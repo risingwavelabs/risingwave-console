@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Play, PlayCircle, Save, X, Settings } from 'lucide-react'
+import { Play, PlayCircle, Save, X, Settings, Plus } from 'lucide-react'
 import { DatabaseManagement } from "@/components/ui/database-management"
 import { GenerateQuery } from "@/components/ui/generate-query"
 
@@ -132,6 +132,13 @@ HAVING COUNT(*) > 5
 ORDER BY active_days DESC;`
 ]
 
+interface EditorTab {
+  id: string
+  name: string
+  content: string
+  isDirty?: boolean
+}
+
 export default function WorkspacePage() {
   const [isResizing, setIsResizing] = useState(false)
   const [panelWidth, setPanelWidth] = useState(192) // 12rem default
@@ -158,6 +165,46 @@ export default function WorkspacePage() {
   const [loadingDots, setLoadingDots] = useState('')
   const editorRef = useRef<any>(null)
   const [showDatabaseManagement, setShowDatabaseManagement] = useState(false)
+  const [tabs, setTabs] = useState<EditorTab[]>([
+    { id: '1', name: 'Query 1', content: '-- Write your SQL query here', isDirty: false }
+  ])
+  const [activeTab, setActiveTab] = useState('1')
+  const [editingTabId, setEditingTabId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState('')
+  const editInputRef = useRef<HTMLInputElement>(null)
+
+  // Load tabs from localStorage on client-side only
+  useEffect(() => {
+    const savedTabs = localStorage.getItem('editor-tabs')
+    if (savedTabs) {
+      const parsedTabs = JSON.parse(savedTabs)
+      setTabs(parsedTabs)
+      // Set active tab to the first tab if the current active tab doesn't exist
+      if (!parsedTabs.find((tab: EditorTab) => tab.id === activeTab)) {
+        setActiveTab(parsedTabs[0].id)
+      }
+    }
+  }, [])
+
+  // Save tabs to local storage when they change
+  useEffect(() => {
+    localStorage.setItem('editor-tabs', JSON.stringify(tabs))
+  }, [tabs])
+
+  // Handle Ctrl+S
+  useEffect(() => {
+    const handleSave = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        setTabs(prev => prev.map(tab => 
+          tab.id === activeTab ? { ...tab, isDirty: false } : tab
+        ))
+      }
+    }
+
+    window.addEventListener('keydown', handleSave)
+    return () => window.removeEventListener('keydown', handleSave)
+  }, [activeTab])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -481,6 +528,73 @@ export default function WorkspacePage() {
     }, 1000)
   }, [])
 
+  const handleNewTab = () => {
+    const newId = `${Date.now()}`
+    setTabs(prev => [...prev, {
+      id: newId,
+      name: `Query ${prev.length + 1}`,
+      content: '-- Write your SQL query here',
+      isDirty: false
+    }])
+    setActiveTab(newId)
+  }
+
+  const handleCloseTab = (tabId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (tabs.length === 1) return // Don't close the last tab
+
+    setTabs(prev => prev.filter(tab => tab.id !== tabId))
+    if (activeTab === tabId) {
+      // Set the previous tab as active, or the first tab if closing the first one
+      const index = tabs.findIndex(tab => tab.id === tabId)
+      const newActiveTab = tabs[index - 1]?.id || tabs[index + 1]?.id
+      setActiveTab(newActiveTab)
+    }
+  }
+
+  const handleEditorChange = (value: string | undefined) => {
+    if (!value) return
+    setTabs(prev => prev.map(tab => 
+      tab.id === activeTab 
+        ? { ...tab, content: value, isDirty: true }
+        : tab
+    ))
+  }
+
+  const handleTabDoubleClick = (tab: EditorTab) => {
+    setEditingTabId(tab.id)
+    setEditingName(tab.name)
+  }
+
+  const handleTabNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditingName(e.target.value)
+  }
+
+  const handleTabNameSave = () => {
+    if (editingTabId && editingName.trim()) {
+      setTabs(prev => prev.map(tab =>
+        tab.id === editingTabId ? { ...tab, name: editingName.trim() } : tab
+      ))
+    }
+    setEditingTabId(null)
+  }
+
+  const handleTabNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleTabNameSave()
+    } else if (e.key === 'Escape') {
+      setEditingTabId(null)
+    }
+  }
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (editingTabId && editInputRef.current) {
+      editInputRef.current.focus()
+      editInputRef.current.select()
+    }
+  }, [editingTabId])
+
   return (
     <div 
       ref={containerRef} 
@@ -551,13 +665,65 @@ export default function WorkspacePage() {
           </Select>
         </div>
         <div className="flex flex-col flex-1 min-h-0">
+          <div className="border-b bg-muted/30 px-2">
+            <div className="flex items-center">
+              {tabs.map(tab => (
+                <div
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`group flex items-center gap-2 px-4 py-2 border-r cursor-pointer hover:bg-muted/50 ${
+                    activeTab === tab.id ? 'bg-background border-b-2 border-b-primary' : 'text-muted-foreground'
+                  }`}
+                >
+                  <div className="flex items-center gap-1">
+                    {editingTabId === tab.id ? (
+                      <input
+                        ref={editInputRef}
+                        value={editingName}
+                        onChange={handleTabNameChange}
+                        onBlur={handleTabNameSave}
+                        onKeyDown={handleTabNameKeyDown}
+                        className="bg-transparent border-none outline-none focus:ring-1 focus:ring-primary text-sm px-0 w-[96px] h-5 -my-[1px]"
+                        onClick={e => e.stopPropagation()}
+                      />
+                    ) : (
+                      <span 
+                        className="text-sm select-none"
+                        onDoubleClick={() => handleTabDoubleClick(tab)}
+                      >
+                        {tab.name}
+                      </span>
+                    )}
+                    {tab.isDirty && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary/70" />
+                    )}
+                  </div>
+                  {tabs.length > 1 && (
+                    <button
+                      onClick={(e) => handleCloseTab(tab.id, e)}
+                      className="opacity-0 group-hover:opacity-100 hover:text-red-500"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                onClick={handleNewTab}
+                className="p-2 hover:bg-muted/50"
+              >
+                <Plus className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
           <div
             style={{ height: editorHeight }}
             className="relative"
           >
             <Editor
               defaultLanguage="sql"
-              defaultValue="-- Write your SQL query here"
+              value={tabs.find(tab => tab.id === activeTab)?.content}
+              onChange={handleEditorChange}
               theme={selectedTheme}
               onMount={handleEditorDidMount}
               options={{
