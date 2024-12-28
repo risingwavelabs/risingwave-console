@@ -48,14 +48,17 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between border rounded-lg p-4 bg-muted/50">
-          <div>
-            <p className="text-sm font-medium">Current Version</p>
-            <p className="text-sm text-muted-foreground">{CURRENT_VERSION}</p>
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">About</h2>
+          <div className="flex items-center justify-between border rounded-lg p-4 bg-muted/50">
+            <div>
+              <p className="text-sm font-medium">Current Version</p>
+              <p className="text-sm text-muted-foreground">{CURRENT_VERSION}</p>
+            </div>
+            <Button onClick={handleCheckUpdate} variant="outline">
+              Check for Updates
+            </Button>
           </div>
-          <Button onClick={handleCheckUpdate} variant="outline">
-            Check for Updates
-          </Button>
         </div>
       </div>
     </div>

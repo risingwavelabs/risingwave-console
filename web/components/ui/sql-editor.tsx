@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select"
 import { Play, PlayCircle, Save, X, Plus } from 'lucide-react'
 import { GenerateQuery } from "@/components/ui/generate-query"
+import { StreamingGraph, RisingWaveNodeData } from "@/components/streaming-graph"
 
 // Move these to a separate constants file if needed
 const SQL_COMPLETIONS = {
@@ -33,6 +34,7 @@ interface SQLEditorProps {
   savedQueries: Array<{ id: string, name: string }>
   onRunQuery?: (query: string) => void
   onSaveQuery?: (query: string, name: string) => void
+  databaseSchema?: RisingWaveNodeData[]
 }
 
 // Sample result datasets
@@ -109,7 +111,7 @@ HAVING COUNT(*) > 5
 ORDER BY active_days DESC;`
 ]
 
-export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLEditorProps) {
+export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databaseSchema = [] }: SQLEditorProps) {
   const [tabs, setTabs] = useState<EditorTab[]>([
     { id: '1', name: 'Query 1', content: '-- Write your SQL query here', isDirty: false }
   ])
@@ -118,6 +120,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
   const [editingName, setEditingName] = useState('')
   const [selectedQuery, setSelectedQuery] = useState("")
   const [editorHeight, setEditorHeight] = useState('60%')
+  const [graphHeight, setGraphHeight] = useState<string>('30vh')
   const [isResizingHeight, setIsResizingHeight] = useState(false)
   const [selectedTheme, setSelectedTheme] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -128,7 +131,8 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string>("")
   const [queryResult, setQueryResult] = useState<{ type: 'success' | 'error', message: string, rows?: any[] }>()
-  
+  const [activeResultTab, setActiveResultTab] = useState<'result' | 'graph'>('result')
+
   const editorRef = useRef<any>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
   const monaco = useMonaco()
@@ -155,7 +159,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
     const handleSave = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault()
-        setTabs(prev => prev.map(tab => 
+        setTabs(prev => prev.map(tab =>
           tab.id === activeTab ? { ...tab, isDirty: false } : tab
         ))
       }
@@ -230,8 +234,8 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
 
   const handleEditorChange = (value: string | undefined) => {
     if (!value) return
-    setTabs(prev => prev.map(tab => 
-      tab.id === activeTab 
+    setTabs(prev => prev.map(tab =>
+      tab.id === activeTab
         ? { ...tab, content: value, isDirty: true }
         : tab
     ))
@@ -258,7 +262,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
     e.preventDefault()
     const draggedTabId = e.dataTransfer.getData('text/plain')
     const draggedTab = tabs.find(tab => tab.id === draggedTabId)
-    
+
     if (!draggedTab || draggedTab.id === targetTab.id) return
 
     const draggedIndex = tabs.findIndex(tab => tab.id === draggedTab.id)
@@ -315,7 +319,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
     e.preventDefault()
     const startY = e.clientY
     const startHeight = parseFloat(editorHeight)
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       const deltaY = e.clientY - startY
       const containerHeight = window.innerHeight
@@ -326,13 +330,13 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
         setEditorHeight(`${newHeight}%`)
       }
     }
-    
+
     const handleMouseUp = () => {
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
       document.body.style.cursor = 'default'
     }
-    
+
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
     document.body.style.cursor = 'ns-resize'
@@ -410,7 +414,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
         const position = editor.getPosition()
         const lineContent = editor.getModel().getLineContent(position.lineNumber)
         const isEmptyLine = !lineContent.trim()
-        
+
         // Add newlines if needed
         let queryToInsert = randomQuery
         if (!isEmptyLine) {
@@ -430,7 +434,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
 
         // Update tab content
         const newContent = editor.getValue()
-        setTabs(prev => prev.map(tab => 
+        setTabs(prev => prev.map(tab =>
           tab.id === activeTab ? { ...tab, content: newContent, isDirty: true } : tab
         ))
 
@@ -445,6 +449,36 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
       }
     }, 500)
   }, [activeTab])
+
+  // Calculate graph height based on editor height changes
+  useEffect(() => {
+    if (typeof editorHeight === 'string' && editorHeight.endsWith('%')) {
+      const percentage = parseInt(editorHeight)
+      // Account for: top toolbar (48px), tab bar (41px), generate query bar (56px), result tab bar (41px), padding (32px)
+      const otherElementsHeight = 48 + 41 + 56 + 41 + 32 + 3
+      const remainingHeightVh = 100 - percentage
+      const remainingHeightPx = (window.innerHeight * remainingHeightVh) / 100
+      const actualGraphHeight = remainingHeightPx - otherElementsHeight
+      setGraphHeight(`${actualGraphHeight}px`)
+    }
+  }, [editorHeight])
+
+  // Add window resize listener to recalculate height
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof editorHeight === 'string' && editorHeight.endsWith('%')) {
+        const percentage = parseInt(editorHeight)
+        const otherElementsHeight = 48 + 41 + 56 + 41 + 32
+        const remainingHeightVh = 100 - percentage
+        const remainingHeightPx = (window.innerHeight * remainingHeightVh) / 100
+        const actualGraphHeight = remainingHeightPx - otherElementsHeight
+        setGraphHeight(`${actualGraphHeight}px`)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [editorHeight])
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -469,8 +503,8 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
             ))}
           </SelectContent>
         </Select>
-        <Button 
-          size="sm" 
+        <Button
+          size="sm"
           variant="outline"
           onClick={() => {
             const currentTab = tabs.find(tab => tab.id === activeTab)
@@ -504,9 +538,8 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
               onDragEnd={handleDragEnd}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, tab)}
-              className={`group flex items-center gap-2 px-4 py-2 border-r cursor-pointer hover:bg-muted/50 ${
-                activeTab === tab.id ? 'bg-background border-b-2 border-b-primary' : 'text-muted-foreground'
-              }`}
+              className={`group flex items-center gap-2 px-4 py-2 border-r cursor-pointer hover:bg-muted/50 ${activeTab === tab.id ? 'bg-background border-b-2 border-b-primary' : 'text-muted-foreground'
+                }`}
             >
               <div className="flex items-center gap-1">
                 {editingTabId === tab.id ? (
@@ -520,7 +553,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
                     onClick={e => e.stopPropagation()}
                   />
                 ) : (
-                  <span 
+                  <span
                     className="text-sm select-none cursor-move"
                     onDoubleClick={() => handleTabDoubleClick(tab)}
                   >
@@ -581,7 +614,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
           className="h-full"
           width={width}
         />
-        <div 
+        <div
           className="absolute left-0 right-0 bottom-[-8px] h-[16px] z-10 cursor-ns-resize group"
           onMouseDown={handleMouseDownVertical}
         >
@@ -598,40 +631,71 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery }: SQLE
           error={generateError}
           className="border-b bg-background/95"
         />
-        <div className="flex-1 overflow-auto p-4 min-h-0 bg-muted/30">
-          {queryResult && (
-            <div>
-              <div className={`mb-2 text-sm ${queryResult.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
-                {queryResult.message}
-              </div>
-              {queryResult.rows && (
-                <div className="overflow-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr>
-                        {Object.keys(queryResult.rows[0]).map(key => (
-                          <th key={key} className="text-left p-2 border bg-muted font-medium text-sm">
-                            {key}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {queryResult.rows.map((row, i) => (
-                        <tr key={i}>
-                          {Object.values(row).map((value, j) => (
-                            <td key={j} className="p-2 border text-sm">
-                              {String(value)}
-                            </td>
+        <div className="flex-1 overflow-auto min-h-0 bg-muted/30">
+          <div className="border-b flex">
+            <button
+              onClick={() => setActiveResultTab('result')}
+              className={`px-4 py-2 text-sm font-medium ${activeResultTab === 'result'
+                  ? 'border-b-2 border-primary text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+                }`}
+            >
+              Result
+            </button>
+            <button
+              onClick={() => setActiveResultTab('graph')}
+              className={`px-4 py-2 text-sm font-medium ${activeResultTab === 'graph'
+                  ? 'border-b-2 border-primary text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+                }`}
+            >
+              Streaming Graph
+            </button>
+          </div>
+          <div className="p-4">
+            {activeResultTab === 'result' && queryResult && (
+              <div>
+                <div className={`mb-2 text-sm ${queryResult.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
+                  {queryResult.message}
+                </div>
+                {queryResult.rows && (
+                  <div className="overflow-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr>
+                          {Object.keys(queryResult.rows[0]).map(key => (
+                            <th key={key} className="text-left p-2 border bg-muted font-medium text-sm">
+                              {key}
+                            </th>
                           ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
+                      </thead>
+                      <tbody>
+                        {queryResult.rows.map((row, i) => (
+                          <tr key={i}>
+                            {Object.values(row).map((value, j) => (
+                              <td key={j} className="p-2 border text-sm">
+                                {String(value)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+            {activeResultTab === 'graph' && (
+              <div style={{ height: graphHeight }} className="w-full">
+                <StreamingGraph
+                  data={databaseSchema}
+                  height={graphHeight}
+                  className="w-full"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Settings } from 'lucide-react'
 import { DatabaseManagement } from "@/components/ui/database-management"
 import { SQLEditor } from "@/components/ui/sql-editor"
+import { RisingWaveNodeData } from "@/components/streaming-graph"
 
 // Sample data - replace with real data from your backend
 const sampleDatabases = [
@@ -26,6 +27,81 @@ const sampleDatabases = [
       { id: "t5", name: "metrics" },
     ],
   },
+]
+
+// Add sample database schema for the streaming graph
+const sampleDatabaseSchema: RisingWaveNodeData[] = [
+  {
+    id: 1,
+    name: "kafka_source",
+    type: "source",
+    connector: {
+      type: "kafka",
+      properties: {
+        topic: "user_events",
+        bootstrap_servers: "localhost:9092"
+      }
+    },
+    format: "json",
+    columns: [
+      { name: "event_id", type: "varchar", isPrimary: true },
+      { name: "user_id", type: "int" },
+      { name: "event_type", type: "varchar" },
+      { name: "timestamp", type: "timestamp" },
+      { name: "data", type: "jsonb" }
+    ]
+  },
+  {
+    id: 2,
+    name: "mysql_source",
+    type: "source",
+    connector: {
+      type: "mysql",
+      properties: {
+        host: "localhost",
+        port: "3306",
+        database: "users"
+      }
+    },
+    columns: [
+      { name: "id", type: "int", isPrimary: true },
+      { name: "name", type: "varchar" },
+      { name: "email", type: "varchar" },
+      { name: "created_at", type: "timestamp" }
+    ]
+  },
+  {
+    id: 3,
+    name: "user_events_mv",
+    type: "materialized_view",
+    dependencies: [1, 2],
+    columns: [
+      { name: "user_id", type: "int", isPrimary: true },
+      { name: "event_count", type: "int" },
+      { name: "last_event", type: "timestamp" },
+      { name: "event_types", type: "varchar[]" }
+    ]
+  },
+  {
+    id: 4,
+    name: "clickhouse_sink",
+    type: "sink",
+    dependencies: [3],
+    connector: {
+      type: "clickhouse",
+      properties: {
+        host: "localhost",
+        port: "8123",
+        database: "analytics"
+      }
+    },
+    columns: [
+      { name: "user_id", type: "int" },
+      { name: "event_count", type: "int" },
+      { name: "last_event", type: "timestamp" },
+      { name: "event_types", type: "array(string)" }
+    ]
+  }
 ]
 
 // Sample saved queries - replace with real data from your backend
@@ -154,6 +230,7 @@ export default function WorkspacePage() {
         savedQueries={savedQueries}
         onRunQuery={handleRunQuery}
         onSaveQuery={handleSaveQuery}
+        databaseSchema={sampleDatabaseSchema}
       />
 
       <DatabaseManagement
