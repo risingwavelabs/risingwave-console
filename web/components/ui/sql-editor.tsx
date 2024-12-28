@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/select"
 import { Play, PlayCircle, Save, X, Plus } from 'lucide-react'
 import { GenerateQuery } from "@/components/ui/generate-query"
-import { StreamingGraph, RisingWaveNodeData } from "@/components/streaming-graph"
+import { DatabaseInsight } from "@/components/ui/database-insight"
+import { RisingWaveNodeData } from "@/components/streaming-graph"
 
 // Move these to a separate constants file if needed
 const SQL_COMPLETIONS = {
@@ -111,7 +112,78 @@ HAVING COUNT(*) > 5
 ORDER BY active_days DESC;`
 ]
 
-export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databaseSchema = [] }: SQLEditorProps) {
+// Sample database schema for streaming graph visualization
+const SAMPLE_SCHEMA: RisingWaveNodeData[] = [
+  {
+    id: 1,
+    name: 'user_events',
+    type: 'source',
+    columns: [
+      { name: 'user_id', type: 'INT', isPrimary: true },
+      { name: 'event_type', type: 'VARCHAR' },
+      { name: 'timestamp', type: 'TIMESTAMP' }
+    ],
+    connector: {
+      type: 'kafka',
+      properties: {
+        topic: 'user_events',
+        bootstrap_servers: 'kafka:9092'
+      }
+    }
+  },
+  {
+    id: 2,
+    name: 'user_metrics',
+    type: 'materialized_view',
+    columns: [
+      { name: 'user_id', type: 'INT', isPrimary: true },
+      { name: 'event_count', type: 'INT' },
+      { name: 'last_seen', type: 'TIMESTAMP' }
+    ],
+    dependencies: [1]
+  },
+  {
+    id: 3,
+    name: 'product_events',
+    type: 'source',
+    columns: [
+      { name: 'product_id', type: 'INT', isPrimary: true },
+      { name: 'event_type', type: 'VARCHAR' },
+      { name: 'timestamp', type: 'TIMESTAMP' }
+    ],
+    connector: {
+      type: 'kafka',
+      properties: {
+        topic: 'product_events',
+        bootstrap_servers: 'kafka:9092'
+      }
+    }
+  },
+  {
+    id: 4,
+    name: 'product_analytics',
+    type: 'materialized_view',
+    columns: [
+      { name: 'product_id', type: 'INT', isPrimary: true },
+      { name: 'view_count', type: 'INT' },
+      { name: 'purchase_count', type: 'INT' }
+    ],
+    dependencies: [3]
+  },
+  {
+    id: 5,
+    name: 'user_product_recommendations',
+    type: 'materialized_view',
+    columns: [
+      { name: 'user_id', type: 'INT' },
+      { name: 'product_id', type: 'INT' },
+      { name: 'score', type: 'FLOAT' }
+    ],
+    dependencies: [1, 3]
+  }
+]
+
+export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databaseSchema = SAMPLE_SCHEMA }: SQLEditorProps) {
   const [tabs, setTabs] = useState<EditorTab[]>([
     { id: '1', name: 'Query 1', content: '-- Write your SQL query here', isDirty: false }
   ])
@@ -131,7 +203,8 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string>("")
   const [queryResult, setQueryResult] = useState<{ type: 'success' | 'error', message: string, rows?: any[] }>()
-  const [activeResultTab, setActiveResultTab] = useState<'result' | 'graph'>('result')
+  const [currentQuery, setCurrentQuery] = useState<string>()
+  const [queryRunId, setQueryRunId] = useState(0)
 
   const editorRef = useRef<any>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
@@ -326,7 +399,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
       const deltaPercent = (deltaY / containerHeight) * 100
       const newHeight = startHeight + deltaPercent
 
-      if (newHeight >= 30 && newHeight <= 80) {
+      if (newHeight >= 0 && newHeight <= 80) {
         setEditorHeight(`${newHeight}%`)
       }
     }
@@ -373,31 +446,32 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
   }, [isResizingHeight, handleMouseMoveVertical, handleMouseUpVertical])
 
   const handleRunQuery = useCallback(() => {
-    const currentQuery = tabs.find(tab => tab.id === activeTab)?.content
-    if (!currentQuery?.trim()) return
+    const query = tabs.find(tab => tab.id === activeTab)?.content
+    if (!query?.trim()) return
 
     // Simulate random success/error (80% success rate)
     const isSuccess = Math.random() < 0.8
 
     if (isSuccess) {
-      // Pick a random successful result
-      const randomResult = SAMPLE_RESULTS[Math.floor(Math.random() * SAMPLE_RESULTS.length)]
-      setQueryResult({
-        type: 'success',
+      // Pick a random result set consistently
+      const randomIndex = Math.floor(Math.random() * SAMPLE_RESULTS.length)
+      const randomResult = SAMPLE_RESULTS[randomIndex]
+      const newResult = {
+        type: 'success' as const,
         message: randomResult.message,
         rows: randomResult.rows
-      })
+      }
+      setQueryResult(newResult)
     } else {
-      // Pick a random error message
       const randomError = ERROR_MESSAGES[Math.floor(Math.random() * ERROR_MESSAGES.length)]
-      setQueryResult({
-        type: 'error',
+      const newResult = {
+        type: 'error' as const,
         message: randomError
-      })
+      }
+      setQueryResult(newResult)
     }
 
-    // Call the external handler if provided
-    onRunQuery?.(currentQuery)
+    onRunQuery?.(query)
   }, [activeTab, tabs, onRunQuery])
 
   const handleGenerateQuery = useCallback((prompt: string) => {
@@ -454,8 +528,8 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
   useEffect(() => {
     if (typeof editorHeight === 'string' && editorHeight.endsWith('%')) {
       const percentage = parseInt(editorHeight)
-      // Account for: top toolbar (48px), tab bar (41px), generate query bar (56px), result tab bar (41px), padding (32px)
-      const otherElementsHeight = 48 + 41 + 56 + 41 + 32 + 3
+      // Account for essential heights only: toolbar(48px) + tab bar(41px) + generate query bar(56px)
+      const otherElementsHeight = 48 + 41 + 56
       const remainingHeightVh = 100 - percentage
       const remainingHeightPx = (window.innerHeight * remainingHeightVh) / 100
       const actualGraphHeight = remainingHeightPx - otherElementsHeight
@@ -468,7 +542,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
     const handleResize = () => {
       if (typeof editorHeight === 'string' && editorHeight.endsWith('%')) {
         const percentage = parseInt(editorHeight)
-        const otherElementsHeight = 48 + 41 + 56 + 41 + 32
+        const otherElementsHeight = 48 + 41 + 56
         const remainingHeightVh = 100 - percentage
         const remainingHeightPx = (window.innerHeight * remainingHeightVh) / 100
         const actualGraphHeight = remainingHeightPx - otherElementsHeight
@@ -481,8 +555,8 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
   }, [editorHeight])
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
-      <div className="flex items-center gap-2 p-2 border-b">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center space-x-2 mb-2 p-2">
         <Button size="sm" variant="default" onClick={handleRunQuery}>
           <Play className="w-4 h-4 mr-1" />
           Run
@@ -585,10 +659,11 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
 
       <div style={{ height: editorHeight }} className="relative">
         <Editor
+          height="100%"
           defaultLanguage="sql"
+          theme={selectedTheme === 'dark' ? 'vs-dark' : 'light'}
           value={tabs.find(tab => tab.id === activeTab)?.content}
           onChange={handleEditorChange}
-          theme={selectedTheme}
           onMount={(editor) => editorRef.current = editor}
           options={{
             minimap: { enabled: false },
@@ -624,79 +699,16 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
 
       <div className="flex-1 min-h-0 flex flex-col">
         <GenerateQuery
-          onGenerate={(prompt) => {
-            handleGenerateQuery(prompt)
-          }}
+          onGenerate={handleGenerateQuery}
           isGenerating={isGenerating}
           error={generateError}
           className="border-b bg-background/95"
         />
-        <div className="flex-1 overflow-auto min-h-0 bg-muted/30">
-          <div className="border-b flex">
-            <button
-              onClick={() => setActiveResultTab('result')}
-              className={`px-4 py-2 text-sm font-medium ${activeResultTab === 'result'
-                  ? 'border-b-2 border-primary text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-                }`}
-            >
-              Result
-            </button>
-            <button
-              onClick={() => setActiveResultTab('graph')}
-              className={`px-4 py-2 text-sm font-medium ${activeResultTab === 'graph'
-                  ? 'border-b-2 border-primary text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-                }`}
-            >
-              Streaming Graph
-            </button>
-          </div>
-          <div className="p-4">
-            {activeResultTab === 'result' && queryResult && (
-              <div>
-                <div className={`mb-2 text-sm ${queryResult.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
-                  {queryResult.message}
-                </div>
-                {queryResult.rows && (
-                  <div className="overflow-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr>
-                          {Object.keys(queryResult.rows[0]).map(key => (
-                            <th key={key} className="text-left p-2 border bg-muted font-medium text-sm">
-                              {key}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {queryResult.rows.map((row, i) => (
-                          <tr key={i}>
-                            {Object.values(row).map((value, j) => (
-                              <td key={j} className="p-2 border text-sm">
-                                {String(value)}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
-            {activeResultTab === 'graph' && (
-              <div style={{ height: graphHeight }} className="w-full">
-                <StreamingGraph
-                  data={databaseSchema}
-                  height={graphHeight}
-                  className="w-full"
-                />
-              </div>
-            )}
-          </div>
-        </div>
+        <DatabaseInsight
+          height={graphHeight}
+          databaseSchema={databaseSchema}
+          result={queryResult}
+        />
       </div>
     </div>
   )
