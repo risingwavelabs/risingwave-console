@@ -194,12 +194,6 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
   const [editorHeight, setEditorHeight] = useState('60%')
   const [graphHeight, setGraphHeight] = useState<string>('30vh')
   const [isResizingHeight, setIsResizingHeight] = useState(false)
-  const [selectedTheme, setSelectedTheme] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(THEME_STORAGE_KEY) || 'light'
-    }
-    return 'light'
-  })
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string>("")
   const [queryResult, setQueryResult] = useState<{ type: 'success' | 'error', message: string, rows?: any[] }>()
@@ -590,15 +584,6 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
           <Save className="w-4 h-4 mr-1" />
           Save Query
         </Button>
-        <Select value={selectedTheme} onValueChange={setSelectedTheme}>
-          <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="Select theme" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="light">Light</SelectItem>
-            <SelectItem value="vs-dark">Dark</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="border-b bg-muted/30 px-2">
@@ -661,7 +646,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
         <Editor
           height="100%"
           defaultLanguage="sql"
-          theme={selectedTheme === 'dark' ? 'vs-dark' : 'light'}
+          theme="light"
           value={tabs.find(tab => tab.id === activeTab)?.content}
           onChange={handleEditorChange}
           onMount={(editor) => editorRef.current = editor}
