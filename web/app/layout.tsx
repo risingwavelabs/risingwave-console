@@ -1,3 +1,5 @@
+"use client"
+
 import "./globals.css";
 
 import { SidebarProvider } from "@/components/ui/sidebar"

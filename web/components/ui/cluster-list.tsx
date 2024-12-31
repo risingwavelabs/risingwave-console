@@ -3,22 +3,29 @@
 import { useEffect, useState, useRef } from "react"
 import { DndProvider, useDrag, useDrop } from "react-dnd"
 import { HTML5Backend } from "react-dnd-html5-backend"
-import { GripVertical, LayoutGrid, List } from "lucide-react"
+import { GripVertical, LayoutGrid, List, Database } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "./button"
 import { Card, CardContent } from "./card"
+import { ClusterDialog, ClusterFormData } from "./new-cluster-dialog"
 
-interface Cluster {
+export interface Cluster {
   id: string
   name: string
   status: "running" | "stopped" | "error"
-  nodes: number
+  host: string
+  sqlPort: number
+  metaNodePort: number
+  user: string
+  password?: string
+  database: string
 }
 
 type ViewMode = "grid" | "list"
 
 interface ClusterListProps {
   clusters: Cluster[]
+  onEdit?: (cluster: Cluster) => void
 }
 
 const STORAGE_KEY = "cluster-order"
@@ -32,9 +39,10 @@ interface DraggableClusterItemProps {
   index: number
   moveCluster: (dragIndex: number, hoverIndex: number) => void
   viewMode: ViewMode
+  onEdit?: (cluster: Cluster) => void
 }
 
-function DraggableClusterItem({ cluster, index, moveCluster, viewMode }: DraggableClusterItemProps) {
+function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit }: DraggableClusterItemProps) {
   const router = useRouter()
   const ref = useRef<HTMLDivElement>(null)
   const handleRef = useRef<HTMLDivElement>(null)
@@ -77,39 +85,57 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode }: Draggab
   return (
     <div ref={ref} style={{ opacity }} data-handler-id={handlerId}>
       <Card className="shadow-none hover:bg-accent/50 transition-colors">
-        <CardContent className="flex items-center gap-4 p-6">
+        <CardContent className="flex items-center gap-4 p-4">
           <div 
             ref={handleRef}
             className="cursor-grab active:cursor-grabbing p-1 -m-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <GripVertical size={20} />
           </div>
-          <div className="flex-1 flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold">{cluster.name}</h3>
-              <p className="text-xs text-muted-foreground mb-1">ID: {cluster.id}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <div className={`w-2 h-2 rounded-full ${
-                  cluster.status === "running" ? "bg-green-500" :
-                  cluster.status === "stopped" ? "bg-yellow-500" :
-                  "bg-red-500"
-                }`} />
-                <span className="text-sm text-muted-foreground capitalize">
-                  {cluster.status}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {cluster.nodes} nodes
-                </span>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold">{cluster.name}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className={`w-2 h-2 rounded-full ${
+                    cluster.status === "running" ? "bg-green-500" :
+                    cluster.status === "stopped" ? "bg-yellow-500" :
+                    "bg-red-500"
+                  }`} />
+                  <span className="text-sm text-muted-foreground capitalize">
+                    {cluster.status}
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <ClusterDialog
+                  mode="edit"
+                  defaultValues={cluster}
+                  trigger={<Button variant="outline" size="sm">Edit</Button>}
+                  onSubmit={(data: ClusterFormData) => onEdit?.({
+                    ...data,
+                    id: cluster.id,
+                    status: cluster.status
+                  })}
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => router.push(`/clusters/${cluster.id}`)}
+                >
+                  Manage
+                </Button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => router.push(`/clusters/${cluster.id}`)}
-              >
-                Manage
-              </Button>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Database className="h-3 w-3" />
+                <span>{cluster.database}</span>
+              </div>
+              <div>Host: {cluster.host}</div>
+              <div>SQL Port: {cluster.sqlPort}</div>
+              <div>Meta Port: {cluster.metaNodePort}</div>
+              <div>User: {cluster.user}</div>
             </div>
           </div>
         </CardContent>
@@ -118,7 +144,7 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode }: Draggab
   )
 }
 
-export function ClusterList({ clusters: initialClusters }: ClusterListProps) {
+export function ClusterList({ clusters: initialClusters, onEdit }: ClusterListProps) {
   const [clusters, setClusters] = useState<Cluster[]>(() => {
     if (typeof window === "undefined") return initialClusters
 
@@ -174,12 +200,12 @@ export function ClusterList({ clusters: initialClusters }: ClusterListProps) {
             Manage and monitor your database clusters
           </p>
         </div>
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <Button variant="outline" size="icon" onClick={toggleViewMode}>
             {viewMode === "list" ? <LayoutGrid size={20} /> : <List size={20} />}
           </Button>
           <Button>New Cluster</Button>
-        </div>
+        </div> */}
       </div>
 
       {clusters.length === 0 ? (
@@ -196,6 +222,7 @@ export function ClusterList({ clusters: initialClusters }: ClusterListProps) {
                 cluster={cluster}
                 moveCluster={moveCluster}
                 viewMode={viewMode}
+                onEdit={onEdit}
               />
             ))}
           </div>

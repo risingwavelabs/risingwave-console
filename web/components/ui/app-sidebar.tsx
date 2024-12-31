@@ -13,6 +13,8 @@ import {
   Code,
 } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 const mainMenuItems = [
   {
@@ -33,23 +35,28 @@ const mainMenuItems = [
 ]
 
 export function AppSidebar() {
+  const pathname = usePathname()
+
   return (
     <Sidebar collapsible="icon" className="border-r">
       <div className="h-4" />
       <SidebarContent>
         <SidebarGroup>
-          {mainMenuItems.map((item) => (
-            <SidebarMenu key={item.title}>
-              <SidebarMenuButton asChild tooltip={item.title}>
-                <Link
-                  href={item.href}
-                  className="flex items-center justify-center"
-                >
-                  <item.icon className="h-4 w-4" />
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenu>
-          ))}
+          {mainMenuItems.map((item) => {
+            const isSelected = pathname === item.href || pathname?.startsWith(item.href + '/')
+            return (
+              <SidebarMenu key={item.title}>
+                <SidebarMenuButton asChild tooltip={item.title}>
+                  <Link
+                    href={item.href}
+                    className="flex items-center justify-center"
+                  >
+                    <item.icon className={cn("h-4 w-4", isSelected ? "text-black" : "text-muted-foreground")} />
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenu>
+            )
+          })}
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>

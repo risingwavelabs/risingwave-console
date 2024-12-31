@@ -38,11 +38,18 @@ import {
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { DateRange } from "react-day-picker"
+import { Card, CardContent } from "@/components/ui/card"
 
 interface ClusterData {
   id: string
   name: string
   status: "running" | "stopped" | "error"
+  host: string
+  sqlPort: number
+  metaNodePort: number
+  user: string
+  password?: string
+  database: string
   nodes: number
   snapshots: Array<{
     id: string
@@ -71,6 +78,12 @@ const initialClusterData: ClusterData = {
   id: "cluster-1",
   name: "Production DB",
   status: "running",
+  host: "localhost",
+  sqlPort: 8080,
+  metaNodePort: 9090,
+  user: "admin",
+  password: "supersecret",
+  database: "myapp_production",
   nodes: 5,
   snapshots: [
     { id: "snap-1", name: "Daily Backup", created_at: "2024-01-20 10:00" },
@@ -149,34 +162,70 @@ export default function ClusterPage() {
 
       {/* Cluster Details Section */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Cluster Information</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Name</p>
-            <p className="text-sm font-medium">{clusterData.name}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Status</p>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${clusterData.status === "running" ? "bg-green-500" :
-                clusterData.status === "stopped" ? "bg-yellow-500" :
-                  "bg-red-500"
-                }`} />
-              <p className="text-sm font-medium capitalize">{clusterData.status}</p>
-            </div>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Cluster ID</p>
-            <p className="text-sm font-medium">{clusterId}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Number of Nodes</p>
-            <p className="text-sm font-medium">{clusterData.nodes} nodes</p>
-          </div>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Cluster Information</h3>
+          <Button variant="outline" size="sm">
+            Edit
+          </Button>
         </div>
+        <Card className="shadow-none">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-6">
+              <div>
+                <p className="text-sm text-muted-foreground">Name</p>
+                <p className="text-sm font-medium">{clusterData.name}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Status</p>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${clusterData.status === "running" ? "bg-green-500" :
+                    clusterData.status === "stopped" ? "bg-yellow-500" :
+                      "bg-red-500"
+                    }`} />
+                  <p className="text-sm font-medium capitalize">{clusterData.status}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Number of Nodes</p>
+                <p className="text-sm font-medium">{clusterData.nodes} nodes</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Connection Information</h3>
+          <Button variant="outline" size="sm">
+            Edit
+          </Button>
+        </div>
+        <Card className="shadow-none">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-3 gap-6">
+              <div>
+                <p className="text-sm text-muted-foreground">Host</p>
+                <p className="text-sm font-medium">{clusterData.host}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Database</p>
+                <p className="text-sm font-medium">{clusterData.database}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">User</p>
+                <p className="text-sm font-medium">{clusterData.user}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">SQL Port</p>
+                <p className="text-sm font-medium">{clusterData.sqlPort}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Meta Node Port</p>
+                <p className="text-sm font-medium">{clusterData.metaNodePort}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-
-      <Separator />
 
       {/* Snapshots Section */}
       <div className="space-y-4">
@@ -213,15 +262,14 @@ export default function ClusterPage() {
                 onValueChange={setAutoBackupInterval}
                 disabled={!autoBackupEnabled}
               >
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="Select interval" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1h">Every hour</SelectItem>
+                  <SelectItem value="30m">Every 30 minutes</SelectItem>
                   <SelectItem value="6h">Every 6 hours</SelectItem>
                   <SelectItem value="12h">Every 12 hours</SelectItem>
                   <SelectItem value="24h">Every 24 hours</SelectItem>
-                  <SelectItem value="7d">Every week</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -236,7 +284,7 @@ export default function ClusterPage() {
                 onValueChange={(value) => setAutoBackupKeepCount(parseInt(value))}
                 disabled={!autoBackupEnabled}
               >
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="Select count" />
                 </SelectTrigger>
                 <SelectContent>
@@ -251,7 +299,7 @@ export default function ClusterPage() {
           </div>
         </div>
 
-        <div className="space-y-4 max-w-4xl">
+        <div className="space-y-4">
           {clusterData.snapshots.map(snapshot => (
             <div key={snapshot.id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
               <div>
@@ -282,8 +330,6 @@ export default function ClusterPage() {
           ))}
         </div>
       </div>
-
-      <Separator />
 
       {/* Diagnostics Section */}
       <div className="space-y-4">
