@@ -1,0 +1,226 @@
+openapi: 3.0.0
+
+info:
+  title: AI Agent API
+  version: '1.0'
+  description: API for interacting with AI models and managing settings
+
+servers:
+  - url: /api/v1
+    description: Base API path
+
+paths:
+  /databases:
+    get:
+      summary: List all databases
+      description: Retrieve a list of all databases and their tables
+      operationId: listDatabases
+      responses:
+        '200':
+          description: Successfully retrieved database list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Database'
+    post:
+      summary: Create a new database
+      description: Create a new database
+      operationId: createDatabase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the database
+      responses:
+        '201':
+          description: Database created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Database'
+
+  /databases/{databaseId}:
+    parameters:
+      - name: databaseId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get database details
+      description: Retrieve details of a specific database
+      operationId: getDatabase
+      responses:
+        '200':
+          description: Successfully retrieved database
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Database'
+    put:
+      summary: Update database
+      description: Update a specific database
+      operationId: updateDatabase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: New name of the database
+      responses:
+        '200':
+          description: Database updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Database'
+    delete:
+      summary: Delete database
+      description: Delete a specific database
+      operationId: deleteDatabase
+      responses:
+        '204':
+          description: Database deleted successfully
+
+  /databases/{databaseId}/tables:
+    parameters:
+      - name: databaseId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: List database tables
+      description: Retrieve all tables in a specific database
+      operationId: listDatabaseTables
+      responses:
+        '200':
+          description: Successfully retrieved tables
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Table'
+    post:
+      summary: Create table
+      description: Create a new table in the specified database
+      operationId: createTable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the table
+      responses:
+        '201':
+          description: Table created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+
+  /databases/{databaseId}/tables/{tableId}:
+    parameters:
+      - name: databaseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get table details
+      description: Retrieve details of a specific table
+      operationId: getTable
+      responses:
+        '200':
+          description: Successfully retrieved table
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+    put:
+      summary: Update table
+      description: Update a specific table
+      operationId: updateTable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: New name of the table
+      responses:
+        '200':
+          description: Table updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+    delete:
+      summary: Delete table
+      description: Delete a specific table
+      operationId: deleteTable
+      responses:
+        '204':
+          description: Table deleted successfully
+
+components:
+  schemas:
+    Database:
+      type: object
+      required:
+        - id
+        - name
+        - tables
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the database
+        name:
+          type: string
+          description: Name of the database
+        tables:
+          type: array
+          items:
+            $ref: '#/components/schemas/Table'
+          description: List of tables in the database
+
+    Table:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the table
+        name:
+          type: string
+          description: Name of the table

@@ -1,0 +1,2 @@
+1. use pnpm as the package manager
+2. use shadcn/ui as the UI library. the command to use shadcn CLI is like: `pnpm dlx shadcn@latest add <name>`

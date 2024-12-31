@@ -8,16 +8,22 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar"
 import {
-  LayoutDashboard,
+  Server,
   Settings,
+  Code,
 } from "lucide-react"
 import Link from "next/link"
 
 const mainMenuItems = [
   {
-    title: "Workspace",
-    href: "/workspace",
-    icon: LayoutDashboard,
+    title: "Clusters",
+    href: "/clusters",
+    icon: Server,
+  },
+  {
+    title: "SQL Console",
+    href: "/sqlconsole",
+    icon: Code,
   },
   {
     title: "Settings",
@@ -29,7 +35,7 @@ const mainMenuItems = [
 export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r">
-      <div className="h-4"/>
+      <div className="h-4" />
       <SidebarContent>
         <SidebarGroup>
           {mainMenuItems.map((item) => (

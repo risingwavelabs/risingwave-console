@@ -204,6 +204,38 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
   const editInputRef = useRef<HTMLInputElement>(null)
   const monaco = useMonaco()
 
+  const calculateGraphHeight = useCallback(() => {
+    if (typeof editorHeight === 'string' && editorHeight.endsWith('%')) {
+      const percentage = parseInt(editorHeight)
+      // Account for essential heights only: toolbar(48px) + tab bar(41px) + generate query bar(56px)
+      const otherElementsHeight = 48 + 41 + 56
+      const remainingHeightVh = 100 - percentage
+      const remainingHeightPx = (window.innerHeight * remainingHeightVh) / 100
+      const actualGraphHeight = remainingHeightPx - otherElementsHeight
+      setGraphHeight(`${actualGraphHeight}px`)
+    }
+  }, [editorHeight])
+
+  // Calculate graph height based on editor height changes
+  useEffect(() => {
+    calculateGraphHeight()
+  }, [calculateGraphHeight])
+
+  // Add window resize listener to recalculate dimensions
+  useEffect(() => {
+    const handleResize = () => {
+      calculateGraphHeight()
+
+      // Trigger Monaco editor layout update
+      if (editorRef.current) {
+        editorRef.current.layout()
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [calculateGraphHeight])
+
   // Load tabs from localStorage
   useEffect(() => {
     const savedTabs = localStorage.getItem('editor-tabs')
@@ -518,36 +550,6 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
     }, 500)
   }, [activeTab])
 
-  // Calculate graph height based on editor height changes
-  useEffect(() => {
-    if (typeof editorHeight === 'string' && editorHeight.endsWith('%')) {
-      const percentage = parseInt(editorHeight)
-      // Account for essential heights only: toolbar(48px) + tab bar(41px) + generate query bar(56px)
-      const otherElementsHeight = 48 + 41 + 56
-      const remainingHeightVh = 100 - percentage
-      const remainingHeightPx = (window.innerHeight * remainingHeightVh) / 100
-      const actualGraphHeight = remainingHeightPx - otherElementsHeight
-      setGraphHeight(`${actualGraphHeight}px`)
-    }
-  }, [editorHeight])
-
-  // Add window resize listener to recalculate height
-  useEffect(() => {
-    const handleResize = () => {
-      if (typeof editorHeight === 'string' && editorHeight.endsWith('%')) {
-        const percentage = parseInt(editorHeight)
-        const otherElementsHeight = 48 + 41 + 56
-        const remainingHeightVh = 100 - percentage
-        const remainingHeightPx = (window.innerHeight * remainingHeightVh) / 100
-        const actualGraphHeight = remainingHeightPx - otherElementsHeight
-        setGraphHeight(`${actualGraphHeight}px`)
-      }
-    }
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [editorHeight])
-
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center space-x-2 mb-2 p-2">
@@ -613,7 +615,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
                   />
                 ) : (
                   <span
-                    className="text-sm select-none cursor-move"
+                    className="text-sm select-none"
                     onDoubleClick={() => handleTabDoubleClick(tab)}
                   >
                     {tab.name}

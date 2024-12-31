@@ -3,6 +3,10 @@ import { X, Settings2, Trash2, Plus, ArrowLeft } from "lucide-react"
 import { useCallback, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import * as yup from "yup"
+import { useForm } from "react-hook-form"
+import { yupResolver } from "@hookform/resolvers/yup"
+import { ConfirmationPopup } from "@/components/ui/confirmation-popup"
 
 interface Database {
   id: string
@@ -10,7 +14,20 @@ interface Database {
   host: string
   port: number
   username: string
+  password?: string
 }
+
+const databaseSchema = yup.object().shape({
+  name: yup.string().required("Database name is required"),
+  host: yup.string().required("Host is required"),
+  port: yup.number()
+    .typeError("Port must be a number")
+    .required("Port is required")
+    .min(1, "Port must be greater than 0")
+    .max(65535, "Port must be less than 65536"),
+  username: yup.string().required("Username is required"),
+  password: yup.string().default(""),
+})
 
 interface DatabaseManagementProps {
   isOpen: boolean
@@ -22,59 +39,74 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
 
   // Sample databases - replace with actual data
   const [databases, setDatabases] = useState<Database[]>([
-    { id: "db1", name: "Main Database", host: "localhost", port: 5432, username: "admin" },
-    { id: "db2", name: "Analytics DB", host: "analytics.example.com", port: 5432, username: "analyst" },
+    { id: "db1", name: "Main Database", host: "localhost", port: 5432, username: "admin", password: "********" },
+    { id: "db2", name: "Analytics DB", host: "analytics.example.com", port: 5432, username: "analyst", password: "********" },
   ])
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isAddingDatabase, setIsAddingDatabase] = useState(false)
   const [isConfiguring, setIsConfiguring] = useState<string | null>(null)
-  const [newDatabase, setNewDatabase] = useState<Omit<Database, 'id'>>({
-    name: '',
-    host: '',
-    port: 5432,
-    username: '',
-  })
   const [editingDatabase, setEditingDatabase] = useState<Database | null>(null)
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+    setValue,
+  } = useForm({
+    resolver: yupResolver(databaseSchema),
+    mode: "all",
+    defaultValues: {
+      name: '',
+      host: '',
+      port: 5432,
+      username: '',
+      password: '',
+    }
+  })
 
   const handleDeleteDatabase = (id: string) => {
     setDatabases(prev => prev.filter(db => db.id !== id))
     setDeleteId(null)
   }
 
-  const handleAddDatabase = () => {
-    const id = `db${Date.now()}`
-    setDatabases(prev => [...prev, { ...newDatabase, id }])
-    setNewDatabase({ name: '', host: '', port: 5432, username: '' })
-    setIsAddingDatabase(false)
+  const onSubmit = (data: Omit<Database, 'id'>) => {
+    if (isAddingDatabase) {
+      const id = `db${Date.now()}`
+      setDatabases(prev => [...prev, { ...data, id }])
+      setIsAddingDatabase(false)
+    } else if (editingDatabase) {
+      setDatabases(prev => prev.map(db => 
+        db.id === editingDatabase.id ? { ...data, id: editingDatabase.id } : db
+      ))
+      setEditingDatabase(null)
+      setIsConfiguring(null)
+    }
+    reset()
   }
 
   const handleConfigureDatabase = (db: Database) => {
     setEditingDatabase(db)
     setIsConfiguring(db.id)
-  }
-
-  const handleSaveConfiguration = () => {
-    if (!editingDatabase) return
-    setDatabases(prev => prev.map(db => 
-      db.id === editingDatabase.id ? editingDatabase : db
-    ))
-    setEditingDatabase(null)
-    setIsConfiguring(null)
+    setValue('name', db.name)
+    setValue('host', db.host)
+    setValue('port', db.port)
+    setValue('username', db.username)
+    setValue('password', db.password || '')
   }
 
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && e.button === 0) {
       onClose()
     }
   }, [onClose])
 
   const isEditing = isAddingDatabase || isConfiguring
-  const currentDatabase = isAddingDatabase ? newDatabase : editingDatabase
-
+  
   return (
     <div 
       className="fixed inset-0 bg-black/50 z-50"
-      onClick={handleBackdropClick}
+      onMouseDown={handleBackdropClick}
     >
       <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] bg-background rounded-lg shadow-lg border">
         <div className="flex items-center justify-between border-b p-4">
@@ -88,6 +120,7 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
                   setIsAddingDatabase(false)
                   setIsConfiguring(null)
                   setEditingDatabase(null)
+                  reset()
                 }}
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -123,7 +156,7 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
               </div>
               
               <div className="space-y-2">
-                {databases.map(db => (
+                {databases.map((db) => (
                   <div 
                     key={db.id}
                     className="flex items-center justify-between p-3 border rounded-lg bg-muted/30 group hover:bg-muted/50"
@@ -153,27 +186,11 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
                           <Trash2 className="h-4 w-4" />
                         </Button>
                         {deleteId === db.id && (
-                          <div className="absolute right-0 top-full mt-1 bg-background border rounded-lg shadow-lg py-2 px-3 z-50 whitespace-nowrap">
-                            <p className="text-xs text-muted-foreground mb-2">Delete this database?</p>
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                className="h-7 px-2 text-xs"
-                                onClick={() => setDeleteId(null)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button 
-                                size="sm"
-                                variant="destructive"
-                                className="h-7 px-2 text-xs"
-                                onClick={() => handleDeleteDatabase(db.id)}
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          </div>
+                          <ConfirmationPopup
+                            message="Delete this database?"
+                            onConfirm={() => handleDeleteDatabase(db.id)}
+                            onCancel={() => setDeleteId(null)}
+                          />
                         )}
                       </div>
                     </div>
@@ -188,38 +205,32 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
               )}
             </>
           ) : (
-            <div className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Database Name</Label>
                   <Input
                     id="name"
-                    value={currentDatabase?.name}
-                    onChange={e => {
-                      if (isAddingDatabase) {
-                        setNewDatabase(prev => ({ ...prev, name: e.target.value }))
-                      } else {
-                        setEditingDatabase(prev => prev ? { ...prev, name: e.target.value } : null)
-                      }
-                    }}
+                    {...register('name')}
                     placeholder="e.g. Production Database"
+                    className={errors.name ? 'border-red-500' : ''}
                   />
+                  {errors.name && (
+                    <p className="text-sm text-red-500">{errors.name.message}</p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="host">Host</Label>
                   <Input
                     id="host"
-                    value={currentDatabase?.host}
-                    onChange={e => {
-                      if (isAddingDatabase) {
-                        setNewDatabase(prev => ({ ...prev, host: e.target.value }))
-                      } else {
-                        setEditingDatabase(prev => prev ? { ...prev, host: e.target.value } : null)
-                      }
-                    }}
+                    {...register('host')}
                     placeholder="e.g. localhost or db.example.com"
+                    className={errors.host ? 'border-red-500' : ''}
                   />
+                  {errors.host && (
+                    <p className="text-sm text-red-500">{errors.host.message}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -227,36 +238,43 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
                   <Input
                     id="port"
                     type="number"
-                    value={currentDatabase?.port}
-                    onChange={e => {
-                      const port = parseInt(e.target.value) || 5432
-                      if (isAddingDatabase) {
-                        setNewDatabase(prev => ({ ...prev, port }))
-                      } else {
-                        setEditingDatabase(prev => prev ? { ...prev, port } : null)
-                      }
-                    }}
+                    {...register('port')}
                     placeholder="5432"
+                    className={errors.port ? 'border-red-500' : ''}
                   />
+                  {errors.port && (
+                    <p className="text-sm text-red-500">{errors.port.message}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="username">Username</Label>
                   <Input
                     id="username"
-                    value={currentDatabase?.username}
-                    onChange={e => {
-                      if (isAddingDatabase) {
-                        setNewDatabase(prev => ({ ...prev, username: e.target.value }))
-                      } else {
-                        setEditingDatabase(prev => prev ? { ...prev, username: e.target.value } : null)
-                      }
-                    }}
+                    {...register('username')}
                     placeholder="e.g. admin"
+                    className={errors.username ? 'border-red-500' : ''}
                   />
+                  {errors.username && (
+                    <p className="text-sm text-red-500">{errors.username.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    {...register('password')}
+                    placeholder="Enter password"
+                    className={errors.password ? 'border-red-500' : ''}
+                  />
+                  {errors.password && (
+                    <p className="text-sm text-red-500">{errors.password.message}</p>
+                  )}
                 </div>
               </div>
-            </div>
+            </form>
           )}
         </div>
 
@@ -269,13 +287,14 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
                   setIsAddingDatabase(false)
                   setIsConfiguring(null)
                   setEditingDatabase(null)
+                  reset()
                 }}
               >
                 Cancel
               </Button>
               <Button 
-                onClick={isAddingDatabase ? handleAddDatabase : handleSaveConfiguration}
-                disabled={!currentDatabase?.name || !currentDatabase?.host || !currentDatabase?.username}
+                onClick={handleSubmit(onSubmit)}
+                type="submit"
               >
                 {isAddingDatabase ? 'Add Database' : 'Save Changes'}
               </Button>
