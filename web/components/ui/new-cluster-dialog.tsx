@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -62,6 +62,7 @@ export function ClusterDialog({
 }: ClusterDialogProps) {
   const [open, setOpen] = useState(false)
   const [testing, setTesting] = useState(false)
+  const [testSuccess, setTestSuccess] = useState(false)
 
   const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : open
@@ -72,6 +73,7 @@ export function ClusterDialog({
     handleSubmit,
     reset,
     getValues,
+    watch,
     formState: { errors, isValid }
   } = useForm<ClusterFormData>({
     mode: "all",
@@ -84,6 +86,14 @@ export function ClusterDialog({
     }
   })
 
+  // Watch all form fields to hide success message on change
+  useEffect(() => {
+    const subscription = watch(() => {
+      setTestSuccess(false)
+    })
+    return () => subscription.unsubscribe()
+  }, [watch])
+
   const handleFormSubmit = handleSubmit((data) => {
     onSubmit(data)
     setIsOpen(false)
@@ -95,10 +105,11 @@ export function ClusterDialog({
   const handleTestConnection = async () => {
     const values = getValues()
     setTesting(true)
+    setTestSuccess(false)
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500))
-      alert("Connection successful!")
+      setTestSuccess(true)
     } catch (error) {
       alert("Connection failed!")
     } finally {
@@ -210,6 +221,11 @@ export function ClusterDialog({
                 <p className="text-sm text-red-500">{errors.password.message}</p>
               )}
             </div>
+            {testSuccess && (
+              <p className="text-sm text-green-500 font-medium">
+                ✓ Successfully connected
+              </p>
+            )}
           </div>
           <DialogFooter className="gap-2">
             <Button
