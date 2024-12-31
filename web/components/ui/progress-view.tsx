@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from './button';
 import Editor from '@monaco-editor/react';
+import { useTheme } from 'next-themes';
 
 interface ProgressItem {
   name: string;
@@ -20,6 +21,7 @@ export function ProgressView({ items = [], onCancel }: ProgressViewProps) {
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const { theme } = useTheme();
 
   // Update time every second for running items
   useEffect(() => {
@@ -140,14 +142,14 @@ GROUP BY u.user_id, p.product_id;`
   return (
     <div className="p-2 space-y-2">
       {displayItems.map((item, index) => (
-        <div key={index} className="bg-white rounded-md shadow-sm">
+        <div key={index} className="bg-background border rounded-md shadow-sm">
           <div 
-            className="p-2 cursor-pointer hover:bg-gray-50"
+            className="p-2 cursor-pointer hover:bg-accent/50"
             onClick={() => toggleExpand(item.name)}
           >
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-1.5">
-                <span className="text-gray-500">
+                <span className="text-muted-foreground">
                   {expandedItems.has(item.name) ? (
                     <ChevronDown className="h-3.5 w-3.5" />
                   ) : (
@@ -157,7 +159,7 @@ GROUP BY u.user_id, p.product_id;`
                 <span className={`w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px] ${getStatusColor(item.status)}`}>
                   {getStatusIcon(item.status)}
                 </span>
-                <span className="font-medium text-sm">{item.name}</span>
+                <span className="font-medium text-sm text-foreground">{item.name}</span>
                 <span className="text-xs text-muted-foreground">
                   {formatDuration(item.startTime)}
                 </span>
@@ -167,7 +169,7 @@ GROUP BY u.user_id, p.product_id;`
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-500"
+                    className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => setCancelId(item.name)}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -199,14 +201,14 @@ GROUP BY u.user_id, p.product_id;`
               )}
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+              <div className="flex-1 bg-accent rounded-full h-1.5">
                 <div
                   className={`h-1.5 rounded-full ${getStatusColor(item.status)} transition-all duration-500`}
                   style={{ width: `${item.progress}%` }}
                 />
               </div>
               <div className="w-10 text-right">
-                <span className="text-xs font-medium">
+                <span className="text-xs font-medium text-foreground">
                   {item.progress}%
                 </span>
               </div>
@@ -219,6 +221,7 @@ GROUP BY u.user_id, p.product_id;`
                   height="150px"
                   defaultLanguage="sql"
                   value={item.sql}
+                  theme={theme === 'dark' ? 'vs-dark' : 'light'}
                   options={{
                     readOnly: true,
                     minimap: { enabled: false },

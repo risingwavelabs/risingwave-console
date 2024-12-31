@@ -127,23 +127,25 @@ const sampleClusters: Cluster[] = [
   }
 ]
 
+function generateUniqueId() {
+  return `cluster-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+}
+
 export default function ClustersPage() {
   const [clusters, setClusters] = useState<Cluster[]>(sampleClusters)
 
   const handleCreateCluster = (data: ClusterFormData) => {
     const newCluster: Cluster = {
-      id: `cluster-${clusters.length + 1}`,
+      id: generateUniqueId(),
       status: "stopped",
       ...data
     }
     setClusters(prev => [...prev, newCluster])
   }
 
-  const handleEditCluster = (id: string, data: ClusterFormData) => {
-    setClusters(prev => prev.map(cluster => 
-      cluster.id === id 
-        ? { ...cluster, ...data }
-        : cluster
+  const handleEditCluster = (cluster: Cluster) => {
+    setClusters(prev => prev.map(c => 
+      c.id === cluster.id ? cluster : c
     ))
   }
 
@@ -160,7 +162,7 @@ export default function ClustersPage() {
       </div>
       <ClusterList 
         clusters={clusters}
-        onEdit={(cluster) => handleEditCluster(cluster.id, cluster)}
+        onEdit={handleEditCluster}
       />
     </div>
   )

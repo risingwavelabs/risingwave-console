@@ -5,6 +5,7 @@ import { ReactFlow, Background, Controls, Panel, Node, Edge, MarkerType, NodePro
 import dagre from '@dagrejs/dagre';
 import '@xyflow/react/dist/style.css';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 // RisingWave Schema Types - Single Source of Truth
 export interface TableColumn {
@@ -34,12 +35,27 @@ interface StreamingGraphProps {
   height?: string | number;
 }
 
-const COLORS: Record<string, string> = {
-  source: '#e3f2fd',
-  sink: '#fce4ec',
-  materializedView: '#e8f5e9',
-  table: '#fff3e0',
-  text: '#1a1a1a',
+const COLORS = {
+  light: {
+    source: '#e3f2fd',
+    sink: '#fce4ec',
+    materializedView: '#e8f5e9',
+    table: '#fff3e0',
+    text: '#1a1a1a',
+    background: '#fafafa',
+    border: '#e2e8f0',
+    nodeBackground: '#ffffff',
+  },
+  dark: {
+    source: '#1e293b',
+    sink: '#3f2a3f',
+    materializedView: '#1e312b',
+    table: '#2c2620',
+    text: '#e2e8f0',
+    background: '#171717',
+    border: '#262626',
+    nodeBackground: '#1e1e1e',
+  }
 };
 
 const ICONS: Record<string, string> = {
@@ -52,10 +68,12 @@ const ICONS: Record<string, string> = {
 // Custom node component for RisingWave nodes
 const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const { theme = 'light' } = useTheme();
   const nodeType = data.type === 'materialized_view' ? 'materializedView' : data.type;
   
   // Memoize static values
-  const backgroundColor = React.useMemo(() => COLORS[nodeType] || COLORS.table, [nodeType]);
+  const colors = React.useMemo(() => COLORS[theme === 'dark' ? 'dark' : 'light'], [theme]);
+  const backgroundColor = React.useMemo(() => colors[nodeType] || colors.table, [colors, nodeType]);
   const icon = React.useMemo(() => ICONS[nodeType] || ICONS.table, [nodeType]);
   
   // Memoize event handler
@@ -68,35 +86,35 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
   const headerContent = React.useMemo(() => (
     <span className="flex items-center gap-2 flex-1">
       <span>{icon}</span>
-      <span>{data.name}</span>
+      <span className="text-foreground">{data.name}</span>
     </span>
   ), [icon, data.name]);
 
   return (
-    <div className="rounded-lg shadow-lg bg-white border border-gray-200 min-w-[200px] drag-handle">
+    <div className={`rounded-lg shadow-lg border min-w-[200px] drag-handle bg-background`}>
       <Handle
         type="target"
         position={Position.Left}
         id="target"
-        style={{ background: '#555' }}
+        className="!bg-muted-foreground"
       />
       <div
         className="px-4 py-2 font-semibold border-b text-sm flex items-center gap-2"
         style={{ backgroundColor }}
       >
         <button 
-          className="p-0.5 hover:bg-black/5 rounded"
+          className="p-0.5 hover:bg-black/5 dark:hover:bg-white/5 rounded"
           onClick={handleExpand}
         >
           {isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-gray-600" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-gray-600" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           )}
         </button>
         {headerContent}
         {data.connector && (
-          <span className="ml-auto text-xs text-gray-500">({data.connector.type})</span>
+          <span className="ml-auto text-xs text-muted-foreground">({data.connector.type})</span>
         )}
       </div>
       {isExpanded && (
@@ -106,12 +124,12 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
               <span className="mr-2">
                 {column.isPrimary && '🔑'}
               </span>
-              <span className="font-medium">{column.name}</span>
-              <span className="ml-2 text-gray-500 text-xs">({column.type})</span>
+              <span className="font-medium text-foreground">{column.name}</span>
+              <span className="ml-2 text-muted-foreground text-xs">({column.type})</span>
             </div>
           ))}
           {data.format && (
-            <div className="mt-2 text-xs text-gray-500 border-t pt-2">
+            <div className="mt-2 text-xs text-muted-foreground border-t pt-2">
               Format: {data.format}
             </div>
           )}
@@ -121,7 +139,7 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
         type="source"
         position={Position.Right}
         id="source"
-        style={{ background: '#555' }}
+        className="!bg-muted-foreground"
       />
     </div>
   );
@@ -135,6 +153,9 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
 TableNodeComponent.displayName = 'TableNodeComponent';
 
 export function StreamingGraph({ data = [], className = '', height = '100%' }: StreamingGraphProps) {
+  const { theme = 'light' } = useTheme();
+  const colors = COLORS[theme === 'dark' ? 'dark' : 'light'];
+
   type NodeData = {
     data: RisingWaveNodeData;
     id: string;
@@ -247,7 +268,7 @@ export function StreamingGraph({ data = [], className = '', height = '100%' }: S
             type: 'default',
             animated: false
           }}
-          style={{ background: '#fafafa' }}
+          style={{ background: colors.background }}
           proOptions={{ 
             hideAttribution: true 
           }}
@@ -268,29 +289,30 @@ export function StreamingGraph({ data = [], className = '', height = '100%' }: S
           zoomOnScroll={false}
           panOnScroll={true}
           preventScrolling={true}
+          className="dark:react-flow-dark"
         >
-          <Background />
-          <Controls />
-          <Panel position="top-left" className="bg-white p-2 rounded shadow-md">
+          <Background className="dark:bg-background" />
+          <Controls className="!bg-background !border-border [&>button]:!bg-background [&>button]:!text-foreground [&>button:hover]:!bg-accent" />
+          <Panel position="top-left" className="bg-background border text-foreground p-2 rounded shadow-md">
             <div className="text-sm font-medium mb-2">Legend</div>
             <div className="flex flex-col gap-1 text-xs">
               <div className="flex items-center">
-                <div className="w-3 h-3 mr-2" style={{ backgroundColor: COLORS.source }}></div>
+                <div className="w-3 h-3 mr-2" style={{ backgroundColor: colors.source }}></div>
                 <span className="mr-1">{ICONS.source}</span>
                 Source
               </div>
               <div className="flex items-center">
-                <div className="w-3 h-3 mr-2" style={{ backgroundColor: COLORS.sink }}></div>
+                <div className="w-3 h-3 mr-2" style={{ backgroundColor: colors.sink }}></div>
                 <span className="mr-1">{ICONS.sink}</span>
                 Sink
               </div>
               <div className="flex items-center">
-                <div className="w-3 h-3 mr-2" style={{ backgroundColor: COLORS.materializedView }}></div>
+                <div className="w-3 h-3 mr-2" style={{ backgroundColor: colors.materializedView }}></div>
                 <span className="mr-1">{ICONS.materializedView}</span>
                 Materialized View
               </div>
               <div className="flex items-center">
-                <div className="w-3 h-3 mr-2" style={{ backgroundColor: COLORS.table }}></div>
+                <div className="w-3 h-3 mr-2" style={{ backgroundColor: colors.table }}></div>
                 <span className="mr-1">{ICONS.table}</span>
                 Table
               </div>

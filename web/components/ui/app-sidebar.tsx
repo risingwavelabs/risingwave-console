@@ -11,10 +11,14 @@ import {
   Server,
   Settings,
   Code,
+  Moon,
+  Sun,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 
 const mainMenuItems = [
   {
@@ -36,6 +40,12 @@ const mainMenuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -51,12 +61,26 @@ export function AppSidebar() {
                     href={item.href}
                     className="flex items-center justify-center"
                   >
-                    <item.icon className={cn("h-4 w-4", isSelected ? "text-black" : "text-muted-foreground")} />
+                    <item.icon className={cn("h-4 w-4", isSelected ? "text-black dark:text-white" : "text-muted-foreground")} />
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenu>
             )
           })}
+          <SidebarMenu>
+            <SidebarMenuButton
+              tooltip="Toggle theme"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            >
+              <div className="flex items-center justify-center">
+                {mounted && (theme === 'dark' ? (
+                  <Sun className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Moon className="h-4 w-4 text-muted-foreground" />
+                ))}
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>

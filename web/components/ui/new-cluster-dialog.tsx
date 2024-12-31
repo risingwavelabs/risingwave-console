@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label"
 import * as yup from "yup"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
-import { CheckCircle2, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 
 const schema = yup.object().shape({
   name: yup.string().required("Name is required"),
@@ -62,7 +62,6 @@ export function ClusterDialog({
 }: ClusterDialogProps) {
   const [open, setOpen] = useState(false)
   const [testing, setTesting] = useState(false)
-  const [connectionStatus, setConnectionStatus] = useState<'none' | 'success' | 'error'>('none')
 
   const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : open
@@ -73,7 +72,6 @@ export function ClusterDialog({
     handleSubmit,
     reset,
     getValues,
-    watch,
     formState: { errors, isValid }
   } = useForm<ClusterFormData>({
     mode: "all",
@@ -86,47 +84,30 @@ export function ClusterDialog({
     }
   })
 
-  // Watch all form fields and hide success message when any value changes
-  useEffect(() => {
-    const subscription = watch(() => {
-      if (connectionStatus === 'success') {
-        setConnectionStatus('none')
-      }
-    })
-    return () => subscription.unsubscribe()
-  }, [watch, connectionStatus])
-
   const handleFormSubmit = handleSubmit((data) => {
     onSubmit(data)
     setIsOpen(false)
     if (!defaultValues) {
       reset()
     }
-    setConnectionStatus('none')
   })
 
   const handleTestConnection = async () => {
     const values = getValues()
     setTesting(true)
-    setConnectionStatus('none')
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500))
-      setConnectionStatus('success')
+      alert("Connection successful!")
     } catch (error) {
-      setConnectionStatus('error')
+      alert("Connection failed!")
     } finally {
       setTesting(false)
     }
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(newOpen: boolean) => {
-      setIsOpen(newOpen)
-      if (!newOpen) {
-        setConnectionStatus('none')
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {trigger || <Button>{mode === 'create' ? 'New Cluster' : 'Edit'}</Button>}
       </DialogTrigger>
@@ -217,11 +198,11 @@ export function ClusterDialog({
               )}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password (Optional)</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder=""
                 {...register("password")}
                 className={errors.password ? "border-red-500" : ""}
               />
@@ -230,29 +211,19 @@ export function ClusterDialog({
               )}
             </div>
           </div>
-          <DialogFooter className="gap-2 items-center">
-            <div className="flex-1 flex items-center gap-2 min-h-[32px]">
-              {connectionStatus === 'success' && (
-                <div className="flex items-center gap-1 text-sm text-green-500">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Successfully connected</span>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleTestConnection}
-                disabled={!isValid || testing}
-              >
-                {testing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Test Connection
-              </Button>
-              <Button type="submit" disabled={!isValid}>
-                {mode === 'create' ? 'Create Cluster' : 'Save Changes'}
-              </Button>
-            </div>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleTestConnection}
+              disabled={!isValid || testing}
+            >
+              {testing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Test Connection
+            </Button>
+            <Button type="submit" disabled={!isValid}>
+              {mode === 'create' ? 'Create Cluster' : 'Save Changes'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -13,6 +13,7 @@ import { Play, PlayCircle, Save, X, Plus } from 'lucide-react'
 import { GenerateQuery } from "@/components/ui/generate-query"
 import { DatabaseInsight } from "@/components/ui/database-insight"
 import { RisingWaveNodeData } from "@/components/streaming-graph"
+import { useTheme } from 'next-themes'
 
 // Move these to a separate constants file if needed
 const SQL_COMPLETIONS = {
@@ -184,6 +185,8 @@ const SAMPLE_SCHEMA: RisingWaveNodeData[] = [
 ]
 
 export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databaseSchema = SAMPLE_SCHEMA }: SQLEditorProps) {
+  const { theme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [tabs, setTabs] = useState<EditorTab[]>([
     { id: '1', name: 'Query 1', content: '-- Write your SQL query here', isDirty: false }
   ])
@@ -550,6 +553,10 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
     }, 500)
   }, [activeTab])
 
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center space-x-2 mb-2 p-2">
@@ -648,7 +655,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
         <Editor
           height="100%"
           defaultLanguage="sql"
-          theme="light"
+          theme={mounted ? (theme === 'dark' ? 'vs-dark' : 'light') : 'light'}
           value={tabs.find(tab => tab.id === activeTab)?.content}
           onChange={handleEditorChange}
           onMount={(editor) => editorRef.current = editor}
@@ -680,7 +687,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
           className="absolute left-0 right-0 bottom-[-8px] h-[16px] z-10 cursor-ns-resize group"
           onMouseDown={handleMouseDownVertical}
         >
-          <div className="absolute left-0 right-0 top-[7px] h-[2px] bg-border group-hover:bg-blue-500/20 group-active:bg-blue-500/40" />
+          <div className="absolute left-0 right-0 top-[7px] h-[2px] bg-border group-hover:bg-primary/20 group-active:bg-primary/40" />
         </div>
       </div>
 
