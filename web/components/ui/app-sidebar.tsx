@@ -15,12 +15,30 @@ import {
   Sun,
 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
 
+function RisingWaveIcon({ className }: { className?: string }) {
+  return (
+    <Image
+      src="/risingwave.svg"
+      alt="RisingWave"
+      width={16}
+      height={16}
+      className={className}
+    />
+  )
+}
+
 const mainMenuItems = [
+  {
+    title: "WaveKit",
+    href: "/",
+    icon: RisingWaveIcon,
+  },
   {
     title: "Clusters",
     href: "/clusters",

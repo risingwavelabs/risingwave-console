@@ -42,19 +42,22 @@ interface DraggableClusterItemProps {
   onEdit?: (cluster: Cluster) => void
 }
 
-function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit }: DraggableClusterItemProps) {
-  const router = useRouter()
-  const ref = useRef<HTMLDivElement>(null)
-  const handleRef = useRef<HTMLDivElement>(null)
+interface DragItem {
+  index: number
+}
 
-  const [{ handlerId }, drop] = useDrop({
+function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit }: DraggableClusterItemProps) {
+  const ref = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+
+  const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: string | symbol | null }>({
     accept: ItemTypes.CLUSTER,
     collect(monitor) {
       return {
         handlerId: monitor.getHandlerId(),
       }
     },
-    hover(item: any, monitor) {
+    hover(item: DragItem, monitor) {
       if (!ref.current) {
         return
       }
@@ -65,43 +68,62 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit }:
         return
       }
 
+      const hoverBoundingRect = ref.current?.getBoundingClientRect()
+      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
+      const clientOffset = monitor.getClientOffset()
+      const hoverClientY = clientOffset!.y - hoverBoundingRect.top
+
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+        return
+      }
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        return
+      }
+
       moveCluster(dragIndex, hoverIndex)
       item.index = hoverIndex
     },
   })
 
-  const [{ isDragging }, drag] = useDrag({
+  const [{ isDragging }, drag] = useDrag<DragItem, void, { isDragging: boolean }>({
     type: ItemTypes.CLUSTER,
-    item: () => ({ id: cluster.id, index }),
+    item: () => ({ index }),
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
   })
 
-  const opacity = isDragging ? 0.4 : 1
-  drop(ref)
-  drag(handleRef)
+  drag(drop(ref))
 
   return (
-    <div ref={ref} style={{ opacity }} data-handler-id={handlerId}>
-      <Card className="shadow-none hover:bg-accent/50 transition-colors">
-        <CardContent className="flex items-center gap-4 p-4">
-          <div 
-            ref={handleRef}
-            className="cursor-grab active:cursor-grabbing p-1 -m-1 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <GripVertical size={20} />
+    <div
+      ref={ref}
+      style={{
+        opacity: isDragging ? 0.5 : 1,
+        transform: isDragging ? 'scale(1.02)' : 'scale(1)',
+        transition: 'transform 0.2s ease, opacity 0.2s ease'
+      }}
+      className={`relative ${viewMode === 'grid' ? '' : ''}`}
+      data-handler-id={handlerId}
+    >
+      <Card className={`
+        border shadow-sm hover:shadow-md 
+        transition-shadow duration-200 ease-in-out
+        ${isDragging ? 'ring-2 ring-primary ring-opacity-50' : ''}
+      `}>
+        <CardContent className="p-4">
+          <div className="absolute left-2 top-1/2 -translate-y-1/2 cursor-move opacity-30 hover:opacity-100 transition-opacity">
+            <GripVertical className="h-5 w-5" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 ml-6">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold">{cluster.name}</h3>
                 <div className="flex items-center gap-2 mt-1">
-                  <div className={`w-2 h-2 rounded-full ${
-                    cluster.status === "running" ? "bg-green-500" :
-                    cluster.status === "stopped" ? "bg-yellow-500" :
-                    "bg-red-500"
-                  }`} />
+                  <div className={`w-2 h-2 rounded-full ${cluster.status === "running" ? "bg-green-500" :
+                      cluster.status === "stopped" ? "bg-yellow-500" :
+                        "bg-red-500"
+                    }`} />
                   <span className="text-sm text-muted-foreground capitalize">
                     {cluster.status}
                   </span>
@@ -118,8 +140,8 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit }:
                     status: cluster.status
                   })}
                 />
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => router.push(`/clusters/${cluster.id}`)}
                 >
@@ -128,14 +150,14 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit }:
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-sm text-muted-foreground">
+
+              <div>Host: <span className="text-foreground">{cluster.host}</span></div>
+              <div>SQL Port: <span className="text-foreground">{cluster.sqlPort}</span> Meta Port: <span className="text-foreground">{cluster.metaNodePort}</span></div>
+              <div>User: <span className="text-foreground">{cluster.user}</span></div>
               <div className="flex items-center gap-1">
                 <Database className="h-3 w-3" />
-                <span>{cluster.database}</span>
+                <span className="text-foreground">{cluster.database}</span>
               </div>
-              <div>Host: {cluster.host}</div>
-              <div>SQL Port: {cluster.sqlPort}</div>
-              <div>Meta Port: {cluster.metaNodePort}</div>
-              <div>User: {cluster.user}</div>
             </div>
           </div>
         </CardContent>

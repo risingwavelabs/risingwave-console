@@ -95,6 +95,9 @@ dependencies:
   react-hook-form:
     specifier: ^7.54.2
     version: 7.54.2(react@19.0.0)
+  react-icons:
+    specifier: ^5.4.0
+    version: 5.4.0(react@19.0.0)
   tailwind-merge:
     specifier: ^2.6.0
     version: 2.6.0
@@ -3583,6 +3586,14 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
+    dependencies:
+      react: 19.0.0
+    dev: false
+
+  /react-icons@5.4.0(react@19.0.0):
+    resolution: {integrity: sha512-7eltJxgVt7X64oHh6wSWNwwbKTCtMfK35hcjvJS0yxEAhPM8oUKdS3+kqaW1vicIltw+kR2unHaa12S9pPALoQ==}
+    peerDependencies:
+      react: '*'
     dependencies:
       react: 19.0.0
     dev: false

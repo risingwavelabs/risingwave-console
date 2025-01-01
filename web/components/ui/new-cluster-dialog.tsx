@@ -79,10 +79,10 @@ export function ClusterDialog({
     mode: "all",
     resolver: yupResolver(schema),
     defaultValues: defaultValues || {
-      host: "localhost",
-      sqlPort: 8080,
-      metaNodePort: 9090,
-      user: "admin"
+      host: "",
+      sqlPort: 4566,
+      metaNodePort: 5691,
+      user: "root"
     }
   })
 
@@ -108,7 +108,7 @@ export function ClusterDialog({
     setTestSuccess(false)
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      await new Promise(resolve => setTimeout(resolve, 500))
       setTestSuccess(true)
     } catch (error) {
       alert("Connection failed!")
