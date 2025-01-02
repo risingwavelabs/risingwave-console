@@ -7,12 +7,24 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu"
+} from "./context-menu"
+
+interface Column {
+  id: string
+  name: string
+  type: string
+}
+
+interface Table {
+  id: string
+  name: string
+  columns: Column[]
+}
 
 interface DatabaseItem {
   id: string
   name: string
-  tables: { id: string; name: string }[]
+  tables: Table[]
 }
 
 interface DatabaseListProps {
@@ -25,6 +37,7 @@ const SELECTED_DB_KEY = 'selectedDatabaseId'
 
 export function DatabaseList({ databases, onSelectTable, onUseDatabase }: DatabaseListProps) {
   const [expandedDbs, setExpandedDbs] = useState<Set<string>>(new Set())
+  const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set())
   const [selectedDbId, setSelectedDbId] = useState<string | null>(null)
 
   // Initialize selected database from local storage or first available
@@ -64,6 +77,19 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase }: Databa
     }
   }, [expandedDbs])
 
+  const toggleTable = useCallback((e: React.MouseEvent, tableId: string) => {
+    e.stopPropagation()
+    if (e.button === 0) { // Left click only
+      const newExpanded = new Set(expandedTables)
+      if (newExpanded.has(tableId)) {
+        newExpanded.delete(tableId)
+      } else {
+        newExpanded.add(tableId)
+      }
+      setExpandedTables(newExpanded)
+    }
+  }, [expandedTables])
+
   return (
     <div className="space-y-1">
       {databases.map((db) => (
@@ -94,14 +120,36 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase }: Databa
           {expandedDbs.has(db.id) && (
             <div className="ml-6 mt-1 space-y-1">
               {db.tables.map((table) => (
-                <button
-                  key={table.id}
-                  onClick={() => onSelectTable?.(db.id, table.id)}
-                  className="flex items-center gap-1 w-full hover:bg-muted/50 rounded-sm p-1 text-sm text-muted-foreground hover:text-foreground"
-                >
-                  <Table className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{table.name}</span>
-                </button>
+                <div key={table.id} className="space-y-1">
+                  <button
+                    onClick={(e) => {
+                      toggleTable(e, table.id)
+                      onSelectTable?.(db.id, table.id)
+                    }}
+                    className="flex items-center gap-1 w-full hover:bg-muted/50 rounded-sm p-1 text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {expandedTables.has(table.id) ? (
+                      <ChevronDown className="h-4 w-4 shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    )}
+                    <Table className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{table.name}</span>
+                  </button>
+                  {expandedTables.has(table.id) && (
+                    <div className="ml-6 space-y-1">
+                      {table.columns.map((column) => (
+                        <div
+                          key={column.id}
+                          className="flex items-center gap-1 w-full rounded-sm p-1 text-sm text-muted-foreground"
+                        >
+                          <span className="truncate">{column.name}</span>
+                          <span className="text-xs text-muted-foreground">({column.type})</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -109,4 +157,4 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase }: Databa
       ))}
     </div>
   )
-} 
+}

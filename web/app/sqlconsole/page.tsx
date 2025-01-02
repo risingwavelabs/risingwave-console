@@ -14,19 +14,67 @@ const sampleDatabases = [
     id: "db1",
     name: "Main Database",
     tables: [
-      { id: "t1", name: "users" },
-      { id: "t2", name: "products" },
-      { id: "t3", name: "orders" },
+      {
+        id: "t1",
+        name: "users",
+        columns: [
+          { id: "c1", name: "id", type: "int" },
+          { id: "c2", name: "name", type: "varchar" },
+          { id: "c3", name: "email", type: "varchar" },
+          { id: "c4", name: "created_at", type: "timestamp" }
+        ]
+      },
+      {
+        id: "t2",
+        name: "products",
+        columns: [
+          { id: "c5", name: "id", type: "int" },
+          { id: "c6", name: "name", type: "varchar" },
+          { id: "c7", name: "price", type: "decimal" },
+          { id: "c8", name: "stock", type: "int" }
+        ]
+      },
+      {
+        id: "t3",
+        name: "orders",
+        columns: [
+          { id: "c9", name: "id", type: "int" },
+          { id: "c10", name: "user_id", type: "int" },
+          { id: "c11", name: "product_id", type: "int" },
+          { id: "c12", name: "quantity", type: "int" },
+          { id: "c13", name: "total", type: "decimal" },
+          { id: "c14", name: "order_date", type: "timestamp" }
+        ]
+      }
     ],
   },
   {
     id: "db2",
     name: "Analytics DB",
     tables: [
-      { id: "t4", name: "events" },
-      { id: "t5", name: "metrics" },
+      {
+        id: "t4",
+        name: "events",
+        columns: [
+          { id: "c15", name: "event_id", type: "varchar" },
+          { id: "c16", name: "user_id", type: "int" },
+          { id: "c17", name: "event_type", type: "varchar" },
+          { id: "c18", name: "timestamp", type: "timestamp" },
+          { id: "c19", name: "data", type: "jsonb" }
+        ]
+      },
+      {
+        id: "t5",
+        name: "metrics",
+        columns: [
+          { id: "c20", name: "id", type: "int" },
+          { id: "c21", name: "name", type: "varchar" },
+          { id: "c22", name: "value", type: "float" },
+          { id: "c23", name: "recorded_at", type: "timestamp" }
+        ]
+      }
     ],
-  },
+  }
 ]
 
 // Add sample database schema for the streaming graph
@@ -239,4 +287,4 @@ export default function WorkspacePage() {
       />
     </div>
   )
-} 
+}
