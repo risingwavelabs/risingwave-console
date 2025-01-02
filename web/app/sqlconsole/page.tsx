@@ -1,15 +1,15 @@
 'use client'
 
-import { DatabaseList } from "@/components/ui/database-list"
+import { DatabaseList, type DatabaseItem } from "../../components/ui/database-list"
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Button } from "@/components/ui/button"
+import { Button } from "../../components/ui/button"
 import { Settings } from 'lucide-react'
-import { DatabaseManagement } from "@/components/ui/database-management"
-import { SQLEditor } from "@/components/ui/sql-editor"
-import { RisingWaveNodeData } from "@/components/streaming-graph"
+import { DatabaseManagement } from "../../components/ui/database-management"
+import { SQLEditor } from "../../components/ui/sql-editor"
+import { RisingWaveNodeData } from "../../components/streaming-graph"
 
-// Sample data - replace with real data from your backend
-const sampleDatabases = [
+// Rest of the file content remains the same
+const sampleDatabases: DatabaseItem[] = [
   {
     id: "db1",
     name: "Main Database",
@@ -17,6 +17,7 @@ const sampleDatabases = [
       {
         id: "t1",
         name: "users",
+        type: "table",
         columns: [
           { id: "c1", name: "id", type: "int" },
           { id: "c2", name: "name", type: "varchar" },
@@ -27,6 +28,7 @@ const sampleDatabases = [
       {
         id: "t2",
         name: "products",
+        type: "table",
         columns: [
           { id: "c5", name: "id", type: "int" },
           { id: "c6", name: "name", type: "varchar" },
@@ -37,6 +39,7 @@ const sampleDatabases = [
       {
         id: "t3",
         name: "orders",
+        type: "table",
         columns: [
           { id: "c9", name: "id", type: "int" },
           { id: "c10", name: "user_id", type: "int" },
@@ -44,6 +47,29 @@ const sampleDatabases = [
           { id: "c12", name: "quantity", type: "int" },
           { id: "c13", name: "total", type: "decimal" },
           { id: "c14", name: "order_date", type: "timestamp" }
+        ]
+      },
+      {
+        id: "kafka_source",
+        name: "kafka_source",
+        type: "source",
+        columns: [
+          { id: "ks1", name: "event_id", type: "varchar" },
+          { id: "ks2", name: "user_id", type: "int" },
+          { id: "ks3", name: "event_type", type: "varchar" },
+          { id: "ks4", name: "timestamp", type: "timestamp" },
+          { id: "ks5", name: "data", type: "jsonb" }
+        ]
+      },
+      {
+        id: "user_events_mv",
+        name: "user_events_mv",
+        type: "materialized_view",
+        columns: [
+          { id: "mv1", name: "user_id", type: "int" },
+          { id: "mv2", name: "event_count", type: "int" },
+          { id: "mv3", name: "last_event", type: "timestamp" },
+          { id: "mv4", name: "event_types", type: "varchar[]" }
         ]
       }
     ],
@@ -55,6 +81,7 @@ const sampleDatabases = [
       {
         id: "t4",
         name: "events",
+        type: "table",
         columns: [
           { id: "c15", name: "event_id", type: "varchar" },
           { id: "c16", name: "user_id", type: "int" },
@@ -66,11 +93,23 @@ const sampleDatabases = [
       {
         id: "t5",
         name: "metrics",
+        type: "table",
         columns: [
           { id: "c20", name: "id", type: "int" },
           { id: "c21", name: "name", type: "varchar" },
           { id: "c22", name: "value", type: "float" },
           { id: "c23", name: "recorded_at", type: "timestamp" }
+        ]
+      },
+      {
+        id: "clickhouse_sink",
+        name: "clickhouse_sink",
+        type: "sink",
+        columns: [
+          { id: "cs1", name: "user_id", type: "int" },
+          { id: "cs2", name: "event_count", type: "int" },
+          { id: "cs3", name: "last_event", type: "timestamp" },
+          { id: "cs4", name: "event_types", type: "array(string)" }
         ]
       }
     ],

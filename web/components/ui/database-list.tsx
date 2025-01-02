@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { ChevronDown, ChevronRight, Database, Table } from 'lucide-react'
+import { ChevronDown, ChevronRight, Database, Table, ArrowDownToLine, ArrowUpFromLine, Eye } from 'lucide-react'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -9,22 +9,23 @@ import {
   ContextMenuTrigger,
 } from "./context-menu"
 
-interface Column {
+export interface Column {
   id: string
   name: string
   type: string
 }
 
-interface Table {
+export interface Relation {
   id: string
   name: string
   columns: Column[]
+  type: 'table' | 'source' | 'sink' | 'materialized_view'
 }
 
-interface DatabaseItem {
+export interface DatabaseItem {
   id: string
   name: string
-  tables: Table[]
+  tables: Relation[]
 }
 
 interface DatabaseListProps {
@@ -133,7 +134,10 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase }: Databa
                     ) : (
                       <ChevronRight className="h-4 w-4 shrink-0" />
                     )}
-                    <Table className="h-4 w-4 shrink-0" />
+                    {table.type === 'table' && <Table className="h-4 w-4 shrink-0" />}
+                    {table.type === 'source' && <ArrowDownToLine className="h-4 w-4 shrink-0" />}
+                    {table.type === 'sink' && <ArrowUpFromLine className="h-4 w-4 shrink-0" />}
+                    {table.type === 'materialized_view' && <Eye className="h-4 w-4 shrink-0" />}
                     <span className="truncate">{table.name}</span>
                   </button>
                   {expandedTables.has(table.id) && (
