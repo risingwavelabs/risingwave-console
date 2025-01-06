@@ -33,13 +33,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-              properties:
-                name:
-                  type: string
-                  description: Name of the database
+              $ref: '#/components/schemas/DatabaseConnectInfo'
       responses:
         '201':
           description: Database created successfully
@@ -48,13 +42,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Database'
 
-  /databases/{databaseId}:
+  /databases/{id}:
     parameters:
-      - name: databaseId
+      - name: id
         in: path
         required: true
         schema:
-          type: string
+          type: integer
+          format: int32
     get:
       summary: Get database details
       description: Retrieve details of a specific database
@@ -75,11 +70,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: New name of the database
+              $ref: '#/components/schemas/DatabaseConnectInfo'
       responses:
         '200':
           description: Database updated successfully
@@ -95,128 +86,430 @@ paths:
         '204':
           description: Database deleted successfully
 
-  /databases/{databaseId}/tables:
-    parameters:
-      - name: databaseId
-        in: path
-        required: true
-        schema:
-          type: string
+  /clusters:
     get:
-      summary: List database tables
-      description: Retrieve all tables in a specific database
-      operationId: listDatabaseTables
+      summary: List all clusters
+      description: Retrieve a list of all database clusters
+      operationId: listClusters
       responses:
         '200':
-          description: Successfully retrieved tables
+          description: Successfully retrieved cluster list
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Table'
+                  $ref: '#/components/schemas/Cluster'
     post:
-      summary: Create table
-      description: Create a new table in the specified database
-      operationId: createTable
+      summary: Create a new cluster
+      description: Create a new database cluster
+      operationId: createCluster
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-              properties:
-                name:
-                  type: string
-                  description: Name of the table
+              $ref: '#/components/schemas/ClusterCreate'
       responses:
         '201':
-          description: Table created successfully
+          description: Cluster created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Table'
+                $ref: '#/components/schemas/Cluster'
 
-  /databases/{databaseId}/tables/{tableId}:
+  /clusters/{id}:
     parameters:
-      - name: databaseId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: tableId
+      - name: id
         in: path
         required: true
         schema:
           type: string
     get:
-      summary: Get table details
-      description: Retrieve details of a specific table
-      operationId: getTable
+      summary: Get cluster details
+      description: Retrieve details of a specific cluster
+      operationId: getCluster
       responses:
         '200':
-          description: Successfully retrieved table
+          description: Successfully retrieved cluster
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Table'
+                $ref: '#/components/schemas/Cluster'
     put:
-      summary: Update table
-      description: Update a specific table
-      operationId: updateTable
+      summary: Update cluster
+      description: Update a specific cluster
+      operationId: updateCluster
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: New name of the table
+              $ref: '#/components/schemas/ClusterCreate'
       responses:
         '200':
-          description: Table updated successfully
+          description: Cluster updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Table'
+                $ref: '#/components/schemas/Cluster'
     delete:
-      summary: Delete table
-      description: Delete a specific table
-      operationId: deleteTable
+      summary: Delete cluster
+      description: Delete a specific cluster
+      operationId: deleteCluster
       responses:
         '204':
-          description: Table deleted successfully
+          description: Cluster deleted successfully
+
+  /clusters/{id}/snapshots:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: List cluster snapshots
+      description: Retrieve a list of all snapshots for a specific cluster
+      operationId: listClusterSnapshots
+      responses:
+        '200':
+          description: Successfully retrieved snapshot list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Snapshot'
+    post:
+      summary: Create a new snapshot
+      description: Create a new metadata snapshot for a specific cluster
+      operationId: createClusterSnapshot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SnapshotCreate'
+      responses:
+        '201':
+          description: Snapshot created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+
+  /clusters/{id}/snapshots/{snapshotId}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: snapshotId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      summary: Delete snapshot
+      description: Delete a specific snapshot
+      operationId: deleteClusterSnapshot
+      responses:
+        '204':
+          description: Snapshot deleted successfully
+    post:
+      summary: Restore snapshot
+      description: Restore cluster metadata from a specific snapshot
+      operationId: restoreClusterSnapshot
+      responses:
+        '200':
+          description: Snapshot restored successfully
+
+  /clusters/{id}/snapshot-config:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get snapshot configuration
+      description: Get automatic snapshot configuration for a cluster
+      operationId: getClusterSnapshotConfig
+      responses:
+        '200':
+          description: Successfully retrieved snapshot configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotConfig'
+    put:
+      summary: Update snapshot configuration
+      description: Update automatic snapshot configuration for a cluster
+      operationId: updateClusterSnapshotConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SnapshotConfig'
+      responses:
+        '200':
+          description: Snapshot configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotConfig'
+
+  /clusters/{id}/diagnostics:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: List diagnostic data
+      description: Retrieve diagnostic data for a specific cluster with optional date range filtering
+      operationId: listClusterDiagnostics
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Start date for filtering diagnostic data
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: End date for filtering diagnostic data
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+      responses:
+        '200':
+          description: Successfully retrieved diagnostic data
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - total
+                  - page
+                  - per_page
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DiagnosticData'
+                  total:
+                    type: integer
+                    description: Total number of diagnostic entries
+                  page:
+                    type: integer
+                    description: Current page number
+                  per_page:
+                    type: integer
+                    description: Number of items per page
+
+  /clusters/{id}/diagnostics/config:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get diagnostic configuration
+      description: Get diagnostic data collection configuration for a cluster
+      operationId: getClusterDiagnosticConfig
+      responses:
+        '200':
+          description: Successfully retrieved diagnostic configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnosticConfig'
+    put:
+      summary: Update diagnostic configuration
+      description: Update diagnostic data collection configuration for a cluster
+      operationId: updateClusterDiagnosticConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiagnosticConfig'
+      responses:
+        '200':
+          description: Diagnostic configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnosticConfig'
+
+  /auth/sign-in:
+    post:
+      summary: Sign in user
+      description: Authenticate user and return access token
+      operationId: signIn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credentials'
+        '401':
+          description: Invalid credentials
+
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+      description: Get a new access token using a refresh token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Successfully refreshed token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credentials'
+        '401':
+          description: Invalid or expired refresh token
 
 components:
   schemas:
+    DatabaseConnectInfo:
+      type: object
+      required:
+        - name
+        - host
+        - sqlPort
+        - metaPort
+      properties:
+        name:
+          type: string
+          description: Name of the database
+        host:
+          type: string
+          description: Database host address
+        sqlPort:
+          type: integer
+          description: SQL connection port
+        metaPort:
+          type: integer
+          description: Metadata service port
+        username:
+          type: string
+          description: Database username (optional)
+        password:
+          type: string
+          description: Database password (optional)
+          format: password
+
     Database:
       type: object
       required:
         - id
         - name
-        - tables
+        - cluster_id
+        - organization_id
+        - created_at
+        - updated_at
       properties:
         id:
-          type: string
+          type: integer
+          format: int32
           description: Unique identifier of the database
         name:
           type: string
           description: Name of the database
+        cluster_id:
+          type: integer
+          format: int32
+          description: ID of the cluster this database belongs to
+        organization_id:
+          type: integer
+          format: int32
+          description: ID of the organization this database belongs to
+        username:
+          type: string
+          description: Database username (optional)
+        password:
+          type: string
+          format: password
+          description: Database password (optional)
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
         tables:
           type: array
           items:
             $ref: '#/components/schemas/Table'
           description: List of tables in the database
 
+    Column:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the column
+        name:
+          type: string
+          description: Name of the column
+        type:
+          type: string
+          description: Data type of the column
+
     Table:
       type: object
       required:
         - id
         - name
+        - type
+        - columns
       properties:
         id:
           type: string
@@ -224,3 +517,237 @@ components:
         name:
           type: string
           description: Name of the table
+        type:
+          type: string
+          enum: ['table', 'source', 'sink', 'materialized_view']
+          description: Type of the relation
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/Column'
+          description: List of columns in the table
+
+    ClusterCreate:
+      type: object
+      required:
+        - name
+        - host
+        - sqlPort
+        - metaNodePort
+        - user
+        - database
+      properties:
+        name:
+          type: string
+          description: Name of the cluster
+        host:
+          type: string
+          description: Cluster host address
+        sqlPort:
+          type: integer
+          description: SQL connection port
+        metaNodePort:
+          type: integer
+          description: Metadata node port
+        user:
+          type: string
+          description: Database user
+        password:
+          type: string
+          description: Database password (optional)
+          format: password
+        database:
+          type: string
+          description: Database name
+
+    Cluster:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - host
+        - sqlPort
+        - metaNodePort
+        - user
+        - database
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the cluster
+        name:
+          type: string
+          description: Name of the cluster
+        status:
+          type: string
+          enum: ['running', 'stopped', 'error']
+          description: Current status of the cluster
+        host:
+          type: string
+          description: Cluster host address
+        sqlPort:
+          type: integer
+          description: SQL connection port
+        metaNodePort:
+          type: integer
+          description: Metadata node port
+        user:
+          type: string
+          description: Database user
+        password:
+          type: string
+          description: Database password (optional)
+          format: password
+        database:
+          type: string
+          description: Database name
+
+    SnapshotCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name of the snapshot
+
+    Snapshot:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the snapshot
+        name:
+          type: string
+          description: Name of the snapshot
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp of the snapshot
+
+    SnapshotConfig:
+      type: object
+      required:
+        - enabled
+        - interval
+        - keepCount
+      properties:
+        enabled:
+          type: boolean
+          description: Whether automatic snapshots are enabled
+        interval:
+          type: string
+          description: Interval between automatic snapshots (e.g., '30m', '6h', '12h', '24h')
+        keepCount:
+          type: integer
+          description: Number of automatic snapshots to retain
+          minimum: 1
+
+    DiagnosticConfig:
+      type: object
+      required:
+        - interval
+        - expiration
+        - noExpiration
+      properties:
+        interval:
+          type: string
+          description: Interval between diagnostic data collections (e.g., '15m', '30m', '1h', '6h', '12h', '24h')
+        expiration:
+          type: string
+          description: How long to retain diagnostic data (e.g., '1d', '7d', '14d', '30d', '90d')
+        noExpiration:
+          type: boolean
+          description: Whether to keep diagnostic data indefinitely
+
+    DiagnosticData:
+      type: object
+      required:
+        - id
+        - timestamp
+        - data
+      properties:
+        id:
+          type: integer
+          description: Unique identifier of the diagnostic entry
+        timestamp:
+          type: string
+          format: date-time
+          description: When the diagnostic data was collected
+        data:
+          type: string
+          description: Raw diagnostic data message containing system metrics and information
+
+    SignInRequest:
+      type: object
+      required:
+        - name
+        - password
+      properties:
+        name:
+          type: string
+          description: User's name
+        password:
+          type: string
+          format: password
+          description: User's password
+
+    Credentials:
+      type: object
+      required:
+        - access_token
+        - refresh_token
+        - token_type
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+        refresh_token:
+          type: string
+          description: JWT refresh token for obtaining new access tokens
+        token_type:
+          type: string
+          enum: ['Bearer']
+          description: Token type
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: Refresh token obtained from sign-in
+
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - organization_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: Unique identifier of the user
+        name:
+          type: string
+          description: User's name
+        organization_id:
+          type: integer
+          format: int32
+          description: ID of the organization this user belongs to
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp

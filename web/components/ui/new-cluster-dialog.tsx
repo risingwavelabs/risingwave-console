@@ -35,10 +35,7 @@ const schema = yup.object().shape({
       function (value) {
         return value !== this.parent.sqlPort
       }
-    ),
-  user: yup.string().required("User is required"),
-  password: yup.string().optional(),
-  database: yup.string().required("Database name is required")
+    )
 })
 
 export interface ClusterFormData extends yup.InferType<typeof schema> { }
@@ -81,8 +78,7 @@ export function ClusterDialog({
     defaultValues: defaultValues || {
       host: "",
       sqlPort: 4566,
-      metaNodePort: 5691,
-      user: "root"
+      metaNodePort: 5691
     }
   })
 
@@ -183,43 +179,6 @@ export function ClusterDialog({
                   <p className="text-sm text-red-500">{errors.metaNodePort.message}</p>
                 )}
               </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="database">Database</Label>
-              <Input
-                id="database"
-                placeholder="myapp_db"
-                {...register("database")}
-                className={errors.database ? "border-red-500" : ""}
-              />
-              {errors.database && (
-                <p className="text-sm text-red-500">{errors.database.message}</p>
-              )}
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="user">User</Label>
-              <Input
-                id="user"
-                placeholder="admin"
-                {...register("user")}
-                className={errors.user ? "border-red-500" : ""}
-              />
-              {errors.user && (
-                <p className="text-sm text-red-500">{errors.user.message}</p>
-              )}
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder=""
-                {...register("password")}
-                className={errors.password ? "border-red-500" : ""}
-              />
-              {errors.password && (
-                <p className="text-sm text-red-500">{errors.password.message}</p>
-              )}
             </div>
             {testSuccess && (
               <p className="text-sm text-green-500 font-medium">

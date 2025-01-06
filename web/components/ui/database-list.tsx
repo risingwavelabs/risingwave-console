@@ -25,6 +25,11 @@ export interface Relation {
 export interface DatabaseItem {
   id: string
   name: string
+  clusterId: string
+  clusterName: string
+  user: string
+  password?: string
+  database: string
   tables: Relation[]
 }
 
@@ -44,12 +49,12 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase }: Databa
   // Initialize selected database from local storage or first available
   useEffect(() => {
     const savedDbId = localStorage.getItem(SELECTED_DB_KEY)
-    
+
     // If there are databases available
     if (databases.length > 0) {
       // Check if saved ID exists in current database list
       const dbExists = databases.some(db => db.id === savedDbId)
-      
+
       if (dbExists) {
         setSelectedDbId(savedDbId)
       } else {
@@ -99,9 +104,8 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase }: Databa
             <ContextMenuTrigger asChild>
               <button
                 onClick={(e) => toggleDb(e, db.id)}
-                className={`flex items-center gap-1 w-full hover:bg-muted/50 rounded-sm p-1 text-sm hover:text-foreground ${
-                  selectedDbId === db.id ? 'font-semibold text-foreground' : 'text-muted-foreground'
-                }`}
+                className={`flex items-center gap-1 w-full hover:bg-muted/50 rounded-sm p-1 text-sm hover:text-foreground ${selectedDbId === db.id ? 'font-semibold text-foreground' : 'text-muted-foreground'
+                  }`}
               >
                 {expandedDbs.has(db.id) ? (
                   <ChevronDown className="h-4 w-4 shrink-0" />
@@ -120,6 +124,7 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase }: Databa
           </ContextMenu>
           {expandedDbs.has(db.id) && (
             <div className="ml-6 mt-1 space-y-1">
+              <span className="text-xs text-muted-foreground truncate">{db.clusterName}</span>
               {db.tables.map((table) => (
                 <div key={table.id} className="space-y-1">
                   <button
@@ -135,8 +140,8 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase }: Databa
                       <ChevronRight className="h-4 w-4 shrink-0" />
                     )}
                     {table.type === 'table' && <Table className="h-4 w-4 shrink-0" />}
-                    {table.type === 'source' && <ArrowDownToLine className="h-4 w-4 shrink-0" />}
-                    {table.type === 'sink' && <ArrowUpFromLine className="h-4 w-4 shrink-0" />}
+                    {table.type === 'source' && <ArrowDownToLine className="h-4 w-4 shrink-0 rotate-270" />}
+                    {table.type === 'sink' && <ArrowUpFromLine className="h-4 w-4 shrink-0 rotate-90" />}
                     {table.type === 'materialized_view' && <Eye className="h-4 w-4 shrink-0" />}
                     <span className="truncate">{table.name}</span>
                   </button>

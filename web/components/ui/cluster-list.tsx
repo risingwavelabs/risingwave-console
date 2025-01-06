@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { DndProvider, useDrag, useDrop } from "react-dnd"
 import { HTML5Backend } from "react-dnd-html5-backend"
-import { GripVertical, LayoutGrid, List, Database } from "lucide-react"
+import { GripVertical, LayoutGrid, List } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "./button"
 import { Card, CardContent } from "./card"
@@ -16,9 +16,6 @@ export interface Cluster {
   host: string
   sqlPort: number
   metaNodePort: number
-  user: string
-  password?: string
-  database: string
 }
 
 type ViewMode = "grid" | "list"
@@ -132,7 +129,12 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit }:
               <div className="flex gap-2">
                 <ClusterDialog
                   mode="edit"
-                  defaultValues={cluster}
+                  defaultValues={{
+                    name: cluster.name,
+                    host: cluster.host,
+                    sqlPort: cluster.sqlPort,
+                    metaNodePort: cluster.metaNodePort
+                  }}
                   trigger={<Button variant="outline" size="sm">Edit</Button>}
                   onSubmit={(data: ClusterFormData) => onEdit?.({
                     ...data,
@@ -150,14 +152,8 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit }:
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-sm text-muted-foreground">
-
               <div>Host: <span className="text-foreground">{cluster.host}</span></div>
               <div>SQL Port: <span className="text-foreground">{cluster.sqlPort}</span> Meta Port: <span className="text-foreground">{cluster.metaNodePort}</span></div>
-              <div>User: <span className="text-foreground">{cluster.user}</span></div>
-              <div className="flex items-center gap-1">
-                <Database className="h-3 w-3" />
-                <span className="text-foreground">{cluster.database}</span>
-              </div>
             </div>
           </div>
         </CardContent>

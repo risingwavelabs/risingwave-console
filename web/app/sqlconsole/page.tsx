@@ -13,6 +13,11 @@ const sampleDatabases: DatabaseItem[] = [
   {
     id: "db1",
     name: "Main Database",
+    clusterId: "cluster-1",
+    clusterName: "Production Cluster",
+    user: "admin",
+    password: "********",
+    database: "main",
     tables: [
       {
         id: "t1",
@@ -77,6 +82,11 @@ const sampleDatabases: DatabaseItem[] = [
   {
     id: "db2",
     name: "Analytics DB",
+    clusterId: "cluster-2",
+    clusterName: "Analytics Cluster",
+    user: "analyst",
+    password: "********",
+    database: "analytics",
     tables: [
       {
         id: "t4",
@@ -201,6 +211,11 @@ const savedQueries = [
 const MIN_WIDTH = 150 // 9.375rem
 const MAX_WIDTH = 400 // 25rem
 
+const sampleClusters = [
+  { id: "cluster-1", name: "Production Cluster" },
+  { id: "cluster-2", name: "Analytics Cluster" }
+]
+
 export default function WorkspacePage() {
   const [isResizing, setIsResizing] = useState(false)
   const [panelWidth, setPanelWidth] = useState(192) // 12rem default
@@ -323,6 +338,7 @@ export default function WorkspacePage() {
       <DatabaseManagement
         isOpen={showDatabaseManagement}
         onClose={() => setShowDatabaseManagement(false)}
+        clusters={sampleClusters}
       />
     </div>
   )

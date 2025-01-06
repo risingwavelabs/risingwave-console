@@ -7,40 +7,55 @@ import * as yup from "yup"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { ConfirmationPopup } from "@/components/ui/confirmation-popup"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 
 interface Database {
   id: string
   name: string
-  host: string
-  port: number
-  username: string
+  clusterId: string
+  clusterName: string
+  user: string
   password?: string
+  database: string
 }
 
 const databaseSchema = yup.object().shape({
-  name: yup.string().required("Database name is required"),
-  host: yup.string().required("Host is required"),
-  port: yup.number()
-    .typeError("Port must be a number")
-    .required("Port is required")
-    .min(1, "Port must be greater than 0")
-    .max(65535, "Port must be less than 65536"),
-  username: yup.string().required("Username is required"),
-  password: yup.string().default(""),
+  name: yup.string().required("Name is required"),
+  clusterId: yup.string().required("Cluster is required"),
+  user: yup.string().required("Username is required"),
+  password: yup.string().optional(),
+  database: yup.string().required("Database name is required"),
 })
 
 interface DatabaseManagementProps {
   isOpen: boolean
   onClose: () => void
+  clusters: Array<{ id: string, name: string }>
 }
 
-export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps) {
+export function DatabaseManagement({ isOpen, onClose, clusters }: DatabaseManagementProps) {
   if (!isOpen) return null
 
   // Sample databases - replace with actual data
   const [databases, setDatabases] = useState<Database[]>([
-    { id: "db1", name: "Main Database", host: "localhost", port: 5432, username: "admin", password: "********" },
-    { id: "db2", name: "Analytics DB", host: "analytics.example.com", port: 5432, username: "analyst", password: "********" },
+    { 
+      id: "db1", 
+      name: "Main Database", 
+      clusterId: "cluster-1", 
+      clusterName: "Production Cluster",
+      user: "admin",
+      password: "********",
+      database: "main"
+    },
+    { 
+      id: "db2", 
+      name: "Analytics DB", 
+      clusterId: "cluster-2", 
+      clusterName: "Analytics Cluster",
+      user: "analyst",
+      password: "********",
+      database: "analytics"
+    },
   ])
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isAddingDatabase, setIsAddingDatabase] = useState(false)
@@ -53,15 +68,16 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
     reset,
     formState: { errors },
     setValue,
+    getValues,
   } = useForm({
     resolver: yupResolver(databaseSchema),
     mode: "all",
     defaultValues: {
       name: '',
-      host: '',
-      port: 5432,
-      username: '',
+      clusterId: '',
+      user: '',
       password: '',
+      database: '',
     }
   })
 
@@ -70,14 +86,26 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
     setDeleteId(null)
   }
 
-  const onSubmit = (data: Omit<Database, 'id'>) => {
+  const onSubmit = (data: { name: string, clusterId: string, user: string, password?: string, database: string }) => {
+    const selectedCluster = clusters.find(c => c.id === data.clusterId)
+    if (!selectedCluster) return
+
+    const dbData: Omit<Database, 'id'> = {
+      name: data.name,
+      clusterId: data.clusterId,
+      clusterName: selectedCluster.name,
+      user: data.user,
+      password: data.password || '',
+      database: data.database
+    }
+
     if (isAddingDatabase) {
       const id = `db${Date.now()}`
-      setDatabases(prev => [...prev, { ...data, id }])
+      setDatabases(prev => [...prev, { ...dbData, id }])
       setIsAddingDatabase(false)
     } else if (editingDatabase) {
       setDatabases(prev => prev.map(db => 
-        db.id === editingDatabase.id ? { ...data, id: editingDatabase.id } : db
+        db.id === editingDatabase.id ? { ...dbData, id: editingDatabase.id } : db
       ))
       setEditingDatabase(null)
       setIsConfiguring(null)
@@ -89,10 +117,10 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
     setEditingDatabase(db)
     setIsConfiguring(db.id)
     setValue('name', db.name)
-    setValue('host', db.host)
-    setValue('port', db.port)
-    setValue('username', db.username)
+    setValue('clusterId', db.clusterId)
+    setValue('user', db.user)
     setValue('password', db.password || '')
+    setValue('database', db.database)
   }
 
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
@@ -163,9 +191,13 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
                   >
                     <div className="space-y-1">
                       <h3 className="font-medium">{db.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {db.username}@{db.host}:{db.port}
-                      </p>
+                      <div className="text-sm text-muted-foreground">
+                        <span>Cluster: {db.clusterName}</span>
+                        <span className="mx-1">·</span>
+                        <span>User: {db.user}</span>
+                        <span className="mx-1">·</span>
+                        <span>Database: {db.database}</span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button 
@@ -208,7 +240,7 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Database Name</Label>
+                  <Label htmlFor="name">Name</Label>
                   <Input
                     id="name"
                     {...register('name')}
@@ -221,42 +253,37 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="host">Host</Label>
-                  <Input
-                    id="host"
-                    {...register('host')}
-                    placeholder="e.g. localhost or db.example.com"
-                    className={errors.host ? 'border-red-500' : ''}
-                  />
-                  {errors.host && (
-                    <p className="text-sm text-red-500">{errors.host.message}</p>
+                  <Label htmlFor="clusterId">Cluster</Label>
+                  <Select
+                    value={getValues('clusterId')}
+                    onValueChange={(value) => setValue('clusterId', value)}
+                  >
+                    <SelectTrigger className={errors.clusterId ? 'border-red-500' : ''}>
+                      <SelectValue placeholder="Select a cluster" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clusters.map((cluster) => (
+                        <SelectItem key={cluster.id} value={cluster.id}>
+                          {cluster.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.clusterId && (
+                    <p className="text-sm text-red-500">{errors.clusterId.message}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="port">Port</Label>
+                  <Label htmlFor="user">Username</Label>
                   <Input
-                    id="port"
-                    type="number"
-                    {...register('port')}
-                    placeholder="5432"
-                    className={errors.port ? 'border-red-500' : ''}
-                  />
-                  {errors.port && (
-                    <p className="text-sm text-red-500">{errors.port.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    {...register('username')}
+                    id="user"
+                    {...register('user')}
                     placeholder="e.g. admin"
-                    className={errors.username ? 'border-red-500' : ''}
+                    className={errors.user ? 'border-red-500' : ''}
                   />
-                  {errors.username && (
-                    <p className="text-sm text-red-500">{errors.username.message}</p>
+                  {errors.user && (
+                    <p className="text-sm text-red-500">{errors.user.message}</p>
                   )}
                 </div>
 
@@ -271,6 +298,19 @@ export function DatabaseManagement({ isOpen, onClose }: DatabaseManagementProps)
                   />
                   {errors.password && (
                     <p className="text-sm text-red-500">{errors.password.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="database">Database</Label>
+                  <Input
+                    id="database"
+                    {...register('database')}
+                    placeholder="e.g. main"
+                    className={errors.database ? 'border-red-500' : ''}
+                  />
+                  {errors.database && (
+                    <p className="text-sm text-red-500">{errors.database.message}</p>
                   )}
                 </div>
               </div>

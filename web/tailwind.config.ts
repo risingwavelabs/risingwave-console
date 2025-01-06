@@ -9,6 +9,9 @@ export default {
   ],
   theme: {
   	extend: {
+		rotate: {
+			'270': '270deg',
+		},
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
