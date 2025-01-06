@@ -564,43 +564,74 @@ components:
       type: object
       required:
         - id
+        - organization_id
         - name
-        - status
         - host
-        - sqlPort
-        - metaNodePort
-        - user
-        - database
+        - sql_port
+        - meta_port
+        - created_at
+        - updated_at
       properties:
         id:
-          type: string
-          description: Unique identifier of the cluster
+          type: integer
+          format: int32
+        organization_id:
+          type: integer
+          format: int32
         name:
           type: string
-          description: Name of the cluster
-        status:
-          type: string
-          enum: ['running', 'stopped', 'error']
-          description: Current status of the cluster
         host:
           type: string
-          description: Cluster host address
-        sqlPort:
+        sql_port:
           type: integer
-          description: SQL connection port
-        metaNodePort:
+          format: int32
+        meta_port:
           type: integer
-          description: Metadata node port
-        user:
+          format: int32
+        created_at:
           type: string
-          description: Database user
-        password:
+          format: date-time
+        updated_at:
           type: string
-          description: Database password (optional)
-          format: password
-        database:
+          format: date-time
+
+    CreateClusterRequest:
+      type: object
+      required:
+        - name
+        - host
+        - sql_port
+        - meta_port
+      properties:
+        name:
           type: string
-          description: Database name
+        host:
+          type: string
+        sql_port:
+          type: integer
+          format: int32
+        meta_port:
+          type: integer
+          format: int32
+
+    UpdateClusterRequest:
+      type: object
+      required:
+        - name
+        - host
+        - sql_port
+        - meta_port
+      properties:
+        name:
+          type: string
+        host:
+          type: string
+        sql_port:
+          type: integer
+          format: int32
+        meta_port:
+          type: integer
+          format: int32
 
     SnapshotCreate:
       type: object

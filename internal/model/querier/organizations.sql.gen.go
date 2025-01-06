@@ -14,7 +14,7 @@ INSERT INTO organizations (
     name
 ) VALUES (
     $1
-) ON CONFLICT DO NOTHING RETURNING id, name, created_at, updated_at, owner_id
+) ON CONFLICT DO NOTHING RETURNING id, name, created_at, updated_at
 `
 
 func (q *Queries) CreateOrganization(ctx context.Context, name string) (*Organization, error) {
@@ -25,9 +25,28 @@ func (q *Queries) CreateOrganization(ctx context.Context, name string) (*Organiz
 		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.OwnerID,
 	)
 	return &i, err
+}
+
+const createOrganizationOwner = `-- name: CreateOrganizationOwner :exec
+INSERT INTO organization_owners (
+    user_id,
+    organization_id
+) VALUES (
+    $1,
+    $2
+)
+`
+
+type CreateOrganizationOwnerParams struct {
+	UserID         int32
+	OrganizationID int32
+}
+
+func (q *Queries) CreateOrganizationOwner(ctx context.Context, arg CreateOrganizationOwnerParams) error {
+	_, err := q.db.Exec(ctx, createOrganizationOwner, arg.UserID, arg.OrganizationID)
+	return err
 }
 
 const deleteOrganization = `-- name: DeleteOrganization :exec
@@ -41,7 +60,7 @@ func (q *Queries) DeleteOrganization(ctx context.Context, id int32) error {
 }
 
 const getOrganization = `-- name: GetOrganization :one
-SELECT id, name, created_at, updated_at, owner_id FROM organizations
+SELECT id, name, created_at, updated_at FROM organizations
 WHERE id = $1
 `
 
@@ -53,13 +72,12 @@ func (q *Queries) GetOrganization(ctx context.Context, id int32) (*Organization,
 		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.OwnerID,
 	)
 	return &i, err
 }
 
 const listOrganizations = `-- name: ListOrganizations :many
-SELECT id, name, created_at, updated_at, owner_id FROM organizations
+SELECT id, name, created_at, updated_at FROM organizations
 ORDER BY name
 `
 
@@ -77,7 +95,6 @@ func (q *Queries) ListOrganizations(ctx context.Context) ([]*Organization, error
 			&i.Name,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.OwnerID,
 		); err != nil {
 			return nil, err
 		}
@@ -95,7 +112,7 @@ SET
     name = $2,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, name, created_at, updated_at, owner_id
+RETURNING id, name, created_at, updated_at
 `
 
 type UpdateOrganizationParams struct {
@@ -111,7 +128,6 @@ func (q *Queries) UpdateOrganization(ctx context.Context, arg UpdateOrganization
 		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.OwnerID,
 	)
 	return &i, err
 }

@@ -15,12 +15,21 @@ CREATE TABLE IF NOT EXISTS users (
     name            TEXT        NOT NULL,
     password_hash   TEXT        NOT NULL,
     password_salt   TEXT        NOT NULL,
-    organization_id INTEGER     REFERENCES organizations(id),
+    organization_id INTEGER     NOT NULL REFERENCES organizations(id),
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
     UNIQUE (name),
     PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS organization_owners (
+    user_id         INTEGER     NOT NULL REFERENCES users(id),
+    organization_id INTEGER     NOT NULL REFERENCES organizations(id),
+    created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    PRIMARY KEY (user_id, organization_id)
 );
 
 CREATE TABLE IF NOT EXISTS refresh_tokens (
@@ -33,9 +42,6 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     PRIMARY KEY (id),
     UNIQUE (user_id, token)
 );
-
-ALTER TABLE organizations
-ADD COLUMN owner_id INTEGER NOT NULL REFERENCES users(id);
 
 CREATE TABLE IF NOT EXISTS clusters (
     id              SERIAL,

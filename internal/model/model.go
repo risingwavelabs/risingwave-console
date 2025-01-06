@@ -61,11 +61,6 @@ func (m *Model) RunTransaction(ctx context.Context, f func(model ModelInterface)
 	return tx.Commit(ctx)
 }
 
-func (m *Model) dataInit() error {
-	log.Info("running data init on database")
-	return nil
-}
-
 func NewModel(cfg *config.Config) (ModelInterface, error) {
 	url := fmt.Sprintf("%s:%s@%s:%d/%s?connect_timeout=%d&timezone=Asia/Shanghai", cfg.Pg.User, cfg.Pg.Password, cfg.Pg.Host, cfg.Pg.Port, cfg.Pg.Db, 15)
 	dsn := fmt.Sprintf("postgres://%s", url)
@@ -118,11 +113,5 @@ func NewModel(cfg *config.Config) (ModelInterface, error) {
 		}
 	}
 
-	model := &Model{Querier: querier.New(p), beginTx: p.Begin, p: p}
-	if err := model.dataInit(); err != nil {
-		return nil, errors.Wrap(err, "failed to init data")
-	}
-	log.Info("model init success")
-
-	return model, nil
+	return &Model{Querier: querier.New(p), beginTx: p.Begin, p: p}, nil
 }

@@ -80,6 +80,20 @@ func (mr *MockModelInterfaceMockRecorder) CreateOrganization(ctx, name interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganization", reflect.TypeOf((*MockModelInterface)(nil).CreateOrganization), ctx, name)
 }
 
+// CreateOrganizationOwner mocks base method.
+func (m *MockModelInterface) CreateOrganizationOwner(ctx context.Context, arg querier.CreateOrganizationOwnerParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateOrganizationOwner", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateOrganizationOwner indicates an expected call of CreateOrganizationOwner.
+func (mr *MockModelInterfaceMockRecorder) CreateOrganizationOwner(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganizationOwner", reflect.TypeOf((*MockModelInterface)(nil).CreateOrganizationOwner), ctx, arg)
+}
+
 // CreateUser mocks base method.
 func (m *MockModelInterface) CreateUser(ctx context.Context, arg querier.CreateUserParams) (*querier.User, error) {
 	m.ctrl.T.Helper()

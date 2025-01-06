@@ -7,8 +7,6 @@ package querier
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -31,7 +29,7 @@ type CreateUserParams struct {
 	Name           string
 	PasswordHash   string
 	PasswordSalt   string
-	OrganizationID pgtype.Int4
+	OrganizationID int32
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, error) {

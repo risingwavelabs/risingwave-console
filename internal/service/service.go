@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -32,11 +33,29 @@ const (
 )
 
 type ServiceInterface interface {
+	// Create a new user and its default organization
+	CreateNewUser(ctx context.Context, username, password string) error
+
 	// SignIn authenticates a user and returns credentials
 	SignIn(ctx context.Context, params apigen.SignInRequest) (*apigen.Credentials, error)
 
 	// RefreshToken refreshes an authentication token using a refresh token
 	RefreshToken(ctx context.Context, userID int32, refreshToken string) (*apigen.Credentials, error)
+
+	// Cluster management
+	CreateCluster(ctx context.Context, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error)
+
+	// GetCluster gets a cluster by its ID
+	GetCluster(ctx context.Context, id int32) (*apigen.Cluster, error)
+
+	// ListClusters lists all clusters in an organization
+	ListClusters(ctx context.Context, orgID int32) ([]apigen.Cluster, error)
+
+	// UpdateCluster updates a cluster
+	UpdateCluster(ctx context.Context, id int32, params apigen.ClusterCreate) (*apigen.Cluster, error)
+
+	// DeleteCluster deletes a cluster
+	DeleteCluster(ctx context.Context, id int32) error
 }
 
 type Service struct {
@@ -130,4 +149,135 @@ func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken s
 		RefreshToken: newRefreshToken,
 		TokenType:    apigen.Bearer,
 	}, nil
+}
+
+func (s *Service) CreateNewUser(ctx context.Context, username, password string) error {
+	hash, salt, err := s.generateHashAndSalt(password)
+	if err != nil {
+		return errors.Wrapf(err, "failed to generate hash and salt")
+	}
+	return s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
+		org, err := txm.CreateOrganization(ctx, fmt.Sprintf("%s's Org", username))
+		if err != nil {
+			return errors.Wrapf(err, "failed to create organization")
+		}
+		user, err := txm.CreateUser(ctx, querier.CreateUserParams{
+			Name:           username,
+			PasswordHash:   hash,
+			PasswordSalt:   salt,
+			OrganizationID: org.ID,
+		})
+		if err := txm.CreateOrganizationOwner(ctx, querier.CreateOrganizationOwnerParams{
+			UserID:         user.ID,
+			OrganizationID: org.ID,
+		}); err != nil {
+			return errors.Wrapf(err, "failed to create organization owner")
+		}
+		if err != nil {
+			return errors.Wrapf(err, "failed to create user")
+		}
+		return nil
+	})
+}
+
+func (s *Service) CreateCluster(ctx context.Context, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error) {
+	cluster, err := s.m.CreateCluster(ctx, querier.CreateClusterParams{
+		OrganizationID: orgID,
+		Name:           params.Name,
+		Host:           params.Host,
+		SqlPort:        int32(params.SqlPort),
+		MetaPort:       int32(params.MetaNodePort),
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create cluster")
+	}
+
+	return &apigen.Cluster{
+		Id:             cluster.ID,
+		OrganizationId: cluster.OrganizationID,
+		Name:           cluster.Name,
+		Host:           cluster.Host,
+		SqlPort:        cluster.SqlPort,
+		MetaPort:       cluster.MetaPort,
+		CreatedAt:      cluster.CreatedAt,
+		UpdatedAt:      cluster.UpdatedAt,
+	}, nil
+}
+
+func (s *Service) GetCluster(ctx context.Context, id int32) (*apigen.Cluster, error) {
+	cluster, err := s.m.GetCluster(ctx, id)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.New("cluster not found")
+		}
+		return nil, errors.Wrapf(err, "failed to get cluster")
+	}
+
+	return &apigen.Cluster{
+		Id:             cluster.ID,
+		OrganizationId: cluster.OrganizationID,
+		Name:           cluster.Name,
+		Host:           cluster.Host,
+		SqlPort:        cluster.SqlPort,
+		MetaPort:       cluster.MetaPort,
+		CreatedAt:      cluster.CreatedAt,
+		UpdatedAt:      cluster.UpdatedAt,
+	}, nil
+}
+
+func (s *Service) ListClusters(ctx context.Context, orgID int32) ([]apigen.Cluster, error) {
+	clusters, err := s.m.ListClusters(ctx, orgID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list clusters")
+	}
+
+	result := make([]apigen.Cluster, len(clusters))
+	for i, cluster := range clusters {
+		result[i] = apigen.Cluster{
+			Id:             cluster.ID,
+			OrganizationId: cluster.OrganizationID,
+			Name:           cluster.Name,
+			Host:           cluster.Host,
+			SqlPort:        cluster.SqlPort,
+			MetaPort:       cluster.MetaPort,
+			CreatedAt:      cluster.CreatedAt,
+			UpdatedAt:      cluster.UpdatedAt,
+		}
+	}
+	return result, nil
+}
+
+func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.ClusterCreate) (*apigen.Cluster, error) {
+	cluster, err := s.m.UpdateCluster(ctx, querier.UpdateClusterParams{
+		ID:       id,
+		Name:     params.Name,
+		Host:     params.Host,
+		SqlPort:  int32(params.SqlPort),
+		MetaPort: int32(params.MetaNodePort),
+	})
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.New("cluster not found")
+		}
+		return nil, errors.Wrapf(err, "failed to update cluster")
+	}
+
+	return &apigen.Cluster{
+		Id:             cluster.ID,
+		OrganizationId: cluster.OrganizationID,
+		Name:           cluster.Name,
+		Host:           cluster.Host,
+		SqlPort:        cluster.SqlPort,
+		MetaPort:       cluster.MetaPort,
+		CreatedAt:      cluster.CreatedAt,
+		UpdatedAt:      cluster.UpdatedAt,
+	}, nil
+}
+
+func (s *Service) DeleteCluster(ctx context.Context, id int32) error {
+	err := s.m.DeleteCluster(ctx, id)
+	if err != nil {
+		return errors.Wrapf(err, "failed to delete cluster")
+	}
+	return nil
 }

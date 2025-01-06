@@ -18,13 +18,6 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// Defines values for ClusterStatus.
-const (
-	Error   ClusterStatus = "error"
-	Running ClusterStatus = "running"
-	Stopped ClusterStatus = "stopped"
-)
-
 // Defines values for CredentialsTokenType.
 const (
 	Bearer CredentialsTokenType = "Bearer"
@@ -40,36 +33,15 @@ const (
 
 // Cluster defines model for Cluster.
 type Cluster struct {
-	// Database Database name
-	Database string `json:"database"`
-
-	// Host Cluster host address
-	Host string `json:"host"`
-
-	// Id Unique identifier of the cluster
-	Id string `json:"id"`
-
-	// MetaNodePort Metadata node port
-	MetaNodePort int `json:"metaNodePort"`
-
-	// Name Name of the cluster
-	Name string `json:"name"`
-
-	// Password Database password (optional)
-	Password *string `json:"password,omitempty"`
-
-	// SqlPort SQL connection port
-	SqlPort int `json:"sqlPort"`
-
-	// Status Current status of the cluster
-	Status ClusterStatus `json:"status"`
-
-	// User Database user
-	User string `json:"user"`
+	CreatedAt      time.Time `json:"created_at"`
+	Host           string    `json:"host"`
+	Id             int32     `json:"id"`
+	MetaPort       int32     `json:"meta_port"`
+	Name           string    `json:"name"`
+	OrganizationId int32     `json:"organization_id"`
+	SqlPort        int32     `json:"sql_port"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
-
-// ClusterStatus Current status of the cluster
-type ClusterStatus string
 
 // ClusterCreate defines model for ClusterCreate.
 type ClusterCreate struct {

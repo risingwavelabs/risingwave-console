@@ -13,8 +13,9 @@ import (
 )
 
 type User struct {
-	ID          int32
-	AccessRules map[string]struct{}
+	ID             int32
+	OrganizationID int32
+	AccessRules    map[string]struct{}
 }
 
 type AuthServiceInterface interface {
@@ -93,8 +94,9 @@ func (s *AuthService) createClaims(user *querier.User, accessRules []string) jwt
 
 	return jwt.MapClaims{
 		"user": &User{
-			ID:          user.ID,
-			AccessRules: ruleMap,
+			ID:             user.ID,
+			OrganizationID: user.OrganizationID,
+			AccessRules:    ruleMap,
 		},
 		"exp": time.Now().Add(12 * time.Hour).Unix(),
 	}

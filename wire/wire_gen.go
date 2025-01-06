@@ -33,7 +33,7 @@ func InitializeServer() (*server.Server, error) {
 	serviceInterface := service.NewService(configConfig, modelInterface, authServiceInterface)
 	middlewareMiddleware := middleware.NewMiddleware(authServiceInterface)
 	controllerController := controller.NewController(serviceInterface, middlewareMiddleware)
-	initService := service.NewInitService(modelInterface)
+	initService := service.NewInitService(modelInterface, serviceInterface)
 	serverServer, err := server.NewServer(configConfig, controllerController, middlewareMiddleware, initService)
 	if err != nil {
 		return nil, err

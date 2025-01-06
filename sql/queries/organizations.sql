@@ -24,3 +24,12 @@ RETURNING *;
 -- name: DeleteOrganization :exec
 DELETE FROM organizations
 WHERE id = $1;
+
+-- name: CreateOrganizationOwner :exec
+INSERT INTO organization_owners (
+    user_id,
+    organization_id
+) VALUES (
+    $1,
+    $2
+);

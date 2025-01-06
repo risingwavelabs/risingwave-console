@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
@@ -66,23 +67,89 @@ func (controller *Controller) RefreshToken(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) CreateCluster(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	var params apigen.ClusterCreate
+	if err := c.BodyParser(&params); err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	user, err := middleware.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	cluster, err := controller.svc.CreateCluster(c.Context(), params, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(cluster)
 }
 
 func (controller *Controller) DeleteCluster(c *fiber.Ctx, id string) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	clusterID, err := strconv.Atoi(id)
+	if err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	err = controller.svc.DeleteCluster(c.Context(), int32(clusterID))
+	if err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 func (controller *Controller) GetCluster(c *fiber.Ctx, id string) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	clusterID, err := strconv.Atoi(id)
+	if err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	cluster, err := controller.svc.GetCluster(c.Context(), int32(clusterID))
+	if err != nil {
+		if err.Error() == "cluster not found" {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(cluster)
 }
 
 func (controller *Controller) UpdateCluster(c *fiber.Ctx, id string) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	var params apigen.ClusterCreate
+	if err := c.BodyParser(&params); err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	clusterID, err := strconv.Atoi(id)
+	if err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	cluster, err := controller.svc.UpdateCluster(c.Context(), int32(clusterID), params)
+	if err != nil {
+		if err.Error() == "cluster not found" {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(cluster)
 }
 
 func (controller *Controller) ListClusters(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	user, err := middleware.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	clusters, err := controller.svc.ListClusters(c.Context(), user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(clusters)
 }
 
 func (controller *Controller) CreateDatabase(c *fiber.Ctx) error {

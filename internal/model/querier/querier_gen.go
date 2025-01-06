@@ -12,6 +12,7 @@ type Querier interface {
 	CreateCluster(ctx context.Context, arg CreateClusterParams) (*Cluster, error)
 	CreateDatabaseConnection(ctx context.Context, arg CreateDatabaseConnectionParams) (*DatabaseConnection, error)
 	CreateOrganization(ctx context.Context, name string) (*Organization, error)
+	CreateOrganizationOwner(ctx context.Context, arg CreateOrganizationOwnerParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	DeleteCluster(ctx context.Context, id int32) error
 	DeleteDatabaseConnection(ctx context.Context, id int32) error

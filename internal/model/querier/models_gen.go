@@ -6,8 +6,6 @@ package querier
 
 import (
 	"time"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Cluster struct {
@@ -37,7 +35,13 @@ type Organization struct {
 	Name      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	OwnerID   int32
+}
+
+type OrganizationOwner struct {
+	UserID         int32
+	OrganizationID int32
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type RefreshToken struct {
@@ -53,7 +57,7 @@ type User struct {
 	Name           string
 	PasswordHash   string
 	PasswordSalt   string
-	OrganizationID pgtype.Int4
+	OrganizationID int32
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
