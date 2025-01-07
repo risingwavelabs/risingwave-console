@@ -18,6 +18,10 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+const (
+	BearerAuthScopes = "BearerAuth.Scopes"
+)
+
 // Defines values for CredentialsTokenType.
 const (
 	Bearer CredentialsTokenType = "Bearer"
@@ -3122,6 +3126,8 @@ func (siw *ServerInterfaceWrapper) SignIn(c *fiber.Ctx) error {
 
 // ListClusters operation middleware
 func (siw *ServerInterfaceWrapper) ListClusters(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.ListClusters(c)
 }

@@ -2,8 +2,18 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Cluster } from '../models/Cluster';
+import type { ClusterCreate } from '../models/ClusterCreate';
+import type { Credentials } from '../models/Credentials';
 import type { Database } from '../models/Database';
-import type { Table } from '../models/Table';
+import type { DatabaseConnectInfo } from '../models/DatabaseConnectInfo';
+import type { DiagnosticConfig } from '../models/DiagnosticConfig';
+import type { DiagnosticData } from '../models/DiagnosticData';
+import type { RefreshTokenRequest } from '../models/RefreshTokenRequest';
+import type { SignInRequest } from '../models/SignInRequest';
+import type { Snapshot } from '../models/Snapshot';
+import type { SnapshotConfig } from '../models/SnapshotConfig';
+import type { SnapshotCreate } from '../models/SnapshotCreate';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -28,12 +38,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public static createDatabase(
-        requestBody: {
-            /**
-             * Name of the database
-             */
-            name: string;
-        },
+        requestBody: DatabaseConnectInfo,
     ): CancelablePromise<Database> {
         return __request(OpenAPI, {
             method: 'POST',
@@ -45,43 +50,38 @@ export class DefaultService {
     /**
      * Get database details
      * Retrieve details of a specific database
-     * @param databaseId
+     * @param id
      * @returns Database Successfully retrieved database
      * @throws ApiError
      */
     public static getDatabase(
-        databaseId: string,
+        id: number,
     ): CancelablePromise<Database> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/databases/{databaseId}',
+            url: '/databases/{id}',
             path: {
-                'databaseId': databaseId,
+                'id': id,
             },
         });
     }
     /**
      * Update database
      * Update a specific database
-     * @param databaseId
+     * @param id
      * @param requestBody
      * @returns Database Database updated successfully
      * @throws ApiError
      */
     public static updateDatabase(
-        databaseId: string,
-        requestBody: {
-            /**
-             * New name of the database
-             */
-            name?: string;
-        },
+        id: number,
+        requestBody: DatabaseConnectInfo,
     ): CancelablePromise<Database> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/databases/{databaseId}',
+            url: '/databases/{id}',
             path: {
-                'databaseId': databaseId,
+                'id': id,
             },
             body: requestBody,
             mediaType: 'application/json',
@@ -90,135 +90,353 @@ export class DefaultService {
     /**
      * Delete database
      * Delete a specific database
-     * @param databaseId
+     * @param id
      * @returns void
      * @throws ApiError
      */
     public static deleteDatabase(
-        databaseId: string,
+        id: number,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/databases/{databaseId}',
+            url: '/databases/{id}',
             path: {
-                'databaseId': databaseId,
+                'id': id,
             },
         });
     }
     /**
-     * List database tables
-     * Retrieve all tables in a specific database
-     * @param databaseId
-     * @returns Table Successfully retrieved tables
+     * List all clusters
+     * Retrieve a list of all database clusters
+     * @returns Cluster Successfully retrieved cluster list
      * @throws ApiError
      */
-    public static listDatabaseTables(
-        databaseId: string,
-    ): CancelablePromise<Array<Table>> {
+    public static listClusters(): CancelablePromise<Array<Cluster>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/databases/{databaseId}/tables',
-            path: {
-                'databaseId': databaseId,
-            },
+            url: '/clusters',
         });
     }
     /**
-     * Create table
-     * Create a new table in the specified database
-     * @param databaseId
+     * Create a new cluster
+     * Create a new database cluster
      * @param requestBody
-     * @returns Table Table created successfully
+     * @returns Cluster Cluster created successfully
      * @throws ApiError
      */
-    public static createTable(
-        databaseId: string,
-        requestBody: {
-            /**
-             * Name of the table
-             */
-            name: string;
-        },
-    ): CancelablePromise<Table> {
+    public static createCluster(
+        requestBody: ClusterCreate,
+    ): CancelablePromise<Cluster> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/databases/{databaseId}/tables',
-            path: {
-                'databaseId': databaseId,
-            },
+            url: '/clusters',
             body: requestBody,
             mediaType: 'application/json',
         });
     }
     /**
-     * Get table details
-     * Retrieve details of a specific table
-     * @param databaseId
-     * @param tableId
-     * @returns Table Successfully retrieved table
+     * Get cluster details
+     * Retrieve details of a specific cluster
+     * @param id
+     * @returns Cluster Successfully retrieved cluster
      * @throws ApiError
      */
-    public static getTable(
-        databaseId: string,
-        tableId: string,
-    ): CancelablePromise<Table> {
+    public static getCluster(
+        id: string,
+    ): CancelablePromise<Cluster> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/databases/{databaseId}/tables/{tableId}',
+            url: '/clusters/{id}',
             path: {
-                'databaseId': databaseId,
-                'tableId': tableId,
+                'id': id,
             },
         });
     }
     /**
-     * Update table
-     * Update a specific table
-     * @param databaseId
-     * @param tableId
+     * Update cluster
+     * Update a specific cluster
+     * @param id
      * @param requestBody
-     * @returns Table Table updated successfully
+     * @returns Cluster Cluster updated successfully
      * @throws ApiError
      */
-    public static updateTable(
-        databaseId: string,
-        tableId: string,
-        requestBody: {
-            /**
-             * New name of the table
-             */
-            name?: string;
-        },
-    ): CancelablePromise<Table> {
+    public static updateCluster(
+        id: string,
+        requestBody: ClusterCreate,
+    ): CancelablePromise<Cluster> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/databases/{databaseId}/tables/{tableId}',
+            url: '/clusters/{id}',
             path: {
-                'databaseId': databaseId,
-                'tableId': tableId,
+                'id': id,
             },
             body: requestBody,
             mediaType: 'application/json',
         });
     }
     /**
-     * Delete table
-     * Delete a specific table
-     * @param databaseId
-     * @param tableId
+     * Delete cluster
+     * Delete a specific cluster
+     * @param id
      * @returns void
      * @throws ApiError
      */
-    public static deleteTable(
-        databaseId: string,
-        tableId: string,
+    public static deleteCluster(
+        id: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/databases/{databaseId}/tables/{tableId}',
+            url: '/clusters/{id}',
             path: {
-                'databaseId': databaseId,
-                'tableId': tableId,
+                'id': id,
+            },
+        });
+    }
+    /**
+     * List cluster snapshots
+     * Retrieve a list of all snapshots for a specific cluster
+     * @param id
+     * @returns Snapshot Successfully retrieved snapshot list
+     * @throws ApiError
+     */
+    public static listClusterSnapshots(
+        id: string,
+    ): CancelablePromise<Array<Snapshot>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clusters/{id}/snapshots',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * Create a new snapshot
+     * Create a new metadata snapshot for a specific cluster
+     * @param id
+     * @param requestBody
+     * @returns Snapshot Snapshot created successfully
+     * @throws ApiError
+     */
+    public static createClusterSnapshot(
+        id: string,
+        requestBody: SnapshotCreate,
+    ): CancelablePromise<Snapshot> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clusters/{id}/snapshots',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Delete snapshot
+     * Delete a specific snapshot
+     * @param id
+     * @param snapshotId
+     * @returns void
+     * @throws ApiError
+     */
+    public static deleteClusterSnapshot(
+        id: string,
+        snapshotId: string,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/clusters/{id}/snapshots/{snapshotId}',
+            path: {
+                'id': id,
+                'snapshotId': snapshotId,
+            },
+        });
+    }
+    /**
+     * Restore snapshot
+     * Restore cluster metadata from a specific snapshot
+     * @param id
+     * @param snapshotId
+     * @returns any Snapshot restored successfully
+     * @throws ApiError
+     */
+    public static restoreClusterSnapshot(
+        id: string,
+        snapshotId: string,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clusters/{id}/snapshots/{snapshotId}',
+            path: {
+                'id': id,
+                'snapshotId': snapshotId,
+            },
+        });
+    }
+    /**
+     * Get snapshot configuration
+     * Get automatic snapshot configuration for a cluster
+     * @param id
+     * @returns SnapshotConfig Successfully retrieved snapshot configuration
+     * @throws ApiError
+     */
+    public static getClusterSnapshotConfig(
+        id: string,
+    ): CancelablePromise<SnapshotConfig> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clusters/{id}/snapshot-config',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * Update snapshot configuration
+     * Update automatic snapshot configuration for a cluster
+     * @param id
+     * @param requestBody
+     * @returns SnapshotConfig Snapshot configuration updated successfully
+     * @throws ApiError
+     */
+    public static updateClusterSnapshotConfig(
+        id: string,
+        requestBody: SnapshotConfig,
+    ): CancelablePromise<SnapshotConfig> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/clusters/{id}/snapshot-config',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * List diagnostic data
+     * Retrieve diagnostic data for a specific cluster with optional date range filtering
+     * @param id
+     * @param from Start date for filtering diagnostic data
+     * @param to End date for filtering diagnostic data
+     * @param page Page number for pagination
+     * @param perPage Number of items per page
+     * @returns any Successfully retrieved diagnostic data
+     * @throws ApiError
+     */
+    public static listClusterDiagnostics(
+        id: string,
+        from?: string,
+        to?: string,
+        page: number = 1,
+        perPage: number = 20,
+    ): CancelablePromise<{
+        items: Array<DiagnosticData>;
+        /**
+         * Total number of diagnostic entries
+         */
+        total: number;
+        /**
+         * Current page number
+         */
+        page: number;
+        /**
+         * Number of items per page
+         */
+        per_page: number;
+    }> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clusters/{id}/diagnostics',
+            path: {
+                'id': id,
+            },
+            query: {
+                'from': from,
+                'to': to,
+                'page': page,
+                'per_page': perPage,
+            },
+        });
+    }
+    /**
+     * Get diagnostic configuration
+     * Get diagnostic data collection configuration for a cluster
+     * @param id
+     * @returns DiagnosticConfig Successfully retrieved diagnostic configuration
+     * @throws ApiError
+     */
+    public static getClusterDiagnosticConfig(
+        id: string,
+    ): CancelablePromise<DiagnosticConfig> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clusters/{id}/diagnostics/config',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * Update diagnostic configuration
+     * Update diagnostic data collection configuration for a cluster
+     * @param id
+     * @param requestBody
+     * @returns DiagnosticConfig Diagnostic configuration updated successfully
+     * @throws ApiError
+     */
+    public static updateClusterDiagnosticConfig(
+        id: string,
+        requestBody: DiagnosticConfig,
+    ): CancelablePromise<DiagnosticConfig> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/clusters/{id}/diagnostics/config',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Sign in user
+     * Authenticate user and return access token
+     * @param requestBody
+     * @returns Credentials Successfully authenticated
+     * @throws ApiError
+     */
+    public static signIn(
+        requestBody: SignInRequest,
+    ): CancelablePromise<Credentials> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/auth/sign-in',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                401: `Invalid credentials`,
+            },
+        });
+    }
+    /**
+     * Refresh access token
+     * Get a new access token using a refresh token
+     * @param requestBody
+     * @returns Credentials Successfully refreshed token
+     * @throws ApiError
+     */
+    public static refreshToken(
+        requestBody: RefreshTokenRequest,
+    ): CancelablePromise<Credentials> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/auth/refresh',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                401: `Invalid or expired refresh token`,
             },
         });
     }

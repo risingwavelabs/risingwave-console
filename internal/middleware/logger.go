@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/risingwavelabs/wavekit/internal/service"
+	"github.com/risingwavelabs/wavekit/internal/auth"
 )
 
 var re = regexp.MustCompile(`[\r?\n| ]`)
@@ -63,7 +63,7 @@ var loggerConfig = logger.Config{
 			return output.WriteString(b)
 		},
 		"user": func(output logger.Buffer, c *fiber.Ctx, data *logger.Data, extraParam string) (int, error) {
-			user, ok := c.Locals(UserContextKey).(*service.User)
+			user, ok := c.Locals(auth.UserContextKey).(*auth.User)
 			if !ok {
 				return output.WriteString("unknown user")
 			}

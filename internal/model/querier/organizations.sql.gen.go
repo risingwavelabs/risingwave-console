@@ -14,7 +14,7 @@ INSERT INTO organizations (
     name
 ) VALUES (
     $1
-) ON CONFLICT DO NOTHING RETURNING id, name, created_at, updated_at
+) ON CONFLICT (name) DO NOTHING RETURNING id, name, created_at, updated_at
 `
 
 func (q *Queries) CreateOrganization(ctx context.Context, name string) (*Organization, error) {

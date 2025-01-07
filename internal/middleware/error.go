@@ -12,7 +12,7 @@ import (
 
 var log = logger.NewLogAgent("middleware")
 
-func (m *Middleware) ErrorHandler(c *fiber.Ctx, err error) error {
+func ErrorHandler(c *fiber.Ctx, err error) error {
 	// default 500
 	var code = fiber.StatusInternalServerError
 

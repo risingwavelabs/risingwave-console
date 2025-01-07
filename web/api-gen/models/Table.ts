@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Column } from './Column';
 export type Table = {
     /**
      * Unique identifier of the table
@@ -11,5 +12,24 @@ export type Table = {
      * Name of the table
      */
     name: string;
+    /**
+     * Type of the relation
+     */
+    type: Table.type;
+    /**
+     * List of columns in the table
+     */
+    columns: Array<Column>;
 };
+export namespace Table {
+    /**
+     * Type of the relation
+     */
+    export enum type {
+        TABLE = 'table',
+        SOURCE = 'source',
+        SINK = 'sink',
+        MATERIALIZED_VIEW = 'materialized_view',
+    }
+}
 

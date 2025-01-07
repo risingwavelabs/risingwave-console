@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
+	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
@@ -59,19 +60,19 @@ type ServiceInterface interface {
 }
 
 type Service struct {
-	m           model.ModelInterface
-	authService AuthServiceInterface
+	m    model.ModelInterface
+	auth auth.AuthInterface
 
 	now                 func() time.Time
 	generateHashAndSalt func(password string) (string, string, error)
 }
 
-func NewService(cfg *config.Config, m model.ModelInterface, authService AuthServiceInterface) ServiceInterface {
+func NewService(cfg *config.Config, m model.ModelInterface, auth auth.AuthInterface) ServiceInterface {
 	return &Service{
 		m:                   m,
 		now:                 time.Now,
 		generateHashAndSalt: utils.GenerateHashAndSalt,
-		authService:         authService,
+		auth:                auth,
 	}
 }
 
@@ -90,11 +91,11 @@ func (s *Service) SignIn(ctx context.Context, params apigen.SignInRequest) (*api
 	if input != user.PasswordHash {
 		return nil, ErrInvalidPassword
 	}
-	token, err := s.authService.CreateToken(user, nil)
+	token, err := s.auth.CreateToken(user, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create token")
 	}
-	refreshToken, err := s.authService.GenerateRefreshToken()
+	refreshToken, err := auth.GenerateRefreshToken()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to generate refresh token")
 	}
@@ -129,7 +130,7 @@ func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken s
 		return nil, errors.Wrapf(err, "failed to get user by id: %d", userID)
 	}
 
-	newRefreshToken, err := s.authService.GenerateRefreshToken()
+	newRefreshToken, err := auth.GenerateRefreshToken()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to generate refresh token")
 	}
@@ -139,7 +140,7 @@ func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken s
 	}); err != nil {
 		return nil, errors.Wrapf(err, "failed to upsert refresh token")
 	}
-	accessToken, err := s.authService.CreateToken(user, nil)
+	accessToken, err := s.auth.CreateToken(user, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create token")
 	}
@@ -152,7 +153,7 @@ func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken s
 }
 
 func (s *Service) CreateNewUser(ctx context.Context, username, password string) error {
-	hash, salt, err := s.generateHashAndSalt(password)
+	salt, hash, err := s.generateHashAndSalt(password)
 	if err != nil {
 		return errors.Wrapf(err, "failed to generate hash and salt")
 	}
@@ -228,6 +229,9 @@ func (s *Service) GetCluster(ctx context.Context, id int32) (*apigen.Cluster, er
 func (s *Service) ListClusters(ctx context.Context, orgID int32) ([]apigen.Cluster, error) {
 	clusters, err := s.m.ListClusters(ctx, orgID)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
 		return nil, errors.Wrapf(err, "failed to list clusters")
 	}
 

@@ -37,9 +37,8 @@ var (
 )
 
 var (
-	globalPhone    = "18688338517"
-	globalUsername = "sage"
-	globalPassword = "1234"
+	globalUsername = "root"
+	globalPassword = "123456"
 )
 
 func TestMain(m *testing.M) {
@@ -69,20 +68,13 @@ func getTestEngine(t *testing.T) *httpexpect.Expect {
 
 type AutenticatedTestEngine struct {
 	*httpexpect.Expect
-	authInfo apigen.AuthInfo
+	authInfo apigen.Credentials
 }
 
 func getAuthenticatedTestEngine(t *testing.T) *AutenticatedTestEngine {
 	te := getTestEngine(t)
-	mu.Lock()
-	tmpToken := token
-	mu.Unlock()
 
-	if tmpToken == "" {
-		registerAccount(t, globalPhone, globalUsername, globalPassword)
-	}
-
-	authInfo := loginAccount(t, globalPhone, globalUsername, globalPassword)
+	authInfo := loginAccount(t, globalUsername, globalPassword)
 
 	return &AutenticatedTestEngine{
 		Expect: te.Builder(func(req *httpexpect.Request) {

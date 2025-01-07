@@ -1,16 +1,19 @@
 #!/bin/bash 
 set +e
 
-docker stop aneith-testpg
-docker run --rm -d -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres --name aneith-testpg postgres:14.1-alpine
+CONTAINER_NAME=wavekit-testpg
 
-export AEN_PG_HOST=localhost
-export AEN_PG_PORT=5432
-export AEN_PG_USER=postgres
-export AEN_PG_PASSWORD=postgres
-export AEN_PG_DB=postgres
-export AEN_PG_MIGRATION=../sql/migrations
-export AEN_JWT_SECRET=jwt_secret
+docker stop $CONTAINER_NAME
+docker run --rm -d -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres --name $CONTAINER_NAME postgres:14.1-alpine
+
+export WK_PG_HOST=localhost
+export WK_PG_PORT=5432
+export WK_PG_USER=postgres
+export WK_PG_PASSWORD=postgres
+export WK_PG_DB=postgres
+export WK_PG_MIGRATION=../sql/migrations
+export WK_JWT_SECRET=jwt_secret
+export WK_ROOT_PASSWORD=123456
 
 exit_code=1
 go clean -testcache 
@@ -25,13 +28,13 @@ fi
 handle_sigint() {
     echo "Received SIGINT (Ctrl+C). Exiting..."
     echo "shutting down database, please wait..."
-    docker stop aneith-testpg
+    docker stop $CONTAINER_NAME
     exit $exit_code
 }
 
 if [ -z "$HOLD" ]; then
     echo "shutting down database, please wait..."
-    docker stop aneith-testpg
+    docker stop $CONTAINER_NAME
 else
     trap handle_sigint SIGINT
     echo "Hold for debug. Press Ctrl+C to stop."

@@ -13,7 +13,7 @@ install-oapi-codegen:
 	DIR=$(PROJECT_DIR)/bin VERSION=${OAPI_CODEGEN_VERSION} ./scripts/install-oapi-codegen.sh
 	
 install-oapi-codegen-fiber:
-	GOBIN=$(PROJECT_DIR)/bin go install github.com/cloudcarver/oapi-codegen-fiber@v0.3.0
+	GOBIN=$(PROJECT_DIR)/bin go install github.com/cloudcarver/oapi-codegen-fiber@v0.4.0
 
 prune-spec:
 	@rm -f $(OAPI_GEN_DIR)/spec_gen.go

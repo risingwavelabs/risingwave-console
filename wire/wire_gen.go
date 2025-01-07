@@ -8,9 +8,9 @@ package wire
 
 import (
 	"github.com/risingwavelabs/wavekit/internal/apps/server"
+	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/controller"
-	"github.com/risingwavelabs/wavekit/internal/middleware"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/service"
 )
@@ -26,15 +26,14 @@ func InitializeServer() (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	authServiceInterface, err := service.NewAuthService(configConfig)
+	authInterface, err := auth.NewAuth(configConfig)
 	if err != nil {
 		return nil, err
 	}
-	serviceInterface := service.NewService(configConfig, modelInterface, authServiceInterface)
-	middlewareMiddleware := middleware.NewMiddleware(authServiceInterface)
-	controllerController := controller.NewController(serviceInterface, middlewareMiddleware)
+	serviceInterface := service.NewService(configConfig, modelInterface, authInterface)
+	controllerController := controller.NewController(serviceInterface, authInterface)
 	initService := service.NewInitService(modelInterface, serviceInterface)
-	serverServer, err := server.NewServer(configConfig, controllerController, middlewareMiddleware, initService)
+	serverServer, err := server.NewServer(configConfig, controllerController, authInterface, initService)
 	if err != nil {
 		return nil, err
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
+	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/controller"
 	"github.com/risingwavelabs/wavekit/internal/middleware"
@@ -20,20 +21,21 @@ import (
 type Server struct {
 	app        *fiber.App
 	port       int
-	middleware *middleware.Middleware
+	auth       auth.AuthInterface
 	controller *controller.Controller
 }
 
-func NewServer(cfg *config.Config, c *controller.Controller, middleware *middleware.Middleware, initSvc *service.InitService) (*Server, error) {
+func NewServer(cfg *config.Config, c *controller.Controller, auth auth.AuthInterface, initSvc *service.InitService) (*Server, error) {
 	app := fiber.New(fiber.Config{
-		ErrorHandler: middleware.ErrorHandler,
-		BodyLimit:    50 * 1024 * 1024, // 50MB
+		ErrorHandler:          middleware.ErrorHandler,
+		BodyLimit:             50 * 1024 * 1024, // 50MB
+		DisableStartupMessage: true,
 	})
 
 	s := &Server{
 		app:        app,
 		port:       cfg.Port,
-		middleware: middleware,
+		auth:       auth,
 		controller: c,
 	}
 
@@ -65,12 +67,7 @@ func (s *Server) registerMiddleware() {
 	s.app.Use(requestid.New())
 	s.app.Use(middleware.NewLogger())
 
-	apigen.RegisterAuthFunc(s.app, func(c *fiber.Ctx, rules ...string) error {
-		if err := s.middleware.Auth(c); err != nil {
-			return err
-		}
-		return s.middleware.CheckRules(c, rules, nil)
-	})
+	apigen.RegisterAuthFunc(s.app, s.auth.Authfunc)
 }
 
 func (s *Server) Listen() error {

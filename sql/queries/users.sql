@@ -6,7 +6,7 @@ INSERT INTO users (
     organization_id
 ) VALUES (
     $1, $2, $3, $4
-) ON CONFLICT DO UPDATE 
+) ON CONFLICT (name) DO UPDATE 
     SET updated_at = CURRENT_TIMESTAMP, 
         name = EXCLUDED.name, 
         password_hash = EXCLUDED.password_hash,

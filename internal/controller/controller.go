@@ -6,24 +6,24 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
-	"github.com/risingwavelabs/wavekit/internal/middleware"
+	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/service"
 )
 
 type Controller struct {
-	mid *middleware.Middleware
-	svc service.ServiceInterface
+	svc  service.ServiceInterface
+	auth auth.AuthInterface
 }
 
 var _ apigen.ServerInterface = &Controller{}
 
 func NewController(
 	s service.ServiceInterface,
-	mid *middleware.Middleware,
+	auth auth.AuthInterface,
 ) *Controller {
 	return &Controller{
-		svc: s,
-		mid: mid,
+		svc:  s,
+		auth: auth,
 	}
 }
 
@@ -50,7 +50,7 @@ func (controller *Controller) RefreshToken(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	user, err := middleware.GetUser(c)
+	user, err := auth.GetUser(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
@@ -72,7 +72,7 @@ func (controller *Controller) CreateCluster(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	user, err := middleware.GetUser(c)
+	user, err := auth.GetUser(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
@@ -139,7 +139,7 @@ func (controller *Controller) UpdateCluster(c *fiber.Ctx, id string) error {
 }
 
 func (controller *Controller) ListClusters(c *fiber.Ctx) error {
-	user, err := middleware.GetUser(c)
+	user, err := auth.GetUser(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}

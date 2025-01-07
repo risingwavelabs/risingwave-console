@@ -3,7 +3,7 @@ INSERT INTO organizations (
     name
 ) VALUES (
     $1
-) ON CONFLICT DO NOTHING RETURNING *;
+) ON CONFLICT (name) DO NOTHING RETURNING *;
 
 -- name: GetOrganization :one
 SELECT * FROM organizations
