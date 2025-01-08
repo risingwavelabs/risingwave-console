@@ -27,9 +27,8 @@ type Server struct {
 
 func NewServer(cfg *config.Config, c *controller.Controller, auth auth.AuthInterface, initSvc *service.InitService) (*Server, error) {
 	app := fiber.New(fiber.Config{
-		ErrorHandler:          middleware.ErrorHandler,
-		BodyLimit:             50 * 1024 * 1024, // 50MB
-		DisableStartupMessage: true,
+		ErrorHandler: middleware.ErrorHandler,
+		BodyLimit:    50 * 1024 * 1024, // 50MB
 	})
 
 	s := &Server{

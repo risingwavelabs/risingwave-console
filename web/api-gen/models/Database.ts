@@ -15,11 +15,11 @@ export type Database = {
     /**
      * ID of the cluster this database belongs to
      */
-    cluster_id: number;
+    clusterID: number;
     /**
      * ID of the organization this database belongs to
      */
-    organization_id: number;
+    organizationID: number;
     /**
      * Database username (optional)
      */
@@ -31,11 +31,11 @@ export type Database = {
     /**
      * Creation timestamp
      */
-    created_at: string;
+    createdAt: string;
     /**
      * Last update timestamp
      */
-    updated_at: string;
+    updatedAt: string;
     /**
      * List of tables in the database
      */

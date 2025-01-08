@@ -3,7 +3,7 @@ INSERT INTO organizations (
     name
 ) VALUES (
     $1
-) ON CONFLICT (name) DO NOTHING RETURNING *;
+) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING *;
 
 -- name: GetOrganization :one
 SELECT * FROM organizations
@@ -32,4 +32,4 @@ INSERT INTO organization_owners (
 ) VALUES (
     $1,
     $2
-);
+) ON CONFLICT (user_id, organization_id) DO NOTHING;

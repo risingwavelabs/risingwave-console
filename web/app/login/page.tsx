@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { DefaultService } from "@/api-gen"
+import toast from "react-hot-toast"
 
 export default function LoginPage() {
   const [name, setName] = useState("")
@@ -17,11 +19,23 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // For demo, just redirect to home
-    router.push("/")
+    try {
+      const credentials = await DefaultService.signIn({
+        name: name,
+        password: password,
+      })
+      
+      // Store the token
+      localStorage.setItem("token", credentials.accessToken)
+      localStorage.setItem("refresh_token", credentials.refreshToken)
+      
+      // Redirect to home
+      router.push("/")
+    } catch (error) {
+      toast.error("Invalid credentials")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

@@ -14,6 +14,6 @@ export type Snapshot = {
     /**
      * Creation timestamp of the snapshot
      */
-    created_at: string;
+    createdAt: string;
 };
 

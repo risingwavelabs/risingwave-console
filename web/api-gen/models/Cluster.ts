@@ -4,12 +4,12 @@
 /* eslint-disable */
 export type Cluster = {
     id: number;
-    organization_id: number;
+    organizationID: number;
     name: string;
     host: string;
-    sql_port: number;
-    meta_port: number;
-    created_at: string;
-    updated_at: string;
+    sqlPort: number;
+    metaPort: number;
+    createdAt: string;
+    updatedAt: string;
 };
 

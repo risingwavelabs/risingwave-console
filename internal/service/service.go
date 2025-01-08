@@ -195,7 +195,7 @@ func (s *Service) CreateCluster(ctx context.Context, params apigen.ClusterCreate
 
 	return &apigen.Cluster{
 		Id:             cluster.ID,
-		OrganizationId: cluster.OrganizationID,
+		OrganizationID: cluster.OrganizationID,
 		Name:           cluster.Name,
 		Host:           cluster.Host,
 		SqlPort:        cluster.SqlPort,
@@ -216,7 +216,7 @@ func (s *Service) GetCluster(ctx context.Context, id int32) (*apigen.Cluster, er
 
 	return &apigen.Cluster{
 		Id:             cluster.ID,
-		OrganizationId: cluster.OrganizationID,
+		OrganizationID: cluster.OrganizationID,
 		Name:           cluster.Name,
 		Host:           cluster.Host,
 		SqlPort:        cluster.SqlPort,
@@ -239,7 +239,7 @@ func (s *Service) ListClusters(ctx context.Context, orgID int32) ([]apigen.Clust
 	for i, cluster := range clusters {
 		result[i] = apigen.Cluster{
 			Id:             cluster.ID,
-			OrganizationId: cluster.OrganizationID,
+			OrganizationID: cluster.OrganizationID,
 			Name:           cluster.Name,
 			Host:           cluster.Host,
 			SqlPort:        cluster.SqlPort,
@@ -268,7 +268,7 @@ func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.Clu
 
 	return &apigen.Cluster{
 		Id:             cluster.ID,
-		OrganizationId: cluster.OrganizationID,
+		OrganizationID: cluster.OrganizationID,
 		Name:           cluster.Name,
 		Host:           cluster.Host,
 		SqlPort:        cluster.SqlPort,

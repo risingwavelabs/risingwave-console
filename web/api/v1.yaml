@@ -299,7 +299,7 @@ paths:
             minimum: 1
             default: 1
           description: Page number for pagination
-        - name: per_page
+        - name: perPage
           in: query
           required: false
           schema:
@@ -319,7 +319,7 @@ paths:
                   - items
                   - total
                   - page
-                  - per_page
+                  - perPage
                 properties:
                   items:
                     type: array
@@ -331,7 +331,7 @@ paths:
                   page:
                     type: integer
                     description: Current page number
-                  per_page:
+                  perPage:
                     type: integer
                     description: Number of items per page
 
@@ -414,6 +414,12 @@ paths:
           description: Invalid or expired refresh token
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     DatabaseConnectInfo:
       type: object
@@ -448,10 +454,10 @@ components:
       required:
         - id
         - name
-        - cluster_id
-        - organization_id
-        - created_at
-        - updated_at
+        - clusterID
+        - organizationID
+        - createdAt
+        - updatedAt
       properties:
         id:
           type: integer
@@ -460,11 +466,11 @@ components:
         name:
           type: string
           description: Name of the database
-        cluster_id:
+        clusterID:
           type: integer
           format: int32
           description: ID of the cluster this database belongs to
-        organization_id:
+        organizationID:
           type: integer
           format: int32
           description: ID of the organization this database belongs to
@@ -475,11 +481,11 @@ components:
           type: string
           format: password
           description: Database password (optional)
-        created_at:
+        createdAt:
           type: string
           format: date-time
           description: Creation timestamp
-        updated_at:
+        updatedAt:
           type: string
           format: date-time
           description: Last update timestamp
@@ -522,7 +528,7 @@ components:
           description: Name of the table
         type:
           type: string
-          enum: ['table', 'source', 'sink', 'materialized_view']
+          enum: ['table', 'source', 'sink', 'materializedView']
           description: Type of the relation
         columns:
           type: array
@@ -567,34 +573,34 @@ components:
       type: object
       required:
         - id
-        - organization_id
+        - organizationID
         - name
         - host
-        - sql_port
-        - meta_port
-        - created_at
-        - updated_at
+        - sqlPort
+        - metaPort
+        - createdAt
+        - updatedAt
       properties:
         id:
           type: integer
           format: int32
-        organization_id:
+        organizationID:
           type: integer
           format: int32
         name:
           type: string
         host:
           type: string
-        sql_port:
+        sqlPort:
           type: integer
           format: int32
-        meta_port:
+        metaPort:
           type: integer
           format: int32
-        created_at:
+        createdAt:
           type: string
           format: date-time
-        updated_at:
+        updatedAt:
           type: string
           format: date-time
 
@@ -603,17 +609,17 @@ components:
       required:
         - name
         - host
-        - sql_port
-        - meta_port
+        - sqlPort
+        - metaPort
       properties:
         name:
           type: string
         host:
           type: string
-        sql_port:
+        sqlPort:
           type: integer
           format: int32
-        meta_port:
+        metaPort:
           type: integer
           format: int32
 
@@ -622,17 +628,17 @@ components:
       required:
         - name
         - host
-        - sql_port
-        - meta_port
+        - sqlPort
+        - metaPort
       properties:
         name:
           type: string
         host:
           type: string
-        sql_port:
+        sqlPort:
           type: integer
           format: int32
-        meta_port:
+        metaPort:
           type: integer
           format: int32
 
@@ -650,7 +656,7 @@ components:
       required:
         - id
         - name
-        - created_at
+        - createdAt
       properties:
         id:
           type: string
@@ -658,7 +664,7 @@ components:
         name:
           type: string
           description: Name of the snapshot
-        created_at:
+        createdAt:
           type: string
           format: date-time
           description: Creation timestamp of the snapshot
@@ -733,17 +739,17 @@ components:
     Credentials:
       type: object
       required:
-        - access_token
-        - refresh_token
-        - token_type
+        - accessToken
+        - refreshToken
+        - tokenType
       properties:
-        access_token:
+        accessToken:
           type: string
           description: JWT access token
-        refresh_token:
+        refreshToken:
           type: string
           description: JWT refresh token for obtaining new access tokens
-        token_type:
+        tokenType:
           type: string
           enum: ['Bearer']
           description: Token type
@@ -751,9 +757,9 @@ components:
     RefreshTokenRequest:
       type: object
       required:
-        - refresh_token
+        - refreshToken
       properties:
-        refresh_token:
+        refreshToken:
           type: string
           description: Refresh token obtained from sign-in
 
@@ -762,9 +768,9 @@ components:
       required:
         - id
         - name
-        - organization_id
-        - created_at
-        - updated_at
+        - organizationID
+        - createdAt
+        - updatedAt
       properties:
         id:
           type: integer
@@ -773,15 +779,15 @@ components:
         name:
           type: string
           description: User's name
-        organization_id:
+        organizationID:
           type: integer
           format: int32
           description: ID of the organization this user belongs to
-        created_at:
+        createdAt:
           type: string
           format: date-time
           description: Creation timestamp
-        updated_at:
+        updatedAt:
           type: string
           format: date-time
           description: Last update timestamp

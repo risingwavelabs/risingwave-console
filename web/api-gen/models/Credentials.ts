@@ -6,21 +6,21 @@ export type Credentials = {
     /**
      * JWT access token
      */
-    access_token: string;
+    accessToken: string;
     /**
      * JWT refresh token for obtaining new access tokens
      */
-    refresh_token: string;
+    refreshToken: string;
     /**
      * Token type
      */
-    token_type: Credentials.token_type;
+    tokenType: Credentials.tokenType;
 };
 export namespace Credentials {
     /**
      * Token type
      */
-    export enum token_type {
+    export enum tokenType {
         BEARER = 'Bearer',
     }
 }

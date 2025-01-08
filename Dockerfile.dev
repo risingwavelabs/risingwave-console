@@ -1,9 +1,2 @@
-FROM alpine:latest
-
+FROM golang:1.23-bullseye
 WORKDIR /app
-
-COPY --from=golang:1.22-alpine /usr/local/go/ /usr/local/go/
- 
-ENV PATH="/usr/local/go/bin:${PATH}"
-
-ENTRYPOINT []

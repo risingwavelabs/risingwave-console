@@ -12,8 +12,6 @@ const sampleClusters: Cluster[] = [
     host: "localhost",
     sqlPort: 8080,
     metaNodePort: 9090,
-    user: "admin",
-    database: "prod_db"
   },
   {
     id: "cluster-2",
@@ -22,8 +20,6 @@ const sampleClusters: Cluster[] = [
     host: "localhost",
     sqlPort: 8081,
     metaNodePort: 9091,
-    user: "admin",
-    database: "staging_db"
   },
   {
     id: "cluster-3",
@@ -32,8 +28,6 @@ const sampleClusters: Cluster[] = [
     host: "localhost",
     sqlPort: 8082,
     metaNodePort: 9092,
-    user: "admin",
-    database: "dev_db"
   },
   {
     id: "cluster-4",
@@ -42,8 +36,6 @@ const sampleClusters: Cluster[] = [
     host: "localhost",
     sqlPort: 8083,
     metaNodePort: 9093,
-    user: "admin",
-    database: "analytics_db"
   },
   {
     id: "cluster-5",
@@ -52,8 +44,6 @@ const sampleClusters: Cluster[] = [
     host: "localhost",
     sqlPort: 8084,
     metaNodePort: 9094,
-    user: "admin",
-    database: "test_db"
   },
   {
     id: "cluster-6",
@@ -62,8 +52,6 @@ const sampleClusters: Cluster[] = [
     host: "localhost",
     sqlPort: 8085,
     metaNodePort: 9095,
-    user: "admin",
-    database: "backup_db"
   },
   {
     id: "cluster-7",
@@ -72,8 +60,6 @@ const sampleClusters: Cluster[] = [
     host: "localhost",
     sqlPort: 8086,
     metaNodePort: 9096,
-    user: "admin",
-    database: "warehouse_db"
   },
   {
     id: "cluster-8",
@@ -82,8 +68,6 @@ const sampleClusters: Cluster[] = [
     host: "localhost",
     sqlPort: 8087,
     metaNodePort: 9097,
-    user: "admin",
-    database: "reporting_db"
   },
   {
     id: "cluster-9",
@@ -92,8 +76,6 @@ const sampleClusters: Cluster[] = [
     host: "localhost",
     sqlPort: 8088,
     metaNodePort: 9098,
-    user: "admin",
-    database: "qa_db"
   },
   {
     id: "cluster-10",
@@ -102,8 +84,6 @@ const sampleClusters: Cluster[] = [
     host: "localhost",
     sqlPort: 8089,
     metaNodePort: 9099,
-    user: "admin",
-    database: "archive_db"
   },
   {
     id: "cluster-11",
@@ -112,8 +92,6 @@ const sampleClusters: Cluster[] = [
     host: "localhost",
     sqlPort: 8090,
     metaNodePort: 9100,
-    user: "admin",
-    database: "ml_db"
   },
   {
     id: "cluster-12",
@@ -122,8 +100,6 @@ const sampleClusters: Cluster[] = [
     host: "localhost",
     sqlPort: 8091,
     metaNodePort: 9101,
-    user: "admin",
-    database: "cache_db"
   }
 ]
 

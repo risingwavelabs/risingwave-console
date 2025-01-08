@@ -344,7 +344,7 @@ export class DefaultService {
         /**
          * Number of items per page
          */
-        per_page: number;
+        perPage: number;
     }> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -356,7 +356,7 @@ export class DefaultService {
                 'from': from,
                 'to': to,
                 'page': page,
-                'per_page': perPage,
+                'perPage': perPage,
             },
         });
     }

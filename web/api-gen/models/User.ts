@@ -14,14 +14,14 @@ export type User = {
     /**
      * ID of the organization this user belongs to
      */
-    organization_id: number;
+    organizationID: number;
     /**
      * Creation timestamp
      */
-    created_at: string;
+    createdAt: string;
     /**
      * Last update timestamp
      */
-    updated_at: string;
+    updatedAt: string;
 };
 

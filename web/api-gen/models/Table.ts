@@ -29,7 +29,7 @@ export namespace Table {
         TABLE = 'table',
         SOURCE = 'source',
         SINK = 'sink',
-        MATERIALIZED_VIEW = 'materialized_view',
+        MATERIALIZED_VIEW = 'materializedView',
     }
 }
 

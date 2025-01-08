@@ -29,7 +29,7 @@ const (
 
 // Defines values for TableType.
 const (
-	TableTypeMaterializedView TableType = "materialized_view"
+	TableTypeMaterializedView TableType = "materializedView"
 	TableTypeSink             TableType = "sink"
 	TableTypeSource           TableType = "source"
 	TableTypeTable            TableType = "table"
@@ -37,14 +37,14 @@ const (
 
 // Cluster defines model for Cluster.
 type Cluster struct {
-	CreatedAt      time.Time `json:"created_at"`
+	CreatedAt      time.Time `json:"createdAt"`
 	Host           string    `json:"host"`
 	Id             int32     `json:"id"`
-	MetaPort       int32     `json:"meta_port"`
+	MetaPort       int32     `json:"metaPort"`
 	Name           string    `json:"name"`
-	OrganizationId int32     `json:"organization_id"`
-	SqlPort        int32     `json:"sql_port"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	OrganizationID int32     `json:"organizationID"`
+	SqlPort        int32     `json:"sqlPort"`
+	UpdatedAt      time.Time `json:"updatedAt"`
 }
 
 // ClusterCreate defines model for ClusterCreate.
@@ -86,13 +86,13 @@ type Column struct {
 // Credentials defines model for Credentials.
 type Credentials struct {
 	// AccessToken JWT access token
-	AccessToken string `json:"access_token"`
+	AccessToken string `json:"accessToken"`
 
 	// RefreshToken JWT refresh token for obtaining new access tokens
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refreshToken"`
 
 	// TokenType Token type
-	TokenType CredentialsTokenType `json:"token_type"`
+	TokenType CredentialsTokenType `json:"tokenType"`
 }
 
 // CredentialsTokenType Token type
@@ -100,11 +100,11 @@ type CredentialsTokenType string
 
 // Database defines model for Database.
 type Database struct {
-	// ClusterId ID of the cluster this database belongs to
-	ClusterId int32 `json:"cluster_id"`
+	// ClusterID ID of the cluster this database belongs to
+	ClusterID int32 `json:"clusterID"`
 
 	// CreatedAt Creation timestamp
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"createdAt"`
 
 	// Id Unique identifier of the database
 	Id int32 `json:"id"`
@@ -112,8 +112,8 @@ type Database struct {
 	// Name Name of the database
 	Name string `json:"name"`
 
-	// OrganizationId ID of the organization this database belongs to
-	OrganizationId int32 `json:"organization_id"`
+	// OrganizationID ID of the organization this database belongs to
+	OrganizationID int32 `json:"organizationID"`
 
 	// Password Database password (optional)
 	Password *string `json:"password,omitempty"`
@@ -122,7 +122,7 @@ type Database struct {
 	Tables *[]Table `json:"tables,omitempty"`
 
 	// UpdatedAt Last update timestamp
-	UpdatedAt time.Time `json:"updated_at"`
+	UpdatedAt time.Time `json:"updatedAt"`
 
 	// Username Database username (optional)
 	Username *string `json:"username,omitempty"`
@@ -176,7 +176,7 @@ type DiagnosticData struct {
 // RefreshTokenRequest defines model for RefreshTokenRequest.
 type RefreshTokenRequest struct {
 	// RefreshToken Refresh token obtained from sign-in
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 // SignInRequest defines model for SignInRequest.
@@ -191,7 +191,7 @@ type SignInRequest struct {
 // Snapshot defines model for Snapshot.
 type Snapshot struct {
 	// CreatedAt Creation timestamp of the snapshot
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"createdAt"`
 
 	// Id Unique identifier of the snapshot
 	Id string `json:"id"`
@@ -248,7 +248,7 @@ type ListClusterDiagnosticsParams struct {
 	Page *int `form:"page,omitempty" json:"page,omitempty"`
 
 	// PerPage Number of items per page
-	PerPage *int `form:"per_page,omitempty" json:"per_page,omitempty"`
+	PerPage *int `form:"perPage,omitempty" json:"perPage,omitempty"`
 }
 
 // RefreshTokenJSONRequestBody defines body for RefreshToken for application/json ContentType.
@@ -1134,7 +1134,7 @@ func NewListClusterDiagnosticsRequest(server string, id string, params *ListClus
 
 		if params.PerPage != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "perPage", runtime.ParamLocationQuery, *params.PerPage); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -1954,7 +1954,7 @@ type ListClusterDiagnosticsResponse struct {
 		Page int `json:"page"`
 
 		// PerPage Number of items per page
-		PerPage int `json:"per_page"`
+		PerPage int `json:"perPage"`
 
 		// Total Total number of diagnostic entries
 		Total int `json:"total"`
@@ -2715,7 +2715,7 @@ func ParseListClusterDiagnosticsResponse(rsp *http.Response) (*ListClusterDiagno
 			Page int `json:"page"`
 
 			// PerPage Number of items per page
-			PerPage int `json:"per_page"`
+			PerPage int `json:"perPage"`
 
 			// Total Total number of diagnostic entries
 			Total int `json:"total"`
@@ -3229,11 +3229,11 @@ func (siw *ServerInterfaceWrapper) ListClusterDiagnostics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter page: %w", err).Error())
 	}
 
-	// ------------- Optional query parameter "per_page" -------------
+	// ------------- Optional query parameter "perPage" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "per_page", query, &params.PerPage)
+	err = runtime.BindQueryParameter("form", true, false, "perPage", query, &params.PerPage)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter per_page: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter perPage: %w", err).Error())
 	}
 
 	return siw.Handler.ListClusterDiagnostics(c, id, params)

@@ -4,20 +4,21 @@ services:
     build: 
       dockerfile: ./Dockerfile.dev
     ports:
-      - "8000:8000"
+      - "8020:8020"
     command:
     - go
     - run
     - cmd/main.go
     environment:
-      ANE_PORT: 8000
-      ANE_PG_HOST: db
-      ANE_PG_PORT: 5432
-      ANE_PG_USER: postgres
-      ANE_PG_PASSWORD: postgres
-      ANE_PG_DB: postgres
-      ANE_PG_MIGRATION: ./sql/migrations
-      ANE_JWT_SECRET: 9138e41195112b568e22480f18a42dd69b38fab5ee1a36fbf63d49b22097d22a
+      WK_PORT: 8020
+      WK_PG_HOST: db
+      WK_PG_PORT: 5432
+      WK_PG_USER: postgres
+      WK_PG_PASSWORD: postgres
+      WK_PG_DB: postgres
+      WK_PG_MIGRATION: ./sql/migrations
+      WK_JWT_SECRET: 9138e41195112b568e22480f18a42dd69b38fab5ee1a36fbf63d49b22097d22a
+      WK_ROOT_PASSWORD: '123456'
     volumes:
       - ./:/app
       - go-data:/go/pkg/mod

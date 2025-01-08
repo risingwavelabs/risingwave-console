@@ -5,7 +5,7 @@
 export type CreateClusterRequest = {
     name: string;
     host: string;
-    sql_port: number;
-    meta_port: number;
+    sqlPort: number;
+    metaPort: number;
 };
 

@@ -14,7 +14,7 @@ INSERT INTO organizations (
     name
 ) VALUES (
     $1
-) ON CONFLICT (name) DO NOTHING RETURNING id, name, created_at, updated_at
+) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id, name, created_at, updated_at
 `
 
 func (q *Queries) CreateOrganization(ctx context.Context, name string) (*Organization, error) {
@@ -36,7 +36,7 @@ INSERT INTO organization_owners (
 ) VALUES (
     $1,
     $2
-)
+) ON CONFLICT (user_id, organization_id) DO NOTHING
 `
 
 type CreateOrganizationOwnerParams struct {

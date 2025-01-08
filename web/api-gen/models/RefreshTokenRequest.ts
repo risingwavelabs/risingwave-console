@@ -6,6 +6,6 @@ export type RefreshTokenRequest = {
     /**
      * Refresh token obtained from sign-in
      */
-    refresh_token: string;
+    refreshToken: string;
 };
 
