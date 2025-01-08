@@ -26,7 +26,7 @@ const schema = yup.object().shape({
     .required("SQL Port is required")
     .min(1, "Port must be greater than 0")
     .max(65535, "Port must be less than 65536"),
-  metaNodePort: yup.number()
+  metaPort: yup.number()
     .typeError("Meta Node Port must be a number")
     .required("Meta Node Port is required")
     .min(1, "Port must be greater than 0")
@@ -78,7 +78,7 @@ export function ClusterDialog({
     defaultValues: defaultValues || {
       host: "",
       sqlPort: 4566,
-      metaNodePort: 5691
+      metaPort: 5691
     }
   })
 
@@ -168,15 +168,15 @@ export function ClusterDialog({
                 )}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="metaNodePort">Meta Node Port</Label>
+                <Label htmlFor="metaPort">Meta Node Port</Label>
                 <Input
-                  id="metaNodePort"
+                  id="metaPort"
                   type="number"
-                  {...register("metaNodePort")}
-                  className={errors.metaNodePort ? "border-red-500" : ""}
+                  {...register("metaPort")}
+                  className={errors.metaPort ? "border-red-500" : ""}
                 />
-                {errors.metaNodePort && (
-                  <p className="text-sm text-red-500">{errors.metaNodePort.message}</p>
+                {errors.metaPort && (
+                  <p className="text-sm text-red-500">{errors.metaPort.message}</p>
                 )}
               </div>
             </div>

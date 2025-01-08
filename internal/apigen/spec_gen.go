@@ -49,26 +49,17 @@ type Cluster struct {
 
 // ClusterCreate defines model for ClusterCreate.
 type ClusterCreate struct {
-	// Database Database name
-	Database string `json:"database"`
-
 	// Host Cluster host address
 	Host string `json:"host"`
 
-	// MetaNodePort Metadata node port
-	MetaNodePort int `json:"metaNodePort"`
+	// MetaPort Metadata node port
+	MetaPort int `json:"metaPort"`
 
 	// Name Name of the cluster
 	Name string `json:"name"`
 
-	// Password Database password (optional)
-	Password *string `json:"password,omitempty"`
-
 	// SqlPort SQL connection port
 	SqlPort int `json:"sqlPort"`
-
-	// User Database user
-	User string `json:"user"`
 }
 
 // Column defines model for Column.
@@ -236,6 +227,14 @@ type Table struct {
 // TableType Type of the relation
 type TableType string
 
+// UpdateClusterRequest defines model for UpdateClusterRequest.
+type UpdateClusterRequest struct {
+	Host     string `json:"host"`
+	MetaPort int32  `json:"metaPort"`
+	Name     string `json:"name"`
+	SqlPort  int32  `json:"sqlPort"`
+}
+
 // ListClusterDiagnosticsParams defines parameters for ListClusterDiagnostics.
 type ListClusterDiagnosticsParams struct {
 	// From Start date for filtering diagnostic data
@@ -261,7 +260,7 @@ type SignInJSONRequestBody = SignInRequest
 type CreateClusterJSONRequestBody = ClusterCreate
 
 // UpdateClusterJSONRequestBody defines body for UpdateCluster for application/json ContentType.
-type UpdateClusterJSONRequestBody = ClusterCreate
+type UpdateClusterJSONRequestBody = UpdateClusterRequest
 
 // UpdateClusterDiagnosticConfigJSONRequestBody defines body for UpdateClusterDiagnosticConfig for application/json ContentType.
 type UpdateClusterDiagnosticConfigJSONRequestBody = DiagnosticConfig
@@ -3135,6 +3134,8 @@ func (siw *ServerInterfaceWrapper) ListClusters(c *fiber.Ctx) error {
 // CreateCluster operation middleware
 func (siw *ServerInterfaceWrapper) CreateCluster(c *fiber.Ctx) error {
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.CreateCluster(c)
 }
 
@@ -3150,6 +3151,8 @@ func (siw *ServerInterfaceWrapper) DeleteCluster(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.DeleteCluster(c, id)
 }
@@ -3167,6 +3170,8 @@ func (siw *ServerInterfaceWrapper) GetCluster(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetCluster(c, id)
 }
 
@@ -3183,6 +3188,8 @@ func (siw *ServerInterfaceWrapper) UpdateCluster(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.UpdateCluster(c, id)
 }
 
@@ -3198,6 +3205,8 @@ func (siw *ServerInterfaceWrapper) ListClusterDiagnostics(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ListClusterDiagnosticsParams
@@ -3252,6 +3261,8 @@ func (siw *ServerInterfaceWrapper) GetClusterDiagnosticConfig(c *fiber.Ctx) erro
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetClusterDiagnosticConfig(c, id)
 }
 
@@ -3267,6 +3278,8 @@ func (siw *ServerInterfaceWrapper) UpdateClusterDiagnosticConfig(c *fiber.Ctx) e
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.UpdateClusterDiagnosticConfig(c, id)
 }
@@ -3284,6 +3297,8 @@ func (siw *ServerInterfaceWrapper) GetClusterSnapshotConfig(c *fiber.Ctx) error 
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetClusterSnapshotConfig(c, id)
 }
 
@@ -3299,6 +3314,8 @@ func (siw *ServerInterfaceWrapper) UpdateClusterSnapshotConfig(c *fiber.Ctx) err
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.UpdateClusterSnapshotConfig(c, id)
 }
@@ -3316,6 +3333,8 @@ func (siw *ServerInterfaceWrapper) ListClusterSnapshots(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.ListClusterSnapshots(c, id)
 }
 
@@ -3331,6 +3350,8 @@ func (siw *ServerInterfaceWrapper) CreateClusterSnapshot(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.CreateClusterSnapshot(c, id)
 }
@@ -3356,6 +3377,8 @@ func (siw *ServerInterfaceWrapper) DeleteClusterSnapshot(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter snapshotId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.DeleteClusterSnapshot(c, id, snapshotId)
 }
 
@@ -3380,17 +3403,23 @@ func (siw *ServerInterfaceWrapper) RestoreClusterSnapshot(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter snapshotId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.RestoreClusterSnapshot(c, id, snapshotId)
 }
 
 // ListDatabases operation middleware
 func (siw *ServerInterfaceWrapper) ListDatabases(c *fiber.Ctx) error {
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.ListDatabases(c)
 }
 
 // CreateDatabase operation middleware
 func (siw *ServerInterfaceWrapper) CreateDatabase(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.CreateDatabase(c)
 }
@@ -3408,6 +3437,8 @@ func (siw *ServerInterfaceWrapper) DeleteDatabase(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.DeleteDatabase(c, id)
 }
 
@@ -3424,6 +3455,8 @@ func (siw *ServerInterfaceWrapper) GetDatabase(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetDatabase(c, id)
 }
 
@@ -3439,6 +3472,8 @@ func (siw *ServerInterfaceWrapper) UpdateDatabase(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.UpdateDatabase(c, id)
 }

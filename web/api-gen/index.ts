@@ -10,7 +10,6 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export type { Cluster } from './models/Cluster';
 export type { ClusterCreate } from './models/ClusterCreate';
 export type { Column } from './models/Column';
-export type { CreateClusterRequest } from './models/CreateClusterRequest';
 export { Credentials } from './models/Credentials';
 export type { Database } from './models/Database';
 export type { DatabaseConnectInfo } from './models/DatabaseConnectInfo';

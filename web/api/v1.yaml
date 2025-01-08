@@ -15,6 +15,8 @@ paths:
       summary: List all databases
       description: Retrieve a list of all databases and their tables
       operationId: listDatabases
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Successfully retrieved database list
@@ -28,6 +30,8 @@ paths:
       summary: Create a new database
       description: Create a new database
       operationId: createDatabase
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -54,6 +58,8 @@ paths:
       summary: Get database details
       description: Retrieve details of a specific database
       operationId: getDatabase
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Successfully retrieved database
@@ -65,6 +71,8 @@ paths:
       summary: Update database
       description: Update a specific database
       operationId: updateDatabase
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -82,6 +90,8 @@ paths:
       summary: Delete database
       description: Delete a specific database
       operationId: deleteDatabase
+      security:
+        - BearerAuth: []
       responses:
         '204':
           description: Database deleted successfully
@@ -121,6 +131,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Cluster'
 
+      security:
+        - BearerAuth: []
+
   /clusters/{id}:
     parameters:
       - name: id
@@ -132,6 +145,8 @@ paths:
       summary: Get cluster details
       description: Retrieve details of a specific cluster
       operationId: getCluster
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Successfully retrieved cluster
@@ -139,6 +154,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Cluster'
+    security:
+        - BearerAuth: []
+
     put:
       summary: Update cluster
       description: Update a specific cluster
@@ -148,7 +166,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ClusterCreate'
+              $ref: '#/components/schemas/UpdateClusterRequest'
       responses:
         '200':
           description: Cluster updated successfully
@@ -156,10 +174,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Cluster'
+      security:
+        - BearerAuth: []
+
     delete:
       summary: Delete cluster
       description: Delete a specific cluster
       operationId: deleteCluster
+      security:
+        - BearerAuth: []
       responses:
         '204':
           description: Cluster deleted successfully
@@ -175,6 +198,8 @@ paths:
       summary: List cluster snapshots
       description: Retrieve a list of all snapshots for a specific cluster
       operationId: listClusterSnapshots
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Successfully retrieved snapshot list
@@ -188,6 +213,8 @@ paths:
       summary: Create a new snapshot
       description: Create a new metadata snapshot for a specific cluster
       operationId: createClusterSnapshot
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -218,6 +245,8 @@ paths:
       summary: Delete snapshot
       description: Delete a specific snapshot
       operationId: deleteClusterSnapshot
+      security:
+        - BearerAuth: []
       responses:
         '204':
           description: Snapshot deleted successfully
@@ -225,6 +254,8 @@ paths:
       summary: Restore snapshot
       description: Restore cluster metadata from a specific snapshot
       operationId: restoreClusterSnapshot
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Snapshot restored successfully
@@ -240,6 +271,8 @@ paths:
       summary: Get snapshot configuration
       description: Get automatic snapshot configuration for a cluster
       operationId: getClusterSnapshotConfig
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Successfully retrieved snapshot configuration
@@ -251,6 +284,8 @@ paths:
       summary: Update snapshot configuration
       description: Update automatic snapshot configuration for a cluster
       operationId: updateClusterSnapshotConfig
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -276,6 +311,8 @@ paths:
       summary: List diagnostic data
       description: Retrieve diagnostic data for a specific cluster with optional date range filtering
       operationId: listClusterDiagnostics
+      security:
+        - BearerAuth: []
       parameters:
         - name: from
           in: query
@@ -346,6 +383,8 @@ paths:
       summary: Get diagnostic configuration
       description: Get diagnostic data collection configuration for a cluster
       operationId: getClusterDiagnosticConfig
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Successfully retrieved diagnostic configuration
@@ -357,6 +396,8 @@ paths:
       summary: Update diagnostic configuration
       description: Update diagnostic data collection configuration for a cluster
       operationId: updateClusterDiagnosticConfig
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -542,9 +583,7 @@ components:
         - name
         - host
         - sqlPort
-        - metaNodePort
-        - user
-        - database
+        - metaPort
       properties:
         name:
           type: string
@@ -555,19 +594,9 @@ components:
         sqlPort:
           type: integer
           description: SQL connection port
-        metaNodePort:
+        metaPort:
           type: integer
           description: Metadata node port
-        user:
-          type: string
-          description: Database user
-        password:
-          type: string
-          description: Database password (optional)
-          format: password
-        database:
-          type: string
-          description: Database name
 
     Cluster:
       type: object
@@ -603,25 +632,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-
-    CreateClusterRequest:
-      type: object
-      required:
-        - name
-        - host
-        - sqlPort
-        - metaPort
-      properties:
-        name:
-          type: string
-        host:
-          type: string
-        sqlPort:
-          type: integer
-          format: int32
-        metaPort:
-          type: integer
-          format: int32
 
     UpdateClusterRequest:
       type: object

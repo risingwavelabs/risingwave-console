@@ -187,7 +187,7 @@ func (s *Service) CreateCluster(ctx context.Context, params apigen.ClusterCreate
 		Name:           params.Name,
 		Host:           params.Host,
 		SqlPort:        int32(params.SqlPort),
-		MetaPort:       int32(params.MetaNodePort),
+		MetaPort:       int32(params.MetaPort),
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create cluster")
@@ -257,7 +257,7 @@ func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.Clu
 		Name:     params.Name,
 		Host:     params.Host,
 		SqlPort:  int32(params.SqlPort),
-		MetaPort: int32(params.MetaNodePort),
+		MetaPort: int32(params.MetaPort),
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {

@@ -3,11 +3,12 @@
 import { useEffect, useState, useRef } from "react"
 import { DndProvider, useDrag, useDrop } from "react-dnd"
 import { HTML5Backend } from "react-dnd-html5-backend"
-import { GripVertical, LayoutGrid, List } from "lucide-react"
+import { GripVertical, LayoutGrid, List, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "./button"
 import { Card, CardContent } from "./card"
 import { ClusterDialog, ClusterFormData } from "./new-cluster-dialog"
+import { ConfirmationPopup } from "./confirmation-popup"
 
 export interface Cluster {
   id: string
@@ -15,7 +16,7 @@ export interface Cluster {
   status: "running" | "stopped" | "error"
   host: string
   sqlPort: number
-  metaNodePort: number
+  metaPort: number
 }
 
 type ViewMode = "grid" | "list"
@@ -23,6 +24,7 @@ type ViewMode = "grid" | "list"
 interface ClusterListProps {
   clusters: Cluster[]
   onEdit?: (cluster: Cluster) => void
+  onDelete?: (cluster: Cluster) => void
 }
 
 const STORAGE_KEY = "cluster-order"
@@ -37,15 +39,17 @@ interface DraggableClusterItemProps {
   moveCluster: (dragIndex: number, hoverIndex: number) => void
   viewMode: ViewMode
   onEdit?: (cluster: Cluster) => void
+  onDelete?: (cluster: Cluster) => void
 }
 
 interface DragItem {
   index: number
 }
 
-function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit }: DraggableClusterItemProps) {
+function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit, onDelete }: DraggableClusterItemProps) {
   const ref = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: string | symbol | null }>({
     accept: ItemTypes.CLUSTER,
@@ -133,7 +137,7 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit }:
                     name: cluster.name,
                     host: cluster.host,
                     sqlPort: cluster.sqlPort,
-                    metaNodePort: cluster.metaNodePort
+                    metaPort: cluster.metaPort
                   }}
                   trigger={<Button variant="outline" size="sm">Edit</Button>}
                   onSubmit={(data: ClusterFormData) => onEdit?.({
@@ -149,11 +153,31 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit }:
                 >
                   Manage
                 </Button>
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-500 hover:text-red-600"
+                    onClick={() => setDeleteConfirmOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  {deleteConfirmOpen && (
+                    <ConfirmationPopup
+                      message="Delete this cluster?"
+                      onConfirm={() => {
+                        onDelete?.(cluster)
+                        setDeleteConfirmOpen(false)
+                      }}
+                      onCancel={() => setDeleteConfirmOpen(false)}
+                    />
+                  )}
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-sm text-muted-foreground">
               <div>Host: <span className="text-foreground">{cluster.host}</span></div>
-              <div>SQL Port: <span className="text-foreground">{cluster.sqlPort}</span> Meta Port: <span className="text-foreground">{cluster.metaNodePort}</span></div>
+              <div>SQL Port: <span className="text-foreground">{cluster.sqlPort}</span> Meta Port: <span className="text-foreground">{cluster.metaPort}</span></div>
             </div>
           </div>
         </CardContent>
@@ -162,7 +186,7 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit }:
   )
 }
 
-export function ClusterList({ clusters: initialClusters, onEdit }: ClusterListProps) {
+export function ClusterList({ clusters: initialClusters, onEdit, onDelete }: ClusterListProps) {
   const [clusters, setClusters] = useState<Cluster[]>(initialClusters)
   const [viewMode, setViewMode] = useState<ViewMode>("list")
 
@@ -242,6 +266,7 @@ export function ClusterList({ clusters: initialClusters, onEdit }: ClusterListPr
                 moveCluster={moveCluster}
                 viewMode={viewMode}
                 onEdit={onEdit}
+                onDelete={onDelete}
               />
             ))}
           </div>

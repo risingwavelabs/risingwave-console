@@ -14,6 +14,7 @@ import type { SignInRequest } from '../models/SignInRequest';
 import type { Snapshot } from '../models/Snapshot';
 import type { SnapshotConfig } from '../models/SnapshotConfig';
 import type { SnapshotCreate } from '../models/SnapshotCreate';
+import type { UpdateClusterRequest } from '../models/UpdateClusterRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -162,7 +163,7 @@ export class DefaultService {
      */
     public static updateCluster(
         id: string,
-        requestBody: ClusterCreate,
+        requestBody: UpdateClusterRequest,
     ): CancelablePromise<Cluster> {
         return __request(OpenAPI, {
             method: 'PUT',

@@ -18,18 +18,6 @@ export type ClusterCreate = {
     /**
      * Metadata node port
      */
-    metaNodePort: number;
-    /**
-     * Database user
-     */
-    user: string;
-    /**
-     * Database password (optional)
-     */
-    password?: string;
-    /**
-     * Database name
-     */
-    database: string;
+    metaPort: number;
 };
 

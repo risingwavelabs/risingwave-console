@@ -1,128 +1,91 @@
 "use client"
 
-import { useState } from "react"
-import { ClusterList, Cluster } from "@/components/ui/cluster-list"
+import { useEffect, useState } from "react"
+import { ClusterList, Cluster as UICluster } from "@/components/ui/cluster-list"
 import { ClusterDialog, ClusterFormData } from "@/components/ui/new-cluster-dialog"
+import { DefaultService } from "@/api-gen"
+import { Cluster as APICluster } from "@/api-gen/models/Cluster"
+import toast from "react-hot-toast"
 
-const sampleClusters: Cluster[] = [
-  {
-    id: "cluster-1",
-    name: "Production DB",
-    status: "running",
-    host: "localhost",
-    sqlPort: 8080,
-    metaNodePort: 9090,
-  },
-  {
-    id: "cluster-2",
-    name: "Staging Environment",
-    status: "running",
-    host: "localhost",
-    sqlPort: 8081,
-    metaNodePort: 9091,
-  },
-  {
-    id: "cluster-3",
-    name: "Development DB",
-    status: "stopped",
-    host: "localhost",
-    sqlPort: 8082,
-    metaNodePort: 9092,
-  },
-  {
-    id: "cluster-4",
-    name: "Analytics Cluster",
-    status: "running",
-    host: "localhost",
-    sqlPort: 8083,
-    metaNodePort: 9093,
-  },
-  {
-    id: "cluster-5",
-    name: "Testing Environment",
-    status: "error",
-    host: "localhost",
-    sqlPort: 8084,
-    metaNodePort: 9094,
-  },
-  {
-    id: "cluster-6",
-    name: "Backup DB",
-    status: "stopped",
-    host: "localhost",
-    sqlPort: 8085,
-    metaNodePort: 9095,
-  },
-  {
-    id: "cluster-7",
-    name: "Data Warehouse",
-    status: "running",
-    host: "localhost",
-    sqlPort: 8086,
-    metaNodePort: 9096,
-  },
-  {
-    id: "cluster-8",
-    name: "Reporting DB",
-    status: "running",
-    host: "localhost",
-    sqlPort: 8087,
-    metaNodePort: 9097,
-  },
-  {
-    id: "cluster-9",
-    name: "QA Environment",
-    status: "stopped",
-    host: "localhost",
-    sqlPort: 8088,
-    metaNodePort: 9098,
-  },
-  {
-    id: "cluster-10",
-    name: "Archive DB",
-    status: "running",
-    host: "localhost",
-    sqlPort: 8089,
-    metaNodePort: 9099,
-  },
-  {
-    id: "cluster-11",
-    name: "ML Training Cluster",
-    status: "error",
-    host: "localhost",
-    sqlPort: 8090,
-    metaNodePort: 9100,
-  },
-  {
-    id: "cluster-12",
-    name: "Cache Cluster",
-    status: "running",
-    host: "localhost",
-    sqlPort: 8091,
-    metaNodePort: 9101,
+function mapAPIClusterToUICluster(apiCluster: APICluster): UICluster {
+  return {
+    id: apiCluster.id.toString(),
+    name: apiCluster.name,
+    status: "running", // You might want to derive this from API data
+    host: apiCluster.host,
+    sqlPort: apiCluster.sqlPort,
+    metaPort: apiCluster.metaPort,
   }
-]
-
-function generateUniqueId() {
-  return `cluster-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 }
 
 export default function ClustersPage() {
-  const [clusters, setClusters] = useState<Cluster[]>(sampleClusters)
+  const [clusters, setClusters] = useState<UICluster[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const handleCreateCluster = (data: ClusterFormData) => {
-    const newCluster: Cluster = {
-      id: generateUniqueId(),
-      status: "stopped",
-      ...data
+  useEffect(() => {
+    const fetchClusters = async () => {
+      try {
+        const data = await DefaultService.listClusters()
+        setClusters(data.map(mapAPIClusterToUICluster))
+      } catch (error) {
+        toast.error("Failed to load clusters")
+        console.error("Error loading clusters:", error)
+      } finally {
+        setLoading(false)
+      }
     }
-    setClusters(prev => [...prev, newCluster])
+
+    void fetchClusters()
+  }, [])
+
+  const handleCreateCluster = async (data: ClusterFormData) => {
+    try {
+      const newCluster = await DefaultService.createCluster(data)
+      setClusters(prev => [...prev, mapAPIClusterToUICluster(newCluster)])
+      toast.success("Cluster created successfully")
+    } catch (error) {
+      toast.error("Failed to create cluster")
+      console.error("Error creating cluster:", error)
+    }
   }
 
-  const handleEditCluster = (cluster: Cluster) => {
-    setClusters(prev => prev.map(c => 
-      c.id === cluster.id ? cluster : c
-    ))
+  const handleEditCluster = async (cluster: UICluster) => {
+    try {
+      const updatedCluster = await DefaultService.updateCluster(cluster.id, {
+        name: cluster.name,
+        host: cluster.host,
+        sqlPort: cluster.sqlPort,
+        metaPort: cluster.metaPort,
+      })
+      setClusters(prev => prev.map(c => 
+        c.id === cluster.id ? mapAPIClusterToUICluster(updatedCluster) : c
+      ))
+      toast.success("Cluster updated successfully")
+    } catch (error) {
+      toast.error("Failed to update cluster")
+      console.error("Error updating cluster:", error)
+    }
+  }
+
+  const handleDeleteCluster = async (cluster: UICluster) => {
+    try {
+      await DefaultService.deleteCluster(cluster.id)
+      setClusters(prev => prev.filter(c => c.id !== cluster.id))
+      toast.success("Cluster deleted successfully")
+    } catch (error) {
+      toast.error("Failed to delete cluster")
+      console.error("Error deleting cluster:", error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="flex items-center justify-center h-[200px]">
+          <div className="text-muted-foreground">Loading clusters...</div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -139,6 +102,7 @@ export default function ClustersPage() {
       <ClusterList 
         clusters={clusters}
         onEdit={handleEditCluster}
+        onDelete={handleDeleteCluster}
       />
     </div>
   )

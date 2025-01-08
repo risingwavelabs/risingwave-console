@@ -24,6 +24,9 @@ gen-spec: install-oapi-codegen-fiber install-oapi-codegen prune-spec
 	$(OAPI_CODEGEN_BIN) -generate $(OAPI_GENERATE_ARG) -o $(OAPI_GEN_DIR)/spec_gen.go -package apigen $(PROJECT_DIR)/web/api/v1.yaml
 	$(PROJECT_DIR)/bin/oapi-codegen-fiber --package apigen --path $(PROJECT_DIR)/web/api/v1.yaml --out $(PROJECT_DIR)/internal/apigen/scopes_extend_gen.go
 
+gen-frontend-client:
+	cd web && pnpm run gen
+
 ###################################################
 ### Wire
 ###################################################
@@ -75,7 +78,7 @@ gen-mock: install-mockgen
 ### Common
 ###################################################
 
-gen: gen-spec gen-querier gen-wire gen-mock
+gen: gen-spec gen-querier gen-wire gen-mock gen-frontend-client
 	@go mod tidy
 
 ###################################################
