@@ -9,7 +9,7 @@ import toast from "react-hot-toast"
 
 function mapAPIClusterToUICluster(apiCluster: APICluster): UICluster {
   return {
-    id: apiCluster.id.toString(),
+    id: apiCluster.ID.toString(),
     name: apiCluster.name,
     status: "running", // You might want to derive this from API data
     host: apiCluster.host,

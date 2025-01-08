@@ -6,7 +6,7 @@ export type Snapshot = {
     /**
      * Unique identifier of the snapshot
      */
-    id: string;
+    ID: string;
     /**
      * Name of the snapshot
      */

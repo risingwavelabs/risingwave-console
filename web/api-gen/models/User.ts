@@ -6,7 +6,7 @@ export type User = {
     /**
      * Unique identifier of the user
      */
-    id: number;
+    ID: number;
     /**
      * User's name
      */

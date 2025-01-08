@@ -46,9 +46,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/Database'
 
-  /databases/{id}:
+  /databases/test-connection:
+    post:
+      summary: Test database connection
+      description: Test a database connection
+      operationId: testDatabaseConnection
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully tested database connection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestConnectionResult'
+
+  /databases/{ID}:
     parameters:
-      - name: id
+      - name: ID
         in: path
         required: true
         schema:
@@ -96,6 +111,71 @@ paths:
         '204':
           description: Database deleted successfully
 
+  /databases/{ID}/query:
+    post:
+      parameters:
+        - name: ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      summary: Query database
+      description: Query a specific database
+      operationId: queryDatabase
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+
+  /databases/{ID}/ddl-progress:
+    get:
+      parameters:
+        - name: ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      summary: Get DDL progress
+      description: Get the progress of a DDL operation
+      operationId: get DDL progress
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved DDL progress
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DDLProgress'
+    
+  /databases/{ID}/ddl-progress/{ddlID}/cancel:
+    post:
+      parameters:
+        - name: ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: ddlID
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully canceled DDL operation
+
   /clusters:
     get:
       summary: List all clusters
@@ -134,9 +214,9 @@ paths:
       security:
         - BearerAuth: []
 
-  /clusters/{id}:
+  /clusters/{ID}:
     parameters:
-      - name: id
+      - name: ID
         in: path
         required: true
         schema:
@@ -187,9 +267,9 @@ paths:
         '204':
           description: Cluster deleted successfully
 
-  /clusters/{id}/snapshots:
+  /clusters/{ID}/snapshots:
     parameters:
-      - name: id
+      - name: ID
         in: path
         required: true
         schema:
@@ -229,9 +309,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Snapshot'
 
-  /clusters/{id}/snapshots/{snapshotId}:
+  /clusters/{ID}/snapshots/{snapshotId}:
     parameters:
-      - name: id
+      - name: ID
         in: path
         required: true
         schema:
@@ -260,9 +340,9 @@ paths:
         '200':
           description: Snapshot restored successfully
 
-  /clusters/{id}/snapshot-config:
+  /clusters/{ID}/snapshot-config:
     parameters:
-      - name: id
+      - name: ID
         in: path
         required: true
         schema:
@@ -300,9 +380,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/SnapshotConfig'
 
-  /clusters/{id}/diagnostics:
+  /clusters/{ID}/diagnostics:
     parameters:
-      - name: id
+      - name: ID
         in: path
         required: true
         schema:
@@ -372,9 +452,9 @@ paths:
                     type: integer
                     description: Number of items per page
 
-  /clusters/{id}/diagnostics/config:
+  /clusters/{ID}/diagnostics/config:
     parameters:
-      - name: id
+      - name: ID
         in: path
         required: true
         schema:
@@ -493,14 +573,14 @@ components:
     Database:
       type: object
       required:
-        - id
+        - ID
         - name
         - clusterID
         - organizationID
         - createdAt
         - updatedAt
       properties:
-        id:
+        ID:
           type: integer
           format: int32
           description: Unique identifier of the database
@@ -530,20 +610,20 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
-        tables:
+        relations:
           type: array
           items:
-            $ref: '#/components/schemas/Table'
-          description: List of tables in the database
+            $ref: '#/components/schemas/Relation'
+          description: List of relations in the database
 
     Column:
       type: object
       required:
-        - id
+        - ID
         - name
         - type
       properties:
-        id:
+        ID:
           type: string
           description: Unique identifier of the column
         name:
@@ -553,15 +633,16 @@ components:
           type: string
           description: Data type of the column
 
-    Table:
+    Relation:
       type: object
       required:
-        - id
+        - ID
         - name
         - type
         - columns
+        - dependencies
       properties:
-        id:
+        ID:
           type: string
           description: Unique identifier of the table
         name:
@@ -576,6 +657,11 @@ components:
           items:
             $ref: '#/components/schemas/Column'
           description: List of columns in the table
+        dependencies:
+          type: array
+          items:
+            type: string
+            description: ID of the relation this relation depends on
 
     ClusterCreate:
       type: object
@@ -601,7 +687,7 @@ components:
     Cluster:
       type: object
       required:
-        - id
+        - ID
         - organizationID
         - name
         - host
@@ -610,7 +696,7 @@ components:
         - createdAt
         - updatedAt
       properties:
-        id:
+        ID:
           type: integer
           format: int32
         organizationID:
@@ -664,11 +750,11 @@ components:
     Snapshot:
       type: object
       required:
-        - id
+        - ID
         - name
         - createdAt
       properties:
-        id:
+        ID:
           type: string
           description: Unique identifier of the snapshot
         name:
@@ -717,11 +803,11 @@ components:
     DiagnosticData:
       type: object
       required:
-        - id
+        - ID
         - timestamp
         - data
       properties:
-        id:
+        ID:
           type: integer
           description: Unique identifier of the diagnostic entry
         timestamp:
@@ -776,13 +862,13 @@ components:
     User:
       type: object
       required:
-        - id
+        - ID
         - name
         - organizationID
         - createdAt
         - updatedAt
       properties:
-        id:
+        ID:
           type: integer
           format: int32
           description: Unique identifier of the user
@@ -801,3 +887,59 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
+
+    QueryRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: SQL query to execute
+
+    QueryResponse:
+      type: object
+      required:
+        - columns
+        - rows
+      properties:
+        columns:
+          type: array
+          items:
+            type: string
+        rows:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+
+    DDLProgress:
+      type: object
+      required: [ID, statement, progress, initializedAt]
+      properties:
+        ID:
+          type: integer
+          format: int64
+        statement:
+          type: string
+        progress:
+          type: string
+          description: Progress of the materialized view creation
+        initializedAt:
+          type: string
+          format: date-time
+          description: When the DDL operation was initialized
+
+    TestConnectionResult:
+      type: object
+      required:
+        - result
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Whether the database connection was successful
+        result:
+          type: string
+          description: Test result

@@ -3,11 +3,11 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Column } from './Column';
-export type Table = {
+export type Relation = {
     /**
      * Unique identifier of the table
      */
-    id: string;
+    ID: string;
     /**
      * Name of the table
      */
@@ -15,13 +15,14 @@ export type Table = {
     /**
      * Type of the relation
      */
-    type: Table.type;
+    type: Relation.type;
     /**
      * List of columns in the table
      */
     columns: Array<Column>;
+    dependencies: Array<string>;
 };
-export namespace Table {
+export namespace Relation {
     /**
      * Type of the relation
      */

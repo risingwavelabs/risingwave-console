@@ -6,7 +6,7 @@ export type Column = {
     /**
      * Unique identifier of the column
      */
-    id: string;
+    ID: string;
     /**
      * Name of the column
      */

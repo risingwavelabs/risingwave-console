@@ -2,12 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { Table } from './Table';
+import type { Relation } from './Relation';
 export type Database = {
     /**
      * Unique identifier of the database
      */
-    id: number;
+    ID: number;
     /**
      * Name of the database
      */
@@ -37,8 +37,8 @@ export type Database = {
      */
     updatedAt: string;
     /**
-     * List of tables in the database
+     * List of relations in the database
      */
-    tables?: Array<Table>;
+    relations?: Array<Relation>;
 };
 

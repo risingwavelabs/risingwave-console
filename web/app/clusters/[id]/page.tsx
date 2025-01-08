@@ -92,7 +92,7 @@ export default function ClusterPage() {
         const data = await DefaultService.getCluster(clusterId)
         // Transform API data to match our UI needs
         const transformedData: ClusterData = {
-          id: data.id.toString(),
+          id: data.ID.toString(),
           name: data.name,
           status: "running", // You might want to derive this from API data
           host: data.host,

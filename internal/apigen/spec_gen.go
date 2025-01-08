@@ -27,19 +27,19 @@ const (
 	Bearer CredentialsTokenType = "Bearer"
 )
 
-// Defines values for TableType.
+// Defines values for RelationType.
 const (
-	TableTypeMaterializedView TableType = "materializedView"
-	TableTypeSink             TableType = "sink"
-	TableTypeSource           TableType = "source"
-	TableTypeTable            TableType = "table"
+	MaterializedView RelationType = "materializedView"
+	Sink             RelationType = "sink"
+	Source           RelationType = "source"
+	Table            RelationType = "table"
 )
 
 // Cluster defines model for Cluster.
 type Cluster struct {
+	ID             int32     `json:"ID"`
 	CreatedAt      time.Time `json:"createdAt"`
 	Host           string    `json:"host"`
-	Id             int32     `json:"id"`
 	MetaPort       int32     `json:"metaPort"`
 	Name           string    `json:"name"`
 	OrganizationID int32     `json:"organizationID"`
@@ -64,8 +64,8 @@ type ClusterCreate struct {
 
 // Column defines model for Column.
 type Column struct {
-	// Id Unique identifier of the column
-	Id string `json:"id"`
+	// ID Unique identifier of the column
+	ID string `json:"ID"`
 
 	// Name Name of the column
 	Name string `json:"name"`
@@ -89,16 +89,28 @@ type Credentials struct {
 // CredentialsTokenType Token type
 type CredentialsTokenType string
 
+// DDLProgress defines model for DDLProgress.
+type DDLProgress struct {
+	ID int64 `json:"ID"`
+
+	// InitializedAt When the DDL operation was initialized
+	InitializedAt time.Time `json:"initializedAt"`
+
+	// Progress Progress of the materialized view creation
+	Progress  string `json:"progress"`
+	Statement string `json:"statement"`
+}
+
 // Database defines model for Database.
 type Database struct {
+	// ID Unique identifier of the database
+	ID int32 `json:"ID"`
+
 	// ClusterID ID of the cluster this database belongs to
 	ClusterID int32 `json:"clusterID"`
 
 	// CreatedAt Creation timestamp
 	CreatedAt time.Time `json:"createdAt"`
-
-	// Id Unique identifier of the database
-	Id int32 `json:"id"`
 
 	// Name Name of the database
 	Name string `json:"name"`
@@ -109,8 +121,8 @@ type Database struct {
 	// Password Database password (optional)
 	Password *string `json:"password,omitempty"`
 
-	// Tables List of tables in the database
-	Tables *[]Table `json:"tables,omitempty"`
+	// Relations List of relations in the database
+	Relations *[]Relation `json:"relations,omitempty"`
 
 	// UpdatedAt Last update timestamp
 	UpdatedAt time.Time `json:"updatedAt"`
@@ -154,14 +166,20 @@ type DiagnosticConfig struct {
 
 // DiagnosticData defines model for DiagnosticData.
 type DiagnosticData struct {
+	// ID Unique identifier of the diagnostic entry
+	ID int `json:"ID"`
+
 	// Data Raw diagnostic data message containing system metrics and information
 	Data string `json:"data"`
 
-	// Id Unique identifier of the diagnostic entry
-	Id int `json:"id"`
-
 	// Timestamp When the diagnostic data was collected
 	Timestamp time.Time `json:"timestamp"`
+}
+
+// QueryRequest defines model for QueryRequest.
+type QueryRequest struct {
+	// Query SQL query to execute
+	Query string `json:"query"`
 }
 
 // RefreshTokenRequest defines model for RefreshTokenRequest.
@@ -169,6 +187,25 @@ type RefreshTokenRequest struct {
 	// RefreshToken Refresh token obtained from sign-in
 	RefreshToken string `json:"refreshToken"`
 }
+
+// Relation defines model for Relation.
+type Relation struct {
+	// ID Unique identifier of the table
+	ID string `json:"ID"`
+
+	// Columns List of columns in the table
+	Columns      []Column `json:"columns"`
+	Dependencies []string `json:"dependencies"`
+
+	// Name Name of the table
+	Name string `json:"name"`
+
+	// Type Type of the relation
+	Type RelationType `json:"type"`
+}
+
+// RelationType Type of the relation
+type RelationType string
 
 // SignInRequest defines model for SignInRequest.
 type SignInRequest struct {
@@ -181,11 +218,11 @@ type SignInRequest struct {
 
 // Snapshot defines model for Snapshot.
 type Snapshot struct {
+	// ID Unique identifier of the snapshot
+	ID string `json:"ID"`
+
 	// CreatedAt Creation timestamp of the snapshot
 	CreatedAt time.Time `json:"createdAt"`
-
-	// Id Unique identifier of the snapshot
-	Id string `json:"id"`
 
 	// Name Name of the snapshot
 	Name string `json:"name"`
@@ -209,23 +246,14 @@ type SnapshotCreate struct {
 	Name string `json:"name"`
 }
 
-// Table defines model for Table.
-type Table struct {
-	// Columns List of columns in the table
-	Columns []Column `json:"columns"`
+// TestConnectionResult defines model for TestConnectionResult.
+type TestConnectionResult struct {
+	// Result Test result
+	Result string `json:"result"`
 
-	// Id Unique identifier of the table
-	Id string `json:"id"`
-
-	// Name Name of the table
-	Name string `json:"name"`
-
-	// Type Type of the relation
-	Type TableType `json:"type"`
+	// Success Whether the database connection was successful
+	Success bool `json:"success"`
 }
-
-// TableType Type of the relation
-type TableType string
 
 // UpdateClusterRequest defines model for UpdateClusterRequest.
 type UpdateClusterRequest struct {
@@ -276,6 +304,9 @@ type CreateDatabaseJSONRequestBody = DatabaseConnectInfo
 
 // UpdateDatabaseJSONRequestBody defines body for UpdateDatabase for application/json ContentType.
 type UpdateDatabaseJSONRequestBody = DatabaseConnectInfo
+
+// QueryDatabaseJSONRequestBody defines body for QueryDatabase for application/json ContentType.
+type QueryDatabaseJSONRequestBody = QueryRequest
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -369,48 +400,48 @@ type ClientInterface interface {
 	CreateCluster(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteCluster request
-	DeleteCluster(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteCluster(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetCluster request
-	GetCluster(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetCluster(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateClusterWithBody request with any body
-	UpdateClusterWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateClusterWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateCluster(ctx context.Context, id string, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateCluster(ctx context.Context, iD string, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListClusterDiagnostics request
-	ListClusterDiagnostics(ctx context.Context, id string, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListClusterDiagnostics(ctx context.Context, iD string, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetClusterDiagnosticConfig request
-	GetClusterDiagnosticConfig(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetClusterDiagnosticConfig(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateClusterDiagnosticConfigWithBody request with any body
-	UpdateClusterDiagnosticConfigWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateClusterDiagnosticConfig(ctx context.Context, id string, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateClusterDiagnosticConfig(ctx context.Context, iD string, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetClusterSnapshotConfig request
-	GetClusterSnapshotConfig(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetClusterSnapshotConfig(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateClusterSnapshotConfigWithBody request with any body
-	UpdateClusterSnapshotConfigWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateClusterSnapshotConfigWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateClusterSnapshotConfig(ctx context.Context, id string, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateClusterSnapshotConfig(ctx context.Context, iD string, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListClusterSnapshots request
-	ListClusterSnapshots(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListClusterSnapshots(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateClusterSnapshotWithBody request with any body
-	CreateClusterSnapshotWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateClusterSnapshotWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateClusterSnapshot(ctx context.Context, id string, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateClusterSnapshot(ctx context.Context, iD string, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteClusterSnapshot request
-	DeleteClusterSnapshot(ctx context.Context, id string, snapshotId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteClusterSnapshot(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// RestoreClusterSnapshot request
-	RestoreClusterSnapshot(ctx context.Context, id string, snapshotId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	RestoreClusterSnapshot(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListDatabases request
 	ListDatabases(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -420,16 +451,30 @@ type ClientInterface interface {
 
 	CreateDatabase(ctx context.Context, body CreateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestDatabaseConnection request
+	TestDatabaseConnection(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// DeleteDatabase request
-	DeleteDatabase(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteDatabase(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDatabase request
-	GetDatabase(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetDatabase(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateDatabaseWithBody request with any body
-	UpdateDatabaseWithBody(ctx context.Context, id int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateDatabaseWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateDatabase(ctx context.Context, id int32, body UpdateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateDatabase(ctx context.Context, iD int32, body UpdateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetDDLProgress request
+	GetDDLProgress(ctx context.Context, iD int64, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostDatabasesIDDdlProgressDdlIDCancel request
+	PostDatabasesIDDdlProgressDdlIDCancel(ctx context.Context, iD int64, ddlID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// QueryDatabaseWithBody request with any body
+	QueryDatabaseWithBody(ctx context.Context, iD int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	QueryDatabase(ctx context.Context, iD int64, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) RefreshTokenWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -516,8 +561,8 @@ func (c *Client) CreateCluster(ctx context.Context, body CreateClusterJSONReques
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteCluster(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteClusterRequest(c.Server, id)
+func (c *Client) DeleteCluster(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteClusterRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -528,8 +573,8 @@ func (c *Client) DeleteCluster(ctx context.Context, id string, reqEditors ...Req
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetCluster(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetClusterRequest(c.Server, id)
+func (c *Client) GetCluster(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetClusterRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -540,8 +585,8 @@ func (c *Client) GetCluster(ctx context.Context, id string, reqEditors ...Reques
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateClusterWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateClusterRequestWithBody(c.Server, id, contentType, body)
+func (c *Client) UpdateClusterWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateClusterRequestWithBody(c.Server, iD, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -552,8 +597,8 @@ func (c *Client) UpdateClusterWithBody(ctx context.Context, id string, contentTy
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateCluster(ctx context.Context, id string, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateClusterRequest(c.Server, id, body)
+func (c *Client) UpdateCluster(ctx context.Context, iD string, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateClusterRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
 	}
@@ -564,8 +609,8 @@ func (c *Client) UpdateCluster(ctx context.Context, id string, body UpdateCluste
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListClusterDiagnostics(ctx context.Context, id string, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListClusterDiagnosticsRequest(c.Server, id, params)
+func (c *Client) ListClusterDiagnostics(ctx context.Context, iD string, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListClusterDiagnosticsRequest(c.Server, iD, params)
 	if err != nil {
 		return nil, err
 	}
@@ -576,8 +621,8 @@ func (c *Client) ListClusterDiagnostics(ctx context.Context, id string, params *
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetClusterDiagnosticConfig(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetClusterDiagnosticConfigRequest(c.Server, id)
+func (c *Client) GetClusterDiagnosticConfig(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetClusterDiagnosticConfigRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -588,8 +633,8 @@ func (c *Client) GetClusterDiagnosticConfig(ctx context.Context, id string, reqE
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateClusterDiagnosticConfigWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateClusterDiagnosticConfigRequestWithBody(c.Server, id, contentType, body)
+func (c *Client) UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateClusterDiagnosticConfigRequestWithBody(c.Server, iD, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -600,8 +645,8 @@ func (c *Client) UpdateClusterDiagnosticConfigWithBody(ctx context.Context, id s
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateClusterDiagnosticConfig(ctx context.Context, id string, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateClusterDiagnosticConfigRequest(c.Server, id, body)
+func (c *Client) UpdateClusterDiagnosticConfig(ctx context.Context, iD string, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateClusterDiagnosticConfigRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
 	}
@@ -612,8 +657,8 @@ func (c *Client) UpdateClusterDiagnosticConfig(ctx context.Context, id string, b
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetClusterSnapshotConfig(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetClusterSnapshotConfigRequest(c.Server, id)
+func (c *Client) GetClusterSnapshotConfig(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetClusterSnapshotConfigRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -624,8 +669,8 @@ func (c *Client) GetClusterSnapshotConfig(ctx context.Context, id string, reqEdi
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateClusterSnapshotConfigWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateClusterSnapshotConfigRequestWithBody(c.Server, id, contentType, body)
+func (c *Client) UpdateClusterSnapshotConfigWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateClusterSnapshotConfigRequestWithBody(c.Server, iD, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -636,8 +681,8 @@ func (c *Client) UpdateClusterSnapshotConfigWithBody(ctx context.Context, id str
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateClusterSnapshotConfig(ctx context.Context, id string, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateClusterSnapshotConfigRequest(c.Server, id, body)
+func (c *Client) UpdateClusterSnapshotConfig(ctx context.Context, iD string, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateClusterSnapshotConfigRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
 	}
@@ -648,8 +693,8 @@ func (c *Client) UpdateClusterSnapshotConfig(ctx context.Context, id string, bod
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListClusterSnapshots(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListClusterSnapshotsRequest(c.Server, id)
+func (c *Client) ListClusterSnapshots(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListClusterSnapshotsRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -660,8 +705,8 @@ func (c *Client) ListClusterSnapshots(ctx context.Context, id string, reqEditors
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateClusterSnapshotWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateClusterSnapshotRequestWithBody(c.Server, id, contentType, body)
+func (c *Client) CreateClusterSnapshotWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateClusterSnapshotRequestWithBody(c.Server, iD, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -672,8 +717,8 @@ func (c *Client) CreateClusterSnapshotWithBody(ctx context.Context, id string, c
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateClusterSnapshot(ctx context.Context, id string, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateClusterSnapshotRequest(c.Server, id, body)
+func (c *Client) CreateClusterSnapshot(ctx context.Context, iD string, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateClusterSnapshotRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
 	}
@@ -684,8 +729,8 @@ func (c *Client) CreateClusterSnapshot(ctx context.Context, id string, body Crea
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteClusterSnapshot(ctx context.Context, id string, snapshotId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteClusterSnapshotRequest(c.Server, id, snapshotId)
+func (c *Client) DeleteClusterSnapshot(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteClusterSnapshotRequest(c.Server, iD, snapshotId)
 	if err != nil {
 		return nil, err
 	}
@@ -696,8 +741,8 @@ func (c *Client) DeleteClusterSnapshot(ctx context.Context, id string, snapshotI
 	return c.Client.Do(req)
 }
 
-func (c *Client) RestoreClusterSnapshot(ctx context.Context, id string, snapshotId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewRestoreClusterSnapshotRequest(c.Server, id, snapshotId)
+func (c *Client) RestoreClusterSnapshot(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRestoreClusterSnapshotRequest(c.Server, iD, snapshotId)
 	if err != nil {
 		return nil, err
 	}
@@ -744,8 +789,8 @@ func (c *Client) CreateDatabase(ctx context.Context, body CreateDatabaseJSONRequ
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteDatabase(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteDatabaseRequest(c.Server, id)
+func (c *Client) TestDatabaseConnection(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestDatabaseConnectionRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -756,8 +801,8 @@ func (c *Client) DeleteDatabase(ctx context.Context, id int32, reqEditors ...Req
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetDatabase(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetDatabaseRequest(c.Server, id)
+func (c *Client) DeleteDatabase(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteDatabaseRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -768,8 +813,8 @@ func (c *Client) GetDatabase(ctx context.Context, id int32, reqEditors ...Reques
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateDatabaseWithBody(ctx context.Context, id int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateDatabaseRequestWithBody(c.Server, id, contentType, body)
+func (c *Client) GetDatabase(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDatabaseRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -780,8 +825,68 @@ func (c *Client) UpdateDatabaseWithBody(ctx context.Context, id int32, contentTy
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateDatabase(ctx context.Context, id int32, body UpdateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateDatabaseRequest(c.Server, id, body)
+func (c *Client) UpdateDatabaseWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateDatabaseRequestWithBody(c.Server, iD, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateDatabase(ctx context.Context, iD int32, body UpdateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateDatabaseRequest(c.Server, iD, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDDLProgress(ctx context.Context, iD int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDDLProgressRequest(c.Server, iD)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostDatabasesIDDdlProgressDdlIDCancel(ctx context.Context, iD int64, ddlID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostDatabasesIDDdlProgressDdlIDCancelRequest(c.Server, iD, ddlID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) QueryDatabaseWithBody(ctx context.Context, iD int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewQueryDatabaseRequestWithBody(c.Server, iD, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) QueryDatabase(ctx context.Context, iD int64, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewQueryDatabaseRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
 	}
@@ -940,12 +1045,12 @@ func NewCreateClusterRequestWithBody(server string, contentType string, body io.
 }
 
 // NewDeleteClusterRequest generates requests for DeleteCluster
-func NewDeleteClusterRequest(server string, id string) (*http.Request, error) {
+func NewDeleteClusterRequest(server string, iD string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -974,12 +1079,12 @@ func NewDeleteClusterRequest(server string, id string) (*http.Request, error) {
 }
 
 // NewGetClusterRequest generates requests for GetCluster
-func NewGetClusterRequest(server string, id string) (*http.Request, error) {
+func NewGetClusterRequest(server string, iD string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1008,23 +1113,23 @@ func NewGetClusterRequest(server string, id string) (*http.Request, error) {
 }
 
 // NewUpdateClusterRequest calls the generic UpdateCluster builder with application/json body
-func NewUpdateClusterRequest(server string, id string, body UpdateClusterJSONRequestBody) (*http.Request, error) {
+func NewUpdateClusterRequest(server string, iD string, body UpdateClusterJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateClusterRequestWithBody(server, id, "application/json", bodyReader)
+	return NewUpdateClusterRequestWithBody(server, iD, "application/json", bodyReader)
 }
 
 // NewUpdateClusterRequestWithBody generates requests for UpdateCluster with any type of body
-func NewUpdateClusterRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateClusterRequestWithBody(server string, iD string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1055,12 +1160,12 @@ func NewUpdateClusterRequestWithBody(server string, id string, contentType strin
 }
 
 // NewListClusterDiagnosticsRequest generates requests for ListClusterDiagnostics
-func NewListClusterDiagnosticsRequest(server string, id string, params *ListClusterDiagnosticsParams) (*http.Request, error) {
+func NewListClusterDiagnosticsRequest(server string, iD string, params *ListClusterDiagnosticsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1159,12 +1264,12 @@ func NewListClusterDiagnosticsRequest(server string, id string, params *ListClus
 }
 
 // NewGetClusterDiagnosticConfigRequest generates requests for GetClusterDiagnosticConfig
-func NewGetClusterDiagnosticConfigRequest(server string, id string) (*http.Request, error) {
+func NewGetClusterDiagnosticConfigRequest(server string, iD string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1193,23 +1298,23 @@ func NewGetClusterDiagnosticConfigRequest(server string, id string) (*http.Reque
 }
 
 // NewUpdateClusterDiagnosticConfigRequest calls the generic UpdateClusterDiagnosticConfig builder with application/json body
-func NewUpdateClusterDiagnosticConfigRequest(server string, id string, body UpdateClusterDiagnosticConfigJSONRequestBody) (*http.Request, error) {
+func NewUpdateClusterDiagnosticConfigRequest(server string, iD string, body UpdateClusterDiagnosticConfigJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateClusterDiagnosticConfigRequestWithBody(server, id, "application/json", bodyReader)
+	return NewUpdateClusterDiagnosticConfigRequestWithBody(server, iD, "application/json", bodyReader)
 }
 
 // NewUpdateClusterDiagnosticConfigRequestWithBody generates requests for UpdateClusterDiagnosticConfig with any type of body
-func NewUpdateClusterDiagnosticConfigRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateClusterDiagnosticConfigRequestWithBody(server string, iD string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1240,12 +1345,12 @@ func NewUpdateClusterDiagnosticConfigRequestWithBody(server string, id string, c
 }
 
 // NewGetClusterSnapshotConfigRequest generates requests for GetClusterSnapshotConfig
-func NewGetClusterSnapshotConfigRequest(server string, id string) (*http.Request, error) {
+func NewGetClusterSnapshotConfigRequest(server string, iD string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1274,23 +1379,23 @@ func NewGetClusterSnapshotConfigRequest(server string, id string) (*http.Request
 }
 
 // NewUpdateClusterSnapshotConfigRequest calls the generic UpdateClusterSnapshotConfig builder with application/json body
-func NewUpdateClusterSnapshotConfigRequest(server string, id string, body UpdateClusterSnapshotConfigJSONRequestBody) (*http.Request, error) {
+func NewUpdateClusterSnapshotConfigRequest(server string, iD string, body UpdateClusterSnapshotConfigJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateClusterSnapshotConfigRequestWithBody(server, id, "application/json", bodyReader)
+	return NewUpdateClusterSnapshotConfigRequestWithBody(server, iD, "application/json", bodyReader)
 }
 
 // NewUpdateClusterSnapshotConfigRequestWithBody generates requests for UpdateClusterSnapshotConfig with any type of body
-func NewUpdateClusterSnapshotConfigRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateClusterSnapshotConfigRequestWithBody(server string, iD string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1321,12 +1426,12 @@ func NewUpdateClusterSnapshotConfigRequestWithBody(server string, id string, con
 }
 
 // NewListClusterSnapshotsRequest generates requests for ListClusterSnapshots
-func NewListClusterSnapshotsRequest(server string, id string) (*http.Request, error) {
+func NewListClusterSnapshotsRequest(server string, iD string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1355,23 +1460,23 @@ func NewListClusterSnapshotsRequest(server string, id string) (*http.Request, er
 }
 
 // NewCreateClusterSnapshotRequest calls the generic CreateClusterSnapshot builder with application/json body
-func NewCreateClusterSnapshotRequest(server string, id string, body CreateClusterSnapshotJSONRequestBody) (*http.Request, error) {
+func NewCreateClusterSnapshotRequest(server string, iD string, body CreateClusterSnapshotJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateClusterSnapshotRequestWithBody(server, id, "application/json", bodyReader)
+	return NewCreateClusterSnapshotRequestWithBody(server, iD, "application/json", bodyReader)
 }
 
 // NewCreateClusterSnapshotRequestWithBody generates requests for CreateClusterSnapshot with any type of body
-func NewCreateClusterSnapshotRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+func NewCreateClusterSnapshotRequestWithBody(server string, iD string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1402,12 +1507,12 @@ func NewCreateClusterSnapshotRequestWithBody(server string, id string, contentTy
 }
 
 // NewDeleteClusterSnapshotRequest generates requests for DeleteClusterSnapshot
-func NewDeleteClusterSnapshotRequest(server string, id string, snapshotId string) (*http.Request, error) {
+func NewDeleteClusterSnapshotRequest(server string, iD string, snapshotId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1443,12 +1548,12 @@ func NewDeleteClusterSnapshotRequest(server string, id string, snapshotId string
 }
 
 // NewRestoreClusterSnapshotRequest generates requests for RestoreClusterSnapshot
-func NewRestoreClusterSnapshotRequest(server string, id string, snapshotId string) (*http.Request, error) {
+func NewRestoreClusterSnapshotRequest(server string, iD string, snapshotId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1550,13 +1655,40 @@ func NewCreateDatabaseRequestWithBody(server string, contentType string, body io
 	return req, nil
 }
 
+// NewTestDatabaseConnectionRequest generates requests for TestDatabaseConnection
+func NewTestDatabaseConnectionRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/databases/test-connection")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewDeleteDatabaseRequest generates requests for DeleteDatabase
-func NewDeleteDatabaseRequest(server string, id int32) (*http.Request, error) {
+func NewDeleteDatabaseRequest(server string, iD int32) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1585,12 +1717,12 @@ func NewDeleteDatabaseRequest(server string, id int32) (*http.Request, error) {
 }
 
 // NewGetDatabaseRequest generates requests for GetDatabase
-func NewGetDatabaseRequest(server string, id int32) (*http.Request, error) {
+func NewGetDatabaseRequest(server string, iD int32) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1619,23 +1751,23 @@ func NewGetDatabaseRequest(server string, id int32) (*http.Request, error) {
 }
 
 // NewUpdateDatabaseRequest calls the generic UpdateDatabase builder with application/json body
-func NewUpdateDatabaseRequest(server string, id int32, body UpdateDatabaseJSONRequestBody) (*http.Request, error) {
+func NewUpdateDatabaseRequest(server string, iD int32, body UpdateDatabaseJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateDatabaseRequestWithBody(server, id, "application/json", bodyReader)
+	return NewUpdateDatabaseRequestWithBody(server, iD, "application/json", bodyReader)
 }
 
 // NewUpdateDatabaseRequestWithBody generates requests for UpdateDatabase with any type of body
-func NewUpdateDatabaseRequestWithBody(server string, id int32, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateDatabaseRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -1656,6 +1788,128 @@ func NewUpdateDatabaseRequestWithBody(server string, id int32, contentType strin
 	}
 
 	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetDDLProgressRequest generates requests for GetDDLProgress
+func NewGetDDLProgressRequest(server string, iD int64) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/databases/%s/ddl-progress", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostDatabasesIDDdlProgressDdlIDCancelRequest generates requests for PostDatabasesIDDdlProgressDdlIDCancel
+func NewPostDatabasesIDDdlProgressDdlIDCancelRequest(server string, iD int64, ddlID string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "ddlID", runtime.ParamLocationPath, ddlID)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/databases/%s/ddl-progress/%s/cancel", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewQueryDatabaseRequest calls the generic QueryDatabase builder with application/json body
+func NewQueryDatabaseRequest(server string, iD int64, body QueryDatabaseJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewQueryDatabaseRequestWithBody(server, iD, "application/json", bodyReader)
+}
+
+// NewQueryDatabaseRequestWithBody generates requests for QueryDatabase with any type of body
+func NewQueryDatabaseRequestWithBody(server string, iD int64, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/databases/%s/query", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -1727,48 +1981,48 @@ type ClientWithResponsesInterface interface {
 	CreateClusterWithResponse(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterResponse, error)
 
 	// DeleteClusterWithResponse request
-	DeleteClusterWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error)
+	DeleteClusterWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error)
 
 	// GetClusterWithResponse request
-	GetClusterWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetClusterResponse, error)
+	GetClusterWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterResponse, error)
 
 	// UpdateClusterWithBodyWithResponse request with any body
-	UpdateClusterWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error)
+	UpdateClusterWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error)
 
-	UpdateClusterWithResponse(ctx context.Context, id string, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error)
+	UpdateClusterWithResponse(ctx context.Context, iD string, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error)
 
 	// ListClusterDiagnosticsWithResponse request
-	ListClusterDiagnosticsWithResponse(ctx context.Context, id string, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*ListClusterDiagnosticsResponse, error)
+	ListClusterDiagnosticsWithResponse(ctx context.Context, iD string, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*ListClusterDiagnosticsResponse, error)
 
 	// GetClusterDiagnosticConfigWithResponse request
-	GetClusterDiagnosticConfigWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticConfigResponse, error)
+	GetClusterDiagnosticConfigWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticConfigResponse, error)
 
 	// UpdateClusterDiagnosticConfigWithBodyWithResponse request with any body
-	UpdateClusterDiagnosticConfigWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
+	UpdateClusterDiagnosticConfigWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
 
-	UpdateClusterDiagnosticConfigWithResponse(ctx context.Context, id string, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
+	UpdateClusterDiagnosticConfigWithResponse(ctx context.Context, iD string, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
 
 	// GetClusterSnapshotConfigWithResponse request
-	GetClusterSnapshotConfigWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetClusterSnapshotConfigResponse, error)
+	GetClusterSnapshotConfigWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterSnapshotConfigResponse, error)
 
 	// UpdateClusterSnapshotConfigWithBodyWithResponse request with any body
-	UpdateClusterSnapshotConfigWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error)
+	UpdateClusterSnapshotConfigWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error)
 
-	UpdateClusterSnapshotConfigWithResponse(ctx context.Context, id string, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error)
+	UpdateClusterSnapshotConfigWithResponse(ctx context.Context, iD string, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error)
 
 	// ListClusterSnapshotsWithResponse request
-	ListClusterSnapshotsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ListClusterSnapshotsResponse, error)
+	ListClusterSnapshotsWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*ListClusterSnapshotsResponse, error)
 
 	// CreateClusterSnapshotWithBodyWithResponse request with any body
-	CreateClusterSnapshotWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error)
+	CreateClusterSnapshotWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error)
 
-	CreateClusterSnapshotWithResponse(ctx context.Context, id string, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error)
+	CreateClusterSnapshotWithResponse(ctx context.Context, iD string, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error)
 
 	// DeleteClusterSnapshotWithResponse request
-	DeleteClusterSnapshotWithResponse(ctx context.Context, id string, snapshotId string, reqEditors ...RequestEditorFn) (*DeleteClusterSnapshotResponse, error)
+	DeleteClusterSnapshotWithResponse(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*DeleteClusterSnapshotResponse, error)
 
 	// RestoreClusterSnapshotWithResponse request
-	RestoreClusterSnapshotWithResponse(ctx context.Context, id string, snapshotId string, reqEditors ...RequestEditorFn) (*RestoreClusterSnapshotResponse, error)
+	RestoreClusterSnapshotWithResponse(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*RestoreClusterSnapshotResponse, error)
 
 	// ListDatabasesWithResponse request
 	ListDatabasesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDatabasesResponse, error)
@@ -1778,16 +2032,30 @@ type ClientWithResponsesInterface interface {
 
 	CreateDatabaseWithResponse(ctx context.Context, body CreateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDatabaseResponse, error)
 
+	// TestDatabaseConnectionWithResponse request
+	TestDatabaseConnectionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestDatabaseConnectionResponse, error)
+
 	// DeleteDatabaseWithResponse request
-	DeleteDatabaseWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*DeleteDatabaseResponse, error)
+	DeleteDatabaseWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*DeleteDatabaseResponse, error)
 
 	// GetDatabaseWithResponse request
-	GetDatabaseWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*GetDatabaseResponse, error)
+	GetDatabaseWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetDatabaseResponse, error)
 
 	// UpdateDatabaseWithBodyWithResponse request with any body
-	UpdateDatabaseWithBodyWithResponse(ctx context.Context, id int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateDatabaseResponse, error)
+	UpdateDatabaseWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateDatabaseResponse, error)
 
-	UpdateDatabaseWithResponse(ctx context.Context, id int32, body UpdateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDatabaseResponse, error)
+	UpdateDatabaseWithResponse(ctx context.Context, iD int32, body UpdateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDatabaseResponse, error)
+
+	// GetDDLProgressWithResponse request
+	GetDDLProgressWithResponse(ctx context.Context, iD int64, reqEditors ...RequestEditorFn) (*GetDDLProgressResponse, error)
+
+	// PostDatabasesIDDdlProgressDdlIDCancelWithResponse request
+	PostDatabasesIDDdlProgressDdlIDCancelWithResponse(ctx context.Context, iD int64, ddlID string, reqEditors ...RequestEditorFn) (*PostDatabasesIDDdlProgressDdlIDCancelResponse, error)
+
+	// QueryDatabaseWithBodyWithResponse request with any body
+	QueryDatabaseWithBodyWithResponse(ctx context.Context, iD int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
+
+	QueryDatabaseWithResponse(ctx context.Context, iD int64, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
 }
 
 type RefreshTokenResponse struct {
@@ -2194,6 +2462,28 @@ func (r CreateDatabaseResponse) StatusCode() int {
 	return 0
 }
 
+type TestDatabaseConnectionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TestConnectionResult
+}
+
+// Status returns HTTPResponse.Status
+func (r TestDatabaseConnectionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestDatabaseConnectionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type DeleteDatabaseResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2253,6 +2543,70 @@ func (r UpdateDatabaseResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UpdateDatabaseResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetDDLProgressResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]DDLProgress
+}
+
+// Status returns HTTPResponse.Status
+func (r GetDDLProgressResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetDDLProgressResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostDatabasesIDDdlProgressDdlIDCancelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PostDatabasesIDDdlProgressDdlIDCancelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostDatabasesIDDdlProgressDdlIDCancelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type QueryDatabaseResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r QueryDatabaseResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r QueryDatabaseResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2320,8 +2674,8 @@ func (c *ClientWithResponses) CreateClusterWithResponse(ctx context.Context, bod
 }
 
 // DeleteClusterWithResponse request returning *DeleteClusterResponse
-func (c *ClientWithResponses) DeleteClusterWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error) {
-	rsp, err := c.DeleteCluster(ctx, id, reqEditors...)
+func (c *ClientWithResponses) DeleteClusterWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error) {
+	rsp, err := c.DeleteCluster(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2329,8 +2683,8 @@ func (c *ClientWithResponses) DeleteClusterWithResponse(ctx context.Context, id 
 }
 
 // GetClusterWithResponse request returning *GetClusterResponse
-func (c *ClientWithResponses) GetClusterWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetClusterResponse, error) {
-	rsp, err := c.GetCluster(ctx, id, reqEditors...)
+func (c *ClientWithResponses) GetClusterWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterResponse, error) {
+	rsp, err := c.GetCluster(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2338,16 +2692,16 @@ func (c *ClientWithResponses) GetClusterWithResponse(ctx context.Context, id str
 }
 
 // UpdateClusterWithBodyWithResponse request with arbitrary body returning *UpdateClusterResponse
-func (c *ClientWithResponses) UpdateClusterWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error) {
-	rsp, err := c.UpdateClusterWithBody(ctx, id, contentType, body, reqEditors...)
+func (c *ClientWithResponses) UpdateClusterWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error) {
+	rsp, err := c.UpdateClusterWithBody(ctx, iD, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseUpdateClusterResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateClusterWithResponse(ctx context.Context, id string, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error) {
-	rsp, err := c.UpdateCluster(ctx, id, body, reqEditors...)
+func (c *ClientWithResponses) UpdateClusterWithResponse(ctx context.Context, iD string, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error) {
+	rsp, err := c.UpdateCluster(ctx, iD, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2355,8 +2709,8 @@ func (c *ClientWithResponses) UpdateClusterWithResponse(ctx context.Context, id 
 }
 
 // ListClusterDiagnosticsWithResponse request returning *ListClusterDiagnosticsResponse
-func (c *ClientWithResponses) ListClusterDiagnosticsWithResponse(ctx context.Context, id string, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*ListClusterDiagnosticsResponse, error) {
-	rsp, err := c.ListClusterDiagnostics(ctx, id, params, reqEditors...)
+func (c *ClientWithResponses) ListClusterDiagnosticsWithResponse(ctx context.Context, iD string, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*ListClusterDiagnosticsResponse, error) {
+	rsp, err := c.ListClusterDiagnostics(ctx, iD, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2364,8 +2718,8 @@ func (c *ClientWithResponses) ListClusterDiagnosticsWithResponse(ctx context.Con
 }
 
 // GetClusterDiagnosticConfigWithResponse request returning *GetClusterDiagnosticConfigResponse
-func (c *ClientWithResponses) GetClusterDiagnosticConfigWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticConfigResponse, error) {
-	rsp, err := c.GetClusterDiagnosticConfig(ctx, id, reqEditors...)
+func (c *ClientWithResponses) GetClusterDiagnosticConfigWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticConfigResponse, error) {
+	rsp, err := c.GetClusterDiagnosticConfig(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2373,16 +2727,16 @@ func (c *ClientWithResponses) GetClusterDiagnosticConfigWithResponse(ctx context
 }
 
 // UpdateClusterDiagnosticConfigWithBodyWithResponse request with arbitrary body returning *UpdateClusterDiagnosticConfigResponse
-func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error) {
-	rsp, err := c.UpdateClusterDiagnosticConfigWithBody(ctx, id, contentType, body, reqEditors...)
+func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error) {
+	rsp, err := c.UpdateClusterDiagnosticConfigWithBody(ctx, iD, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseUpdateClusterDiagnosticConfigResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithResponse(ctx context.Context, id string, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error) {
-	rsp, err := c.UpdateClusterDiagnosticConfig(ctx, id, body, reqEditors...)
+func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithResponse(ctx context.Context, iD string, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error) {
+	rsp, err := c.UpdateClusterDiagnosticConfig(ctx, iD, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2390,8 +2744,8 @@ func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithResponse(ctx cont
 }
 
 // GetClusterSnapshotConfigWithResponse request returning *GetClusterSnapshotConfigResponse
-func (c *ClientWithResponses) GetClusterSnapshotConfigWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetClusterSnapshotConfigResponse, error) {
-	rsp, err := c.GetClusterSnapshotConfig(ctx, id, reqEditors...)
+func (c *ClientWithResponses) GetClusterSnapshotConfigWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterSnapshotConfigResponse, error) {
+	rsp, err := c.GetClusterSnapshotConfig(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2399,16 +2753,16 @@ func (c *ClientWithResponses) GetClusterSnapshotConfigWithResponse(ctx context.C
 }
 
 // UpdateClusterSnapshotConfigWithBodyWithResponse request with arbitrary body returning *UpdateClusterSnapshotConfigResponse
-func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error) {
-	rsp, err := c.UpdateClusterSnapshotConfigWithBody(ctx, id, contentType, body, reqEditors...)
+func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error) {
+	rsp, err := c.UpdateClusterSnapshotConfigWithBody(ctx, iD, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseUpdateClusterSnapshotConfigResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithResponse(ctx context.Context, id string, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error) {
-	rsp, err := c.UpdateClusterSnapshotConfig(ctx, id, body, reqEditors...)
+func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithResponse(ctx context.Context, iD string, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error) {
+	rsp, err := c.UpdateClusterSnapshotConfig(ctx, iD, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2416,8 +2770,8 @@ func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithResponse(ctx contex
 }
 
 // ListClusterSnapshotsWithResponse request returning *ListClusterSnapshotsResponse
-func (c *ClientWithResponses) ListClusterSnapshotsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ListClusterSnapshotsResponse, error) {
-	rsp, err := c.ListClusterSnapshots(ctx, id, reqEditors...)
+func (c *ClientWithResponses) ListClusterSnapshotsWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*ListClusterSnapshotsResponse, error) {
+	rsp, err := c.ListClusterSnapshots(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2425,16 +2779,16 @@ func (c *ClientWithResponses) ListClusterSnapshotsWithResponse(ctx context.Conte
 }
 
 // CreateClusterSnapshotWithBodyWithResponse request with arbitrary body returning *CreateClusterSnapshotResponse
-func (c *ClientWithResponses) CreateClusterSnapshotWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error) {
-	rsp, err := c.CreateClusterSnapshotWithBody(ctx, id, contentType, body, reqEditors...)
+func (c *ClientWithResponses) CreateClusterSnapshotWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error) {
+	rsp, err := c.CreateClusterSnapshotWithBody(ctx, iD, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseCreateClusterSnapshotResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateClusterSnapshotWithResponse(ctx context.Context, id string, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error) {
-	rsp, err := c.CreateClusterSnapshot(ctx, id, body, reqEditors...)
+func (c *ClientWithResponses) CreateClusterSnapshotWithResponse(ctx context.Context, iD string, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error) {
+	rsp, err := c.CreateClusterSnapshot(ctx, iD, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2442,8 +2796,8 @@ func (c *ClientWithResponses) CreateClusterSnapshotWithResponse(ctx context.Cont
 }
 
 // DeleteClusterSnapshotWithResponse request returning *DeleteClusterSnapshotResponse
-func (c *ClientWithResponses) DeleteClusterSnapshotWithResponse(ctx context.Context, id string, snapshotId string, reqEditors ...RequestEditorFn) (*DeleteClusterSnapshotResponse, error) {
-	rsp, err := c.DeleteClusterSnapshot(ctx, id, snapshotId, reqEditors...)
+func (c *ClientWithResponses) DeleteClusterSnapshotWithResponse(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*DeleteClusterSnapshotResponse, error) {
+	rsp, err := c.DeleteClusterSnapshot(ctx, iD, snapshotId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2451,8 +2805,8 @@ func (c *ClientWithResponses) DeleteClusterSnapshotWithResponse(ctx context.Cont
 }
 
 // RestoreClusterSnapshotWithResponse request returning *RestoreClusterSnapshotResponse
-func (c *ClientWithResponses) RestoreClusterSnapshotWithResponse(ctx context.Context, id string, snapshotId string, reqEditors ...RequestEditorFn) (*RestoreClusterSnapshotResponse, error) {
-	rsp, err := c.RestoreClusterSnapshot(ctx, id, snapshotId, reqEditors...)
+func (c *ClientWithResponses) RestoreClusterSnapshotWithResponse(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*RestoreClusterSnapshotResponse, error) {
+	rsp, err := c.RestoreClusterSnapshot(ctx, iD, snapshotId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2485,9 +2839,18 @@ func (c *ClientWithResponses) CreateDatabaseWithResponse(ctx context.Context, bo
 	return ParseCreateDatabaseResponse(rsp)
 }
 
+// TestDatabaseConnectionWithResponse request returning *TestDatabaseConnectionResponse
+func (c *ClientWithResponses) TestDatabaseConnectionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestDatabaseConnectionResponse, error) {
+	rsp, err := c.TestDatabaseConnection(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestDatabaseConnectionResponse(rsp)
+}
+
 // DeleteDatabaseWithResponse request returning *DeleteDatabaseResponse
-func (c *ClientWithResponses) DeleteDatabaseWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*DeleteDatabaseResponse, error) {
-	rsp, err := c.DeleteDatabase(ctx, id, reqEditors...)
+func (c *ClientWithResponses) DeleteDatabaseWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*DeleteDatabaseResponse, error) {
+	rsp, err := c.DeleteDatabase(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2495,8 +2858,8 @@ func (c *ClientWithResponses) DeleteDatabaseWithResponse(ctx context.Context, id
 }
 
 // GetDatabaseWithResponse request returning *GetDatabaseResponse
-func (c *ClientWithResponses) GetDatabaseWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*GetDatabaseResponse, error) {
-	rsp, err := c.GetDatabase(ctx, id, reqEditors...)
+func (c *ClientWithResponses) GetDatabaseWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetDatabaseResponse, error) {
+	rsp, err := c.GetDatabase(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2504,20 +2867,55 @@ func (c *ClientWithResponses) GetDatabaseWithResponse(ctx context.Context, id in
 }
 
 // UpdateDatabaseWithBodyWithResponse request with arbitrary body returning *UpdateDatabaseResponse
-func (c *ClientWithResponses) UpdateDatabaseWithBodyWithResponse(ctx context.Context, id int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateDatabaseResponse, error) {
-	rsp, err := c.UpdateDatabaseWithBody(ctx, id, contentType, body, reqEditors...)
+func (c *ClientWithResponses) UpdateDatabaseWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateDatabaseResponse, error) {
+	rsp, err := c.UpdateDatabaseWithBody(ctx, iD, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseUpdateDatabaseResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateDatabaseWithResponse(ctx context.Context, id int32, body UpdateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDatabaseResponse, error) {
-	rsp, err := c.UpdateDatabase(ctx, id, body, reqEditors...)
+func (c *ClientWithResponses) UpdateDatabaseWithResponse(ctx context.Context, iD int32, body UpdateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDatabaseResponse, error) {
+	rsp, err := c.UpdateDatabase(ctx, iD, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseUpdateDatabaseResponse(rsp)
+}
+
+// GetDDLProgressWithResponse request returning *GetDDLProgressResponse
+func (c *ClientWithResponses) GetDDLProgressWithResponse(ctx context.Context, iD int64, reqEditors ...RequestEditorFn) (*GetDDLProgressResponse, error) {
+	rsp, err := c.GetDDLProgress(ctx, iD, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDDLProgressResponse(rsp)
+}
+
+// PostDatabasesIDDdlProgressDdlIDCancelWithResponse request returning *PostDatabasesIDDdlProgressDdlIDCancelResponse
+func (c *ClientWithResponses) PostDatabasesIDDdlProgressDdlIDCancelWithResponse(ctx context.Context, iD int64, ddlID string, reqEditors ...RequestEditorFn) (*PostDatabasesIDDdlProgressDdlIDCancelResponse, error) {
+	rsp, err := c.PostDatabasesIDDdlProgressDdlIDCancel(ctx, iD, ddlID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostDatabasesIDDdlProgressDdlIDCancelResponse(rsp)
+}
+
+// QueryDatabaseWithBodyWithResponse request with arbitrary body returning *QueryDatabaseResponse
+func (c *ClientWithResponses) QueryDatabaseWithBodyWithResponse(ctx context.Context, iD int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error) {
+	rsp, err := c.QueryDatabaseWithBody(ctx, iD, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseQueryDatabaseResponse(rsp)
+}
+
+func (c *ClientWithResponses) QueryDatabaseWithResponse(ctx context.Context, iD int64, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error) {
+	rsp, err := c.QueryDatabase(ctx, iD, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseQueryDatabaseResponse(rsp)
 }
 
 // ParseRefreshTokenResponse parses an HTTP response from a RefreshTokenWithResponse call
@@ -2969,6 +3367,32 @@ func ParseCreateDatabaseResponse(rsp *http.Response) (*CreateDatabaseResponse, e
 	return response, nil
 }
 
+// ParseTestDatabaseConnectionResponse parses an HTTP response from a TestDatabaseConnectionWithResponse call
+func ParseTestDatabaseConnectionResponse(rsp *http.Response) (*TestDatabaseConnectionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestDatabaseConnectionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestConnectionResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseDeleteDatabaseResponse parses an HTTP response from a DeleteDatabaseWithResponse call
 func ParseDeleteDatabaseResponse(rsp *http.Response) (*DeleteDatabaseResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -3037,6 +3461,64 @@ func ParseUpdateDatabaseResponse(rsp *http.Response) (*UpdateDatabaseResponse, e
 	return response, nil
 }
 
+// ParseGetDDLProgressResponse parses an HTTP response from a GetDDLProgressWithResponse call
+func ParseGetDDLProgressResponse(rsp *http.Response) (*GetDDLProgressResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetDDLProgressResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []DDLProgress
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostDatabasesIDDdlProgressDdlIDCancelResponse parses an HTTP response from a PostDatabasesIDDdlProgressDdlIDCancelWithResponse call
+func ParsePostDatabasesIDDdlProgressDdlIDCancelResponse(rsp *http.Response) (*PostDatabasesIDDdlProgressDdlIDCancelResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostDatabasesIDDdlProgressDdlIDCancelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseQueryDatabaseResponse parses an HTTP response from a QueryDatabaseWithResponse call
+func ParseQueryDatabaseResponse(rsp *http.Response) (*QueryDatabaseResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &QueryDatabaseResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Refresh access token
@@ -3052,56 +3534,68 @@ type ServerInterface interface {
 	// (POST /clusters)
 	CreateCluster(c *fiber.Ctx) error
 	// Delete cluster
-	// (DELETE /clusters/{id})
-	DeleteCluster(c *fiber.Ctx, id string) error
+	// (DELETE /clusters/{ID})
+	DeleteCluster(c *fiber.Ctx, iD string) error
 	// Get cluster details
-	// (GET /clusters/{id})
-	GetCluster(c *fiber.Ctx, id string) error
+	// (GET /clusters/{ID})
+	GetCluster(c *fiber.Ctx, iD string) error
 	// Update cluster
-	// (PUT /clusters/{id})
-	UpdateCluster(c *fiber.Ctx, id string) error
+	// (PUT /clusters/{ID})
+	UpdateCluster(c *fiber.Ctx, iD string) error
 	// List diagnostic data
-	// (GET /clusters/{id}/diagnostics)
-	ListClusterDiagnostics(c *fiber.Ctx, id string, params ListClusterDiagnosticsParams) error
+	// (GET /clusters/{ID}/diagnostics)
+	ListClusterDiagnostics(c *fiber.Ctx, iD string, params ListClusterDiagnosticsParams) error
 	// Get diagnostic configuration
-	// (GET /clusters/{id}/diagnostics/config)
-	GetClusterDiagnosticConfig(c *fiber.Ctx, id string) error
+	// (GET /clusters/{ID}/diagnostics/config)
+	GetClusterDiagnosticConfig(c *fiber.Ctx, iD string) error
 	// Update diagnostic configuration
-	// (PUT /clusters/{id}/diagnostics/config)
-	UpdateClusterDiagnosticConfig(c *fiber.Ctx, id string) error
+	// (PUT /clusters/{ID}/diagnostics/config)
+	UpdateClusterDiagnosticConfig(c *fiber.Ctx, iD string) error
 	// Get snapshot configuration
-	// (GET /clusters/{id}/snapshot-config)
-	GetClusterSnapshotConfig(c *fiber.Ctx, id string) error
+	// (GET /clusters/{ID}/snapshot-config)
+	GetClusterSnapshotConfig(c *fiber.Ctx, iD string) error
 	// Update snapshot configuration
-	// (PUT /clusters/{id}/snapshot-config)
-	UpdateClusterSnapshotConfig(c *fiber.Ctx, id string) error
+	// (PUT /clusters/{ID}/snapshot-config)
+	UpdateClusterSnapshotConfig(c *fiber.Ctx, iD string) error
 	// List cluster snapshots
-	// (GET /clusters/{id}/snapshots)
-	ListClusterSnapshots(c *fiber.Ctx, id string) error
+	// (GET /clusters/{ID}/snapshots)
+	ListClusterSnapshots(c *fiber.Ctx, iD string) error
 	// Create a new snapshot
-	// (POST /clusters/{id}/snapshots)
-	CreateClusterSnapshot(c *fiber.Ctx, id string) error
+	// (POST /clusters/{ID}/snapshots)
+	CreateClusterSnapshot(c *fiber.Ctx, iD string) error
 	// Delete snapshot
-	// (DELETE /clusters/{id}/snapshots/{snapshotId})
-	DeleteClusterSnapshot(c *fiber.Ctx, id string, snapshotId string) error
+	// (DELETE /clusters/{ID}/snapshots/{snapshotId})
+	DeleteClusterSnapshot(c *fiber.Ctx, iD string, snapshotId string) error
 	// Restore snapshot
-	// (POST /clusters/{id}/snapshots/{snapshotId})
-	RestoreClusterSnapshot(c *fiber.Ctx, id string, snapshotId string) error
+	// (POST /clusters/{ID}/snapshots/{snapshotId})
+	RestoreClusterSnapshot(c *fiber.Ctx, iD string, snapshotId string) error
 	// List all databases
 	// (GET /databases)
 	ListDatabases(c *fiber.Ctx) error
 	// Create a new database
 	// (POST /databases)
 	CreateDatabase(c *fiber.Ctx) error
+	// Test database connection
+	// (POST /databases/test-connection)
+	TestDatabaseConnection(c *fiber.Ctx) error
 	// Delete database
-	// (DELETE /databases/{id})
-	DeleteDatabase(c *fiber.Ctx, id int32) error
+	// (DELETE /databases/{ID})
+	DeleteDatabase(c *fiber.Ctx, iD int32) error
 	// Get database details
-	// (GET /databases/{id})
-	GetDatabase(c *fiber.Ctx, id int32) error
+	// (GET /databases/{ID})
+	GetDatabase(c *fiber.Ctx, iD int32) error
 	// Update database
-	// (PUT /databases/{id})
-	UpdateDatabase(c *fiber.Ctx, id int32) error
+	// (PUT /databases/{ID})
+	UpdateDatabase(c *fiber.Ctx, iD int32) error
+	// Get DDL progress
+	// (GET /databases/{ID}/ddl-progress)
+	GetDDLProgress(c *fiber.Ctx, iD int64) error
+
+	// (POST /databases/{ID}/ddl-progress/{ddlID}/cancel)
+	PostDatabasesIDDdlProgressDdlIDCancel(c *fiber.Ctx, iD int64, ddlID string) error
+	// Query database
+	// (POST /databases/{ID}/query)
+	QueryDatabase(c *fiber.Ctx, iD int64) error
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -3144,17 +3638,17 @@ func (siw *ServerInterfaceWrapper) DeleteCluster(c *fiber.Ctx) error {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "ID" -------------
+	var iD string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.DeleteCluster(c, id)
+	return siw.Handler.DeleteCluster(c, iD)
 }
 
 // GetCluster operation middleware
@@ -3162,17 +3656,17 @@ func (siw *ServerInterfaceWrapper) GetCluster(c *fiber.Ctx) error {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "ID" -------------
+	var iD string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.GetCluster(c, id)
+	return siw.Handler.GetCluster(c, iD)
 }
 
 // UpdateCluster operation middleware
@@ -3180,17 +3674,17 @@ func (siw *ServerInterfaceWrapper) UpdateCluster(c *fiber.Ctx) error {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "ID" -------------
+	var iD string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.UpdateCluster(c, id)
+	return siw.Handler.UpdateCluster(c, iD)
 }
 
 // ListClusterDiagnostics operation middleware
@@ -3198,12 +3692,12 @@ func (siw *ServerInterfaceWrapper) ListClusterDiagnostics(c *fiber.Ctx) error {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "ID" -------------
+	var iD string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
@@ -3245,7 +3739,7 @@ func (siw *ServerInterfaceWrapper) ListClusterDiagnostics(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter perPage: %w", err).Error())
 	}
 
-	return siw.Handler.ListClusterDiagnostics(c, id, params)
+	return siw.Handler.ListClusterDiagnostics(c, iD, params)
 }
 
 // GetClusterDiagnosticConfig operation middleware
@@ -3253,17 +3747,17 @@ func (siw *ServerInterfaceWrapper) GetClusterDiagnosticConfig(c *fiber.Ctx) erro
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "ID" -------------
+	var iD string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.GetClusterDiagnosticConfig(c, id)
+	return siw.Handler.GetClusterDiagnosticConfig(c, iD)
 }
 
 // UpdateClusterDiagnosticConfig operation middleware
@@ -3271,17 +3765,17 @@ func (siw *ServerInterfaceWrapper) UpdateClusterDiagnosticConfig(c *fiber.Ctx) e
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "ID" -------------
+	var iD string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.UpdateClusterDiagnosticConfig(c, id)
+	return siw.Handler.UpdateClusterDiagnosticConfig(c, iD)
 }
 
 // GetClusterSnapshotConfig operation middleware
@@ -3289,17 +3783,17 @@ func (siw *ServerInterfaceWrapper) GetClusterSnapshotConfig(c *fiber.Ctx) error 
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "ID" -------------
+	var iD string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.GetClusterSnapshotConfig(c, id)
+	return siw.Handler.GetClusterSnapshotConfig(c, iD)
 }
 
 // UpdateClusterSnapshotConfig operation middleware
@@ -3307,17 +3801,17 @@ func (siw *ServerInterfaceWrapper) UpdateClusterSnapshotConfig(c *fiber.Ctx) err
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "ID" -------------
+	var iD string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.UpdateClusterSnapshotConfig(c, id)
+	return siw.Handler.UpdateClusterSnapshotConfig(c, iD)
 }
 
 // ListClusterSnapshots operation middleware
@@ -3325,17 +3819,17 @@ func (siw *ServerInterfaceWrapper) ListClusterSnapshots(c *fiber.Ctx) error {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "ID" -------------
+	var iD string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.ListClusterSnapshots(c, id)
+	return siw.Handler.ListClusterSnapshots(c, iD)
 }
 
 // CreateClusterSnapshot operation middleware
@@ -3343,17 +3837,17 @@ func (siw *ServerInterfaceWrapper) CreateClusterSnapshot(c *fiber.Ctx) error {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "ID" -------------
+	var iD string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.CreateClusterSnapshot(c, id)
+	return siw.Handler.CreateClusterSnapshot(c, iD)
 }
 
 // DeleteClusterSnapshot operation middleware
@@ -3361,12 +3855,12 @@ func (siw *ServerInterfaceWrapper) DeleteClusterSnapshot(c *fiber.Ctx) error {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "ID" -------------
+	var iD string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	// ------------- Path parameter "snapshotId" -------------
@@ -3379,7 +3873,7 @@ func (siw *ServerInterfaceWrapper) DeleteClusterSnapshot(c *fiber.Ctx) error {
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.DeleteClusterSnapshot(c, id, snapshotId)
+	return siw.Handler.DeleteClusterSnapshot(c, iD, snapshotId)
 }
 
 // RestoreClusterSnapshot operation middleware
@@ -3387,12 +3881,12 @@ func (siw *ServerInterfaceWrapper) RestoreClusterSnapshot(c *fiber.Ctx) error {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "ID" -------------
+	var iD string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	// ------------- Path parameter "snapshotId" -------------
@@ -3405,7 +3899,7 @@ func (siw *ServerInterfaceWrapper) RestoreClusterSnapshot(c *fiber.Ctx) error {
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.RestoreClusterSnapshot(c, id, snapshotId)
+	return siw.Handler.RestoreClusterSnapshot(c, iD, snapshotId)
 }
 
 // ListDatabases operation middleware
@@ -3424,22 +3918,30 @@ func (siw *ServerInterfaceWrapper) CreateDatabase(c *fiber.Ctx) error {
 	return siw.Handler.CreateDatabase(c)
 }
 
+// TestDatabaseConnection operation middleware
+func (siw *ServerInterfaceWrapper) TestDatabaseConnection(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.TestDatabaseConnection(c)
+}
+
 // DeleteDatabase operation middleware
 func (siw *ServerInterfaceWrapper) DeleteDatabase(c *fiber.Ctx) error {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id int32
+	// ------------- Path parameter "ID" -------------
+	var iD int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.DeleteDatabase(c, id)
+	return siw.Handler.DeleteDatabase(c, iD)
 }
 
 // GetDatabase operation middleware
@@ -3447,17 +3949,17 @@ func (siw *ServerInterfaceWrapper) GetDatabase(c *fiber.Ctx) error {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id int32
+	// ------------- Path parameter "ID" -------------
+	var iD int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.GetDatabase(c, id)
+	return siw.Handler.GetDatabase(c, iD)
 }
 
 // UpdateDatabase operation middleware
@@ -3465,17 +3967,79 @@ func (siw *ServerInterfaceWrapper) UpdateDatabase(c *fiber.Ctx) error {
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id int32
+	// ------------- Path parameter "ID" -------------
+	var iD int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.UpdateDatabase(c, id)
+	return siw.Handler.UpdateDatabase(c, iD)
+}
+
+// GetDDLProgress operation middleware
+func (siw *ServerInterfaceWrapper) GetDDLProgress(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "ID" -------------
+	var iD int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.GetDDLProgress(c, iD)
+}
+
+// PostDatabasesIDDdlProgressDdlIDCancel operation middleware
+func (siw *ServerInterfaceWrapper) PostDatabasesIDDdlProgressDdlIDCancel(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "ID" -------------
+	var iD int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
+	}
+
+	// ------------- Path parameter "ddlID" -------------
+	var ddlID string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ddlID", c.Params("ddlID"), &ddlID, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ddlID: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.PostDatabasesIDDdlProgressDdlIDCancel(c, iD, ddlID)
+}
+
+// QueryDatabase operation middleware
+func (siw *ServerInterfaceWrapper) QueryDatabase(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "ID" -------------
+	var iD int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.QueryDatabase(c, iD)
 }
 
 // FiberServerOptions provides options for the Fiber server.
@@ -3507,38 +4071,46 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Post(options.BaseURL+"/clusters", wrapper.CreateCluster)
 
-	router.Delete(options.BaseURL+"/clusters/:id", wrapper.DeleteCluster)
+	router.Delete(options.BaseURL+"/clusters/:ID", wrapper.DeleteCluster)
 
-	router.Get(options.BaseURL+"/clusters/:id", wrapper.GetCluster)
+	router.Get(options.BaseURL+"/clusters/:ID", wrapper.GetCluster)
 
-	router.Put(options.BaseURL+"/clusters/:id", wrapper.UpdateCluster)
+	router.Put(options.BaseURL+"/clusters/:ID", wrapper.UpdateCluster)
 
-	router.Get(options.BaseURL+"/clusters/:id/diagnostics", wrapper.ListClusterDiagnostics)
+	router.Get(options.BaseURL+"/clusters/:ID/diagnostics", wrapper.ListClusterDiagnostics)
 
-	router.Get(options.BaseURL+"/clusters/:id/diagnostics/config", wrapper.GetClusterDiagnosticConfig)
+	router.Get(options.BaseURL+"/clusters/:ID/diagnostics/config", wrapper.GetClusterDiagnosticConfig)
 
-	router.Put(options.BaseURL+"/clusters/:id/diagnostics/config", wrapper.UpdateClusterDiagnosticConfig)
+	router.Put(options.BaseURL+"/clusters/:ID/diagnostics/config", wrapper.UpdateClusterDiagnosticConfig)
 
-	router.Get(options.BaseURL+"/clusters/:id/snapshot-config", wrapper.GetClusterSnapshotConfig)
+	router.Get(options.BaseURL+"/clusters/:ID/snapshot-config", wrapper.GetClusterSnapshotConfig)
 
-	router.Put(options.BaseURL+"/clusters/:id/snapshot-config", wrapper.UpdateClusterSnapshotConfig)
+	router.Put(options.BaseURL+"/clusters/:ID/snapshot-config", wrapper.UpdateClusterSnapshotConfig)
 
-	router.Get(options.BaseURL+"/clusters/:id/snapshots", wrapper.ListClusterSnapshots)
+	router.Get(options.BaseURL+"/clusters/:ID/snapshots", wrapper.ListClusterSnapshots)
 
-	router.Post(options.BaseURL+"/clusters/:id/snapshots", wrapper.CreateClusterSnapshot)
+	router.Post(options.BaseURL+"/clusters/:ID/snapshots", wrapper.CreateClusterSnapshot)
 
-	router.Delete(options.BaseURL+"/clusters/:id/snapshots/:snapshotId", wrapper.DeleteClusterSnapshot)
+	router.Delete(options.BaseURL+"/clusters/:ID/snapshots/:snapshotId", wrapper.DeleteClusterSnapshot)
 
-	router.Post(options.BaseURL+"/clusters/:id/snapshots/:snapshotId", wrapper.RestoreClusterSnapshot)
+	router.Post(options.BaseURL+"/clusters/:ID/snapshots/:snapshotId", wrapper.RestoreClusterSnapshot)
 
 	router.Get(options.BaseURL+"/databases", wrapper.ListDatabases)
 
 	router.Post(options.BaseURL+"/databases", wrapper.CreateDatabase)
 
-	router.Delete(options.BaseURL+"/databases/:id", wrapper.DeleteDatabase)
+	router.Post(options.BaseURL+"/databases/test-connection", wrapper.TestDatabaseConnection)
 
-	router.Get(options.BaseURL+"/databases/:id", wrapper.GetDatabase)
+	router.Delete(options.BaseURL+"/databases/:ID", wrapper.DeleteDatabase)
 
-	router.Put(options.BaseURL+"/databases/:id", wrapper.UpdateDatabase)
+	router.Get(options.BaseURL+"/databases/:ID", wrapper.GetDatabase)
+
+	router.Put(options.BaseURL+"/databases/:ID", wrapper.UpdateDatabase)
+
+	router.Get(options.BaseURL+"/databases/:ID/ddl-progress", wrapper.GetDDLProgress)
+
+	router.Post(options.BaseURL+"/databases/:ID/ddl-progress/:ddlID/cancel", wrapper.PostDatabasesIDDdlProgressDdlIDCancel)
+
+	router.Post(options.BaseURL+"/databases/:ID/query", wrapper.QueryDatabase)
 
 }

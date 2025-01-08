@@ -7,13 +7,16 @@ import type { ClusterCreate } from '../models/ClusterCreate';
 import type { Credentials } from '../models/Credentials';
 import type { Database } from '../models/Database';
 import type { DatabaseConnectInfo } from '../models/DatabaseConnectInfo';
+import type { DDLProgress } from '../models/DDLProgress';
 import type { DiagnosticConfig } from '../models/DiagnosticConfig';
 import type { DiagnosticData } from '../models/DiagnosticData';
+import type { QueryRequest } from '../models/QueryRequest';
 import type { RefreshTokenRequest } from '../models/RefreshTokenRequest';
 import type { SignInRequest } from '../models/SignInRequest';
 import type { Snapshot } from '../models/Snapshot';
 import type { SnapshotConfig } from '../models/SnapshotConfig';
 import type { SnapshotCreate } from '../models/SnapshotCreate';
+import type { TestConnectionResult } from '../models/TestConnectionResult';
 import type { UpdateClusterRequest } from '../models/UpdateClusterRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -49,6 +52,18 @@ export class DefaultService {
         });
     }
     /**
+     * Test database connection
+     * Test a database connection
+     * @returns TestConnectionResult Successfully tested database connection
+     * @throws ApiError
+     */
+    public static testDatabaseConnection(): CancelablePromise<TestConnectionResult> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/databases/test-connection',
+        });
+    }
+    /**
      * Get database details
      * Retrieve details of a specific database
      * @param id
@@ -60,9 +75,9 @@ export class DefaultService {
     ): CancelablePromise<Database> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/databases/{id}',
+            url: '/databases/{ID}',
             path: {
-                'id': id,
+                'ID': id,
             },
         });
     }
@@ -80,9 +95,9 @@ export class DefaultService {
     ): CancelablePromise<Database> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/databases/{id}',
+            url: '/databases/{ID}',
             path: {
-                'id': id,
+                'ID': id,
             },
             body: requestBody,
             mediaType: 'application/json',
@@ -100,9 +115,67 @@ export class DefaultService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/databases/{id}',
+            url: '/databases/{ID}',
             path: {
-                'id': id,
+                'ID': id,
+            },
+        });
+    }
+    /**
+     * Query database
+     * Query a specific database
+     * @param id
+     * @param requestBody
+     * @throws ApiError
+     */
+    public static queryDatabase(
+        id: number,
+        requestBody: QueryRequest,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/databases/{ID}/query',
+            path: {
+                'ID': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Get DDL progress
+     * Get the progress of a DDL operation
+     * @param id
+     * @returns DDLProgress Successfully retrieved DDL progress
+     * @throws ApiError
+     */
+    public static getDdlProgress(
+        id: number,
+    ): CancelablePromise<Array<DDLProgress>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/databases/{ID}/ddl-progress',
+            path: {
+                'ID': id,
+            },
+        });
+    }
+    /**
+     * @param id
+     * @param ddlId
+     * @returns any Successfully canceled DDL operation
+     * @throws ApiError
+     */
+    public static postDatabasesDdlProgressCancel(
+        id: number,
+        ddlId: string,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/databases/{ID}/ddl-progress/{ddlID}/cancel',
+            path: {
+                'ID': id,
+                'ddlID': ddlId,
             },
         });
     }
@@ -147,9 +220,9 @@ export class DefaultService {
     ): CancelablePromise<Cluster> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/clusters/{id}',
+            url: '/clusters/{ID}',
             path: {
-                'id': id,
+                'ID': id,
             },
         });
     }
@@ -167,9 +240,9 @@ export class DefaultService {
     ): CancelablePromise<Cluster> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/clusters/{id}',
+            url: '/clusters/{ID}',
             path: {
-                'id': id,
+                'ID': id,
             },
             body: requestBody,
             mediaType: 'application/json',
@@ -187,9 +260,9 @@ export class DefaultService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/clusters/{id}',
+            url: '/clusters/{ID}',
             path: {
-                'id': id,
+                'ID': id,
             },
         });
     }
@@ -205,9 +278,9 @@ export class DefaultService {
     ): CancelablePromise<Array<Snapshot>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/clusters/{id}/snapshots',
+            url: '/clusters/{ID}/snapshots',
             path: {
-                'id': id,
+                'ID': id,
             },
         });
     }
@@ -225,9 +298,9 @@ export class DefaultService {
     ): CancelablePromise<Snapshot> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/clusters/{id}/snapshots',
+            url: '/clusters/{ID}/snapshots',
             path: {
-                'id': id,
+                'ID': id,
             },
             body: requestBody,
             mediaType: 'application/json',
@@ -247,9 +320,9 @@ export class DefaultService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/clusters/{id}/snapshots/{snapshotId}',
+            url: '/clusters/{ID}/snapshots/{snapshotId}',
             path: {
-                'id': id,
+                'ID': id,
                 'snapshotId': snapshotId,
             },
         });
@@ -268,9 +341,9 @@ export class DefaultService {
     ): CancelablePromise<any> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/clusters/{id}/snapshots/{snapshotId}',
+            url: '/clusters/{ID}/snapshots/{snapshotId}',
             path: {
-                'id': id,
+                'ID': id,
                 'snapshotId': snapshotId,
             },
         });
@@ -287,9 +360,9 @@ export class DefaultService {
     ): CancelablePromise<SnapshotConfig> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/clusters/{id}/snapshot-config',
+            url: '/clusters/{ID}/snapshot-config',
             path: {
-                'id': id,
+                'ID': id,
             },
         });
     }
@@ -307,9 +380,9 @@ export class DefaultService {
     ): CancelablePromise<SnapshotConfig> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/clusters/{id}/snapshot-config',
+            url: '/clusters/{ID}/snapshot-config',
             path: {
-                'id': id,
+                'ID': id,
             },
             body: requestBody,
             mediaType: 'application/json',
@@ -349,9 +422,9 @@ export class DefaultService {
     }> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/clusters/{id}/diagnostics',
+            url: '/clusters/{ID}/diagnostics',
             path: {
-                'id': id,
+                'ID': id,
             },
             query: {
                 'from': from,
@@ -373,9 +446,9 @@ export class DefaultService {
     ): CancelablePromise<DiagnosticConfig> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/clusters/{id}/diagnostics/config',
+            url: '/clusters/{ID}/diagnostics/config',
             path: {
-                'id': id,
+                'ID': id,
             },
         });
     }
@@ -393,9 +466,9 @@ export class DefaultService {
     ): CancelablePromise<DiagnosticConfig> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/clusters/{id}/diagnostics/config',
+            url: '/clusters/{ID}/diagnostics/config',
             path: {
-                'id': id,
+                'ID': id,
             },
             body: requestBody,
             mediaType: 'application/json',

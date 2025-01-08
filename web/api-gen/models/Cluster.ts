@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type Cluster = {
-    id: number;
+    ID: number;
     organizationID: number;
     name: string;
     host: string;

@@ -207,3 +207,19 @@ func (controller *Controller) GetClusterDiagnosticConfig(c *fiber.Ctx, id string
 func (controller *Controller) UpdateClusterDiagnosticConfig(c *fiber.Ctx, id string) error {
 	return c.Status(fiber.StatusOK).SendString("Hello, World!")
 }
+
+func (controller *Controller) GetDDLProgress(c *fiber.Ctx, id int64) error {
+	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+}
+
+func (controller *Controller) PostDatabasesIDDdlProgressDdlIDCancel(c *fiber.Ctx, id int64, ddlID string) error {
+	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+}
+
+func (controller *Controller) TestDatabaseConnection(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+}
+
+func (controller *Controller) QueryDatabase(c *fiber.Ctx, id int64) error {
+	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+}

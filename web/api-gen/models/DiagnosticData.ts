@@ -6,7 +6,7 @@ export type DiagnosticData = {
     /**
      * Unique identifier of the diagnostic entry
      */
-    id: number;
+    ID: number;
     /**
      * When the diagnostic data was collected
      */
