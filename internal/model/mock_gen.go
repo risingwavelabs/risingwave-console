@@ -269,6 +269,21 @@ func (mr *MockModelInterfaceMockRecorder) GetUserByName(ctx, name interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByName", reflect.TypeOf((*MockModelInterface)(nil).GetUserByName), ctx, name)
 }
 
+// GetUserDatabaseByID mocks base method.
+func (m *MockModelInterface) GetUserDatabaseByID(ctx context.Context, arg querier.GetUserDatabaseByIDParams) (*querier.DatabaseConnection, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserDatabaseByID", ctx, arg)
+	ret0, _ := ret[0].(*querier.DatabaseConnection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserDatabaseByID indicates an expected call of GetUserDatabaseByID.
+func (mr *MockModelInterfaceMockRecorder) GetUserDatabaseByID(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDatabaseByID", reflect.TypeOf((*MockModelInterface)(nil).GetUserDatabaseByID), ctx, arg)
+}
+
 // InTransaction mocks base method.
 func (m *MockModelInterface) InTransaction() bool {
 	m.ctrl.T.Helper()

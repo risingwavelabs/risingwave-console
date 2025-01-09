@@ -4,10 +4,6 @@
 /* eslint-disable */
 export type Column = {
     /**
-     * Unique identifier of the column
-     */
-    ID: string;
-    /**
      * Name of the column
      */
     name: string;

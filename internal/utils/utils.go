@@ -63,3 +63,10 @@ func TryMarshal(o any) string {
 	}
 	return string(raw)
 }
+
+func UnwrapOrDefault[T any](v *T, def T) T {
+	if v == nil {
+		return def
+	}
+	return *v
+}

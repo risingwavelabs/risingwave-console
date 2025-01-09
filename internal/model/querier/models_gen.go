@@ -26,6 +26,7 @@ type DatabaseConnection struct {
 	ClusterID      int32
 	Username       string
 	Password       *string
+	Database       string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }

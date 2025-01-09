@@ -4,9 +4,10 @@ INSERT INTO database_connections (
     cluster_id,
     username,
     password,
+    database,
     organization_id
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 ) RETURNING *;
 
 -- name: GetDatabaseConnection :one
@@ -25,7 +26,8 @@ SET
     cluster_id = $3,
     username = $4,
     password = $5,
-    organization_id = $6,
+    database = $6,
+    organization_id = $7,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING *;
@@ -33,3 +35,8 @@ RETURNING *;
 -- name: DeleteDatabaseConnection :exec
 DELETE FROM database_connections
 WHERE id = $1;
+
+-- name: GetUserDatabaseByID :one
+SELECT * FROM database_connections
+WHERE id = $1 AND organization_id = $2;
+

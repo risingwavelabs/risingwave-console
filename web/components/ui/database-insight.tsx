@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { StreamingGraph, RisingWaveNodeData } from "@/components/streaming-graph";
 import { ProgressView } from "./progress-view";
 
@@ -8,15 +8,12 @@ interface DatabaseInsightProps {
   height?: string;
   databaseSchema?: RisingWaveNodeData[];
   result?: { type: 'success' | 'error', message: string, rows?: any[] };
+  selectedDatabaseId?: string | null;
+  onCancelProgress?: (ddlId: string) => void;
 }
 
-export function DatabaseInsight({ height = '30vh', databaseSchema = [], result }: DatabaseInsightProps) {
+export function DatabaseInsight({ height = '30vh', databaseSchema = [], result, selectedDatabaseId, onCancelProgress }: DatabaseInsightProps) {
   const [activeResultTab, setActiveResultTab] = useState<'result' | 'graph' | 'progress'>('result')
-
-  const handleCancelProgress = useCallback((name: string) => {
-    // Here you would typically make an API call to cancel the materialized view creation
-    console.log(`Cancelling materialized view creation: ${name}`);
-  }, []);
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ height }}>
@@ -53,7 +50,12 @@ export function DatabaseInsight({ height = '30vh', databaseSchema = [], result }
         {activeResultTab === 'result' && result && (
           <div className="p-4 h-full overflow-auto">
             <div className={`mb-2 text-sm ${result.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
-              {result.message}
+              {result.message.split('\n').map((line, i) => (
+                <span key={i}>
+                  {line}
+                  {i < result.message.split('\n').length - 1 && <br />}
+                </span>
+              ))}
             </div>
             {result.rows && (
               <div className="overflow-auto">
@@ -93,8 +95,11 @@ export function DatabaseInsight({ height = '30vh', databaseSchema = [], result }
           </div>
         )}
         {activeResultTab === 'progress' && (
-          <div className="h-full overflow-auto">
-            <ProgressView onCancel={handleCancelProgress} />
+          <div className="flex-1 overflow-auto p-4">
+            <ProgressView
+              databaseId={selectedDatabaseId}
+              onCancel={onCancelProgress}
+            />
           </div>
         )}
       </div>

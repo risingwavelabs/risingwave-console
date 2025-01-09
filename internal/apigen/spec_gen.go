@@ -64,9 +64,6 @@ type ClusterCreate struct {
 
 // Column defines model for Column.
 type Column struct {
-	// ID Unique identifier of the column
-	ID string `json:"ID"`
-
 	// Name Name of the column
 	Name string `json:"name"`
 
@@ -112,6 +109,9 @@ type Database struct {
 	// CreatedAt Creation timestamp
 	CreatedAt time.Time `json:"createdAt"`
 
+	// Database Database name
+	Database string `json:"database"`
+
 	// Name Name of the database
 	Name string `json:"name"`
 
@@ -135,6 +135,9 @@ type Database struct {
 type DatabaseConnectInfo struct {
 	// ClusterID ID of the cluster this database belongs to
 	ClusterID int32 `json:"clusterID"`
+
+	// Database Database name
+	Database string `json:"database"`
 
 	// Name Name of the database
 	Name string `json:"name"`
@@ -178,8 +181,14 @@ type QueryRequest struct {
 
 // QueryResponse defines model for QueryResponse.
 type QueryResponse struct {
-	Columns []string   `json:"columns"`
-	Rows    [][]string `json:"rows"`
+	Columns []Column `json:"columns"`
+
+	// Error Error message if the query failed
+	Error *string                  `json:"error,omitempty"`
+	Rows  []map[string]interface{} `json:"rows"`
+
+	// RowsAffected Number of rows affected by the query
+	RowsAffected int64 `json:"rowsAffected"`
 }
 
 // RefreshTokenRequest defines model for RefreshTokenRequest.
@@ -249,6 +258,7 @@ type SnapshotCreate struct {
 // TestConnectionPayload defines model for TestConnectionPayload.
 type TestConnectionPayload struct {
 	ClusterID int32   `json:"clusterID"`
+	Database  string  `json:"database"`
 	Password  *string `json:"password,omitempty"`
 	Username  string  `json:"username"`
 }
@@ -478,15 +488,15 @@ type ClientInterface interface {
 	UpdateDatabase(ctx context.Context, iD int32, body UpdateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDDLProgress request
-	GetDDLProgress(ctx context.Context, iD int64, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetDDLProgress(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CancelDDLProgress request
-	CancelDDLProgress(ctx context.Context, iD int64, ddlID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CancelDDLProgress(ctx context.Context, iD int32, ddlID string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// QueryDatabaseWithBody request with any body
-	QueryDatabaseWithBody(ctx context.Context, iD int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	QueryDatabaseWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	QueryDatabase(ctx context.Context, iD int64, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	QueryDatabase(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) RefreshTokenWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -873,7 +883,7 @@ func (c *Client) UpdateDatabase(ctx context.Context, iD int32, body UpdateDataba
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetDDLProgress(ctx context.Context, iD int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetDDLProgress(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetDDLProgressRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
@@ -885,7 +895,7 @@ func (c *Client) GetDDLProgress(ctx context.Context, iD int64, reqEditors ...Req
 	return c.Client.Do(req)
 }
 
-func (c *Client) CancelDDLProgress(ctx context.Context, iD int64, ddlID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CancelDDLProgress(ctx context.Context, iD int32, ddlID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCancelDDLProgressRequest(c.Server, iD, ddlID)
 	if err != nil {
 		return nil, err
@@ -897,7 +907,7 @@ func (c *Client) CancelDDLProgress(ctx context.Context, iD int64, ddlID string, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) QueryDatabaseWithBody(ctx context.Context, iD int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) QueryDatabaseWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewQueryDatabaseRequestWithBody(c.Server, iD, contentType, body)
 	if err != nil {
 		return nil, err
@@ -909,7 +919,7 @@ func (c *Client) QueryDatabaseWithBody(ctx context.Context, iD int64, contentTyp
 	return c.Client.Do(req)
 }
 
-func (c *Client) QueryDatabase(ctx context.Context, iD int64, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) QueryDatabase(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewQueryDatabaseRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
@@ -1835,7 +1845,7 @@ func NewUpdateDatabaseRequestWithBody(server string, iD int32, contentType strin
 }
 
 // NewGetDDLProgressRequest generates requests for GetDDLProgress
-func NewGetDDLProgressRequest(server string, iD int64) (*http.Request, error) {
+func NewGetDDLProgressRequest(server string, iD int32) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1869,7 +1879,7 @@ func NewGetDDLProgressRequest(server string, iD int64) (*http.Request, error) {
 }
 
 // NewCancelDDLProgressRequest generates requests for CancelDDLProgress
-func NewCancelDDLProgressRequest(server string, iD int64, ddlID string) (*http.Request, error) {
+func NewCancelDDLProgressRequest(server string, iD int32, ddlID string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1910,7 +1920,7 @@ func NewCancelDDLProgressRequest(server string, iD int64, ddlID string) (*http.R
 }
 
 // NewQueryDatabaseRequest calls the generic QueryDatabase builder with application/json body
-func NewQueryDatabaseRequest(server string, iD int64, body QueryDatabaseJSONRequestBody) (*http.Request, error) {
+func NewQueryDatabaseRequest(server string, iD int32, body QueryDatabaseJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -1921,7 +1931,7 @@ func NewQueryDatabaseRequest(server string, iD int64, body QueryDatabaseJSONRequ
 }
 
 // NewQueryDatabaseRequestWithBody generates requests for QueryDatabase with any type of body
-func NewQueryDatabaseRequestWithBody(server string, iD int64, contentType string, body io.Reader) (*http.Request, error) {
+func NewQueryDatabaseRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2086,15 +2096,15 @@ type ClientWithResponsesInterface interface {
 	UpdateDatabaseWithResponse(ctx context.Context, iD int32, body UpdateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDatabaseResponse, error)
 
 	// GetDDLProgressWithResponse request
-	GetDDLProgressWithResponse(ctx context.Context, iD int64, reqEditors ...RequestEditorFn) (*GetDDLProgressResponse, error)
+	GetDDLProgressWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetDDLProgressResponse, error)
 
 	// CancelDDLProgressWithResponse request
-	CancelDDLProgressWithResponse(ctx context.Context, iD int64, ddlID string, reqEditors ...RequestEditorFn) (*CancelDDLProgressResponse, error)
+	CancelDDLProgressWithResponse(ctx context.Context, iD int32, ddlID string, reqEditors ...RequestEditorFn) (*CancelDDLProgressResponse, error)
 
 	// QueryDatabaseWithBodyWithResponse request with any body
-	QueryDatabaseWithBodyWithResponse(ctx context.Context, iD int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
+	QueryDatabaseWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
 
-	QueryDatabaseWithResponse(ctx context.Context, iD int64, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
+	QueryDatabaseWithResponse(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
 }
 
 type RefreshTokenResponse struct {
@@ -2932,7 +2942,7 @@ func (c *ClientWithResponses) UpdateDatabaseWithResponse(ctx context.Context, iD
 }
 
 // GetDDLProgressWithResponse request returning *GetDDLProgressResponse
-func (c *ClientWithResponses) GetDDLProgressWithResponse(ctx context.Context, iD int64, reqEditors ...RequestEditorFn) (*GetDDLProgressResponse, error) {
+func (c *ClientWithResponses) GetDDLProgressWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetDDLProgressResponse, error) {
 	rsp, err := c.GetDDLProgress(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2941,7 +2951,7 @@ func (c *ClientWithResponses) GetDDLProgressWithResponse(ctx context.Context, iD
 }
 
 // CancelDDLProgressWithResponse request returning *CancelDDLProgressResponse
-func (c *ClientWithResponses) CancelDDLProgressWithResponse(ctx context.Context, iD int64, ddlID string, reqEditors ...RequestEditorFn) (*CancelDDLProgressResponse, error) {
+func (c *ClientWithResponses) CancelDDLProgressWithResponse(ctx context.Context, iD int32, ddlID string, reqEditors ...RequestEditorFn) (*CancelDDLProgressResponse, error) {
 	rsp, err := c.CancelDDLProgress(ctx, iD, ddlID, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2950,7 +2960,7 @@ func (c *ClientWithResponses) CancelDDLProgressWithResponse(ctx context.Context,
 }
 
 // QueryDatabaseWithBodyWithResponse request with arbitrary body returning *QueryDatabaseResponse
-func (c *ClientWithResponses) QueryDatabaseWithBodyWithResponse(ctx context.Context, iD int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error) {
+func (c *ClientWithResponses) QueryDatabaseWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error) {
 	rsp, err := c.QueryDatabaseWithBody(ctx, iD, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2958,7 +2968,7 @@ func (c *ClientWithResponses) QueryDatabaseWithBodyWithResponse(ctx context.Cont
 	return ParseQueryDatabaseResponse(rsp)
 }
 
-func (c *ClientWithResponses) QueryDatabaseWithResponse(ctx context.Context, iD int64, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error) {
+func (c *ClientWithResponses) QueryDatabaseWithResponse(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error) {
 	rsp, err := c.QueryDatabase(ctx, iD, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -3647,13 +3657,13 @@ type ServerInterface interface {
 	UpdateDatabase(c *fiber.Ctx, iD int32) error
 	// Get DDL progress
 	// (GET /databases/{ID}/ddl-progress)
-	GetDDLProgress(c *fiber.Ctx, iD int64) error
+	GetDDLProgress(c *fiber.Ctx, iD int32) error
 
 	// (POST /databases/{ID}/ddl-progress/{ddlID}/cancel)
-	CancelDDLProgress(c *fiber.Ctx, iD int64, ddlID string) error
+	CancelDDLProgress(c *fiber.Ctx, iD int32, ddlID string) error
 	// Query database
 	// (POST /databases/{ID}/query)
-	QueryDatabase(c *fiber.Ctx, iD int64) error
+	QueryDatabase(c *fiber.Ctx, iD int32) error
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -4044,7 +4054,7 @@ func (siw *ServerInterfaceWrapper) GetDDLProgress(c *fiber.Ctx) error {
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD int64
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -4062,7 +4072,7 @@ func (siw *ServerInterfaceWrapper) CancelDDLProgress(c *fiber.Ctx) error {
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD int64
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -4088,7 +4098,7 @@ func (siw *ServerInterfaceWrapper) QueryDatabase(c *fiber.Ctx) error {
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD int64
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {

@@ -125,7 +125,7 @@ paths:
           required: true
           schema:
             type: integer
-            format: int64
+            format: int32
       summary: Query database
       description: Query a specific database
       operationId: queryDatabase
@@ -153,7 +153,7 @@ paths:
           required: true
           schema:
             type: integer
-            format: int64
+            format: int32
       summary: Get DDL progress
       description: Get the progress of a DDL operation
       operationId: get DDL progress
@@ -178,7 +178,7 @@ paths:
           required: true
           schema:
             type: integer
-            format: int64
+            format: int32
         - name: ddlID
           in: path
           required: true
@@ -562,6 +562,7 @@ components:
         - name
         - clusterID
         - username
+        - database
       properties:
         name:
           type: string
@@ -577,6 +578,9 @@ components:
           type: string
           description: Database password (optional)
           format: password
+        database:
+          type: string
+          description: Database name
 
     Database:
       type: object
@@ -586,6 +590,7 @@ components:
         - clusterID
         - organizationID
         - username
+        - database
         - createdAt
         - updatedAt
       properties:
@@ -607,6 +612,9 @@ components:
         username:
           type: string
           description: Database username
+        database:
+          type: string
+          description: Database name
         password:
           type: string
           format: password
@@ -628,13 +636,9 @@ components:
     Column:
       type: object
       required:
-        - ID
         - name
         - type
       properties:
-        ID:
-          type: string
-          description: Unique identifier of the column
         name:
           type: string
           description: Name of the column
@@ -911,17 +915,24 @@ components:
       required:
         - columns
         - rows
+        - rowsAffected
       properties:
         columns:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/Column'
         rows:
           type: array
           items:
-            type: array
-            items:
-              type: string
+            type: object
+            description: Row of the query result, the key is the column name and the value is the column value
+        rowsAffected:
+          type: integer
+          format: int64
+          description: Number of rows affected by the query
+        error:
+          type: string
+          description: Error message if the query failed
 
     DDLProgress:
       type: object
@@ -945,6 +956,7 @@ components:
       required:
         - clusterID
         - username
+        - database
       properties:
         clusterID:
           type: integer
@@ -952,6 +964,8 @@ components:
         username:
           type: string
         password:
+          type: string
+        database:
           type: string
 
     TestConnectionResult:

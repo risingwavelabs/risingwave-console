@@ -14,6 +14,7 @@ import { GenerateQuery } from "@/components/ui/generate-query"
 import { DatabaseInsight } from "@/components/ui/database-insight"
 import { RisingWaveNodeData } from "@/components/streaming-graph"
 import { useTheme } from 'next-themes'
+import { ProgressItem } from "./progress-view"
 
 // Move these to a separate constants file if needed
 const SQL_COMPLETIONS = {
@@ -34,9 +35,11 @@ interface EditorTab {
 interface SQLEditorProps {
   width: number
   savedQueries: Array<{ id: string, name: string }>
-  onRunQuery?: (query: string) => void
+  onRunQuery?: (query: string) => Promise<{ type: 'success' | 'error', message: string, rows?: Record<string, string>[] }>
   onSaveQuery?: (query: string, name: string) => void
   databaseSchema?: RisingWaveNodeData[]
+  selectedDatabaseId?: string | null
+  onCancelProgress?: (ddlId: string) => void
 }
 
 // Sample result datasets
@@ -184,7 +187,7 @@ const SAMPLE_SCHEMA: RisingWaveNodeData[] = [
   }
 ]
 
-export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databaseSchema = SAMPLE_SCHEMA }: SQLEditorProps) {
+export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databaseSchema = SAMPLE_SCHEMA, selectedDatabaseId, onCancelProgress }: SQLEditorProps) {
   const { theme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [tabs, setTabs] = useState<EditorTab[]>([
@@ -474,34 +477,30 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
     }
   }, [isResizingHeight, handleMouseMoveVertical, handleMouseUpVertical])
 
-  const handleRunQuery = useCallback(() => {
+  const handleRunQuery = useCallback(async () => {
     const query = tabs.find(tab => tab.id === activeTab)?.content
     if (!query?.trim()) return
 
-    // Simulate random success/error (80% success rate)
-    const isSuccess = Math.random() < 0.8
-
-    if (isSuccess) {
-      // Pick a random result set consistently
-      const randomIndex = Math.floor(Math.random() * SAMPLE_RESULTS.length)
-      const randomResult = SAMPLE_RESULTS[randomIndex]
-      const newResult = {
-        type: 'success' as const,
-        message: randomResult.message,
-        rows: randomResult.rows
-      }
-      setQueryResult(newResult)
-    } else {
-      const randomError = ERROR_MESSAGES[Math.floor(Math.random() * ERROR_MESSAGES.length)]
-      const newResult = {
-        type: 'error' as const,
-        message: randomError
-      }
-      setQueryResult(newResult)
+    if (!selectedDatabaseId) {
+      setQueryResult({
+        type: 'error',
+        message: 'Please select a database first'
+      })
+      return
     }
 
-    onRunQuery?.(query)
-  }, [activeTab, tabs, onRunQuery])
+    try {
+      const result = await onRunQuery?.(query)
+      if (result) {
+        setQueryResult(result)
+      }
+    } catch (error) {
+      setQueryResult({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to execute query'
+      })
+    }
+  }, [activeTab, tabs, onRunQuery, selectedDatabaseId])
 
   const handleGenerateQuery = useCallback((prompt: string) => {
     if (!prompt.trim() || !editorRef.current) return
@@ -702,6 +701,8 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
           height={graphHeight}
           databaseSchema={databaseSchema}
           result={queryResult}
+          selectedDatabaseId={selectedDatabaseId}
+          onCancelProgress={onCancelProgress}
         />
       </div>
     </div>

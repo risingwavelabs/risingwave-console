@@ -10,6 +10,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
+	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
 	"github.com/risingwavelabs/wavekit/internal/utils"
@@ -91,17 +92,19 @@ type ServiceInterface interface {
 type Service struct {
 	m    model.ModelInterface
 	auth auth.AuthInterface
+	sqlm sql.SQLConnectionManegerInterface
 
 	now                 func() time.Time
 	generateHashAndSalt func(password string) (string, string, error)
 }
 
-func NewService(cfg *config.Config, m model.ModelInterface, auth auth.AuthInterface) ServiceInterface {
+func NewService(cfg *config.Config, m model.ModelInterface, auth auth.AuthInterface, sqlm sql.SQLConnectionManegerInterface) ServiceInterface {
 	return &Service{
 		m:                   m,
 		now:                 time.Now,
 		generateHashAndSalt: utils.GenerateHashAndSalt,
 		auth:                auth,
+		sqlm:                sqlm,
 	}
 }
 
@@ -321,6 +324,7 @@ func (s *Service) CreateDatabase(ctx context.Context, params apigen.DatabaseConn
 		Name:           params.Name,
 		Username:       params.Username,
 		Password:       params.Password,
+		Database:       params.Database,
 		OrganizationID: orgID,
 	})
 	if err != nil {
@@ -334,6 +338,7 @@ func (s *Service) CreateDatabase(ctx context.Context, params apigen.DatabaseConn
 		OrganizationID: cluster.OrganizationID,
 		Username:       cluster.Username,
 		Password:       cluster.Password,
+		Database:       cluster.Database,
 		CreatedAt:      cluster.CreatedAt,
 		UpdatedAt:      cluster.UpdatedAt,
 	}, nil
@@ -355,6 +360,7 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 		OrganizationID: db.OrganizationID,
 		Username:       db.Username,
 		Password:       db.Password,
+		Database:       db.Database,
 		CreatedAt:      db.CreatedAt,
 		UpdatedAt:      db.UpdatedAt,
 	}, nil
@@ -378,6 +384,7 @@ func (s *Service) ListDatabases(ctx context.Context, orgID int32) ([]apigen.Data
 			OrganizationID: db.OrganizationID,
 			Username:       db.Username,
 			Password:       db.Password,
+			Database:       db.Database,
 			CreatedAt:      db.CreatedAt,
 			UpdatedAt:      db.UpdatedAt,
 		}
@@ -392,6 +399,7 @@ func (s *Service) UpdateDatabase(ctx context.Context, id int32, params apigen.Da
 		Name:           params.Name,
 		Username:       params.Username,
 		Password:       params.Password,
+		Database:       params.Database,
 		OrganizationID: orgID,
 	})
 	if err != nil {
@@ -405,6 +413,7 @@ func (s *Service) UpdateDatabase(ctx context.Context, id int32, params apigen.Da
 		ID:             db.ID,
 		Name:           db.Name,
 		ClusterID:      db.ClusterID,
+		Database:       db.Database,
 		OrganizationID: db.OrganizationID,
 		Username:       db.Username,
 		Password:       db.Password,
@@ -422,7 +431,21 @@ func (s *Service) DeleteDatabase(ctx context.Context, id int32, orgID int32) err
 }
 
 func (s *Service) TestDatabaseConnection(ctx context.Context, params apigen.TestConnectionPayload) (*apigen.TestConnectionResult, error) {
-	// TODO: Implement actual database connection test
+	cluster, err := s.m.GetCluster(ctx, params.ClusterID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get cluster")
+	}
+
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", params.Username, utils.UnwrapOrDefault(params.Password, ""), cluster.Host, cluster.SqlPort, params.Database)
+
+	_, err = sql.Query(ctx, connStr, "SELECT 1")
+	if err != nil {
+		return &apigen.TestConnectionResult{
+			Success: false,
+			Result:  err.Error(),
+		}, nil
+	}
+
 	return &apigen.TestConnectionResult{
 		Success: true,
 		Result:  "Connection successful",
@@ -430,10 +453,49 @@ func (s *Service) TestDatabaseConnection(ctx context.Context, params apigen.Test
 }
 
 func (s *Service) QueryDatabase(ctx context.Context, id int32, params apigen.QueryRequest, orgID int32) (*apigen.QueryResponse, error) {
-	// TODO: Implement actual database query execution
+	db, err := s.m.GetUserDatabaseByID(ctx, querier.GetUserDatabaseByIDParams{
+		ID:             id,
+		OrganizationID: orgID,
+	})
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, ErrDatabaseNotFound
+		}
+		if errors.Is(err, sql.ErrQueryFailed) {
+			return &apigen.QueryResponse{
+				Error: utils.Ptr(err.Error()),
+			}, nil
+		}
+		return nil, errors.Wrapf(err, "failed to get database connection")
+	}
+
+	conn, err := s.sqlm.GetConn(ctx, db.ID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get database connection")
+	}
+
+	result, err := conn.Query(ctx, params.Query)
+	if err != nil {
+		if errors.Is(err, sql.ErrQueryFailed) {
+			return &apigen.QueryResponse{
+				Error: utils.Ptr(err.Error()),
+			}, nil
+		}
+		return nil, errors.Wrapf(err, "failed to query database")
+	}
+
+	columns := make([]apigen.Column, len(result.Columns))
+	for i, column := range result.Columns {
+		columns[i] = apigen.Column{
+			Name: column.Name,
+			Type: column.Type,
+		}
+	}
+
 	return &apigen.QueryResponse{
-		Columns: []string{"id", "name"},
-		Rows:    [][]string{{"1", "test"}},
+
+		Columns: columns,
+		Rows:    result.Rows,
 	}, nil
 }
 
@@ -444,7 +506,13 @@ func (s *Service) GetDDLProgress(ctx context.Context, id int32, orgID int32) ([]
 			ID:            1,
 			Statement:     "CREATE MATERIALIZED VIEW ...",
 			Progress:      "50%",
-			InitializedAt: s.now(),
+			InitializedAt: s.now().Round(time.Hour),
+		},
+		{
+			ID:            1,
+			Statement:     "CREATE MATERIALIZED VIEW ...",
+			Progress:      "100%",
+			InitializedAt: s.now().Round(time.Hour),
 		},
 	}, nil
 }

@@ -15,10 +15,11 @@ INSERT INTO database_connections (
     cluster_id,
     username,
     password,
+    database,
     organization_id
 ) VALUES (
-    $1, $2, $3, $4, $5
-) RETURNING id, organization_id, name, cluster_id, username, password, created_at, updated_at
+    $1, $2, $3, $4, $5, $6
+) RETURNING id, organization_id, name, cluster_id, username, password, database, created_at, updated_at
 `
 
 type CreateDatabaseConnectionParams struct {
@@ -26,6 +27,7 @@ type CreateDatabaseConnectionParams struct {
 	ClusterID      int32
 	Username       string
 	Password       *string
+	Database       string
 	OrganizationID int32
 }
 
@@ -35,6 +37,7 @@ func (q *Queries) CreateDatabaseConnection(ctx context.Context, arg CreateDataba
 		arg.ClusterID,
 		arg.Username,
 		arg.Password,
+		arg.Database,
 		arg.OrganizationID,
 	)
 	var i DatabaseConnection
@@ -45,6 +48,7 @@ func (q *Queries) CreateDatabaseConnection(ctx context.Context, arg CreateDataba
 		&i.ClusterID,
 		&i.Username,
 		&i.Password,
+		&i.Database,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -62,7 +66,7 @@ func (q *Queries) DeleteDatabaseConnection(ctx context.Context, id int32) error 
 }
 
 const getDatabaseConnection = `-- name: GetDatabaseConnection :one
-SELECT id, organization_id, name, cluster_id, username, password, created_at, updated_at FROM database_connections
+SELECT id, organization_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
 WHERE id = $1
 `
 
@@ -76,6 +80,34 @@ func (q *Queries) GetDatabaseConnection(ctx context.Context, id int32) (*Databas
 		&i.ClusterID,
 		&i.Username,
 		&i.Password,
+		&i.Database,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const getUserDatabaseByID = `-- name: GetUserDatabaseByID :one
+SELECT id, organization_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
+WHERE id = $1 AND organization_id = $2
+`
+
+type GetUserDatabaseByIDParams struct {
+	ID             int32
+	OrganizationID int32
+}
+
+func (q *Queries) GetUserDatabaseByID(ctx context.Context, arg GetUserDatabaseByIDParams) (*DatabaseConnection, error) {
+	row := q.db.QueryRow(ctx, getUserDatabaseByID, arg.ID, arg.OrganizationID)
+	var i DatabaseConnection
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.Name,
+		&i.ClusterID,
+		&i.Username,
+		&i.Password,
+		&i.Database,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -83,7 +115,7 @@ func (q *Queries) GetDatabaseConnection(ctx context.Context, id int32) (*Databas
 }
 
 const listDatabaseConnections = `-- name: ListDatabaseConnections :many
-SELECT id, organization_id, name, cluster_id, username, password, created_at, updated_at FROM database_connections
+SELECT id, organization_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
 WHERE organization_id = $1
 ORDER BY name
 `
@@ -104,6 +136,7 @@ func (q *Queries) ListDatabaseConnections(ctx context.Context, organizationID in
 			&i.ClusterID,
 			&i.Username,
 			&i.Password,
+			&i.Database,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -124,10 +157,11 @@ SET
     cluster_id = $3,
     username = $4,
     password = $5,
-    organization_id = $6,
+    database = $6,
+    organization_id = $7,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, organization_id, name, cluster_id, username, password, created_at, updated_at
+RETURNING id, organization_id, name, cluster_id, username, password, database, created_at, updated_at
 `
 
 type UpdateDatabaseConnectionParams struct {
@@ -136,6 +170,7 @@ type UpdateDatabaseConnectionParams struct {
 	ClusterID      int32
 	Username       string
 	Password       *string
+	Database       string
 	OrganizationID int32
 }
 
@@ -146,6 +181,7 @@ func (q *Queries) UpdateDatabaseConnection(ctx context.Context, arg UpdateDataba
 		arg.ClusterID,
 		arg.Username,
 		arg.Password,
+		arg.Database,
 		arg.OrganizationID,
 	)
 	var i DatabaseConnection
@@ -156,6 +192,7 @@ func (q *Queries) UpdateDatabaseConnection(ctx context.Context, arg UpdateDataba
 		&i.ClusterID,
 		&i.Username,
 		&i.Password,
+		&i.Database,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

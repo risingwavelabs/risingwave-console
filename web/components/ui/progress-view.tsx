@@ -3,30 +3,59 @@ import { X, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from './button';
 import Editor from '@monaco-editor/react';
 import { useTheme } from 'next-themes';
+import { DefaultService } from '@/api-gen';
 
-interface ProgressItem {
+// Export the interface so it can be used by other components
+export interface ProgressItem {
   name: string;
   status: 'running' | 'completed' | 'failed';
-  progress: number;
-  startTime: number; // Unix timestamp in milliseconds
-  sql: string; // SQL code that's being executed
+  progress: string;
+  startTime: number;
+  sql: string;
+  ddlId: string;
 }
 
-interface ProgressViewProps {
-  items?: ProgressItem[];
-  onCancel?: (name: string) => void;
+export interface ProgressViewProps {
+  databaseId?: string | null;
+  onCancel?: (ddlId: string) => void;
 }
 
-export function ProgressView({ items = [], onCancel }: ProgressViewProps) {
+export function ProgressView({ databaseId, onCancel }: ProgressViewProps) {
+  const [items, setItems] = useState<ProgressItem[]>([]);
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const { theme } = useTheme();
 
+  // Fetch progress items
+  useEffect(() => {
+    if (!databaseId) return;
+
+    const fetchProgress = async () => {
+      try {
+        const progress = await DefaultService.getDdlProgress(Number(databaseId));
+        setItems(progress.map(p => ({
+          name: p.statement,
+          status: 'running',
+          progress: p.progress,
+          startTime: Date.parse(p.initializedAt),
+          sql: p.statement,
+          ddlId: String(p.ID)
+        })));
+      } catch (error) {
+        console.error('Error fetching DDL progress:', error);
+      }
+    };
+
+    fetchProgress();
+    const interval = setInterval(fetchProgress, 1000);
+    return () => clearInterval(interval);
+  }, [databaseId]);
+
   // Update time every second for running items
   useEffect(() => {
-    const hasRunningItems = (items.length > 0 ? items : sampleItems).some(
-      item => item.status === 'running'
+    const hasRunningItems = items.some(
+      (item: ProgressItem) => item.status === 'running'
     );
 
     if (hasRunningItems) {
@@ -36,50 +65,6 @@ export function ProgressView({ items = [], onCancel }: ProgressViewProps) {
       return () => clearInterval(interval);
     }
   }, [items]);
-
-  // Sample data for demonstration
-  const sampleItems: ProgressItem[] = [
-    {
-      name: 'user_metrics',
-      status: 'completed',
-      progress: 100,
-      startTime: Date.now() - 3600000, // 1 hour ago
-      sql: `CREATE MATERIALIZED VIEW user_metrics AS
-SELECT user_id,
-       COUNT(*) as event_count,
-       MAX(timestamp) as last_seen
-FROM user_events
-GROUP BY user_id;`
-    },
-    {
-      name: 'product_analytics',
-      status: 'running',
-      progress: 65,
-      startTime: Date.now() - 300000, // 5 minutes ago
-      sql: `CREATE MATERIALIZED VIEW product_analytics AS
-SELECT product_id,
-       COUNT(CASE WHEN event_type = 'view' THEN 1 END) as view_count,
-       COUNT(CASE WHEN event_type = 'purchase' THEN 1 END) as purchase_count
-FROM product_events
-GROUP BY product_id;`
-    },
-    {
-      name: 'user_product_recommendations',
-      status: 'running',
-      progress: 30,
-      startTime: Date.now() - 120000, // 2 minutes ago
-      sql: `CREATE MATERIALIZED VIEW user_product_recommendations AS
-SELECT u.user_id,
-       p.product_id,
-       COUNT(*) as interaction_count,
-       AVG(CASE WHEN p.event_type = 'purchase' THEN 1 ELSE 0.1 END) as score
-FROM user_events u
-JOIN product_events p ON u.session_id = p.session_id
-GROUP BY u.user_id, p.product_id;`
-    }
-  ];
-
-  const displayItems = items.length > 0 ? items : sampleItems;
 
   const toggleExpand = (name: string) => {
     setExpandedItems(prev => {
@@ -130,18 +115,16 @@ GROUP BY u.user_id, p.product_id;`
     }
   };
 
-  const handleConfirmCancel = (name: string) => {
+  const handleConfirmCancel = (ddlId: string) => {
     if (onCancel) {
-      onCancel(name);
-    } else {
-      console.log('Cancel clicked for:', name);
+      onCancel(ddlId)
     }
-    setCancelId(null);
+    setCancelId(null)
   };
 
   return (
     <div className="p-2 space-y-2">
-      {displayItems.map((item, index) => (
+      {items.map((item: ProgressItem, index: number) => (
         <div key={index} className="bg-background border rounded-md shadow-sm">
           <div 
             className="p-2 cursor-pointer hover:bg-accent/50"
@@ -170,11 +153,11 @@ GROUP BY u.user_id, p.product_id;`
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => setCancelId(item.name)}
+                    onClick={() => setCancelId(item.ddlId)}
                   >
                     <X className="h-3.5 w-3.5" />
                   </Button>
-                  {cancelId === item.name && (
+                  {cancelId === item.ddlId && (
                     <div className="absolute right-0 top-full mt-1 bg-background border rounded-lg shadow-lg py-1.5 px-2 z-50 whitespace-nowrap">
                       <p className="text-xs text-muted-foreground mb-1.5">Cancel this operation?</p>
                       <div className="flex gap-1.5">
@@ -190,7 +173,7 @@ GROUP BY u.user_id, p.product_id;`
                           size="sm"
                           variant="destructive"
                           className="h-6 px-2 text-xs"
-                          onClick={() => handleConfirmCancel(item.name)}
+                          onClick={() => handleConfirmCancel(item.ddlId)}
                         >
                           Yes, cancel
                         </Button>
@@ -204,12 +187,12 @@ GROUP BY u.user_id, p.product_id;`
               <div className="flex-1 bg-accent rounded-full h-1.5">
                 <div
                   className={`h-1.5 rounded-full ${getStatusColor(item.status)} transition-all duration-500`}
-                  style={{ width: `${item.progress}%` }}
+                  style={{ width: item.progress }}
                 />
               </div>
               <div className="w-10 text-right">
                 <span className="text-xs font-medium text-foreground">
-                  {item.progress}%
+                  {item.progress}
                 </span>
               </div>
             </div>

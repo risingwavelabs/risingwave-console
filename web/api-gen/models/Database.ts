@@ -25,6 +25,10 @@ export type Database = {
      */
     username: string;
     /**
+     * Database name
+     */
+    database: string;
+    /**
      * Database password (optional)
      */
     password?: string;

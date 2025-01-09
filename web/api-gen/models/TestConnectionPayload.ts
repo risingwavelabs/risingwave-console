@@ -6,5 +6,6 @@ export type TestConnectionPayload = {
     clusterID: number;
     username: string;
     password?: string;
+    database: string;
 };
 

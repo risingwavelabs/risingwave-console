@@ -25,6 +25,7 @@ const databaseSchema = yup.object().shape({
   clusterID: yup.number().required("Cluster is required"),
   username: yup.string().required("Username is required"),
   password: yup.string().optional(),
+  database: yup.string().required("Database name is required"),
 })
 
 export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange }: DatabaseManagementProps) {
@@ -55,6 +56,7 @@ export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange
       username: '',
       password: '',
       clusterID: 0,
+      database: '',
     }
   })
 
@@ -105,6 +107,7 @@ export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange
         clusterID: Number(formData.clusterID),
         username: formData.username,
         password: formData.password,
+        database: formData.database,
       })
       setTestResult({
         success: result.success,
@@ -121,12 +124,13 @@ export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange
     }
   }
 
-  const onSubmit = async (data: { name: string, username: string, password?: string, clusterID: number }) => {
+  const onSubmit = async (data: { name: string, username: string, password?: string, clusterID: number, database: string }) => {
     const dbConnectInfo: DatabaseConnectInfo = {
       name: data.name,
       username: data.username,
       password: data.password,
       clusterID: data.clusterID,
+      database: data.database,
     }
 
     try {
@@ -157,6 +161,7 @@ export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange
     setEditingDatabase(db)
     setIsConfiguring(String(db.ID))
     setValue('name', db.name)
+    setValue('database', db.database)
     
     try {
       // Get cluster info since that's where the connection details are
@@ -353,6 +358,19 @@ export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange
                   />
                   {errors.password && (
                     <p className="text-sm text-red-500">{errors.password.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="database">Database Name</Label>
+                  <Input
+                    id="database"
+                    {...register('database')}
+                    placeholder="e.g. postgres"
+                    className={errors.database ? 'border-red-500' : ''}
+                  />
+                  {errors.database && (
+                    <p className="text-sm text-red-500">{errors.database.message}</p>
                   )}
                 </div>
 

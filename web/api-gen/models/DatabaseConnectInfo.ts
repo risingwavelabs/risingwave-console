@@ -19,5 +19,9 @@ export type DatabaseConnectInfo = {
      * Database password (optional)
      */
     password?: string;
+    /**
+     * Database name
+     */
+    database: string;
 };
 

@@ -10,7 +10,6 @@ import {
 } from "./context-menu"
 
 export interface Column {
-  id: string
   name: string
   type: string
 }
@@ -147,9 +146,9 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase }: Databa
                   </button>
                   {expandedTables.has(table.id) && (
                     <div className="ml-6 space-y-1">
-                      {table.columns.map((column) => (
+                      {table.columns.map((column, index) => (
                         <div
-                          key={column.id}
+                          key={index}
                           className="flex items-center gap-1 w-full rounded-sm p-1 text-sm text-muted-foreground"
                         >
                           <span className="truncate">{column.name}</span>

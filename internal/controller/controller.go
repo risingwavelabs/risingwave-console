@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -238,13 +239,13 @@ func (controller *Controller) ListDatabases(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(databases)
 }
 
-func (controller *Controller) GetDDLProgress(c *fiber.Ctx, id int64) error {
+func (controller *Controller) GetDDLProgress(c *fiber.Ctx, id int32) error {
 	user, err := auth.GetUser(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	progress, err := controller.svc.GetDDLProgress(c.Context(), int32(id), user.OrganizationID)
+	progress, err := controller.svc.GetDDLProgress(c.Context(), id, user.OrganizationID)
 	if err != nil {
 		return err
 	}
@@ -252,13 +253,13 @@ func (controller *Controller) GetDDLProgress(c *fiber.Ctx, id int64) error {
 	return c.Status(fiber.StatusOK).JSON(progress)
 }
 
-func (controller *Controller) CancelDDLProgress(c *fiber.Ctx, id int64, ddlID string) error {
+func (controller *Controller) CancelDDLProgress(c *fiber.Ctx, id int32, ddlID string) error {
 	user, err := auth.GetUser(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	err = controller.svc.CancelDDLProgress(c.Context(), int32(id), ddlID, user.OrganizationID)
+	err = controller.svc.CancelDDLProgress(c.Context(), id, ddlID, user.OrganizationID)
 	if err != nil {
 		return err
 	}
@@ -280,7 +281,7 @@ func (controller *Controller) TestDatabaseConnection(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-func (controller *Controller) QueryDatabase(c *fiber.Ctx, id int64) error {
+func (controller *Controller) QueryDatabase(c *fiber.Ctx, id int32) error {
 	var params apigen.QueryRequest
 	if err := c.BodyParser(&params); err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
@@ -291,8 +292,11 @@ func (controller *Controller) QueryDatabase(c *fiber.Ctx, id int64) error {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	result, err := controller.svc.QueryDatabase(c.Context(), int32(id), params, user.OrganizationID)
+	result, err := controller.svc.QueryDatabase(c.Context(), id, params, user.OrganizationID)
 	if err != nil {
+		if errors.Is(err, service.ErrDatabaseNotFound) {
+			return c.Status(fiber.StatusNotFound).SendString(fmt.Sprintf("database %d not found", id))
+		}
 		return err
 	}
 
