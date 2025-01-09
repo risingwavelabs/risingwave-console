@@ -25,6 +25,8 @@ var (
 	ErrUserNotFound        = errors.New("user not found")
 	ErrInvalidPassword     = errors.New("invalid password")
 	ErrRefreshTokenExpired = errors.New("refresh token expired")
+	ErrDatabaseNotFound    = errors.New("database not found")
+	ErrClusterNotFound     = errors.New("cluster not found")
 )
 
 const (
@@ -57,6 +59,33 @@ type ServiceInterface interface {
 
 	// DeleteCluster deletes a cluster
 	DeleteCluster(ctx context.Context, id int32) error
+
+	// Database management
+	CreateDatabase(ctx context.Context, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error)
+
+	// GetDatabase gets a database by its ID and organization ID
+	GetDatabase(ctx context.Context, id int32, orgID int32) (*apigen.Database, error)
+
+	// ListDatabases lists all databases in an organization
+	ListDatabases(ctx context.Context, orgID int32) ([]apigen.Database, error)
+
+	// UpdateDatabase updates a database
+	UpdateDatabase(ctx context.Context, id int32, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error)
+
+	// DeleteDatabase deletes a database
+	DeleteDatabase(ctx context.Context, id int32, orgID int32) error
+
+	// TestDatabaseConnection tests a database connection
+	TestDatabaseConnection(ctx context.Context, params apigen.TestConnectionPayload) (*apigen.TestConnectionResult, error)
+
+	// QueryDatabase executes a query on a database
+	QueryDatabase(ctx context.Context, id int32, params apigen.QueryRequest, orgID int32) (*apigen.QueryResponse, error)
+
+	// GetDDLProgress gets the progress of DDL operations
+	GetDDLProgress(ctx context.Context, id int32, orgID int32) ([]apigen.DDLProgress, error)
+
+	// CancelDDLProgress cancels a DDL operation
+	CancelDDLProgress(ctx context.Context, id int32, ddlID string, orgID int32) error
 }
 
 type Service struct {
@@ -95,7 +124,7 @@ func (s *Service) SignIn(ctx context.Context, params apigen.SignInRequest) (*api
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create token")
 	}
-	refreshToken, err := auth.GenerateRefreshToken()
+	refreshToken, jwtToken, err := s.auth.CreateRefreshToken(user.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to generate refresh token")
 	}
@@ -109,7 +138,7 @@ func (s *Service) SignIn(ctx context.Context, params apigen.SignInRequest) (*api
 
 	return &apigen.Credentials{
 		AccessToken:  token,
-		RefreshToken: refreshToken,
+		RefreshToken: jwtToken,
 		TokenType:    apigen.Bearer,
 	}, nil
 }
@@ -130,7 +159,7 @@ func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken s
 		return nil, errors.Wrapf(err, "failed to get user by id: %d", userID)
 	}
 
-	newRefreshToken, err := auth.GenerateRefreshToken()
+	newRefreshToken, jwtToken, err := s.auth.CreateRefreshToken(userID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to generate refresh token")
 	}
@@ -147,7 +176,7 @@ func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken s
 
 	return &apigen.Credentials{
 		AccessToken:  accessToken,
-		RefreshToken: newRefreshToken,
+		RefreshToken: jwtToken,
 		TokenType:    apigen.Bearer,
 	}, nil
 }
@@ -209,7 +238,7 @@ func (s *Service) GetCluster(ctx context.Context, id int32) (*apigen.Cluster, er
 	cluster, err := s.m.GetCluster(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, errors.New("cluster not found")
+			return nil, ErrClusterNotFound
 		}
 		return nil, errors.Wrapf(err, "failed to get cluster")
 	}
@@ -261,7 +290,7 @@ func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.Clu
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, errors.New("cluster not found")
+			return nil, ErrClusterNotFound
 		}
 		return nil, errors.Wrapf(err, "failed to update cluster")
 	}
@@ -283,5 +312,144 @@ func (s *Service) DeleteCluster(ctx context.Context, id int32) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete cluster")
 	}
+	return nil
+}
+
+func (s *Service) CreateDatabase(ctx context.Context, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error) {
+	cluster, err := s.m.CreateDatabaseConnection(ctx, querier.CreateDatabaseConnectionParams{
+		ClusterID:      params.ClusterID,
+		Name:           params.Name,
+		Username:       params.Username,
+		Password:       params.Password,
+		OrganizationID: orgID,
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create database")
+	}
+
+	return &apigen.Database{
+		ID:             cluster.ID,
+		Name:           cluster.Name,
+		ClusterID:      cluster.ClusterID,
+		OrganizationID: cluster.OrganizationID,
+		Username:       cluster.Username,
+		Password:       cluster.Password,
+		CreatedAt:      cluster.CreatedAt,
+		UpdatedAt:      cluster.UpdatedAt,
+	}, nil
+}
+
+func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apigen.Database, error) {
+	db, err := s.m.GetDatabaseConnection(ctx, id)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, ErrDatabaseNotFound
+		}
+		return nil, errors.Wrapf(err, "failed to get database")
+	}
+
+	return &apigen.Database{
+		ID:             db.ID,
+		Name:           db.Name,
+		ClusterID:      db.ClusterID,
+		OrganizationID: db.OrganizationID,
+		Username:       db.Username,
+		Password:       db.Password,
+		CreatedAt:      db.CreatedAt,
+		UpdatedAt:      db.UpdatedAt,
+	}, nil
+}
+
+func (s *Service) ListDatabases(ctx context.Context, orgID int32) ([]apigen.Database, error) {
+	dbs, err := s.m.ListDatabaseConnections(ctx, orgID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errors.Wrapf(err, "failed to list databases")
+	}
+
+	result := make([]apigen.Database, len(dbs))
+	for i, db := range dbs {
+		result[i] = apigen.Database{
+			ID:             db.ID,
+			Name:           db.Name,
+			ClusterID:      db.ClusterID,
+			OrganizationID: db.OrganizationID,
+			Username:       db.Username,
+			Password:       db.Password,
+			CreatedAt:      db.CreatedAt,
+			UpdatedAt:      db.UpdatedAt,
+		}
+	}
+	return result, nil
+}
+
+func (s *Service) UpdateDatabase(ctx context.Context, id int32, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error) {
+	db, err := s.m.UpdateDatabaseConnection(ctx, querier.UpdateDatabaseConnectionParams{
+		ID:             id,
+		ClusterID:      params.ClusterID,
+		Name:           params.Name,
+		Username:       params.Username,
+		Password:       params.Password,
+		OrganizationID: orgID,
+	})
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, ErrDatabaseNotFound
+		}
+		return nil, errors.Wrapf(err, "failed to update database")
+	}
+
+	return &apigen.Database{
+		ID:             db.ID,
+		Name:           db.Name,
+		ClusterID:      db.ClusterID,
+		OrganizationID: db.OrganizationID,
+		Username:       db.Username,
+		Password:       db.Password,
+		CreatedAt:      db.CreatedAt,
+		UpdatedAt:      db.UpdatedAt,
+	}, nil
+}
+
+func (s *Service) DeleteDatabase(ctx context.Context, id int32, orgID int32) error {
+	err := s.m.DeleteDatabaseConnection(ctx, id)
+	if err != nil {
+		return errors.Wrapf(err, "failed to delete database")
+	}
+	return nil
+}
+
+func (s *Service) TestDatabaseConnection(ctx context.Context, params apigen.TestConnectionPayload) (*apigen.TestConnectionResult, error) {
+	// TODO: Implement actual database connection test
+	return &apigen.TestConnectionResult{
+		Success: true,
+		Result:  "Connection successful",
+	}, nil
+}
+
+func (s *Service) QueryDatabase(ctx context.Context, id int32, params apigen.QueryRequest, orgID int32) (*apigen.QueryResponse, error) {
+	// TODO: Implement actual database query execution
+	return &apigen.QueryResponse{
+		Columns: []string{"id", "name"},
+		Rows:    [][]string{{"1", "test"}},
+	}, nil
+}
+
+func (s *Service) GetDDLProgress(ctx context.Context, id int32, orgID int32) ([]apigen.DDLProgress, error) {
+	// TODO: Implement actual DDL progress tracking
+	return []apigen.DDLProgress{
+		{
+			ID:            1,
+			Statement:     "CREATE MATERIALIZED VIEW ...",
+			Progress:      "50%",
+			InitializedAt: s.now(),
+		},
+	}, nil
+}
+
+func (s *Service) CancelDDLProgress(ctx context.Context, id int32, ddlID string, orgID int32) error {
+	// TODO: Implement actual DDL cancellation
 	return nil
 }

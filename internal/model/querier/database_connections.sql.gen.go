@@ -24,7 +24,7 @@ INSERT INTO database_connections (
 type CreateDatabaseConnectionParams struct {
 	Name           string
 	ClusterID      int32
-	Username       *string
+	Username       string
 	Password       *string
 	OrganizationID int32
 }
@@ -134,7 +134,7 @@ type UpdateDatabaseConnectionParams struct {
 	ID             int32
 	Name           string
 	ClusterID      int32
-	Username       *string
+	Username       string
 	Password       *string
 	OrganizationID int32
 }

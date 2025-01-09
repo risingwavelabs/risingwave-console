@@ -21,9 +21,9 @@ export type Database = {
      */
     organizationID: number;
     /**
-     * Database username (optional)
+     * Database username
      */
-    username?: string;
+    username: string;
     /**
      * Database password (optional)
      */

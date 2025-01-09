@@ -11,11 +11,13 @@ import type { DDLProgress } from '../models/DDLProgress';
 import type { DiagnosticConfig } from '../models/DiagnosticConfig';
 import type { DiagnosticData } from '../models/DiagnosticData';
 import type { QueryRequest } from '../models/QueryRequest';
+import type { QueryResponse } from '../models/QueryResponse';
 import type { RefreshTokenRequest } from '../models/RefreshTokenRequest';
 import type { SignInRequest } from '../models/SignInRequest';
 import type { Snapshot } from '../models/Snapshot';
 import type { SnapshotConfig } from '../models/SnapshotConfig';
 import type { SnapshotCreate } from '../models/SnapshotCreate';
+import type { TestConnectionPayload } from '../models/TestConnectionPayload';
 import type { TestConnectionResult } from '../models/TestConnectionResult';
 import type { UpdateClusterRequest } from '../models/UpdateClusterRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
@@ -54,13 +56,18 @@ export class DefaultService {
     /**
      * Test database connection
      * Test a database connection
+     * @param requestBody
      * @returns TestConnectionResult Successfully tested database connection
      * @throws ApiError
      */
-    public static testDatabaseConnection(): CancelablePromise<TestConnectionResult> {
+    public static testDatabaseConnection(
+        requestBody: TestConnectionPayload,
+    ): CancelablePromise<TestConnectionResult> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/databases/test-connection',
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**
@@ -126,12 +133,13 @@ export class DefaultService {
      * Query a specific database
      * @param id
      * @param requestBody
+     * @returns QueryResponse Query executed successfully
      * @throws ApiError
      */
     public static queryDatabase(
         id: number,
         requestBody: QueryRequest,
-    ): CancelablePromise<void> {
+    ): CancelablePromise<QueryResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/databases/{ID}/query',
@@ -166,7 +174,7 @@ export class DefaultService {
      * @returns any Successfully canceled DDL operation
      * @throws ApiError
      */
-    public static postDatabasesDdlProgressCancel(
+    public static cancelDdlProgress(
         id: number,
         ddlId: string,
     ): CancelablePromise<any> {

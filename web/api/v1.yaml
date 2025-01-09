@@ -53,6 +53,12 @@ paths:
       operationId: testDatabaseConnection
       security:
         - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestConnectionPayload'
       responses:
         '200':
           description: Successfully tested database connection
@@ -131,6 +137,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/QueryRequest'
+      responses:
+        '200':
+          description: Query executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
 
   /databases/{ID}/ddl-progress:
     get:
@@ -158,6 +171,7 @@ paths:
     
   /databases/{ID}/ddl-progress/{ddlID}/cancel:
     post:
+      operationId: cancelDDLProgress
       parameters:
         - name: ID
           in: path
@@ -546,25 +560,19 @@ components:
       type: object
       required:
         - name
-        - host
-        - sqlPort
-        - metaPort
+        - clusterID
+        - username
       properties:
         name:
           type: string
           description: Name of the database
-        host:
-          type: string
-          description: Database host address
-        sqlPort:
+        clusterID:
           type: integer
-          description: SQL connection port
-        metaPort:
-          type: integer
-          description: Metadata service port
+          format: int32
+          description: ID of the cluster this database belongs to
         username:
           type: string
-          description: Database username (optional)
+          description: Database username
         password:
           type: string
           description: Database password (optional)
@@ -577,6 +585,7 @@ components:
         - name
         - clusterID
         - organizationID
+        - username
         - createdAt
         - updatedAt
       properties:
@@ -597,7 +606,7 @@ components:
           description: ID of the organization this database belongs to
         username:
           type: string
-          description: Database username (optional)
+          description: Database username
         password:
           type: string
           format: password
@@ -930,6 +939,20 @@ components:
           type: string
           format: date-time
           description: When the DDL operation was initialized
+
+    TestConnectionPayload:
+      type: object
+      required:
+        - clusterID
+        - username
+      properties:
+        clusterID:
+          type: integer
+          format: int32
+        username:
+          type: string
+        password:
+          type: string
 
     TestConnectionResult:
       type: object

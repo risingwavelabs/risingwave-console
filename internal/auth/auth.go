@@ -34,6 +34,12 @@ type AuthInterface interface {
 
 	// GetJWTSecret returns the JWT secret used for signing tokens
 	GetJWTSecret() []byte
+
+	// CreateRefreshToken returns a refresh token and its JWT token
+	CreateRefreshToken(userID int32) (string, string, error)
+
+	// ParseJWTRefreshToken parses the given JWT refresh token and returns the user ID and the refresh token
+	ParseJWTRefreshToken(jwtToken string) (int32, string, error)
 }
 
 type Auth struct {
@@ -56,7 +62,7 @@ func NewAuth(cfg *config.Config) (AuthInterface, error) {
 func (a *Auth) Authfunc(c *fiber.Ctx, rules ...string) error {
 	authHeader := c.Get("Authorization")
 	if authHeader == "" {
-		return c.Status(401).SendString("missing authorization header")
+		return c.Status(fiber.StatusUnauthorized).SendString("missing authorization header")
 	}
 
 	// Remove "Bearer " prefix if present
@@ -67,14 +73,14 @@ func (a *Auth) Authfunc(c *fiber.Ctx, rules ...string) error {
 
 	user, err := a.ValidateToken(tokenString)
 	if err != nil {
-		return err
+		return c.Status(fiber.StatusUnauthorized).SendString(err.Error())
 	}
 
 	c.Locals(UserContextKey, user)
 
 	for _, rule := range rules {
 		if _, ok := user.AccessRules[rule]; !ok {
-			return c.Status(403).SendString(fmt.Sprintf("Permission denied, need rule %s", rule))
+			return c.Status(fiber.StatusForbidden).SendString(fmt.Sprintf("Permission denied, need rule %s", rule))
 		}
 	}
 	return nil
@@ -137,7 +143,51 @@ func (a *Auth) GetJWTSecret() []byte {
 	return a.jwtSecret
 }
 
-func GenerateRefreshToken() (string, error) {
+func (a *Auth) CreateRefreshToken(userID int32) (string, string, error) {
+	refreshToken, err := generateRefreshToken()
+	if err != nil {
+		return "", "", err
+	}
+	jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userID": userID,
+		"token":  refreshToken,
+	})
+	jwtToken, err := jwt.SignedString(a.jwtSecret)
+	if err != nil {
+		return "", "", err
+	}
+	return refreshToken, jwtToken, nil
+}
+
+func (a *Auth) ParseJWTRefreshToken(jwtToken string) (int32, string, error) {
+	token, err := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return a.jwtSecret, nil
+	})
+	if err != nil {
+		return 0, "", err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, "", errors.New("unexpected error when parsing claims: claims is not jwt.MapClaims")
+	}
+
+	userID, ok := claims["userID"].(float64)
+	if !ok {
+		return 0, "", errors.New("unexpected error when parsing userID: userID is not float64")
+	}
+
+	refreshToken, ok := claims["token"].(string)
+	if !ok {
+		return 0, "", errors.New("unexpected error when parsing token: token is not string")
+	}
+	return int32(userID), refreshToken, nil
+}
+
+func generateRefreshToken() (string, error) {
 	const length = 32
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)

@@ -8,21 +8,13 @@ export type DatabaseConnectInfo = {
      */
     name: string;
     /**
-     * Database host address
+     * ID of the cluster this database belongs to
      */
-    host: string;
+    clusterID: number;
     /**
-     * SQL connection port
+     * Database username
      */
-    sqlPort: number;
-    /**
-     * Metadata service port
-     */
-    metaPort: number;
-    /**
-     * Database username (optional)
-     */
-    username?: string;
+    username: string;
     /**
      * Database password (optional)
      */

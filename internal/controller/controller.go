@@ -50,12 +50,12 @@ func (controller *Controller) RefreshToken(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	user, err := auth.GetUser(c)
+	userID, refreshToken, err := controller.auth.ParseJWTRefreshToken(params.RefreshToken)
 	if err != nil {
-		return c.SendStatus(fiber.StatusUnauthorized)
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
-	credentials, err := controller.svc.RefreshToken(c.Context(), user.ID, params.RefreshToken)
+	credentials, err := controller.svc.RefreshToken(c.Context(), userID, refreshToken)
 	if err != nil {
 		if errors.Is(err, service.ErrRefreshTokenExpired) {
 			return c.SendStatus(fiber.StatusUnauthorized)
@@ -107,7 +107,7 @@ func (controller *Controller) GetCluster(c *fiber.Ctx, id string) error {
 
 	cluster, err := controller.svc.GetCluster(c.Context(), int32(clusterID))
 	if err != nil {
-		if err.Error() == "cluster not found" {
+		if errors.Is(err, service.ErrClusterNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
 		}
 		return err
@@ -129,7 +129,7 @@ func (controller *Controller) UpdateCluster(c *fiber.Ctx, id string) error {
 
 	cluster, err := controller.svc.UpdateCluster(c.Context(), int32(clusterID), params)
 	if err != nil {
-		if err.Error() == "cluster not found" {
+		if errors.Is(err, service.ErrClusterNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
 		}
 		return err
@@ -153,23 +153,150 @@ func (controller *Controller) ListClusters(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) CreateDatabase(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	var params apigen.DatabaseConnectInfo
+	if err := c.BodyParser(&params); err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	database, err := controller.svc.CreateDatabase(c.Context(), params, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(database)
 }
 
 func (controller *Controller) DeleteDatabase(c *fiber.Ctx, id int32) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	err = controller.svc.DeleteDatabase(c.Context(), id, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 func (controller *Controller) GetDatabase(c *fiber.Ctx, id int32) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	database, err := controller.svc.GetDatabase(c.Context(), id, user.OrganizationID)
+	if err != nil {
+		if errors.Is(err, service.ErrDatabaseNotFound) {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(database)
 }
 
 func (controller *Controller) UpdateDatabase(c *fiber.Ctx, id int32) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	var params apigen.DatabaseConnectInfo
+	if err := c.BodyParser(&params); err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	database, err := controller.svc.UpdateDatabase(c.Context(), id, params, user.OrganizationID)
+	if err != nil {
+		if errors.Is(err, service.ErrDatabaseNotFound) {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(database)
 }
 
 func (controller *Controller) ListDatabases(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	databases, err := controller.svc.ListDatabases(c.Context(), user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(databases)
+}
+
+func (controller *Controller) GetDDLProgress(c *fiber.Ctx, id int64) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	progress, err := controller.svc.GetDDLProgress(c.Context(), int32(id), user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(progress)
+}
+
+func (controller *Controller) CancelDDLProgress(c *fiber.Ctx, id int64, ddlID string) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	err = controller.svc.CancelDDLProgress(c.Context(), int32(id), ddlID, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (controller *Controller) TestDatabaseConnection(c *fiber.Ctx) error {
+	var params apigen.TestConnectionPayload
+	if err := c.BodyParser(&params); err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	result, err := controller.svc.TestDatabaseConnection(c.Context(), params)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (controller *Controller) QueryDatabase(c *fiber.Ctx, id int64) error {
+	var params apigen.QueryRequest
+	if err := c.BodyParser(&params); err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	result, err := controller.svc.QueryDatabase(c.Context(), int32(id), params, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
 }
 
 func (controller *Controller) CreateClusterSnapshot(c *fiber.Ctx, id string) error {
@@ -205,21 +332,5 @@ func (controller *Controller) GetClusterDiagnosticConfig(c *fiber.Ctx, id string
 }
 
 func (controller *Controller) UpdateClusterDiagnosticConfig(c *fiber.Ctx, id string) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
-}
-
-func (controller *Controller) GetDDLProgress(c *fiber.Ctx, id int64) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
-}
-
-func (controller *Controller) PostDatabasesIDDdlProgressDdlIDCancel(c *fiber.Ctx, id int64, ddlID string) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
-}
-
-func (controller *Controller) TestDatabaseConnection(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
-}
-
-func (controller *Controller) QueryDatabase(c *fiber.Ctx, id int64) error {
 	return c.Status(fiber.StatusOK).SendString("Hello, World!")
 }

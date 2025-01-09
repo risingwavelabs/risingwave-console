@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS database_connections (
 
     name            TEXT        NOT NULL,
     cluster_id      INTEGER     NOT NULL REFERENCES clusters(id),
-    username        TEXT,
+    username        TEXT        NOT NULL,
     password        TEXT,
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,

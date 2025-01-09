@@ -24,7 +24,7 @@ type DatabaseConnection struct {
 	OrganizationID int32
 	Name           string
 	ClusterID      int32
-	Username       *string
+	Username       string
 	Password       *string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time

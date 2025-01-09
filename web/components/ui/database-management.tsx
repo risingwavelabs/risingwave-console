@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { X, Settings2, Trash2, Plus, ArrowLeft } from "lucide-react"
-import { useCallback, useState } from "react"
+import { useCallback, useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import * as yup from "yup"
@@ -8,59 +8,37 @@ import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { ConfirmationPopup } from "@/components/ui/confirmation-popup"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-
-interface Database {
-  id: string
-  name: string
-  clusterId: string
-  clusterName: string
-  user: string
-  password?: string
-  database: string
-}
-
-const databaseSchema = yup.object().shape({
-  name: yup.string().required("Name is required"),
-  clusterId: yup.string().required("Cluster is required"),
-  user: yup.string().required("Username is required"),
-  password: yup.string().optional(),
-  database: yup.string().required("Database name is required"),
-})
+import { DefaultService } from "@/api-gen/services/DefaultService"
+import { Database } from "@/api-gen/models/Database"
+import { DatabaseConnectInfo } from "@/api-gen/models/DatabaseConnectInfo"
+import { toast } from "sonner"
 
 interface DatabaseManagementProps {
   isOpen: boolean
   onClose: () => void
   clusters: Array<{ id: string, name: string }>
+  onDatabaseChange?: () => void
 }
 
-export function DatabaseManagement({ isOpen, onClose, clusters }: DatabaseManagementProps) {
+const databaseSchema = yup.object().shape({
+  name: yup.string().required("Name is required"),
+  clusterID: yup.number().required("Cluster is required"),
+  username: yup.string().required("Username is required"),
+  password: yup.string().optional(),
+})
+
+export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange }: DatabaseManagementProps) {
   if (!isOpen) return null
 
-  // Sample databases - replace with actual data
-  const [databases, setDatabases] = useState<Database[]>([
-    { 
-      id: "db1", 
-      name: "Main Database", 
-      clusterId: "cluster-1", 
-      clusterName: "Production Cluster",
-      user: "admin",
-      password: "********",
-      database: "main"
-    },
-    { 
-      id: "db2", 
-      name: "Analytics DB", 
-      clusterId: "cluster-2", 
-      clusterName: "Analytics Cluster",
-      user: "analyst",
-      password: "********",
-      database: "analytics"
-    },
-  ])
+  const [databases, setDatabases] = useState<Database[]>([])
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isAddingDatabase, setIsAddingDatabase] = useState(false)
   const [isConfiguring, setIsConfiguring] = useState<string | null>(null)
   const [editingDatabase, setEditingDatabase] = useState<Database | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isTesting, setIsTesting] = useState(false)
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [selectedClusterId, setSelectedClusterId] = useState<string>('')
 
   const {
     register,
@@ -74,53 +52,123 @@ export function DatabaseManagement({ isOpen, onClose, clusters }: DatabaseManage
     mode: "all",
     defaultValues: {
       name: '',
-      clusterId: '',
-      user: '',
+      username: '',
       password: '',
-      database: '',
+      clusterID: 0,
     }
   })
 
-  const handleDeleteDatabase = (id: string) => {
-    setDatabases(prev => prev.filter(db => db.id !== id))
+  // Reset form and state when closing
+  const handleClose = useCallback(() => {
+    reset()
+    setSelectedClusterId('')
+    onClose()
+  }, [reset, onClose])
+
+  // Fetch databases on component mount
+  useEffect(() => {
+    const fetchDatabases = async () => {
+      try {
+        setIsLoading(true)
+        const data = await DefaultService.listDatabases()
+        setDatabases(data)
+      } catch (error) {
+        toast.error("Failed to fetch databases")
+        console.error("Error fetching databases:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchDatabases()
+  }, [])
+
+  const handleDeleteDatabase = async (id: number) => {
+    try {
+      await DefaultService.deleteDatabase(id)
+      setDatabases(prev => prev.filter(db => db.ID !== id))
+      toast.success("Database deleted successfully")
+      onDatabaseChange?.()
+    } catch (error) {
+      toast.error("Failed to delete database")
+      console.error("Error deleting database:", error)
+    }
     setDeleteId(null)
   }
 
-  const onSubmit = (data: { name: string, clusterId: string, user: string, password?: string, database: string }) => {
-    const selectedCluster = clusters.find(c => c.id === data.clusterId)
-    if (!selectedCluster) return
-
-    const dbData: Omit<Database, 'id'> = {
-      name: data.name,
-      clusterId: data.clusterId,
-      clusterName: selectedCluster.name,
-      user: data.user,
-      password: data.password || '',
-      database: data.database
+  const handleTestConnection = async () => {
+    try {
+      setIsTesting(true)
+      setTestResult(null)
+      const formData = getValues()
+      const result = await DefaultService.testDatabaseConnection({
+        clusterID: Number(formData.clusterID),
+        username: formData.username,
+        password: formData.password,
+      })
+      setTestResult({
+        success: result.success,
+        message: result.result
+      })
+    } catch (error) {
+      setTestResult({
+        success: false,
+        message: "Connection test failed"
+      })
+      console.error("Error testing connection:", error)
+    } finally {
+      setIsTesting(false)
     }
-
-    if (isAddingDatabase) {
-      const id = `db${Date.now()}`
-      setDatabases(prev => [...prev, { ...dbData, id }])
-      setIsAddingDatabase(false)
-    } else if (editingDatabase) {
-      setDatabases(prev => prev.map(db => 
-        db.id === editingDatabase.id ? { ...dbData, id: editingDatabase.id } : db
-      ))
-      setEditingDatabase(null)
-      setIsConfiguring(null)
-    }
-    reset()
   }
 
-  const handleConfigureDatabase = (db: Database) => {
+  const onSubmit = async (data: { name: string, username: string, password?: string, clusterID: number }) => {
+    const dbConnectInfo: DatabaseConnectInfo = {
+      name: data.name,
+      username: data.username,
+      password: data.password,
+      clusterID: data.clusterID,
+    }
+
+    try {
+      if (isAddingDatabase) {
+        const newDb = await DefaultService.createDatabase(dbConnectInfo)
+        setDatabases(prev => [...prev, newDb])
+        toast.success("Database created successfully")
+        setIsAddingDatabase(false)
+        onDatabaseChange?.()
+      } else if (editingDatabase) {
+        const updatedDb = await DefaultService.updateDatabase(editingDatabase.ID, dbConnectInfo)
+        setDatabases(prev => prev.map(db => 
+          db.ID === editingDatabase.ID ? updatedDb : db
+        ))
+        toast.success("Database updated successfully")
+        setEditingDatabase(null)
+        setIsConfiguring(null)
+        onDatabaseChange?.()
+      }
+      reset()
+    } catch (error) {
+      toast.error(isAddingDatabase ? "Failed to create database" : "Failed to update database")
+      console.error("Error saving database:", error)
+    }
+  }
+
+  const handleConfigureDatabase = async (db: Database) => {
     setEditingDatabase(db)
-    setIsConfiguring(db.id)
+    setIsConfiguring(String(db.ID))
     setValue('name', db.name)
-    setValue('clusterId', db.clusterId)
-    setValue('user', db.user)
-    setValue('password', db.password || '')
-    setValue('database', db.database)
+    
+    try {
+      // Get cluster info since that's where the connection details are
+      const cluster = await DefaultService.getCluster(String(db.clusterID))
+      setValue('username', db.username || '')
+      setValue('password', db.password || '')
+      setValue('clusterID', db.clusterID)
+      setSelectedClusterId(String(db.clusterID))
+    } catch (error) {
+      toast.error("Failed to fetch cluster information")
+      console.error("Error fetching cluster:", error)
+    }
   }
 
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
@@ -130,7 +178,7 @@ export function DatabaseManagement({ isOpen, onClose, clusters }: DatabaseManage
   }, [onClose])
 
   const isEditing = isAddingDatabase || isConfiguring
-  
+
   return (
     <div 
       className="fixed inset-0 bg-black/50 z-50"
@@ -183,54 +231,58 @@ export function DatabaseManagement({ isOpen, onClose, clusters }: DatabaseManage
                 </Button>
               </div>
               
-              <div className="space-y-2">
-                {databases.map((db) => (
-                  <div 
-                    key={db.id}
-                    className="flex items-center justify-between p-3 border rounded-lg bg-muted/30 group hover:bg-muted/50"
-                  >
-                    <div className="space-y-1">
-                      <h3 className="font-medium">{db.name}</h3>
-                      <div className="text-sm text-muted-foreground">
-                        <span>Cluster: {db.clusterName}</span>
-                        <span className="mx-1">·</span>
-                        <span>User: {db.user}</span>
-                        <span className="mx-1">·</span>
-                        <span>Database: {db.database}</span>
+              {isLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Loading databases...
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {databases.map((db) => (
+                    <div 
+                      key={db.ID}
+                      className="flex items-center justify-between p-3 border rounded-lg bg-muted/30 group hover:bg-muted/50"
+                    >
+                      <div className="space-y-1">
+                        <h3 className="font-medium">{db.name}</h3>
+                        <div className="text-sm text-muted-foreground">
+                          <span>Created: {new Date(db.createdAt).toLocaleString()}</span>
+                          <span className="mx-1">·</span>
+                          <span>Updated: {new Date(db.updatedAt).toLocaleString()}</span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 w-8 p-0"
-                        onClick={() => handleConfigureDatabase(db)}
-                      >
-                        <Settings2 className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                      </Button>
-                      <div className="relative">
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="h-8 w-8 p-0 hover:text-red-500"
-                          onClick={() => setDeleteId(db.id)}
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleConfigureDatabase(db)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Settings2 className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                         </Button>
-                        {deleteId === db.id && (
-                          <ConfirmationPopup
-                            message="Delete this database?"
-                            onConfirm={() => handleDeleteDatabase(db.id)}
-                            onCancel={() => setDeleteId(null)}
-                          />
-                        )}
+                        <div className="relative">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0 hover:text-red-500"
+                            onClick={() => setDeleteId(String(db.ID))}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          {deleteId === String(db.ID) && (
+                            <ConfirmationPopup
+                              message="Delete this database?"
+                              onConfirm={() => handleDeleteDatabase(db.ID)}
+                              onCancel={() => setDeleteId(null)}
+                            />
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
-              {databases.length === 0 && (
+              {!isLoading && databases.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   No databases configured. Click "Add Database" to get started.
                 </div>
@@ -251,14 +303,17 @@ export function DatabaseManagement({ isOpen, onClose, clusters }: DatabaseManage
                     <p className="text-sm text-red-500">{errors.name.message}</p>
                   )}
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="clusterId">Cluster</Label>
+                  <Label htmlFor="cluster">Cluster</Label>
                   <Select
-                    value={getValues('clusterId')}
-                    onValueChange={(value) => setValue('clusterId', value)}
+                    onValueChange={(value) => {
+                      setValue('clusterID', parseInt(value))
+                      setSelectedClusterId(value)
+                    }}
+                    value={selectedClusterId}
                   >
-                    <SelectTrigger className={errors.clusterId ? 'border-red-500' : ''}>
+                    <SelectTrigger>
                       <SelectValue placeholder="Select a cluster" />
                     </SelectTrigger>
                     <SelectContent>
@@ -269,21 +324,21 @@ export function DatabaseManagement({ isOpen, onClose, clusters }: DatabaseManage
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.clusterId && (
-                    <p className="text-sm text-red-500">{errors.clusterId.message}</p>
+                  {errors.clusterID && (
+                    <p className="text-sm text-red-500">{errors.clusterID.message}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="user">Username</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input
-                    id="user"
-                    {...register('user')}
+                    id="username"
+                    {...register('username')}
                     placeholder="e.g. admin"
-                    className={errors.user ? 'border-red-500' : ''}
+                    className={errors.username ? 'border-red-500' : ''}
                   />
-                  {errors.user && (
-                    <p className="text-sm text-red-500">{errors.user.message}</p>
+                  {errors.username && (
+                    <p className="text-sm text-red-500">{errors.username.message}</p>
                   )}
                 </div>
 
@@ -301,18 +356,24 @@ export function DatabaseManagement({ isOpen, onClose, clusters }: DatabaseManage
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="database">Database</Label>
-                  <Input
-                    id="database"
-                    {...register('database')}
-                    placeholder="e.g. main"
-                    className={errors.database ? 'border-red-500' : ''}
-                  />
-                  {errors.database && (
-                    <p className="text-sm text-red-500">{errors.database.message}</p>
-                  )}
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleTestConnection}
+                  disabled={isTesting}
+                >
+                  {isTesting ? "Testing..." : "Test Connection"}
+                </Button>
+
+                {testResult && (
+                  <div className={`p-3 rounded-md ${
+                    testResult.success 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                      : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                  }`}>
+                    {testResult.message}
+                  </div>
+                )}
               </div>
             </form>
           )}
