@@ -25,7 +25,7 @@ interface EditorTab {
 interface SQLEditorProps {
   width: number
   savedQueries: Array<{ id: string, name: string }>
-  onRunQuery?: (query: string) => Promise<{ type: 'success' | 'error', message: string, rows?: Record<string, string>[] }>
+  onRunQuery?: (query: string) => Promise<{ type: 'success' | 'error', message: string, rows?: Record<string, string>[], columns?: string[] }>
   onSaveQuery?: (query: string, name: string) => void
   databaseSchema?: RisingWaveNodeData[]
   selectedDatabaseId?: string | null
@@ -177,7 +177,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
   const [isResizingHeight, setIsResizingHeight] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string>("")
-  const [queryResult, setQueryResult] = useState<{ type: 'success' | 'error', message: string, rows?: any[] }>()
+  const [queryResult, setQueryResult] = useState<{ type: 'success' | 'error', message: string, rows?: any[], latencyMs?: number }>()
   const [executionHistory, setExecutionHistory] = useState<Array<{
     query: string;
     timestamp: string;
@@ -186,6 +186,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
     rowsAffected?: number;
   }>>([])
   const [activeResultTab, setActiveResultTab] = useState<'result' | 'graph' | 'progress' | 'history'>('result')
+  const [isQueryLoading, setIsQueryLoading] = useState(false)
 
   const editorRef = useRef<any>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
@@ -194,8 +195,8 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
   const calculateGraphHeight = useCallback(() => {
     if (typeof editorHeight === 'string' && editorHeight.endsWith('%')) {
       const percentage = parseInt(editorHeight)
-      // Account for essential heights only: toolbar(48px) + tab bar(41px) + generate query bar(56px)
-      const otherElementsHeight = 48 + 41 + 56
+      // Account for essential heights only: toolbar(48px) + tab bar(41px) + generate query bar(56px) + borders(2px)
+      const otherElementsHeight = 48 + 41 + 56 + 2
       const remainingHeightVh = 100 - percentage
       const remainingHeightPx = (window.innerHeight * remainingHeightVh) / 100
       const actualGraphHeight = remainingHeightPx - otherElementsHeight
@@ -477,15 +478,25 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
     }
 
     try {
+      setIsQueryLoading(true)
+      setActiveResultTab('result')
+      const startTime = performance.now();
       const result = await onRunQuery?.(query)
+      const endTime = performance.now();
+      const latencyMs = Math.round(endTime - startTime);
+
       if (result) {
-        setQueryResult(result)
+        setQueryResult({
+          ...result,
+          latencyMs
+        })
         setExecutionHistory(prev => [{
           query,
           timestamp: new Date().toISOString(),
           status: result.type,
           message: result.message,
-          rowsAffected: result.rows?.length
+          rowsAffected: result.rows?.length,
+          latencyMs
         }, ...prev])
         
         // Switch to appropriate tab based on result
@@ -505,9 +516,12 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
         query,
         timestamp: new Date().toISOString(),
         status: 'error',
-        message: errorResult.message
+        message: errorResult.message,
+        latencyMs: 0
       }, ...prev])
       setActiveResultTab('history')
+    } finally {
+      setIsQueryLoading(false)
     }
   }, [activeTab, tabs, onRunQuery, selectedDatabaseId, editorRef])
 
@@ -566,15 +580,15 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
   }, [])
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center space-x-2 mb-2 p-2">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex items-center space-x-2 mb-2 p-2 flex-shrink-0">
         <Button size="sm" variant="default" onClick={handleRunQuery}>
           <Play className="w-4 h-4 mr-1" />
           Run
         </Button>
       </div>
 
-      <div className="border-b bg-muted/30 px-2">
+      <div className="border-b bg-muted/30 px-2 flex-shrink-0">
         <div className="flex items-center">
           {tabs.map(tab => (
             <div
@@ -686,6 +700,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
           executionHistory={executionHistory}
           activeTab={activeResultTab}
           onTabChange={setActiveResultTab}
+          isQueryLoading={isQueryLoading}
         />
       </div>
     </div>

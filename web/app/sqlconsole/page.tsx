@@ -17,7 +17,9 @@ export default function SQLConsole() {
   const [clusters, setClusters] = useState<Array<{ id: string, name: string }>>([])
   const [isLoading, setIsLoading] = useState(true)
   const [editorWidth, setEditorWidth] = useState(0)
+  const [isResizing, setIsResizing] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const [sidebarWidth, setSidebarWidth] = useState(256) // Default width of the sidebar
   const [selectedDatabaseId, setSelectedDatabaseId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const savedId = localStorage.getItem(SELECTED_DB_KEY)
@@ -104,7 +106,7 @@ export default function SQLConsole() {
     const calculateEditorWidth = () => {
       if (containerRef.current) {
         const totalWidth = containerRef.current.getBoundingClientRect().width
-        setEditorWidth(totalWidth - 256) // 256px is the width of the sidebar (w-64)
+        setEditorWidth(totalWidth - sidebarWidth - 30)
       }
     }
 
@@ -114,7 +116,38 @@ export default function SQLConsole() {
     return () => {
       window.removeEventListener('resize', calculateEditorWidth)
     }
-  }, [])
+  }, [sidebarWidth])
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsResizing(true)
+
+    const startX = e.clientX
+    const startWidth = sidebarWidth
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (containerRef.current) {
+        const newWidth = startWidth + (e.clientX - startX)
+        const maxWidth = containerRef.current.getBoundingClientRect().width * 0.8 // 80% of container width
+        const minWidth = 200 // Minimum sidebar width
+
+        if (newWidth >= minWidth && newWidth <= maxWidth) {
+          setSidebarWidth(newWidth)
+        }
+      }
+    }
+
+    const handleMouseUp = () => {
+      setIsResizing(false)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'default'
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    document.body.style.cursor = 'ew-resize'
+  }, [sidebarWidth])
 
   useEffect(() => {
     fetchData()
@@ -151,6 +184,7 @@ export default function SQLConsole() {
         type: 'success' as const,
         message: `Query executed successfully`,
         rows: result.rows,
+        columns: result.columns.map(col => col.name),
       }
     } catch (error) {
       return {
@@ -181,9 +215,9 @@ export default function SQLConsole() {
   }, [selectedDatabaseId])
 
   return (
-    <div ref={containerRef} className="flex h-screen">
-      <div className="w-64 border-r bg-muted/30">
-        <div className="p-4 border-b">
+    <div ref={containerRef} className="flex h-screen overflow-hidden">
+      <div style={{ width: sidebarWidth }} className="flex-shrink-0 border-r bg-muted/30 overflow-hidden flex flex-col">
+        <div className="p-4 border-b flex-shrink-0">
           <Button
             variant="outline"
             size="sm"
@@ -194,7 +228,7 @@ export default function SQLConsole() {
             Manage Databases
           </Button>
         </div>
-        <div className="p-2">
+        <div className="p-2 overflow-auto flex-1">
           {isLoading ? (
             <div className="text-center py-4 text-muted-foreground">
               Loading databases...
@@ -208,6 +242,11 @@ export default function SQLConsole() {
           )}
         </div>
       </div>
+
+      <div
+        className="w-[3px] hover:bg-primary/20 active:bg-primary/40 cursor-ew-resize flex-shrink-0"
+        onMouseDown={handleMouseDown}
+      />
 
       <div className="flex-1 min-w-0">
         <SQLEditor

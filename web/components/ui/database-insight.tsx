@@ -1,9 +1,10 @@
 "use client"
 
-import React, { useState } from 'react';
+import React from 'react';
 import { StreamingGraph, RisingWaveNodeData } from "@/components/streaming-graph";
 import { ProgressView } from "./progress-view";
 import { ExecutionHistory } from "./execution-history";
+import { QueryResult } from "./query-result";
 
 interface DatabaseInsightProps {
   height?: string;
@@ -20,6 +21,7 @@ interface DatabaseInsightProps {
   }>;
   activeTab: 'result' | 'graph' | 'progress' | 'history';
   onTabChange: (tab: 'result' | 'graph' | 'progress' | 'history') => void;
+  isQueryLoading?: boolean;
 }
 
 export function DatabaseInsight({
@@ -30,7 +32,8 @@ export function DatabaseInsight({
   onCancelProgress,
   executionHistory = [],
   activeTab,
-  onTabChange
+  onTabChange,
+  isQueryLoading = false
 }: DatabaseInsightProps) {
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ height }}>
@@ -74,42 +77,7 @@ export function DatabaseInsight({
       </div>
       <div className="flex-1 min-h-0 bg-muted/30 overflow-hidden">
         {activeTab === 'result' && result && (
-          <div className="p-4 h-full overflow-auto">
-            <div className={`mb-2 text-sm ${result.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
-              {result.message.split('\n').map((line, i) => (
-                <span key={i}>
-                  {line}
-                  {i < result.message.split('\n').length - 1 && <br />}
-                </span>
-              ))}
-            </div>
-            {result.rows && (
-              <div className="overflow-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr>
-                      {Object.keys(result.rows[0]).map((key: string) => (
-                        <th key={key} className="text-left p-2 border bg-muted font-medium text-sm">
-                          {key}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.rows.map((row: Record<string, any>, i: number) => (
-                      <tr key={i}>
-                        {Object.values(row).map((value: any, j: number) => (
-                          <td key={j} className="p-2 border text-sm">
-                            {String(value)}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          <QueryResult result={result} isLoading={isQueryLoading} />
         )}
         {activeTab === 'graph' && (
           <div className="h-full">
@@ -121,17 +89,13 @@ export function DatabaseInsight({
           </div>
         )}
         {activeTab === 'progress' && (
-          <div className="flex-1 overflow-auto p-4">
-            <ProgressView
-              databaseId={selectedDatabaseId}
-              onCancel={onCancelProgress}
-            />
-          </div>
+          <ProgressView
+            databaseId={selectedDatabaseId}
+            onCancel={onCancelProgress}
+          />
         )}
         {activeTab === 'history' && (
-          <div className="flex-1 overflow-auto">
-            <ExecutionHistory history={executionHistory} />
-          </div>
+          <ExecutionHistory history={executionHistory} />
         )}
       </div>
     </div>

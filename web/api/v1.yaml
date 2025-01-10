@@ -646,6 +646,20 @@ components:
           type: string
           description: Data type of the column
 
+    Schema:
+      type: object
+      required:
+        - name
+        - relations
+      properties:
+        name:
+          type: string
+          description: Name of the schema
+        relations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Relation'
+
     Relation:
       type: object
       required:
@@ -663,7 +677,7 @@ components:
           description: Name of the table
         type:
           type: string
-          enum: ['table', 'source', 'sink', 'materializedView']
+          enum: ['table', 'source', 'sink', 'materializedView', "system table"]
           description: Type of the relation
         columns:
           type: array
