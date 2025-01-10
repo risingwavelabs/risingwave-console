@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { StreamingGraph, RisingWaveNodeData } from "@/components/streaming-graph";
 import { ProgressView } from "./progress-view";
+import { ExecutionHistory } from "./execution-history";
 
 interface DatabaseInsightProps {
   height?: string;
@@ -10,17 +11,33 @@ interface DatabaseInsightProps {
   result?: { type: 'success' | 'error', message: string, rows?: any[] };
   selectedDatabaseId?: string | null;
   onCancelProgress?: (ddlId: string) => void;
+  executionHistory?: Array<{
+    query: string;
+    timestamp: string;
+    status: 'success' | 'error';
+    message: string;
+    rowsAffected?: number;
+  }>;
+  activeTab: 'result' | 'graph' | 'progress' | 'history';
+  onTabChange: (tab: 'result' | 'graph' | 'progress' | 'history') => void;
 }
 
-export function DatabaseInsight({ height = '30vh', databaseSchema = [], result, selectedDatabaseId, onCancelProgress }: DatabaseInsightProps) {
-  const [activeResultTab, setActiveResultTab] = useState<'result' | 'graph' | 'progress'>('result')
-
+export function DatabaseInsight({
+  height = '30vh',
+  databaseSchema = [],
+  result,
+  selectedDatabaseId,
+  onCancelProgress,
+  executionHistory = [],
+  activeTab,
+  onTabChange
+}: DatabaseInsightProps) {
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ height }}>
       <div className="border-b flex">
         <button
-          onClick={() => setActiveResultTab('result')}
-          className={`px-4 py-2 text-sm font-medium ${activeResultTab === 'result'
+          onClick={() => onTabChange('result')}
+          className={`px-4 py-2 text-sm font-medium ${activeTab === 'result'
             ? 'border-b-2 border-primary text-foreground'
             : 'text-muted-foreground hover:text-foreground'
             }`}
@@ -28,8 +45,17 @@ export function DatabaseInsight({ height = '30vh', databaseSchema = [], result, 
           Result
         </button>
         <button
-          onClick={() => setActiveResultTab('graph')}
-          className={`px-4 py-2 text-sm font-medium ${activeResultTab === 'graph'
+          onClick={() => onTabChange('history')}
+          className={`px-4 py-2 text-sm font-medium ${activeTab === 'history'
+            ? 'border-b-2 border-primary text-foreground'
+            : 'text-muted-foreground hover:text-foreground'
+            }`}
+        >
+          History
+        </button>
+        <button
+          onClick={() => onTabChange('graph')}
+          className={`px-4 py-2 text-sm font-medium ${activeTab === 'graph'
             ? 'border-b-2 border-primary text-foreground'
             : 'text-muted-foreground hover:text-foreground'
             }`}
@@ -37,8 +63,8 @@ export function DatabaseInsight({ height = '30vh', databaseSchema = [], result, 
           Streaming Graph
         </button>
         <button
-          onClick={() => setActiveResultTab('progress')}
-          className={`px-4 py-2 text-sm font-medium ${activeResultTab === 'progress'
+          onClick={() => onTabChange('progress')}
+          className={`px-4 py-2 text-sm font-medium ${activeTab === 'progress'
             ? 'border-b-2 border-primary text-foreground'
             : 'text-muted-foreground hover:text-foreground'
             }`}
@@ -47,7 +73,7 @@ export function DatabaseInsight({ height = '30vh', databaseSchema = [], result, 
         </button>
       </div>
       <div className="flex-1 min-h-0 bg-muted/30 overflow-hidden">
-        {activeResultTab === 'result' && result && (
+        {activeTab === 'result' && result && (
           <div className="p-4 h-full overflow-auto">
             <div className={`mb-2 text-sm ${result.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
               {result.message.split('\n').map((line, i) => (
@@ -85,7 +111,7 @@ export function DatabaseInsight({ height = '30vh', databaseSchema = [], result, 
             )}
           </div>
         )}
-        {activeResultTab === 'graph' && (
+        {activeTab === 'graph' && (
           <div className="h-full">
             <StreamingGraph
               data={databaseSchema}
@@ -94,12 +120,17 @@ export function DatabaseInsight({ height = '30vh', databaseSchema = [], result, 
             />
           </div>
         )}
-        {activeResultTab === 'progress' && (
+        {activeTab === 'progress' && (
           <div className="flex-1 overflow-auto p-4">
             <ProgressView
               databaseId={selectedDatabaseId}
               onCancel={onCancelProgress}
             />
+          </div>
+        )}
+        {activeTab === 'history' && (
+          <div className="flex-1 overflow-auto">
+            <ExecutionHistory history={executionHistory} />
           </div>
         )}
       </div>

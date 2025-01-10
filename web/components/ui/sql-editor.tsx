@@ -2,19 +2,11 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import Editor, { useMonaco } from '@monaco-editor/react'
 import type { languages } from 'monaco-editor'
 import { Button } from "@/components/ui/button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Play, PlayCircle, Save, X, Plus } from 'lucide-react'
+import { Play, X, Plus } from 'lucide-react'
 import { GenerateQuery } from "@/components/ui/generate-query"
 import { DatabaseInsight } from "@/components/ui/database-insight"
 import { RisingWaveNodeData } from "@/components/streaming-graph"
 import { useTheme } from 'next-themes'
-import { ProgressItem } from "./progress-view"
 
 // Move these to a separate constants file if needed
 const SQL_COMPLETIONS = {
@@ -22,8 +14,6 @@ const SQL_COMPLETIONS = {
   functions: ['COUNT', 'SUM', 'AVG', 'MAX', 'MIN', 'COALESCE', 'NULLIF', 'CAST', 'DATE', 'EXTRACT'],
   operators: ['AND', 'OR', 'NOT', 'IN', 'BETWEEN', 'LIKE', 'IS NULL', 'IS NOT NULL'],
 }
-
-const THEME_STORAGE_KEY = 'editor-theme'
 
 interface EditorTab {
   id: string
@@ -41,43 +31,6 @@ interface SQLEditorProps {
   selectedDatabaseId?: string | null
   onCancelProgress?: (ddlId: string) => void
 }
-
-// Sample result datasets
-const SAMPLE_RESULTS = [
-  {
-    message: '3 row(s) affected',
-    rows: [
-      { id: 1, name: 'John Doe', email: 'john@example.com', status: 'active' },
-      { id: 2, name: 'Jane Smith', email: 'jane@example.com', status: 'inactive' },
-      { id: 3, name: 'Bob Wilson', email: 'bob@example.com', status: 'active' },
-    ]
-  },
-  {
-    message: '4 row(s) affected',
-    rows: [
-      { order_id: 'ORD001', product: 'Laptop', quantity: 2, total: 2400 },
-      { order_id: 'ORD002', product: 'Mouse', quantity: 5, total: 100 },
-      { order_id: 'ORD003', product: 'Keyboard', quantity: 3, total: 300 },
-      { order_id: 'ORD004', product: 'Monitor', quantity: 1, total: 500 },
-    ]
-  },
-  {
-    message: '2 row(s) affected',
-    rows: [
-      { category: 'Electronics', total_sales: 15000, avg_order: 750 },
-      { category: 'Books', total_sales: 5000, avg_order: 250 },
-    ]
-  }
-]
-
-// Sample error messages
-const ERROR_MESSAGES = [
-  'Syntax error in SQL statement: Unexpected token near "FROM"',
-  'Table "nonexistent_table" does not exist',
-  'Column "unknown_column" not found in any table',
-  'Invalid operator in WHERE clause',
-  'Subquery returned more than 1 row'
-]
 
 // Sample AI-generated queries
 const SAMPLE_AI_QUERIES = [
@@ -190,21 +143,49 @@ const SAMPLE_SCHEMA: RisingWaveNodeData[] = [
 export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databaseSchema = SAMPLE_SCHEMA, selectedDatabaseId, onCancelProgress }: SQLEditorProps) {
   const { theme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  const [tabs, setTabs] = useState<EditorTab[]>([
-    { id: '1', name: 'Query 1', content: '-- Write your SQL query here', isDirty: false }
-  ])
-  const [activeTab, setActiveTab] = useState('1')
+  const [tabs, setTabs] = useState<EditorTab[]>(() => {
+    if (typeof window !== 'undefined') {
+      const savedTabs = localStorage.getItem('editor-tabs')
+      if (savedTabs) {
+        try {
+          return JSON.parse(savedTabs)
+        } catch (e) {
+          console.error('Failed to parse saved tabs:', e)
+        }
+      }
+    }
+    return [{
+      id: '1',
+      name: 'Query 1',
+      content: '',
+      isDirty: false
+    }]
+  })
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedActiveTab = localStorage.getItem('editor-active-tab')
+      if (savedActiveTab && tabs.some(tab => tab.id === savedActiveTab)) {
+        return savedActiveTab
+      }
+    }
+    return '1'
+  })
   const [editingTabId, setEditingTabId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
-  const [selectedQuery, setSelectedQuery] = useState("")
   const [editorHeight, setEditorHeight] = useState('60%')
   const [graphHeight, setGraphHeight] = useState<string>('30vh')
   const [isResizingHeight, setIsResizingHeight] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string>("")
   const [queryResult, setQueryResult] = useState<{ type: 'success' | 'error', message: string, rows?: any[] }>()
-  const [currentQuery, setCurrentQuery] = useState<string>()
-  const [queryRunId, setQueryRunId] = useState(0)
+  const [executionHistory, setExecutionHistory] = useState<Array<{
+    query: string;
+    timestamp: string;
+    status: 'success' | 'error';
+    message: string;
+    rowsAffected?: number;
+  }>>([])
+  const [activeResultTab, setActiveResultTab] = useState<'result' | 'graph' | 'progress' | 'history'>('result')
 
   const editorRef = useRef<any>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
@@ -242,19 +223,13 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
     return () => window.removeEventListener('resize', handleResize)
   }, [calculateGraphHeight])
 
-  // Load tabs from localStorage
+  // Save active tab to localStorage
   useEffect(() => {
-    const savedTabs = localStorage.getItem('editor-tabs')
-    if (savedTabs) {
-      const parsedTabs = JSON.parse(savedTabs)
-      setTabs(parsedTabs)
-      if (!parsedTabs.find((tab: EditorTab) => tab.id === activeTab)) {
-        setActiveTab(parsedTabs[0].id)
-      }
-    }
-  }, [])
+    localStorage.setItem('editor-active-tab', activeTab)
+  }, [activeTab])
 
-  // Save tabs to localStorage
+  // Remove the old useEffect for loading tabs since we're doing it in the initial state
+  // Keep only the save effect
   useEffect(() => {
     localStorage.setItem('editor-tabs', JSON.stringify(tabs))
   }, [tabs])
@@ -264,15 +239,19 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
     const handleSave = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault()
-        setTabs(prev => prev.map(tab =>
-          tab.id === activeTab ? { ...tab, isDirty: false } : tab
-        ))
+        const currentTab = tabs.find(tab => tab.id === activeTab)
+        if (currentTab) {
+          onSaveQuery?.(currentTab.content, currentTab.name)
+          setTabs(prev => prev.map(tab =>
+            tab.id === activeTab ? { ...tab, isDirty: false } : tab
+          ))
+        }
       }
     }
 
     window.addEventListener('keydown', handleSave)
     return () => window.removeEventListener('keydown', handleSave)
-  }, [activeTab])
+  }, [activeTab, tabs, onSaveQuery])
 
   // Configure Monaco Editor
   useEffect(() => {
@@ -319,7 +298,7 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
     setTabs(prev => [...prev, {
       id: newId,
       name: `Query ${prev.length + 1}`,
-      content: '-- Write your SQL query here',
+      content: '',
       isDirty: false
     }])
     setActiveTab(newId)
@@ -478,7 +457,15 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
   }, [isResizingHeight, handleMouseMoveVertical, handleMouseUpVertical])
 
   const handleRunQuery = useCallback(async () => {
-    const query = tabs.find(tab => tab.id === activeTab)?.content
+    if (!editorRef.current) return
+
+    // Get the selected text or full content
+    const editor = editorRef.current
+    const selection = editor.getSelection()
+    const query = selection && !selection.isEmpty()
+      ? editor.getModel().getValueInRange(selection)
+      : tabs.find(tab => tab.id === activeTab)?.content
+
     if (!query?.trim()) return
 
     if (!selectedDatabaseId) {
@@ -493,14 +480,36 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
       const result = await onRunQuery?.(query)
       if (result) {
         setQueryResult(result)
+        setExecutionHistory(prev => [{
+          query,
+          timestamp: new Date().toISOString(),
+          status: result.type,
+          message: result.message,
+          rowsAffected: result.rows?.length
+        }, ...prev])
+        
+        // Switch to appropriate tab based on result
+        if (result.rows && result.rows.length > 0) {
+          setActiveResultTab('result')
+        } else {
+          setActiveResultTab('history')
+        }
       }
     } catch (error) {
-      setQueryResult({
-        type: 'error',
+      const errorResult = {
+        type: 'error' as const,
         message: error instanceof Error ? error.message : 'Failed to execute query'
-      })
+      }
+      setQueryResult(errorResult)
+      setExecutionHistory(prev => [{
+        query,
+        timestamp: new Date().toISOString(),
+        status: 'error',
+        message: errorResult.message
+      }, ...prev])
+      setActiveResultTab('history')
     }
-  }, [activeTab, tabs, onRunQuery, selectedDatabaseId])
+  }, [activeTab, tabs, onRunQuery, selectedDatabaseId, editorRef])
 
   const handleGenerateQuery = useCallback((prompt: string) => {
     if (!prompt.trim() || !editorRef.current) return
@@ -562,35 +571,6 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
         <Button size="sm" variant="default" onClick={handleRunQuery}>
           <Play className="w-4 h-4 mr-1" />
           Run
-        </Button>
-        <Button size="sm" variant="secondary">
-          <PlayCircle className="w-4 h-4 mr-1" />
-          Run Selected
-        </Button>
-        <Select value={selectedQuery} onValueChange={setSelectedQuery}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="My SQL Queries" />
-          </SelectTrigger>
-          <SelectContent>
-            {savedQueries.map(query => (
-              <SelectItem key={query.id} value={query.id}>
-                {query.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            const currentTab = tabs.find(tab => tab.id === activeTab)
-            if (currentTab) {
-              onSaveQuery?.(currentTab.content, currentTab.name)
-            }
-          }}
-        >
-          <Save className="w-4 h-4 mr-1" />
-          Save Query
         </Button>
       </div>
 
@@ -703,6 +683,9 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
           result={queryResult}
           selectedDatabaseId={selectedDatabaseId}
           onCancelProgress={onCancelProgress}
+          executionHistory={executionHistory}
+          activeTab={activeResultTab}
+          onTabChange={setActiveResultTab}
         />
       </div>
     </div>
