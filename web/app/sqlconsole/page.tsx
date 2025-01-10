@@ -280,9 +280,16 @@ export default function SQLConsole() {
             }
             return d
           }))
+
+          // Update streaming graph data for the selected database
+          const publicSchema = dbDetails.schemas?.find(s => s.name === 'public')
+          if (publicSchema) {
+            setDatabaseSchema(convertToStreamingGraph(publicSchema))
+          } else {
+            setDatabaseSchema([])
+          }
         } catch (error) {
           console.error('Error refreshing database details after DDL:', error)
-          // Don't show error toast here as the query itself was successful
         }
       }
       
