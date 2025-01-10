@@ -10,6 +10,7 @@ interface QueryResultProps {
     rows?: any[];
     columns?: string[];
     latencyMs?: number;
+    rowCount?: number;
   };
   isLoading?: boolean;
 }
@@ -94,11 +95,9 @@ export function QueryResult({ result, isLoading = false }: QueryResultProps) {
               <div className={`text-xs ${result.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
                 {result.message}
               </div>
-              {result.rows && (
-                <div className="text-xs text-muted-foreground">
-                  {result.rows.length.toLocaleString()} row{result.rows.length !== 1 ? 's' : ''}
-                </div>
-              )}
+              <div className="text-xs text-muted-foreground">
+                {(result.rowCount ?? result.rows?.length ?? 0).toLocaleString()} row{(result.rowCount ?? result.rows?.length ?? 0) !== 1 ? 's' : ''}
+              </div>
             </div>
             {result.latencyMs !== undefined && (
               <div className="text-xs text-muted-foreground">

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { ChevronDown, ChevronRight, Database, Table, ArrowDownToLine, ArrowUpFromLine, Waves, RefreshCw, Glasses, Workflow, Wallpaper, Monitor, Touchpad } from 'lucide-react'
+import { ChevronDown, ChevronRight, Database, Table, ArrowDownToLine, ArrowUpFromLine, Waves, RefreshCw, Glasses, Workflow, Wallpaper, Monitor, Touchpad, Copy, Check } from 'lucide-react'
 import { DefaultService } from '@/api-gen'
 import {
   ContextMenu,
@@ -11,6 +11,12 @@ import {
 } from "./context-menu"
 import { Button } from "./button"
 import { toast } from "sonner"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./tooltip"
 
 export interface Column {
   name: string
@@ -55,6 +61,7 @@ interface DatabaseListProps {
   databases: DatabaseItem[]
   onSelectTable?: (databaseId: string, tableId: number) => void
   onUseDatabase?: (databaseId: string) => void
+  queryHelper?: (name: string, content: string, executeNow?: boolean) => void
 }
 
 const SELECTED_DB_KEY = 'selectedDatabaseId'
@@ -68,7 +75,7 @@ export const convertRelationType = (type: string): RelationType => {
   return type as RelationType
 }
 
-export function DatabaseList({ databases, onSelectTable, onUseDatabase }: DatabaseListProps) {
+export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHelper }: DatabaseListProps) {
   const [expandedDbs, setExpandedDbs] = useState<Set<string>>(new Set())
   const [expandedSchemas, setExpandedSchemas] = useState<Set<string>>(new Set())
   const [expandedRelations, setExpandedRelations] = useState<Set<string>>(new Set())
@@ -76,6 +83,7 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase }: Databa
   const [loadedDatabases, setLoadedDatabases] = useState<Record<string, DatabaseItem>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [localDatabases, setLocalDatabases] = useState(databases)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   useEffect(() => {
     setLocalDatabases(databases)
@@ -296,6 +304,28 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase }: Databa
     }
   }, [expandedDbs])
 
+  const handleCopy = useCallback(async (e: React.MouseEvent, text: string, id: string) => {
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedId(id)
+      setTimeout(() => setCopiedId(null), 2000)
+      toast.success('Copied to clipboard')
+    } catch (err) {
+      toast.error('Failed to copy to clipboard')
+    }
+  }, [])
+
+  const handleDropRelation = useCallback((relation: Relation, schema: Schema, cascade: boolean = false) => {
+    const statement = `DROP ${relation.type.toUpperCase()} ${schema.name}.${relation.name}${cascade ? ' CASCADE' : ''};`
+    queryHelper?.(`Drop ${relation.name}`, statement)
+  }, [queryHelper])
+
+  const handleViewData = useCallback((relation: Relation, schema: Schema) => {
+    const statement = `SELECT * FROM ${schema.name}.${relation.name} LIMIT 100;`
+    queryHelper?.(`View ${relation.name}`, statement, true)
+  }, [queryHelper])
+
   return (
     <div className="space-y-1">
       <div className="p-2 border-b flex items-center justify-between">
@@ -357,28 +387,109 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase }: Databa
                       <div className="ml-6 space-y-1">
                         {schema.relations.map((relation) => (
                           <div key={relation.id} className="space-y-1">
-                            <button
-                              onClick={(e) => {
-                                toggleRelation(e, relation.id)
-                                onSelectTable?.(db.id, relation.id)
-                              }}
-                              className={`flex items-center gap-1 w-full hover:bg-muted/50 rounded-sm p-1 text-sm ${
-                                selectedDbId === db.id ? 'text-foreground' : 'text-muted-foreground'
-                              } hover:text-foreground`}
-                            >
-                              {expandedRelations.has(String(relation.id)) ? (
-                                <ChevronDown className="h-4 w-4 shrink-0" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4 shrink-0" />
-                              )}
-                              {relation.type === RelationType.Table && <Table className="h-4 w-4 shrink-0 text-yellow-500" />}
-                              {relation.type === RelationType.Source && <ArrowDownToLine className="h-4 w-4 shrink-0 rotate-270" />}
-                              {relation.type === RelationType.Sink && <ArrowUpFromLine className="h-4 w-4 shrink-0 rotate-90" />}
-                              {relation.type === RelationType.MaterializedView && <Workflow className="h-4 w-4 shrink-0 text-blue-500" />}
-                              {relation.type === RelationType.SystemTable && <Table className="h-4 w-4 shrink-0" />}
-                              {relation.type === RelationType.View && <Touchpad className="h-4 w-4 shrink-0" />}
-                              <span className="truncate">{relation.name}</span>
-                            </button>
+                            <ContextMenu>
+                              <ContextMenuTrigger asChild>
+                                <div className="flex items-center gap-1 w-full group">
+                                  <button
+                                    onClick={(e) => {
+                                      toggleRelation(e, relation.id)
+                                      onSelectTable?.(db.id, relation.id)
+                                    }}
+                                    className={`flex items-center gap-1 flex-1 hover:bg-muted/50 rounded-sm p-1 text-sm ${
+                                      selectedDbId === db.id ? 'text-foreground' : 'text-muted-foreground'
+                                    } hover:text-foreground`}
+                                  >
+                                    {expandedRelations.has(String(relation.id)) ? (
+                                      <ChevronDown className="h-4 w-4 shrink-0" />
+                                    ) : (
+                                      <ChevronRight className="h-4 w-4 shrink-0" />
+                                    )}
+                                    {relation.type === RelationType.Table && (
+                                      <TooltipProvider>
+                                        <Tooltip delayDuration={0}>
+                                          <TooltipTrigger>
+                                            <Table className="h-4 w-4 shrink-0 text-yellow-500" />
+                                          </TooltipTrigger>
+                                          <TooltipContent>Table</TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                    {relation.type === RelationType.Source && (
+                                      <TooltipProvider>
+                                        <Tooltip delayDuration={0}>
+                                          <TooltipTrigger>
+                                            <ArrowDownToLine className="h-4 w-4 shrink-0 rotate-270" />
+                                          </TooltipTrigger>
+                                          <TooltipContent>Source</TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                    {relation.type === RelationType.Sink && (
+                                      <TooltipProvider>
+                                        <Tooltip delayDuration={0}>
+                                          <TooltipTrigger>
+                                            <ArrowUpFromLine className="h-4 w-4 shrink-0 rotate-90" />
+                                          </TooltipTrigger>
+                                          <TooltipContent>Sink</TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                    {relation.type === RelationType.MaterializedView && (
+                                      <TooltipProvider>
+                                        <Tooltip delayDuration={0}>
+                                          <TooltipTrigger>
+                                            <Workflow className="h-4 w-4 shrink-0 text-blue-500" />
+                                          </TooltipTrigger>
+                                          <TooltipContent>Materialized View</TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                    {relation.type === RelationType.SystemTable && (
+                                      <TooltipProvider>
+                                        <Tooltip delayDuration={0}>
+                                          <TooltipTrigger>
+                                            <Table className="h-4 w-4 shrink-0" />
+                                          </TooltipTrigger>
+                                          <TooltipContent>System Table</TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                    {relation.type === RelationType.View && (
+                                      <TooltipProvider>
+                                        <Tooltip delayDuration={0}>
+                                          <TooltipTrigger>
+                                            <Touchpad className="h-4 w-4 shrink-0" />
+                                          </TooltipTrigger>
+                                          <TooltipContent>View</TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                    <span className="truncate">{relation.name}</span>
+                                  </button>
+                                  <button
+                                    onClick={(e) => handleCopy(e, relation.name, String(relation.id))}
+                                    className="p-1 opacity-0 group-hover:opacity-100 hover:text-foreground transition-opacity"
+                                  >
+                                    {copiedId === String(relation.id) ? (
+                                      <Check className="h-3 w-3" />
+                                    ) : (
+                                      <Copy className="h-3 w-3" />
+                                    )}
+                                  </button>
+                                </div>
+                              </ContextMenuTrigger>
+                              <ContextMenuContent className="w-48">
+                                <ContextMenuItem onClick={() => handleViewData(relation, schema)}>
+                                  View Data (100 rows)
+                                </ContextMenuItem>
+                                <ContextMenuItem onClick={() => handleDropRelation(relation, schema)}>
+                                  Drop
+                                </ContextMenuItem>
+                                <ContextMenuItem onClick={() => handleDropRelation(relation, schema, true)}>
+                                  Drop Cascade
+                                </ContextMenuItem>
+                              </ContextMenuContent>
+                            </ContextMenu>
                             {expandedRelations.has(String(relation.id)) && (
                               <div className="ml-6 space-y-1">
                                 {relation.columns.map((column, index) => (

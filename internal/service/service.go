@@ -366,6 +366,8 @@ JOIN rw_relations ON rw_relations.id = rw_columns.relation_id
 JOIN rw_schemas   ON rw_schemas.id = rw_relations.schema_id
 `
 
+const getRwDependSQL = `SELECT * FROM rw_depend`
+
 func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apigen.Database, error) {
 	db, err := s.m.GetDatabaseConnection(ctx, id)
 	if err != nil {
@@ -386,6 +388,7 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 	}
 
 	data := make(map[string]map[string]apigen.Relation)
+	idToRelation := make(map[int32]apigen.Relation)
 
 	for _, row := range result.Rows {
 		schemaName := row["schema"].(string)
@@ -402,6 +405,7 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 				Type:    apigen.RelationType(row["relation_type"].(string)),
 				Columns: []apigen.Column{},
 			}
+			idToRelation[row["relation_id"].(int32)] = schema[relationName]
 		}
 		relation := schema[relationName]
 		relation.Columns = append(relation.Columns, apigen.Column{
@@ -412,6 +416,18 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 		})
 		schema[relationName] = relation
 		data[schemaName] = schema
+	}
+
+	depend, err := sql.Query(ctx, connStr, getRwDependSQL)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to query database")
+	}
+	for _, row := range depend.Rows {
+		objid := row["objid"].(int32)
+		refobjid := row["refobjid"].(int32)
+		relation := idToRelation[objid]
+		relation.Dependencies = append(relation.Dependencies, refobjid)
+		idToRelation[objid] = relation
 	}
 
 	schemas := []apigen.Schema{}

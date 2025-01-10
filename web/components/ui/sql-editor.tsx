@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import Editor, { useMonaco } from '@monaco-editor/react'
 import type { languages } from 'monaco-editor'
 import { Button } from "@/components/ui/button"
@@ -142,7 +142,13 @@ const SAMPLE_SCHEMA: RisingWaveNodeData[] = [
   }
 ]
 
-export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databaseSchema = SAMPLE_SCHEMA, selectedDatabaseId, onCancelProgress }: SQLEditorProps) {
+export interface SQLEditorHandle {
+  handleNewTab: () => void
+  handleEditorChange: (value: string) => void
+  handleRunQuery: (query: string) => void
+}
+
+export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, savedQueries, onRunQuery, onSaveQuery, databaseSchema = SAMPLE_SCHEMA, selectedDatabaseId, onCancelProgress }, ref) => {
   const { theme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [tabs, setTabs] = useState<EditorTab[]>(() => {
@@ -459,15 +465,17 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
     }
   }, [isResizingHeight, handleMouseMoveVertical, handleMouseUpVertical])
 
-  const handleRunQuery = useCallback(async () => {
+  const handleRunQuery = useCallback(async (providedQuery?: string) => {
     if (!editorRef.current) return
 
-    // Get the selected text or full content
-    const editor = editorRef.current
-    const selection = editor.getSelection()
-    const query = selection && !selection.isEmpty()
-      ? editor.getModel().getValueInRange(selection)
-      : tabs.find(tab => tab.id === activeTab)?.content
+    // Use provided query if available, otherwise get from editor
+    const query = providedQuery ?? (() => {
+      const editor = editorRef.current
+      const selection = editor.getSelection()
+      return selection && !selection.isEmpty()
+        ? editor.getModel().getValueInRange(selection)
+        : tabs.find(tab => tab.id === activeTab)?.content
+    })()
 
     if (!query?.trim()) return
 
@@ -527,6 +535,10 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
     }
   }, [activeTab, tabs, onRunQuery, selectedDatabaseId, editorRef])
 
+  const handleRunButtonClick = useCallback(() => {
+    handleRunQuery()
+  }, [handleRunQuery])
+
   const handleGenerateQuery = useCallback((prompt: string) => {
     if (!prompt.trim() || !editorRef.current) return
 
@@ -581,10 +593,16 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
     setMounted(true)
   }, [])
 
+  useImperativeHandle(ref, () => ({
+    handleNewTab,
+    handleEditorChange,
+    handleRunQuery
+  }), [handleNewTab, handleEditorChange, handleRunQuery])
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center space-x-2 mb-2 p-2 flex-shrink-0">
-        <Button size="sm" variant="default" onClick={handleRunQuery}>
+        <Button size="sm" variant="default" onClick={handleRunButtonClick}>
           <Play className="w-4 h-4 mr-1" />
           Run
         </Button>
@@ -707,4 +725,4 @@ export function SQLEditor({ width, savedQueries, onRunQuery, onSaveQuery, databa
       </div>
     </div>
   )
-} 
+}) 

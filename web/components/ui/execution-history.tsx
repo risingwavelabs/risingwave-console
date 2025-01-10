@@ -11,6 +11,7 @@ interface ExecutionHistoryProps {
     message: string;
     rowsAffected?: number;
     latencyMs?: number;
+    rowCount?: number;
   }>;
 }
 
@@ -68,6 +69,11 @@ export function ExecutionHistory({ history = [] }: ExecutionHistoryProps) {
                     {item.latencyMs !== undefined && (
                       <span className="text-xs text-muted-foreground">
                         {item.latencyMs}ms
+                      </span>
+                    )}
+                    {item.status === 'success' && (
+                      <span className="text-xs text-muted-foreground">
+                        ({(item.rowCount ?? 0).toLocaleString()} row{(item.rowCount ?? 0) !== 1 ? 's' : ''})
                       </span>
                     )}
                   </div>

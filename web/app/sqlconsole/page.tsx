@@ -5,7 +5,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { Button } from "../../components/ui/button"
 import { Settings } from 'lucide-react'
 import { DatabaseManagement } from "../../components/ui/database-management"
-import { SQLEditor } from "../../components/ui/sql-editor"
+import { SQLEditor, type SQLEditorHandle } from "../../components/ui/sql-editor"
 import { DefaultService } from "@/api-gen"
 import { toast } from "sonner"
 
@@ -19,6 +19,7 @@ export default function SQLConsole() {
   const [editorWidth, setEditorWidth] = useState(0)
   const [isResizing, setIsResizing] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const editorRef = useRef<SQLEditorHandle>(null)
   const [sidebarWidth, setSidebarWidth] = useState(256) // Default width of the sidebar
   const [selectedDatabaseId, setSelectedDatabaseId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
@@ -184,11 +185,13 @@ export default function SQLConsole() {
           message: result.error
         }
       }
+
       return {
         type: 'success' as const,
         message: `Query executed successfully`,
         rows: result.rows,
         columns: result.columns.map(col => col.name),
+        rowCount: result.rows?.length ?? 0
       }
     } catch (error) {
       return {
@@ -196,7 +199,7 @@ export default function SQLConsole() {
         message: error instanceof Error ? error.message : 'Failed to execute query'
       }
     }
-  }, [selectedDatabaseId])
+  }, [selectedDatabaseId, fetchData])
 
   const handleSaveQuery = useCallback((query: string, name: string) => {
     // Handle query saving
@@ -217,6 +220,21 @@ export default function SQLConsole() {
       toast.error('Failed to cancel operation')
     }
   }, [selectedDatabaseId])
+
+  const queryHelper = useCallback((name: string, content: string, executeNow: boolean = false) => {
+    if (executeNow) {
+      // Execute the query immediately
+      editorRef.current?.handleRunQuery(content)
+      return
+    }
+
+    // Create a new tab and set its content
+    editorRef.current?.handleNewTab()
+    // Wait for the next tick to ensure the tab is created
+    setTimeout(() => {
+      editorRef.current?.handleEditorChange(content)
+    }, 0)
+  }, [])
 
   return (
     <div ref={containerRef} className="flex h-screen overflow-hidden">
@@ -242,6 +260,7 @@ export default function SQLConsole() {
               databases={databases}
               onSelectTable={handleSelectTable}
               onUseDatabase={handleUseDatabase}
+              queryHelper={queryHelper}
             />
           )}
         </div>
@@ -254,6 +273,7 @@ export default function SQLConsole() {
 
       <div className="flex-1 min-w-0">
         <SQLEditor
+          ref={editorRef}
           width={editorWidth}
           savedQueries={[]}
           onRunQuery={handleRunQuery}
