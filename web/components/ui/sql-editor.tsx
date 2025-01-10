@@ -92,7 +92,7 @@ const SAMPLE_SCHEMA: RisingWaveNodeData[] = [
   {
     id: 2,
     name: 'user_metrics',
-    type: 'materialized_view',
+    type: 'materialized view',
     columns: [
       { name: 'user_id', type: 'INT', isPrimary: true },
       { name: 'event_count', type: 'INT' },
@@ -120,7 +120,7 @@ const SAMPLE_SCHEMA: RisingWaveNodeData[] = [
   {
     id: 4,
     name: 'product_analytics',
-    type: 'materialized_view',
+    type: 'materialized view',
     columns: [
       { name: 'product_id', type: 'INT', isPrimary: true },
       { name: 'view_count', type: 'INT' },
@@ -131,7 +131,7 @@ const SAMPLE_SCHEMA: RisingWaveNodeData[] = [
   {
     id: 5,
     name: 'user_product_recommendations',
-    type: 'materialized_view',
+    type: 'materialized view',
     columns: [
       { name: 'user_id', type: 'INT' },
       { name: 'product_id', type: 'INT' },
@@ -147,7 +147,7 @@ export interface SQLEditorHandle {
   handleRunQuery: (query: string) => void
 }
 
-export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, savedQueries, onRunQuery, onSaveQuery, databaseSchema = SAMPLE_SCHEMA, selectedDatabaseId, onCancelProgress }, ref) => {
+export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, savedQueries, onRunQuery, onSaveQuery, databaseSchema, selectedDatabaseId, onCancelProgress }, ref) => {
   const { theme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [tabs, setTabs] = useState<EditorTab[]>(() => {

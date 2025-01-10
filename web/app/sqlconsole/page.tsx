@@ -8,8 +8,45 @@ import { DatabaseManagement } from "../../components/ui/database-management"
 import { SQLEditor, type SQLEditorHandle } from "../../components/ui/sql-editor"
 import { DefaultService } from "@/api-gen"
 import { toast } from "sonner"
+import { RisingWaveNodeData, NodeType } from "@/components/streaming-graph"
+import type { Relation as APIRelation } from "@/api-gen/models/Relation"
+import type { Schema as APISchema } from "@/api-gen/models/Schema"
+import type { Database as APIDatabase } from "@/api-gen/models/Database"
 
 const SELECTED_DB_KEY = 'selected-database-id'
+
+// Utility function to convert API schema to UI schema
+const convertDatabaseSchema = (dbDetails: APIDatabase): DatabaseItem['schemas'] => {
+  return dbDetails.schemas?.map(schema => ({
+    name: schema.name,
+    relations: schema.relations.map(relation => ({
+      id: relation.ID,
+      name: relation.name,
+      type: convertRelationType(relation.type.toLowerCase()),
+      columns: relation.columns.map(col => ({
+        name: col.name,
+        type: col.type,
+        isHidden: col.isHidden,
+        isPrimaryKey: col.isPrimaryKey
+      }))
+    }))
+  }))
+}
+
+// Utility function to convert API schema to streaming graph data
+const convertToStreamingGraph = (schema: APISchema): RisingWaveNodeData[] => {
+  return schema.relations.map((relation: APIRelation) => ({
+    id: relation.ID,
+    name: relation.name,
+    type: relation.type.toLowerCase() as NodeType,
+    columns: relation.columns.map(col => ({
+      name: col.name,
+      type: col.type,
+      isPrimary: col.isPrimaryKey
+    })),
+    dependencies: relation.dependencies
+  }))
+}
 
 export default function SQLConsole() {
   const [isManagementOpen, setIsManagementOpen] = useState(false)
@@ -20,6 +57,7 @@ export default function SQLConsole() {
   const [isResizing, setIsResizing] = useState(false)
   const [expandedDbs, setExpandedDbs] = useState<Set<string>>(new Set())
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [databaseSchema, setDatabaseSchema] = useState<RisingWaveNodeData[]>([])
   const containerRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<SQLEditorHandle>(null)
   const [sidebarWidth, setSidebarWidth] = useState(256) // Default width of the sidebar
@@ -74,7 +112,7 @@ export default function SQLConsole() {
       setClusters(transformedClusters)
 
       // Transform databases data
-      const transformedDatabases = await Promise.all(dbData.map(async (db) => {
+      const transformedDatabases = dbData.map(db => {
         const cluster = clusterData.find(c => c.ID === db.clusterID)
         return {
           id: String(db.ID),
@@ -83,31 +121,56 @@ export default function SQLConsole() {
           clusterName: cluster?.name || 'Unknown Cluster',
           user: db.username,
           password: db.password,
-          database: db.database,
-          schemas: db.schemas?.map(schema => ({
-            name: schema.name,
-            relations: schema.relations.map(relation => ({
-              id: relation.ID,
-              name: relation.name,
-              type: convertRelationType(relation.type),
-              columns: relation.columns.map(col => ({
-                name: col.name,
-                type: col.type,
-                isHidden: col.isHidden,
-                isPrimaryKey: col.isPrimaryKey
-              }))
-            }))
-          }))
+          database: db.database
         }
-      }))
-      setDatabases(transformedDatabases)
+      })
+
+      // Get the database ID to select
+      const savedId = typeof window !== 'undefined' ? localStorage.getItem(SELECTED_DB_KEY) : null
+      const idToSelect = savedId && transformedDatabases.some(db => db.id === savedId)
+        ? savedId
+        : transformedDatabases[0]?.id
+
+      // If we have a database to select, fetch its details
+      if (idToSelect) {
+        try {
+          const dbDetails = await DefaultService.getDatabase(Number(idToSelect))
+          
+          // Update the database with schema details
+          const updatedDatabases = transformedDatabases.map(db => {
+            if (db.id === idToSelect) {
+              return {
+                ...db,
+                schemas: convertDatabaseSchema(dbDetails)
+              }
+            }
+            return db
+          })
+          setDatabases(updatedDatabases)
+
+          // Update the streaming graph if there's a public schema
+          const publicSchema = dbDetails.schemas?.find(s => s.name === 'public')
+          if (publicSchema) {
+            setDatabaseSchema(convertToStreamingGraph(publicSchema))
+          }
+
+          // Set the selected database ID
+          setSelectedDatabase(idToSelect)
+        } catch (error) {
+          console.error('Error loading selected database details:', error)
+          setDatabases(transformedDatabases)
+          setSelectedDatabase(idToSelect)
+        }
+      } else {
+        setDatabases(transformedDatabases)
+      }
     } catch (error) {
       console.error('Error fetching data:', error)
       toast.error('Failed to load databases and clusters')
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [setSelectedDatabase])
 
   useEffect(() => {
     const calculateEditorWidth = () => {
@@ -167,7 +230,21 @@ export default function SQLConsole() {
 
   const handleUseDatabase = useCallback((databaseId: string) => {
     setSelectedDatabase(databaseId)
-  }, [setSelectedDatabase])
+    
+    // Update streaming graph data for the selected database
+    const db = databases.find(db => db.id === databaseId)
+    if (db?.schemas) {
+      const publicSchema = db.schemas.find(s => s.name === 'public')
+      if (publicSchema) {
+        const graphData = convertToStreamingGraph(publicSchema as unknown as APISchema)
+        setDatabaseSchema(graphData)
+      } else {
+        setDatabaseSchema([])
+      }
+    } else {
+      setDatabaseSchema([])
+    }
+  }, [setSelectedDatabase, databases])
 
   const handleRunQuery = useCallback(async (query: string) => {
     if (!selectedDatabaseId) {
@@ -198,20 +275,7 @@ export default function SQLConsole() {
             if (d.id === selectedDatabaseId) {
               return {
                 ...d,
-                schemas: dbDetails.schemas?.map(schema => ({
-                  name: schema.name,
-                  relations: schema.relations.map(relation => ({
-                    id: relation.ID,
-                    name: relation.name,
-                    type: convertRelationType(relation.type.toLowerCase()),
-                    columns: relation.columns.map(col => ({
-                      name: col.name,
-                      type: col.type,
-                      isHidden: col.isHidden,
-                      isPrimaryKey: col.isPrimaryKey
-                    }))
-                  }))
-                }))
+                schemas: convertDatabaseSchema(dbDetails)
               }
             }
             return d
@@ -277,6 +341,9 @@ export default function SQLConsole() {
     if (newExpanded.has(dbId)) {
       newExpanded.delete(dbId)
       setExpandedDbs(newExpanded)
+      if (dbId === selectedDatabaseId) {
+        setDatabaseSchema([])
+      }
     } else {
       newExpanded.add(dbId)
       setExpandedDbs(newExpanded)
@@ -290,24 +357,19 @@ export default function SQLConsole() {
             if (d.id === dbId) {
               return {
                 ...d,
-                schemas: dbDetails.schemas?.map(schema => ({
-                  name: schema.name,
-                  relations: schema.relations.map(relation => ({
-                    id: relation.ID,
-                    name: relation.name,
-                    type: convertRelationType(relation.type.toLowerCase()),
-                    columns: relation.columns.map(col => ({
-                      name: col.name,
-                      type: col.type,
-                      isHidden: col.isHidden,
-                      isPrimaryKey: col.isPrimaryKey
-                    }))
-                  }))
-                }))
+                schemas: convertDatabaseSchema(dbDetails)
               }
             }
             return d
           }))
+
+          // Update streaming graph data if this is the selected database
+          if (dbId === selectedDatabaseId) {
+            const publicSchema = (dbDetails.schemas as APISchema[])?.find(s => s.name === 'public')
+            if (publicSchema) {
+              setDatabaseSchema(convertToStreamingGraph(publicSchema))
+            }
+          }
         } catch (error) {
           console.error('Error loading database details:', error)
           toast.error('Failed to load database details')
@@ -316,7 +378,7 @@ export default function SQLConsole() {
         }
       }
     }
-  }, [expandedDbs, databases])
+  }, [expandedDbs, databases, selectedDatabaseId])
 
   const handleRefresh = useCallback(async () => {
     try {
@@ -349,30 +411,33 @@ export default function SQLConsole() {
         }
       })
 
-      // For expanded databases, fetch their details
+      // Create a set of database IDs to fetch details for (expanded + selected)
+      const dbsToFetch = new Set([...expandedDbs])
+      if (selectedDatabaseId) {
+        dbsToFetch.add(selectedDatabaseId)
+      }
+
+      // For expanded databases and selected database, fetch their details
       const expandedDetails = await Promise.all(
-        Array.from(expandedDbs).map(async (dbId) => {
+        Array.from(dbsToFetch).map(async (dbId) => {
           try {
             const dbDetails = await DefaultService.getDatabase(Number(dbId))
             const db = transformedDatabases.find(d => d.id === dbId)
             if (!db) return null
 
+            // If this is the selected database, update the streaming graph
+            if (dbId === selectedDatabaseId) {
+              const publicSchema = dbDetails.schemas?.find(s => s.name === 'public')
+              if (publicSchema) {
+                setDatabaseSchema(convertToStreamingGraph(publicSchema))
+              } else {
+                setDatabaseSchema([])
+              }
+            }
+
             return {
               ...db,
-              schemas: dbDetails.schemas?.map(schema => ({
-                name: schema.name,
-                relations: schema.relations.map(relation => ({
-                  id: relation.ID,
-                  name: relation.name,
-                  type: convertRelationType(relation.type.toLowerCase()),
-                  columns: relation.columns.map(col => ({
-                    name: col.name,
-                    type: col.type,
-                    isHidden: col.isHidden,
-                    isPrimaryKey: col.isPrimaryKey
-                  }))
-                }))
-              }))
+              schemas: convertDatabaseSchema(dbDetails)
             }
           } catch (error) {
             console.error(`Error refreshing database ${dbId} details:`, error)
@@ -394,7 +459,7 @@ export default function SQLConsole() {
     } finally {
       setIsRefreshing(false)
     }
-  }, [expandedDbs])
+  }, [expandedDbs, selectedDatabaseId])
 
   return (
     <div ref={containerRef} className="flex h-screen overflow-hidden">
@@ -449,7 +514,7 @@ export default function SQLConsole() {
           savedQueries={[]}
           onRunQuery={handleRunQuery}
           onSaveQuery={handleSaveQuery}
-          databaseSchema={[]}
+          databaseSchema={databaseSchema}
           selectedDatabaseId={selectedDatabaseId}
           onCancelProgress={handleCancelDDL}
         />

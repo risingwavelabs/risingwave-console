@@ -14,7 +14,7 @@ export interface TableColumn {
   isPrimary?: boolean;
 }
 
-export type NodeType = 'source' | 'sink' | 'materialized_view' | 'table';
+export type NodeType = 'source' | 'sink' | 'materialized view' | 'table' | 'system table';
 
 export interface RisingWaveNodeData extends Record<string, unknown> {
   id: number;
@@ -45,6 +45,7 @@ const COLORS = {
     background: '#fafafa',
     border: '#e2e8f0',
     nodeBackground: '#ffffff',
+    systemTable: '#e0f2f1',
   },
   dark: {
     source: '#1e293b',
@@ -55,6 +56,7 @@ const COLORS = {
     background: '#171717',
     border: '#262626',
     nodeBackground: '#1e1e1e',
+    systemTable: '#1e312b',
   }
 };
 
@@ -69,7 +71,8 @@ const ICONS: Record<string, string> = {
 const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const { theme = 'light' } = useTheme();
-  const nodeType = data.type === 'materialized_view' ? 'materializedView' : data.type;
+  const nodeType = data.type === 'materialized view' ? 'materializedView' : 
+    data.type === 'system table' ? 'systemTable' : data.type;
   
   // Memoize static values
   const colors = React.useMemo(() => COLORS[theme === 'dark' ? 'dark' : 'light'], [theme]);
@@ -91,7 +94,7 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
   ), [icon, data.name]);
 
   return (
-    <div className={`rounded-lg shadow-lg border min-w-[200px] drag-handle bg-background`}>
+    <div className={`rounded-lg shadow-lg border min-w-[100px] drag-handle bg-background`}>
       <Handle
         type="target"
         position={Position.Left}
@@ -227,10 +230,10 @@ export function StreamingGraph({ data = [], className = '', height = '100%' }: S
         target: node.id.toString(),
         sourceHandle: 'source',
         targetHandle: 'target',
-        animated: node.type === 'materialized_view',
+        animated: node.type === 'materialized view',
         style: { 
-          stroke: node.type === 'materialized_view' ? '#2196f3' : '#888',
-          strokeWidth: node.type === 'materialized_view' ? 2 : 1
+          stroke: node.type === 'materialized view' ? '#2196f3' : '#888',
+          strokeWidth: node.type === 'materialized view' ? 2 : 1
         },
         markerEnd: {
           type: MarkerType.Arrow
@@ -261,7 +264,7 @@ export function StreamingGraph({ data = [], className = '', height = '100%' }: S
           onNodesChange={onNodesChange}
           nodeTypes={nodeTypes}
           fitView
-          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+          defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
           minZoom={0.3}
           maxZoom={1.2}
           defaultEdgeOptions={{

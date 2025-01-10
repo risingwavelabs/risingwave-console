@@ -388,7 +388,20 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 	}
 
 	data := make(map[string]map[string]apigen.Relation)
-	idToRelation := make(map[int32]apigen.Relation)
+
+	idToDepends := make(map[int32][]int32)
+	depend, err := sql.Query(ctx, connStr, getRwDependSQL)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to query database")
+	}
+	for _, row := range depend.Rows {
+		objid := row["objid"].(int32)
+		refobjid := row["refobjid"].(int32)
+		if _, ok := idToDepends[objid]; !ok {
+			idToDepends[objid] = []int32{}
+		}
+		idToDepends[objid] = append(idToDepends[objid], refobjid)
+	}
 
 	for _, row := range result.Rows {
 		schemaName := row["schema"].(string)
@@ -400,12 +413,12 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 		relationName := row["relation_name"].(string)
 		if _, ok := schema[relationName]; !ok {
 			schema[relationName] = apigen.Relation{
-				ID:      row["relation_id"].(int32),
-				Name:    row["relation_name"].(string),
-				Type:    apigen.RelationType(row["relation_type"].(string)),
-				Columns: []apigen.Column{},
+				ID:           row["relation_id"].(int32),
+				Name:         row["relation_name"].(string),
+				Type:         apigen.RelationType(row["relation_type"].(string)),
+				Columns:      []apigen.Column{},
+				Dependencies: idToDepends[row["relation_id"].(int32)],
 			}
-			idToRelation[row["relation_id"].(int32)] = schema[relationName]
 		}
 		relation := schema[relationName]
 		relation.Columns = append(relation.Columns, apigen.Column{
@@ -416,18 +429,6 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 		})
 		schema[relationName] = relation
 		data[schemaName] = schema
-	}
-
-	depend, err := sql.Query(ctx, connStr, getRwDependSQL)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to query database")
-	}
-	for _, row := range depend.Rows {
-		objid := row["objid"].(int32)
-		refobjid := row["refobjid"].(int32)
-		relation := idToRelation[objid]
-		relation.Dependencies = append(relation.Dependencies, refobjid)
-		idToRelation[objid] = relation
 	}
 
 	schemas := []apigen.Schema{}
