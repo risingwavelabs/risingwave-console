@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { Relation } from './Relation';
+import type { Schema } from './Schema';
 export type Database = {
     /**
      * Unique identifier of the database
@@ -41,8 +41,8 @@ export type Database = {
      */
     updatedAt: string;
     /**
-     * List of relations in the database
+     * List of schemas in the database
      */
-    relations?: Array<Relation>;
+    schemas?: Array<Schema>;
 };
 

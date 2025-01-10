@@ -7,7 +7,7 @@ export type Relation = {
     /**
      * Unique identifier of the table
      */
-    ID: string;
+    ID: number;
     /**
      * Name of the table
      */
@@ -20,7 +20,7 @@ export type Relation = {
      * List of columns in the table
      */
     columns: Array<Column>;
-    dependencies: Array<string>;
+    dependencies: Array<number>;
 };
 export namespace Relation {
     /**
@@ -31,6 +31,7 @@ export namespace Relation {
         SOURCE = 'source',
         SINK = 'sink',
         MATERIALIZED_VIEW = 'materializedView',
+        SYSTEM_TABLE = 'system table',
     }
 }
 

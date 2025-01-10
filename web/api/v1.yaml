@@ -627,17 +627,19 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
-        relations:
+        schemas:
           type: array
           items:
-            $ref: '#/components/schemas/Relation'
-          description: List of relations in the database
+            $ref: '#/components/schemas/Schema'
+          description: List of schemas in the database
 
     Column:
       type: object
       required:
         - name
         - type
+        - isPrimaryKey
+        - isHidden
       properties:
         name:
           type: string
@@ -645,6 +647,12 @@ components:
         type:
           type: string
           description: Data type of the column
+        isPrimaryKey:
+          type: boolean
+          description: Whether the column is a primary key
+        isHidden:
+          type: boolean
+          description: Whether the column is hidden
 
     Schema:
       type: object
@@ -670,7 +678,8 @@ components:
         - dependencies
       properties:
         ID:
-          type: string
+          type: integer
+          format: int32
           description: Unique identifier of the table
         name:
           type: string
@@ -687,7 +696,8 @@ components:
         dependencies:
           type: array
           items:
-            type: string
+            type: integer
+            format: int32
             description: ID of the relation this relation depends on
 
     ClusterCreate:

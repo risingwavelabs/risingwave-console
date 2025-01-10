@@ -1,6 +1,6 @@
 'use client'
 
-import { DatabaseList, type DatabaseItem } from "../../components/ui/database-list"
+import { DatabaseList, type DatabaseItem, RelationType, convertRelationType } from "../../components/ui/database-list"
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Button } from "../../components/ui/button"
 import { Settings } from 'lucide-react'
@@ -81,16 +81,20 @@ export default function SQLConsole() {
           user: db.username,
           password: db.password,
           database: db.database,
-          tables: db.relations?.map(relation => ({
-            id: relation.ID,
-            name: relation.name,
-            type: relation.type.toLowerCase() as 'table' | 'source' | 'sink' | 'materialized_view',
-            columns: relation.columns.map(col => ({
-              // id: col.ID,
-              name: col.name,
-              type: col.type
+          schemas: db.schemas?.map(schema => ({
+            name: schema.name,
+            relations: schema.relations.map(relation => ({
+              id: relation.ID,
+              name: relation.name,
+              type: convertRelationType(relation.type),
+              columns: relation.columns.map(col => ({
+                name: col.name,
+                type: col.type,
+                isHidden: col.isHidden,
+                isPrimaryKey: col.isPrimaryKey
+              }))
             }))
-          })) || []
+          }))
         }
       }))
       setDatabases(transformedDatabases)
@@ -153,7 +157,7 @@ export default function SQLConsole() {
     fetchData()
   }, [fetchData])
 
-  const handleSelectTable = useCallback((databaseId: string, tableId: string) => {
+  const handleSelectTable = useCallback((databaseId: string, tableId: number) => {
     // Handle table selection
     console.log('Selected table:', databaseId, tableId)
   }, [])

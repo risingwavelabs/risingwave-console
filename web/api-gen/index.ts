@@ -20,6 +20,7 @@ export type { QueryRequest } from './models/QueryRequest';
 export type { QueryResponse } from './models/QueryResponse';
 export type { RefreshTokenRequest } from './models/RefreshTokenRequest';
 export { Relation } from './models/Relation';
+export type { Schema } from './models/Schema';
 export type { SignInRequest } from './models/SignInRequest';
 export type { Snapshot } from './models/Snapshot';
 export type { SnapshotConfig } from './models/SnapshotConfig';

@@ -344,6 +344,28 @@ func (s *Service) CreateDatabase(ctx context.Context, params apigen.DatabaseConn
 	}, nil
 }
 
+func (s *Service) getConnStr(ctx context.Context, db *querier.DatabaseConnection) (string, error) {
+	cluster, err := s.m.GetCluster(ctx, db.ClusterID)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to get cluster")
+	}
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s", db.Username, utils.UnwrapOrDefault(db.Password, ""), cluster.Host, cluster.SqlPort, db.Database), nil
+}
+
+const getRelationsSQL = `SELECT 
+    rw_relations.id            AS relation_id,
+    rw_schemas.name            AS schema, 
+    rw_relations.name          AS relation_name, 
+    rw_relations.relation_type AS relation_type, 
+    rw_columns.name            AS column_name,
+    rw_columns.data_type       AS column_type,
+    rw_columns.is_primary_key  AS is_primary_key,
+	rw_columns.is_hidden       AS is_hidden
+FROM rw_columns
+JOIN rw_relations ON rw_relations.id = rw_columns.relation_id
+JOIN rw_schemas   ON rw_schemas.id = rw_relations.schema_id
+`
+
 func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apigen.Database, error) {
 	db, err := s.m.GetDatabaseConnection(ctx, id)
 	if err != nil {
@@ -351,6 +373,57 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 			return nil, ErrDatabaseNotFound
 		}
 		return nil, errors.Wrapf(err, "failed to get database")
+	}
+
+	connStr, err := s.getConnStr(ctx, db)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get connection string")
+	}
+
+	result, err := sql.Query(ctx, connStr, getRelationsSQL)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to query database")
+	}
+
+	data := make(map[string]map[string]apigen.Relation)
+
+	for _, row := range result.Rows {
+		schemaName := row["schema"].(string)
+		if _, ok := data[schemaName]; !ok {
+			data[schemaName] = make(map[string]apigen.Relation)
+		}
+		schema := data[schemaName]
+
+		relationName := row["relation_name"].(string)
+		if _, ok := schema[relationName]; !ok {
+			schema[relationName] = apigen.Relation{
+				ID:      row["relation_id"].(int32),
+				Name:    row["relation_name"].(string),
+				Type:    apigen.RelationType(row["relation_type"].(string)),
+				Columns: []apigen.Column{},
+			}
+		}
+		relation := schema[relationName]
+		relation.Columns = append(relation.Columns, apigen.Column{
+			Name:         row["column_name"].(string),
+			Type:         row["column_type"].(string),
+			IsPrimaryKey: row["is_primary_key"].(bool),
+			IsHidden:     row["is_hidden"].(bool),
+		})
+		schema[relationName] = relation
+		data[schemaName] = schema
+	}
+
+	schemas := []apigen.Schema{}
+	for schemaName, schema := range data {
+		s := apigen.Schema{
+			Name:      schemaName,
+			Relations: []apigen.Relation{},
+		}
+		for _, relation := range schema {
+			s.Relations = append(s.Relations, relation)
+		}
+		schemas = append(schemas, s)
 	}
 
 	return &apigen.Database{
@@ -363,6 +436,7 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 		Database:       db.Database,
 		CreatedAt:      db.CreatedAt,
 		UpdatedAt:      db.UpdatedAt,
+		Schemas:        &schemas,
 	}, nil
 }
 
@@ -493,7 +567,6 @@ func (s *Service) QueryDatabase(ctx context.Context, id int32, params apigen.Que
 	}
 
 	return &apigen.QueryResponse{
-
 		Columns: columns,
 		Rows:    result.Rows,
 	}, nil
@@ -509,7 +582,7 @@ func (s *Service) GetDDLProgress(ctx context.Context, id int32, orgID int32) ([]
 			InitializedAt: s.now().Round(time.Hour),
 		},
 		{
-			ID:            1,
+			ID:            2,
 			Statement:     "CREATE MATERIALIZED VIEW ...",
 			Progress:      "100%",
 			InitializedAt: s.now().Round(time.Hour),

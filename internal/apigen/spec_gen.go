@@ -32,6 +32,7 @@ const (
 	MaterializedView RelationType = "materializedView"
 	Sink             RelationType = "sink"
 	Source           RelationType = "source"
+	SystemTable      RelationType = "system table"
 	Table            RelationType = "table"
 )
 
@@ -64,6 +65,12 @@ type ClusterCreate struct {
 
 // Column defines model for Column.
 type Column struct {
+	// IsHidden Whether the column is hidden
+	IsHidden bool `json:"isHidden"`
+
+	// IsPrimaryKey Whether the column is a primary key
+	IsPrimaryKey bool `json:"isPrimaryKey"`
+
 	// Name Name of the column
 	Name string `json:"name"`
 
@@ -121,8 +128,8 @@ type Database struct {
 	// Password Database password (optional)
 	Password *string `json:"password,omitempty"`
 
-	// Relations List of relations in the database
-	Relations *[]Relation `json:"relations,omitempty"`
+	// Schemas List of schemas in the database
+	Schemas *[]Schema `json:"schemas,omitempty"`
 
 	// UpdatedAt Last update timestamp
 	UpdatedAt time.Time `json:"updatedAt"`
@@ -200,11 +207,11 @@ type RefreshTokenRequest struct {
 // Relation defines model for Relation.
 type Relation struct {
 	// ID Unique identifier of the table
-	ID string `json:"ID"`
+	ID int32 `json:"ID"`
 
 	// Columns List of columns in the table
 	Columns      []Column `json:"columns"`
-	Dependencies []string `json:"dependencies"`
+	Dependencies []int32  `json:"dependencies"`
 
 	// Name Name of the table
 	Name string `json:"name"`
@@ -215,6 +222,13 @@ type Relation struct {
 
 // RelationType Type of the relation
 type RelationType string
+
+// Schema defines model for Schema.
+type Schema struct {
+	// Name Name of the schema
+	Name      string     `json:"name"`
+	Relations []Relation `json:"relations"`
+}
 
 // SignInRequest defines model for SignInRequest.
 type SignInRequest struct {

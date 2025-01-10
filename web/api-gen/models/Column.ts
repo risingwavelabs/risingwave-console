@@ -11,5 +11,13 @@ export type Column = {
      * Data type of the column
      */
     type: string;
+    /**
+     * Whether the column is a primary key
+     */
+    isPrimaryKey: boolean;
+    /**
+     * Whether the column is hidden
+     */
+    isHidden: boolean;
 };
 
