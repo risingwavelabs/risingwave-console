@@ -57,11 +57,13 @@ export interface DatabaseItem {
   schemas?: Schema[]
 }
 
-interface DatabaseListProps {
+export interface DatabaseListProps {
   databases: DatabaseItem[]
   onSelectTable?: (databaseId: string, tableId: number) => void
   onUseDatabase?: (databaseId: string) => void
   queryHelper?: (name: string, content: string, executeNow?: boolean) => void
+  expandedDbs: Set<string>
+  onToggleDb: (dbId: string) => void
 }
 
 const SELECTED_DB_KEY = 'selectedDatabaseId'
@@ -75,15 +77,12 @@ export const convertRelationType = (type: string): RelationType => {
   return type as RelationType
 }
 
-export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHelper }: DatabaseListProps) {
-  const [expandedDbs, setExpandedDbs] = useState<Set<string>>(new Set())
+export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHelper, expandedDbs, onToggleDb }: DatabaseListProps) {
   const [expandedSchemas, setExpandedSchemas] = useState<Set<string>>(new Set())
   const [expandedRelations, setExpandedRelations] = useState<Set<string>>(new Set())
   const [selectedDbId, setSelectedDbId] = useState<string | null>(null)
-  const [loadedDatabases, setLoadedDatabases] = useState<Record<string, DatabaseItem>>({})
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [localDatabases, setLocalDatabases] = useState(databases)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [localDatabases, setLocalDatabases] = useState(databases)
 
   useEffect(() => {
     setLocalDatabases(databases)
@@ -116,43 +115,9 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHel
 
   const toggleDb = useCallback(async (e: React.MouseEvent, dbId: string) => {
     if (e.button === 0) { // Left click only
-      const newExpanded = new Set(expandedDbs)
-      if (newExpanded.has(dbId)) {
-        newExpanded.delete(dbId)
-      } else {
-        newExpanded.add(dbId)
-        // If we haven't loaded this database's details yet, load them
-        if (!loadedDatabases[dbId]) {
-          try {
-            const dbDetails = await DefaultService.getDatabase(Number(dbId))
-            setLoadedDatabases(prev => ({
-              ...prev,
-              [dbId]: {
-                ...databases.find(db => db.id === dbId)!,
-                schemas: dbDetails.schemas?.map(schema => ({
-                  name: schema.name,
-                  relations: schema.relations.map(relation => ({
-                    id: relation.ID,
-                    name: relation.name,
-                    type: convertRelationType(relation.type.toLowerCase()),
-                    columns: relation.columns.map(col => ({
-                      name: col.name,
-                      type: col.type,
-                      isHidden: col.isHidden,
-                      isPrimaryKey: col.isPrimaryKey
-                    }))
-                  }))
-                }))
-              }
-            }))
-          } catch (error) {
-            console.error('Error loading database details:', error)
-          }
-        }
-      }
-      setExpandedDbs(newExpanded)
+      onToggleDb(dbId)
     }
-  }, [expandedDbs, databases, loadedDatabases])
+  }, [onToggleDb])
 
   const toggleSchema = useCallback((e: React.MouseEvent, schemaName: string) => {
     e.stopPropagation()
@@ -209,100 +174,17 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHel
 
   // Update the getDisplayDatabase function to sort schemas and relations
   const getDisplayDatabase = useCallback((db: DatabaseItem) => {
-    const displayDb = loadedDatabases[db.id] || db
-    if (displayDb.schemas) {
+    if (db.schemas) {
       return {
-        ...displayDb,
-        schemas: sortSchemas(displayDb.schemas).map(schema => ({
+        ...db,
+        schemas: sortSchemas(db.schemas).map(schema => ({
           ...schema,
           relations: sortRelations(schema.relations)
         }))
       }
     }
-    return displayDb
-  }, [loadedDatabases, sortSchemas, sortRelations])
-
-  const handleRefresh = useCallback(async () => {
-    try {
-      setIsRefreshing(true)
-      
-      // First get the list of databases and clusters
-      const [dbData, clusterData] = await Promise.all([
-        DefaultService.listDatabases(),
-        DefaultService.listClusters()
-      ])
-      
-      // Transform the new database data
-      const transformedDatabases = dbData.map(db => {
-        const cluster = clusterData.find(c => c.ID === db.clusterID)
-        return {
-          id: String(db.ID),
-          name: db.name,
-          clusterId: String(db.clusterID),
-          clusterName: cluster?.name || 'Unknown Cluster',
-          user: db.username,
-          password: db.password,
-          database: db.database,
-          // Don't copy old schemas, we'll fetch fresh ones for expanded DBs
-          schemas: undefined
-        }
-      })
-
-      // Update local databases first
-      setLocalDatabases(transformedDatabases)
-
-      // Then immediately fetch details for all expanded databases
-      const expandedDetails = await Promise.all(
-        Array.from(expandedDbs).map(async (dbId) => {
-          try {
-            const dbDetails = await DefaultService.getDatabase(Number(dbId))
-            const db = transformedDatabases.find(d => d.id === dbId)
-            if (!db) return null
-
-            return {
-              dbId,
-              details: {
-                ...db,
-                schemas: dbDetails.schemas?.map(schema => ({
-                  name: schema.name,
-                  relations: schema.relations.map(relation => ({
-                    id: relation.ID,
-                    name: relation.name,
-                    type: convertRelationType(relation.type.toLowerCase()),
-                    columns: relation.columns.map(col => ({
-                      name: col.name,
-                      type: col.type,
-                      isHidden: col.isHidden,
-                      isPrimaryKey: col.isPrimaryKey
-                    }))
-                  }))
-                }))
-              }
-            }
-          } catch (error) {
-            console.error(`Error refreshing database ${dbId} details:`, error)
-            return null
-          }
-        })
-      )
-
-      // Update loadedDatabases with fresh details
-      const newLoadedDatabases: Record<string, DatabaseItem> = {}
-      expandedDetails.forEach(detail => {
-        if (detail) {
-          newLoadedDatabases[detail.dbId] = detail.details
-        }
-      })
-      setLoadedDatabases(newLoadedDatabases)
-
-      toast.success('Database list refreshed')
-    } catch (error) {
-      console.error('Error refreshing databases:', error)
-      toast.error('Failed to refresh database list')
-    } finally {
-      setIsRefreshing(false)
-    }
-  }, [expandedDbs])
+    return db
+  }, [sortSchemas, sortRelations])
 
   const handleCopy = useCallback(async (e: React.MouseEvent, text: string, id: string) => {
     e.stopPropagation()
@@ -316,8 +198,8 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHel
     }
   }, [])
 
-  const handleDropRelation = useCallback((relation: Relation, schema: Schema, cascade: boolean = false) => {
-    const statement = `DROP ${relation.type.toUpperCase()} ${schema.name}.${relation.name}${cascade ? ' CASCADE' : ''};`
+  const handleDropRelation = useCallback((relation: Relation, schema: Schema, cascade: boolean) => {
+    const statement = `DROP ${relation.type.toUpperCase()} ${schema.name}.${relation.name} ${cascade ? 'CASCADE' : ''};`
     queryHelper?.(`Drop ${relation.name}`, statement)
   }, [queryHelper])
 
@@ -328,18 +210,6 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHel
 
   return (
     <div className="space-y-1">
-      <div className="p-2 border-b flex items-center justify-between">
-        <span className="text-sm font-medium">Databases</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className={isRefreshing ? 'animate-spin' : ''}
-        >
-          <RefreshCw className="h-4 w-4" />
-        </Button>
-      </div>
       {localDatabases.map((db) => {
         const displayDb = getDisplayDatabase(db)
         return (
@@ -368,7 +238,7 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHel
             </ContextMenu>
             {expandedDbs.has(db.id) && (
               <div className="ml-6 mt-1 space-y-1">
-                {displayDb.schemas?.map((schema) => (
+                {displayDb.schemas?.map((schema: Schema) => (
                   <div key={schema.name} className="space-y-1">
                     <button
                       onClick={(e) => toggleSchema(e, schema.name)}
@@ -385,7 +255,7 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHel
                     </button>
                     {expandedSchemas.has(schema.name) && (
                       <div className="ml-6 space-y-1">
-                        {schema.relations.map((relation) => (
+                        {schema.relations.map((relation: Relation) => (
                           <div key={relation.id} className="space-y-1">
                             <ContextMenu>
                               <ContextMenuTrigger asChild>
@@ -482,7 +352,7 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHel
                                 <ContextMenuItem onClick={() => handleViewData(relation, schema)}>
                                   View Data (100 rows)
                                 </ContextMenuItem>
-                                <ContextMenuItem onClick={() => handleDropRelation(relation, schema)}>
+                                <ContextMenuItem onClick={() => handleDropRelation(relation, schema, false)}>
                                   Drop
                                 </ContextMenuItem>
                                 <ContextMenuItem onClick={() => handleDropRelation(relation, schema, true)}>
@@ -492,7 +362,7 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHel
                             </ContextMenu>
                             {expandedRelations.has(String(relation.id)) && (
                               <div className="ml-6 space-y-1">
-                                {relation.columns.map((column, index) => (
+                                {relation.columns.map((column: Column, index: number) => (
                                   <div
                                     key={index}
                                     className={`flex items-center gap-1 w-full rounded-sm p-1 text-sm ${

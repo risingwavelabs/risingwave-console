@@ -3,7 +3,7 @@
 import { DatabaseList, type DatabaseItem, RelationType, convertRelationType } from "../../components/ui/database-list"
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Button } from "../../components/ui/button"
-import { Settings } from 'lucide-react'
+import { Settings, RefreshCw } from 'lucide-react'
 import { DatabaseManagement } from "../../components/ui/database-management"
 import { SQLEditor, type SQLEditorHandle } from "../../components/ui/sql-editor"
 import { DefaultService } from "@/api-gen"
@@ -18,6 +18,8 @@ export default function SQLConsole() {
   const [isLoading, setIsLoading] = useState(true)
   const [editorWidth, setEditorWidth] = useState(0)
   const [isResizing, setIsResizing] = useState(false)
+  const [expandedDbs, setExpandedDbs] = useState<Set<string>>(new Set())
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<SQLEditorHandle>(null)
   const [sidebarWidth, setSidebarWidth] = useState(256) // Default width of the sidebar
@@ -186,6 +188,40 @@ export default function SQLConsole() {
         }
       }
 
+      // Check if the query is a DDL operation (case insensitive)
+      const isDDL = /^(CREATE|DROP|ALTER)\s/i.test(query.trim())
+      if (isDDL && expandedDbs.has(selectedDatabaseId)) {
+        // Refresh the database details
+        try {
+          const dbDetails = await DefaultService.getDatabase(Number(selectedDatabaseId))
+          setDatabases(prev => prev.map(d => {
+            if (d.id === selectedDatabaseId) {
+              return {
+                ...d,
+                schemas: dbDetails.schemas?.map(schema => ({
+                  name: schema.name,
+                  relations: schema.relations.map(relation => ({
+                    id: relation.ID,
+                    name: relation.name,
+                    type: convertRelationType(relation.type.toLowerCase()),
+                    columns: relation.columns.map(col => ({
+                      name: col.name,
+                      type: col.type,
+                      isHidden: col.isHidden,
+                      isPrimaryKey: col.isPrimaryKey
+                    }))
+                  }))
+                }))
+              }
+            }
+            return d
+          }))
+        } catch (error) {
+          console.error('Error refreshing database details after DDL:', error)
+          // Don't show error toast here as the query itself was successful
+        }
+      }
+      
       return {
         type: 'success' as const,
         message: `Query executed successfully`,
@@ -199,7 +235,7 @@ export default function SQLConsole() {
         message: error instanceof Error ? error.message : 'Failed to execute query'
       }
     }
-  }, [selectedDatabaseId, fetchData])
+  }, [selectedDatabaseId, expandedDbs, setDatabases])
 
   const handleSaveQuery = useCallback((query: string, name: string) => {
     // Handle query saving
@@ -236,18 +272,151 @@ export default function SQLConsole() {
     }, 0)
   }, [])
 
+  const handleToggleDb = useCallback(async (dbId: string) => {
+    const newExpanded = new Set(expandedDbs)
+    if (newExpanded.has(dbId)) {
+      newExpanded.delete(dbId)
+      setExpandedDbs(newExpanded)
+    } else {
+      newExpanded.add(dbId)
+      setExpandedDbs(newExpanded)
+      
+      // Load database details if not already loaded
+      const db = databases.find(db => db.id === dbId)
+      if (db && !db.schemas) {
+        try {
+          const dbDetails = await DefaultService.getDatabase(Number(dbId))
+          setDatabases(prev => prev.map(d => {
+            if (d.id === dbId) {
+              return {
+                ...d,
+                schemas: dbDetails.schemas?.map(schema => ({
+                  name: schema.name,
+                  relations: schema.relations.map(relation => ({
+                    id: relation.ID,
+                    name: relation.name,
+                    type: convertRelationType(relation.type.toLowerCase()),
+                    columns: relation.columns.map(col => ({
+                      name: col.name,
+                      type: col.type,
+                      isHidden: col.isHidden,
+                      isPrimaryKey: col.isPrimaryKey
+                    }))
+                  }))
+                }))
+              }
+            }
+            return d
+          }))
+        } catch (error) {
+          console.error('Error loading database details:', error)
+          toast.error('Failed to load database details')
+          newExpanded.delete(dbId)
+          setExpandedDbs(newExpanded)
+        }
+      }
+    }
+  }, [expandedDbs, databases])
+
+  const handleRefresh = useCallback(async () => {
+    try {
+      setIsRefreshing(true)
+      
+      // First get the list of databases and clusters
+      const [dbData, clusterData] = await Promise.all([
+        DefaultService.listDatabases(),
+        DefaultService.listClusters()
+      ])
+
+      // Transform clusters data
+      const transformedClusters = clusterData.map(cluster => ({
+        id: String(cluster.ID),
+        name: cluster.name
+      }))
+      setClusters(transformedClusters)
+
+      // Transform databases data
+      const transformedDatabases = dbData.map(db => {
+        const cluster = clusterData.find(c => c.ID === db.clusterID)
+        return {
+          id: String(db.ID),
+          name: db.name,
+          clusterId: String(db.clusterID),
+          clusterName: cluster?.name || 'Unknown Cluster',
+          user: db.username,
+          password: db.password,
+          database: db.database
+        }
+      })
+
+      // For expanded databases, fetch their details
+      const expandedDetails = await Promise.all(
+        Array.from(expandedDbs).map(async (dbId) => {
+          try {
+            const dbDetails = await DefaultService.getDatabase(Number(dbId))
+            const db = transformedDatabases.find(d => d.id === dbId)
+            if (!db) return null
+
+            return {
+              ...db,
+              schemas: dbDetails.schemas?.map(schema => ({
+                name: schema.name,
+                relations: schema.relations.map(relation => ({
+                  id: relation.ID,
+                  name: relation.name,
+                  type: convertRelationType(relation.type.toLowerCase()),
+                  columns: relation.columns.map(col => ({
+                    name: col.name,
+                    type: col.type,
+                    isHidden: col.isHidden,
+                    isPrimaryKey: col.isPrimaryKey
+                  }))
+                }))
+              }))
+            }
+          } catch (error) {
+            console.error(`Error refreshing database ${dbId} details:`, error)
+            return null
+          }
+        })
+      )
+
+      // Update databases with the refreshed data
+      setDatabases(transformedDatabases.map(db => {
+        const expandedDb = expandedDetails.find(d => d?.id === db.id)
+        return expandedDb || db
+      }))
+
+      toast.success('Database list refreshed')
+    } catch (error) {
+      console.error('Error refreshing databases:', error)
+      toast.error('Failed to refresh database list')
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [expandedDbs])
+
   return (
     <div ref={containerRef} className="flex h-screen overflow-hidden">
       <div style={{ width: sidebarWidth }} className="flex-shrink-0 border-r bg-muted/30 overflow-hidden flex flex-col">
-        <div className="p-4 border-b flex-shrink-0">
+        <div className="p-4 border-b flex-shrink-0 flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            className="w-full"
+            className="flex-1"
             onClick={() => setIsManagementOpen(true)}
           >
             <Settings className="h-4 w-4 mr-2" />
             Manage Databases
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className={isRefreshing ? 'animate-spin' : ''}
+          >
+            <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
         <div className="p-2 overflow-auto flex-1">
@@ -261,6 +430,8 @@ export default function SQLConsole() {
               onSelectTable={handleSelectTable}
               onUseDatabase={handleUseDatabase}
               queryHelper={queryHelper}
+              expandedDbs={expandedDbs}
+              onToggleDb={handleToggleDb}
             />
           )}
         </div>

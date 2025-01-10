@@ -21,7 +21,6 @@ interface EditorTab {
   id: string
   name: string
   content: string
-  isDirty?: boolean
 }
 
 interface SQLEditorProps {
@@ -165,8 +164,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
     return [{
       id: '1',
       name: 'Query 1',
-      content: '',
-      isDirty: false
+      content: ''
     }]
   })
   const [activeTab, setActiveTab] = useState(() => {
@@ -243,25 +241,6 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
     localStorage.setItem('editor-tabs', JSON.stringify(tabs))
   }, [tabs])
 
-  // Handle Ctrl+S
-  useEffect(() => {
-    const handleSave = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault()
-        const currentTab = tabs.find(tab => tab.id === activeTab)
-        if (currentTab) {
-          onSaveQuery?.(currentTab.content, currentTab.name)
-          setTabs(prev => prev.map(tab =>
-            tab.id === activeTab ? { ...tab, isDirty: false } : tab
-          ))
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleSave)
-    return () => window.removeEventListener('keydown', handleSave)
-  }, [activeTab, tabs, onSaveQuery])
-
   // Configure Monaco Editor
   useEffect(() => {
     if (monaco) {
@@ -307,8 +286,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
     setTabs(prev => [...prev, {
       id: newId,
       name: `Query ${prev.length + 1}`,
-      content: '',
-      isDirty: false
+      content: ''
     }])
     setActiveTab(newId)
   }
@@ -329,7 +307,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
     if (!value) return
     setTabs(prev => prev.map(tab =>
       tab.id === activeTab
-        ? { ...tab, content: value, isDirty: true }
+        ? { ...tab, content: value }
         : tab
     ))
   }
@@ -574,7 +552,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
         // Update tab content
         const newContent = editor.getValue()
         setTabs(prev => prev.map(tab =>
-          tab.id === activeTab ? { ...tab, content: newContent, isDirty: true } : tab
+          tab.id === activeTab ? { ...tab, content: newContent } : tab
         ))
 
         // Move cursor to the end of the inserted query
@@ -640,9 +618,6 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
                   >
                     {tab.name}
                   </span>
-                )}
-                {tab.isDirty && (
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary/70" />
                 )}
               </div>
               {tabs.length > 1 && (
