@@ -7,7 +7,7 @@ interface QueryResultProps {
   result: { 
     type: 'success' | 'error';
     message: string;
-    rows?: any[];
+    rows?: Record<string, unknown>[];
     columns?: string[];
     latencyMs?: number;
     rowCount?: number;
@@ -48,7 +48,7 @@ export function QueryResult({ result, isLoading = false }: QueryResultProps) {
     return Object.keys(result.rows[0]);
   }, [result.columns, result.rows]);
 
-  const sortData = (data: any[], key: string) => {
+  const sortData = (data: Record<string, unknown>[], key: string) => {
     if (!data.length) return data;
     
     const sorted = [...data].sort((a, b) => {
@@ -135,7 +135,7 @@ export function QueryResult({ result, isLoading = false }: QueryResultProps) {
                   {(sortConfig.key
                     ? sortData(result.rows, sortConfig.key)
                     : result.rows
-                  ).map((row: Record<string, any>, i: number) => (
+                  ).map((row: Record<string, unknown>, i: number) => (
                     <tr key={`row-${i}-${Object.values(row).join('-')}`}>
                       {columns.map((key: string) => (
                         <td key={`${key}-${i}`} className="p-2 border text-sm">

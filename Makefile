@@ -97,6 +97,17 @@ db:
 test:
 	TEST_DIR=$(PROJECT_DIR)/e2e HOLD="$(HOLD)" ./scripts/run-local-test.sh "$(K)" 
 
+build-web:
+	cd web && pnpm run build
+
+build-server:
+	GOOS=linux GOARCH=amd64 go build -o ./bin/wavekit-server cmd/main.go
+
+build-docker:
+	docker build -t wavekit .
+
+build: build-web build-server build-docker
+
 ut:
 	COLOR=ALWAYS go test -race -covermode=atomic -coverprofile=coverage.out -tags ut ./... 
 	@go tool cover -html coverage.out -o coverage.html

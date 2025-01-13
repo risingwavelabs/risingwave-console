@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { ReactFlow, Background, Controls, Panel, Node, Edge, MarkerType, NodeProps, NodeTypes, Position, Handle, useNodesState, useEdgesState } from '@xyflow/react';
+import { ReactFlow, Background, Controls, Panel, MarkerType, Position, Handle, useNodesState, useEdgesState } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
 import '@xyflow/react/dist/style.css';
 import { ChevronDown, ChevronRight } from 'lucide-react';
@@ -71,14 +71,14 @@ const ICONS: Record<string, string> = {
 const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const { theme = 'light' } = useTheme();
-  const nodeType = data.type === 'materialized view' ? 'materializedView' : 
+  const nodeType = data.type === 'materialized view' ? 'materializedView' :
     data.type === 'system table' ? 'systemTable' : data.type;
-  
+
   // Memoize static values
   const colors = React.useMemo(() => COLORS[theme === 'dark' ? 'dark' : 'light'], [theme]);
   const backgroundColor = React.useMemo(() => colors[nodeType] || colors.table, [colors, nodeType]);
   const icon = React.useMemo(() => ICONS[nodeType] || ICONS.table, [nodeType]);
-  
+
   // Memoize event handler
   const handleExpand = React.useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -105,7 +105,7 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
         className="px-4 py-2 font-semibold border-b text-sm flex items-center gap-2"
         style={{ backgroundColor }}
       >
-        <button 
+        <button
           className="p-0.5 hover:bg-black/5 dark:hover:bg-white/5 rounded"
           onClick={handleExpand}
         >
@@ -149,8 +149,8 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
 }, (prevProps, nextProps) => {
   // Custom comparison function for memo
   return prevProps.data.id === nextProps.data.id &&
-         prevProps.data.name === nextProps.data.name &&
-         prevProps.data.type === nextProps.data.type;
+    prevProps.data.name === nextProps.data.name &&
+    prevProps.data.type === nextProps.data.type;
 });
 
 TableNodeComponent.displayName = 'TableNodeComponent';
@@ -174,7 +174,7 @@ export function StreamingGraph({ data = [], className = '', height = '100%' }: S
     sourceHandle?: string;
     targetHandle?: string;
     animated?: boolean;
-    style?: Record<string, any>;
+    style?: Record<string, string | number | boolean>;
     markerEnd?: { type: MarkerType };
     type?: string;
   };
@@ -223,7 +223,7 @@ export function StreamingGraph({ data = [], className = '', height = '100%' }: S
 
     const generatedEdges = data.flatMap((node) => {
       if (!node.dependencies) return [];
-      
+
       return node.dependencies.map((depId) => ({
         id: `dep-${depId}-${node.id}`,
         source: depId.toString(),
@@ -231,7 +231,7 @@ export function StreamingGraph({ data = [], className = '', height = '100%' }: S
         sourceHandle: 'source',
         targetHandle: 'target',
         animated: node.type === 'materialized view',
-        style: { 
+        style: {
           stroke: node.type === 'materialized view' ? '#2196f3' : '#888',
           strokeWidth: node.type === 'materialized view' ? 2 : 1
         },
@@ -272,10 +272,10 @@ export function StreamingGraph({ data = [], className = '', height = '100%' }: S
             animated: false
           }}
           style={{ background: colors.background }}
-          proOptions={{ 
-            hideAttribution: true 
+          proOptions={{
+            hideAttribution: true
           }}
-          fitViewOptions={{ 
+          fitViewOptions={{
             padding: 0.2,
             includeHiddenNodes: true,
             minZoom: 0.3,

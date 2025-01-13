@@ -38,6 +38,7 @@ const initService = () => {
             config.headers.Authorization = `Bearer ${response.accessToken}`;
             return axios(config);
           } catch (refreshError) {
+            console.error("Refresh token failed", refreshError);
             // If refresh token fails, clear storage and redirect to login
             localStorage.removeItem(tokenKey);
             localStorage.removeItem(refreshTokenKey);

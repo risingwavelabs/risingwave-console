@@ -28,8 +28,6 @@ const databaseSchema = yup.object().shape({
 })
 
 export function DatabaseManagement({ isOpen, onClose, onDatabaseChange }: DatabaseManagementProps) {
-  if (!isOpen) return null
-
   const [databases, setDatabases] = useState<Database[]>([])
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isAddingDatabase, setIsAddingDatabase] = useState(false)
@@ -61,13 +59,6 @@ export function DatabaseManagement({ isOpen, onClose, onDatabaseChange }: Databa
     }
   })
 
-  // Reset form and state when closing
-  const handleClose = useCallback(() => {
-    reset()
-    setSelectedClusterId('')
-    onClose()
-  }, [reset, onClose])
-
   // Fetch databases on component mount
   useEffect(() => {
     const fetchDatabases = async () => {
@@ -83,8 +74,10 @@ export function DatabaseManagement({ isOpen, onClose, onDatabaseChange }: Databa
       }
     }
 
-    fetchDatabases()
-  }, [])
+    if (isOpen) {
+      fetchDatabases()
+    }
+  }, [isOpen])
 
   // Fetch clusters on component mount and when refreshing
   const fetchClusters = useCallback(async () => {
@@ -110,6 +103,14 @@ export function DatabaseManagement({ isOpen, onClose, onDatabaseChange }: Databa
       fetchClusters()
     }
   }, [isOpen, fetchClusters])
+
+  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
+    if (e.target === e.currentTarget && e.button === 0) {
+      onClose()
+    }
+  }, [onClose])
+
+  if (!isOpen) return null
 
   const handleDeleteDatabase = async (id: number) => {
     try {
@@ -200,12 +201,6 @@ export function DatabaseManagement({ isOpen, onClose, onDatabaseChange }: Databa
     }
   }
 
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && e.button === 0) {
-      onClose()
-    }
-  }, [onClose])
-
   const isEditing = isAddingDatabase || isConfiguring
 
   // Update the refresh button click handler
@@ -237,9 +232,9 @@ export function DatabaseManagement({ isOpen, onClose, onDatabaseChange }: Databa
               </Button>
             )}
             <h2 className="text-lg font-semibold">
-              {isAddingDatabase ? 'Add New Database' : 
-               isConfiguring ? 'Configure Database' : 
-               'Database Management'}
+              {isAddingDatabase ? "Add New Database" : 
+               isConfiguring ? "Configure Database" : 
+               "Database Management"}
             </h2>
           </div>
           <Button
@@ -318,7 +313,7 @@ export function DatabaseManagement({ isOpen, onClose, onDatabaseChange }: Databa
 
               {!isLoading && databases.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  No databases configured. Click "Add Database" to get started.
+                  No databases configured. Click &quot;Add Database&quot; to get started.
                 </div>
               )}
             </>

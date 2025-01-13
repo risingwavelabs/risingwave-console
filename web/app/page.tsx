@@ -8,8 +8,8 @@ export default function Home() {
     <div className="flex flex-col p-8">
       <h1 className="text-2xl font-semibold mb-4">WaveKit</h1>
       <div className="grid gap-4 md:grid-cols-2 mb-8">
-        <Link 
-          href="/clusters" 
+        <Link
+          href="/clusters"
           className="p-6 bg-card rounded-lg border transition-colors hover:bg-accent/50"
         >
           <div className="flex items-center gap-2 mb-2">
@@ -18,8 +18,8 @@ export default function Home() {
           </div>
           <p className="text-muted-foreground">Manage your database clusters and monitor their status.</p>
         </Link>
-        <Link 
-          href="/sqlconsole" 
+        <Link
+          href="/sqlconsole"
           className="p-6 bg-card rounded-lg border transition-colors hover:bg-accent/50"
         >
           <div className="flex items-center gap-2 mb-2">
@@ -34,40 +34,40 @@ export default function Home() {
         <h2 className="text-lg font-medium mb-4">Resources & Documentation</h2>
         <div className="space-y-4">
           <p className="text-muted-foreground">
-            WaveKit is a modern management UI for RisingWave, the cloud-native streaming database. 
+            WaveKit is a modern management UI for RisingWave, the cloud-native streaming database.
             Here are some helpful resources to get you started:
           </p>
           <div className="grid gap-3 text-sm">
-            <a 
-              href="https://risingwave.com" 
-              target="_blank" 
+            <a
+              href="https://risingwave.com"
+              target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-primary hover:underline"
             >
               <ExternalLinkIcon className="h-4 w-4" />
-              Visit RisingWave's official website
+              Visit RisingWave&apos;s official website
             </a>
-            <a 
-              href="https://docs.risingwave.com" 
-              target="_blank" 
+            <a
+              href="https://docs.risingwave.com"
+              target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-primary hover:underline"
             >
               <ExternalLinkIcon className="h-4 w-4" />
               Read the RisingWave documentation
             </a>
-            <a 
-              href="https://github.com/risingwavelabs/risingwave" 
-              target="_blank" 
+            <a
+              href="https://github.com/risingwavelabs/risingwave"
+              target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-primary hover:underline"
             >
               <FaGithub className="h-4 w-4" />
               RisingWave on GitHub
             </a>
-            <a 
-              href="https://github.com/risingwavelabs/wavekit" 
-              target="_blank" 
+            <a
+              href="https://github.com/risingwavelabs/wavekit"
+              target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-primary hover:underline"
             >

@@ -1,6 +1,5 @@
 "use client"
 
-import { AxiosError } from "axios"
 import { useEffect, useState } from "react"
 import { ClusterList, Cluster as UICluster } from "@/components/ui/cluster-list"
 import { ClusterDialog, ClusterFormData } from "@/components/ui/new-cluster-dialog"

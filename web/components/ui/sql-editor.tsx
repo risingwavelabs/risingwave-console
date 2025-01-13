@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
-import Editor, { useMonaco } from '@monaco-editor/react'
+import Editor, { useMonaco, OnMount } from '@monaco-editor/react'
 import type { languages } from 'monaco-editor'
 import { Button } from "@/components/ui/button"
 import { Play, X, Plus } from 'lucide-react'
@@ -25,9 +25,7 @@ interface EditorTab {
 
 interface SQLEditorProps {
   width: number
-  savedQueries: Array<{ id: string, name: string }>
   onRunQuery?: (query: string) => Promise<{ type: 'success' | 'error', message: string, rows?: Record<string, string>[], columns?: string[] }>
-  onSaveQuery?: (query: string, name: string) => void
   databaseSchema?: RisingWaveNodeData[]
   selectedDatabaseId?: string | null
   onCancelProgress?: (ddlId: string) => void
@@ -70,76 +68,6 @@ HAVING COUNT(*) > 5
 ORDER BY active_days DESC;`
 ]
 
-// Sample database schema for streaming graph visualization
-const SAMPLE_SCHEMA: RisingWaveNodeData[] = [
-  {
-    id: 1,
-    name: 'user_events',
-    type: 'source',
-    columns: [
-      { name: 'user_id', type: 'INT', isPrimary: true },
-      { name: 'event_type', type: 'VARCHAR' },
-      { name: 'timestamp', type: 'TIMESTAMP' }
-    ],
-    connector: {
-      type: 'kafka',
-      properties: {
-        topic: 'user_events',
-        bootstrap_servers: 'kafka:9092'
-      }
-    }
-  },
-  {
-    id: 2,
-    name: 'user_metrics',
-    type: 'materialized view',
-    columns: [
-      { name: 'user_id', type: 'INT', isPrimary: true },
-      { name: 'event_count', type: 'INT' },
-      { name: 'last_seen', type: 'TIMESTAMP' }
-    ],
-    dependencies: [1]
-  },
-  {
-    id: 3,
-    name: 'product_events',
-    type: 'source',
-    columns: [
-      { name: 'product_id', type: 'INT', isPrimary: true },
-      { name: 'event_type', type: 'VARCHAR' },
-      { name: 'timestamp', type: 'TIMESTAMP' }
-    ],
-    connector: {
-      type: 'kafka',
-      properties: {
-        topic: 'product_events',
-        bootstrap_servers: 'kafka:9092'
-      }
-    }
-  },
-  {
-    id: 4,
-    name: 'product_analytics',
-    type: 'materialized view',
-    columns: [
-      { name: 'product_id', type: 'INT', isPrimary: true },
-      { name: 'view_count', type: 'INT' },
-      { name: 'purchase_count', type: 'INT' }
-    ],
-    dependencies: [3]
-  },
-  {
-    id: 5,
-    name: 'user_product_recommendations',
-    type: 'materialized view',
-    columns: [
-      { name: 'user_id', type: 'INT' },
-      { name: 'product_id', type: 'INT' },
-      { name: 'score', type: 'FLOAT' }
-    ],
-    dependencies: [1, 3]
-  }
-]
 
 export interface SQLEditorHandle {
   handleNewTab: () => void
@@ -147,7 +75,7 @@ export interface SQLEditorHandle {
   handleRunQuery: (query: string) => void
 }
 
-export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, savedQueries, onRunQuery, onSaveQuery, databaseSchema, selectedDatabaseId, onCancelProgress }, ref) => {
+export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, onRunQuery, databaseSchema, selectedDatabaseId, onCancelProgress }, ref) => {
   const { theme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [tabs, setTabs] = useState<EditorTab[]>(() => {
@@ -183,7 +111,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
   const [isResizingHeight, setIsResizingHeight] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string>("")
-  const [queryResult, setQueryResult] = useState<{ type: 'success' | 'error', message: string, rows?: any[], latencyMs?: number }>()
+  const [queryResult, setQueryResult] = useState<{ type: 'success' | 'error', message: string, rows?: Record<string, unknown>[], latencyMs?: number }>()
   const [executionHistory, setExecutionHistory] = useState<Array<{
     query: string;
     timestamp: string;
@@ -194,7 +122,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
   const [activeResultTab, setActiveResultTab] = useState<'result' | 'graph' | 'progress' | 'history'>('result')
   const [isQueryLoading, setIsQueryLoading] = useState(false)
 
-  const editorRef = useRef<any>(null)
+  const editorRef = useRef<Parameters<OnMount>[0] | null>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
   const monaco = useMonaco()
 
@@ -281,7 +209,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
   }, [monaco])
 
   // Tab management handlers
-  const handleNewTab = () => {
+  const handleNewTab = useCallback(() => {
     const newId = `${Date.now()}`
     setTabs(prev => [...prev, {
       id: newId,
@@ -289,7 +217,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
       content: ''
     }])
     setActiveTab(newId)
-  }
+  }, [])
 
   const handleCloseTab = (tabId: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -303,14 +231,14 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
     }
   }
 
-  const handleEditorChange = (value: string | undefined) => {
+  const handleEditorChange = useCallback((value: string | undefined) => {
     if (!value) return
     setTabs(prev => prev.map(tab =>
       tab.id === activeTab
         ? { ...tab, content: value }
         : tab
     ))
-  }
+  }, [activeTab])
 
   // Tab drag and drop handlers
   const handleDragStart = (e: React.DragEvent, tab: EditorTab) => {
@@ -449,10 +377,12 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
     // Use provided query if available, otherwise get from editor
     const query = providedQuery ?? (() => {
       const editor = editorRef.current
+      if (!editor) return ''
+      
       const selection = editor.getSelection()
       return selection && !selection.isEmpty()
-        ? editor.getModel().getValueInRange(selection)
-        : tabs.find(tab => tab.id === activeTab)?.content
+        ? editor.getModel()?.getValueInRange(selection) ?? ''
+        : tabs.find(tab => tab.id === activeTab)?.content ?? ''
     })()
 
     if (!query?.trim()) return
@@ -527,10 +457,14 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
     setTimeout(() => {
       try {
         const editor = editorRef.current
+        if (!editor) return
+
         const randomQuery = SAMPLE_AI_QUERIES[Math.floor(Math.random() * SAMPLE_AI_QUERIES.length)]
         const position = editor.getPosition()
-        const lineContent = editor.getModel().getLineContent(position.lineNumber)
-        const isEmptyLine = !lineContent.trim()
+        if (!position) return
+
+        const lineContent = editor.getModel()?.getLineContent(position.lineNumber)
+        const isEmptyLine = !lineContent?.trim()
 
         // Add newlines if needed
         let queryToInsert = randomQuery
@@ -557,8 +491,10 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
 
         // Move cursor to the end of the inserted query
         const newPosition = editor.getPosition()
-        editor.setPosition(newPosition)
-        editor.focus()
+        if (newPosition) {
+          editor.setPosition(newPosition)
+          editor.focus()
+        }
       } catch (error) {
         setGenerateError(error instanceof Error ? error.message : "Failed to generate query")
       } finally {
@@ -640,37 +576,39 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
       </div>
 
       <div style={{ height: editorHeight }} className="relative">
-        <Editor
-          height="100%"
-          defaultLanguage="sql"
-          theme={mounted ? (theme === 'dark' ? 'vs-dark' : 'light') : 'light'}
-          value={tabs.find(tab => tab.id === activeTab)?.content}
-          onChange={handleEditorChange}
-          onMount={(editor) => editorRef.current = editor}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 14,
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            padding: { top: 16 },
-            quickSuggestions: {
-              other: true,
-              comments: true,
-              strings: true
-            },
-            suggestOnTriggerCharacters: true,
-            acceptSuggestionOnEnter: "on",
-            tabCompletion: "on",
-            suggest: {
-              preview: true,
-              showIcons: true,
-              showStatusBar: true,
-              showInlineDetails: true,
-            }
-          }}
-          className="h-full"
-          width={width}
-        />
+        {mounted && (
+          <Editor
+            height="100%"
+            defaultLanguage="sql"
+            theme={theme === 'dark' ? 'vs-dark' : 'light'}
+            value={tabs.find(tab => tab.id === activeTab)?.content}
+            onChange={handleEditorChange}
+            onMount={(editor) => editorRef.current = editor}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              padding: { top: 16 },
+              quickSuggestions: {
+                other: true,
+                comments: true,
+                strings: true
+              },
+              suggestOnTriggerCharacters: true,
+              acceptSuggestionOnEnter: "on",
+              tabCompletion: "on",
+              suggest: {
+                preview: true,
+                showIcons: true,
+                showStatusBar: true,
+                showInlineDetails: true,
+              }
+            }}
+            className="h-full"
+            width={width}
+          />
+        )}
         <div
           className="absolute left-0 right-0 bottom-[-8px] h-[16px] z-10 cursor-ns-resize group"
           onMouseDown={handleMouseDownVertical}
@@ -701,4 +639,6 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
       </div>
     </div>
   )
-}) 
+})
+
+SQLEditor.displayName = 'SQLEditor'

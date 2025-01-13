@@ -38,7 +38,7 @@ const schema = yup.object().shape({
     )
 })
 
-export interface ClusterFormData extends yup.InferType<typeof schema> { }
+export type ClusterFormData = yup.InferType<typeof schema>
 
 interface ClusterDialogProps {
   mode: 'create' | 'edit'
@@ -69,7 +69,6 @@ export function ClusterDialog({
     register,
     handleSubmit,
     reset,
-    getValues,
     watch,
     formState: { errors, isValid }
   } = useForm<ClusterFormData>({
@@ -99,14 +98,13 @@ export function ClusterDialog({
   })
 
   const handleTestConnection = async () => {
-    const values = getValues()
     setTesting(true)
     setTestSuccess(false)
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500))
       setTestSuccess(true)
-    } catch (error) {
+    } catch {
       alert("Connection failed!")
     } finally {
       setTesting(false)

@@ -149,7 +149,7 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit, o
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push(`/clusters/${cluster.id}`)}
+                  onClick={() => router.push(`/clusters/details?id=${cluster.id}`)}
                 >
                   Manage
                 </Button>

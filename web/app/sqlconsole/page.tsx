@@ -1,6 +1,6 @@
 'use client'
 
-import { DatabaseList, type DatabaseItem, RelationType, convertRelationType } from "../../components/ui/database-list"
+import { DatabaseList, type DatabaseItem, convertRelationType } from "../../components/ui/database-list"
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Button } from "../../components/ui/button"
 import { Settings, RefreshCw } from 'lucide-react'
@@ -75,7 +75,6 @@ export default function SQLConsole() {
   const [databases, setDatabases] = useState<DatabaseItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [editorWidth, setEditorWidth] = useState(0)
-  const [isResizing, setIsResizing] = useState(false)
   const [expandedDbs, setExpandedDbs] = useState<Set<string>>(new Set())
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [databaseSchema, setDatabaseSchema] = useState<RisingWaveNodeData[]>([])
@@ -187,7 +186,6 @@ export default function SQLConsole() {
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
-    setIsResizing(true)
 
     const startX = e.clientX
     const startWidth = sidebarWidth
@@ -205,7 +203,6 @@ export default function SQLConsole() {
     }
 
     const handleMouseUp = () => {
-      setIsResizing(false)
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
       document.body.style.cursor = 'default'
@@ -304,11 +301,6 @@ export default function SQLConsole() {
       }
     }
   }, [selectedDatabaseId, expandedDbs, setDatabases])
-
-  const handleSaveQuery = useCallback((query: string, name: string) => {
-    // Handle query saving
-    console.log('Saving query:', name, query)
-  }, [])
 
   const handleDatabaseChange = useCallback(() => {
     fetchData()
@@ -489,9 +481,7 @@ export default function SQLConsole() {
         <SQLEditor
           ref={editorRef}
           width={editorWidth}
-          savedQueries={[]}
           onRunQuery={handleRunQuery}
-          onSaveQuery={handleSaveQuery}
           databaseSchema={databaseSchema}
           selectedDatabaseId={selectedDatabaseId}
           onCancelProgress={handleCancelDDL}

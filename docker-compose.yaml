@@ -23,6 +23,7 @@ services:
       - ./:/app
       - go-data:/go/pkg/mod
       - go-build-data:/root/.cache/go-build
+      - ./web/out:/app/web/out
   db: 
     image: "postgres:latest"
     ports:

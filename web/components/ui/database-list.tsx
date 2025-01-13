@@ -1,15 +1,13 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { ChevronDown, ChevronRight, Database, Table, ArrowDownToLine, ArrowUpFromLine, Waves, RefreshCw, Glasses, Workflow, Wallpaper, Monitor, Touchpad, Copy, Check } from 'lucide-react'
-import { DefaultService } from '@/api-gen'
+import { ChevronDown, ChevronRight, Database, Table, ArrowDownToLine, ArrowUpFromLine, Workflow, Touchpad, Copy, Check } from 'lucide-react'
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from "./context-menu"
-import { Button } from "./button"
 import { toast } from "sonner"
 import {
   Tooltip,
@@ -193,7 +191,7 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHel
       setCopiedId(id)
       setTimeout(() => setCopiedId(null), 2000)
       toast.success('Copied to clipboard')
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy to clipboard')
     }
   }, [])

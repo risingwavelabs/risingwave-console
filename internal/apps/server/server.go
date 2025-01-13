@@ -62,6 +62,12 @@ func (s *Server) registerMiddleware() {
 	s.app.Use(recover.New(recover.Config{
 		EnableStackTrace: true,
 	}))
+
+	s.app.Static("/", "./web/out", fiber.Static{
+		Browse: true,
+		Index:  "index.html",
+	})
+
 	s.app.Use(cors.New(cors.Config{}))
 	s.app.Use(requestid.New())
 	s.app.Use(middleware.NewLogger())

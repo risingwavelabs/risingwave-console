@@ -31,7 +31,7 @@ export default function LoginPage() {
       
       // Redirect to home
       router.push("/")
-    } catch (error) {
+    } catch {
       toast.error("Invalid credentials")
     } finally {
       setLoading(false)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import {
@@ -70,10 +70,15 @@ interface ClusterData {
   }
 }
 
-export default function ClusterPage() {
-  const params = useParams()
+interface ClusterPageProps {
+  params: {
+    id: string
+  }
+}
+
+export default function ClusterPage({ params }: ClusterPageProps) {
   const router = useRouter()
-  const clusterId = params.id as string
+  const clusterId = params.id
   const [clusterData, setClusterData] = useState<ClusterData | null>(null)
   const [loading, setLoading] = useState(true)
   const [interval, setInterval] = useState("")
@@ -212,7 +217,7 @@ export default function ClusterPage() {
                     <div className={`w-2 h-2 rounded-full ${clusterData.status === "running" ? "bg-green-500" :
                       clusterData.status === "stopped" ? "bg-yellow-500" :
                         "bg-red-500"
-                    }`} />
+                      }`} />
                     <p className="text-sm font-medium capitalize">{clusterData.status}</p>
                   </div>
                 </div>
@@ -268,8 +273,8 @@ export default function ClusterPage() {
                 <Label className="text-sm font-medium">Backup Interval</Label>
                 <p className="text-sm text-muted-foreground">How often to create snapshots</p>
               </div>
-              <Select 
-                value={autoBackupInterval} 
+              <Select
+                value={autoBackupInterval}
                 onValueChange={setAutoBackupInterval}
                 disabled={!autoBackupEnabled}
               >
@@ -290,8 +295,8 @@ export default function ClusterPage() {
                 <Label className="text-sm font-medium">Keep Last</Label>
                 <p className="text-sm text-muted-foreground">Number of automatic snapshots to retain</p>
               </div>
-              <Select 
-                value={autoBackupKeepCount.toString()} 
+              <Select
+                value={autoBackupKeepCount.toString()}
                 onValueChange={(value) => setAutoBackupKeepCount(parseInt(value))}
                 disabled={!autoBackupEnabled}
               >
@@ -451,7 +456,7 @@ export default function ClusterPage() {
                 </PopoverContent>
               </Popover>
             </div>
-            
+
             {filteredItems.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
                 No diagnostic data available. Data will appear here once collection begins.
