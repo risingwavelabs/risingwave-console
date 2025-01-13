@@ -1,6 +1,6 @@
 module github.com/risingwavelabs/wavekit
 
-go 1.23
+go 1.23.4
 
 require (
 	github.com/cloudcarver/edc v0.2.0
