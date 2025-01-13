@@ -10,6 +10,19 @@ INSERT INTO database_connections (
     $1, $2, $3, $4, $5, $6
 ) RETURNING *;
 
+-- name: InitDatabaseConnection :one
+INSERT INTO database_connections (
+    name,
+    cluster_id,
+    username,
+    password,
+    database,
+    organization_id
+) VALUES (
+    $1, $2, $3, $4, $5, $6
+) ON CONFLICT (organization_id, name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+RETURNING *;
+
 -- name: GetOrgDatabaseConnection :one
 SELECT * FROM database_connections
 WHERE id = $1 AND organization_id = $2;

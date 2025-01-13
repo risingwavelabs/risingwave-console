@@ -113,6 +113,49 @@ func (q *Queries) GetOrgCluster(ctx context.Context, arg GetOrgClusterParams) (*
 	return &i, err
 }
 
+const initCluster = `-- name: InitCluster :one
+INSERT INTO clusters (
+    organization_id,
+    name,
+    host,
+    sql_port,
+    meta_port
+) VALUES (
+    $1, $2, $3, $4, $5
+) ON CONFLICT (organization_id, name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+RETURNING id, organization_id, name, host, sql_port, meta_port, created_at, updated_at
+`
+
+type InitClusterParams struct {
+	OrganizationID int32
+	Name           string
+	Host           string
+	SqlPort        int32
+	MetaPort       int32
+}
+
+func (q *Queries) InitCluster(ctx context.Context, arg InitClusterParams) (*Cluster, error) {
+	row := q.db.QueryRow(ctx, initCluster,
+		arg.OrganizationID,
+		arg.Name,
+		arg.Host,
+		arg.SqlPort,
+		arg.MetaPort,
+	)
+	var i Cluster
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.Name,
+		&i.Host,
+		&i.SqlPort,
+		&i.MetaPort,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const listOrgClusters = `-- name: ListOrgClusters :many
 SELECT id, organization_id, name, host, sql_port, meta_port, created_at, updated_at FROM clusters
 WHERE organization_id = $1

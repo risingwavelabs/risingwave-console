@@ -357,6 +357,36 @@ func (mr *MockModelInterfaceMockRecorder) InTransaction() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InTransaction", reflect.TypeOf((*MockModelInterface)(nil).InTransaction))
 }
 
+// InitCluster mocks base method.
+func (m *MockModelInterface) InitCluster(ctx context.Context, arg querier.InitClusterParams) (*querier.Cluster, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InitCluster", ctx, arg)
+	ret0, _ := ret[0].(*querier.Cluster)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InitCluster indicates an expected call of InitCluster.
+func (mr *MockModelInterfaceMockRecorder) InitCluster(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitCluster", reflect.TypeOf((*MockModelInterface)(nil).InitCluster), ctx, arg)
+}
+
+// InitDatabaseConnection mocks base method.
+func (m *MockModelInterface) InitDatabaseConnection(ctx context.Context, arg querier.InitDatabaseConnectionParams) (*querier.DatabaseConnection, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InitDatabaseConnection", ctx, arg)
+	ret0, _ := ret[0].(*querier.DatabaseConnection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InitDatabaseConnection indicates an expected call of InitDatabaseConnection.
+func (mr *MockModelInterfaceMockRecorder) InitDatabaseConnection(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).InitDatabaseConnection), ctx, arg)
+}
+
 // ListOrgClusters mocks base method.
 func (m *MockModelInterface) ListOrgClusters(ctx context.Context, organizationID int32) ([]*querier.Cluster, error) {
 	m.ctrl.T.Helper()

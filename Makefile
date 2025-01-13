@@ -104,9 +104,12 @@ build-server:
 	GOOS=linux GOARCH=amd64 go build -o ./bin/wavekit-server cmd/main.go
 
 build-docker:
-	docker build -t wavekit .
+	docker build -f docker/Dockerfile.pgbundle -t cloudcarver/wavekit:v0.1.0-pgbundle .
 
 build: build-web build-server build-docker
+
+push:
+	docker push cloudcarver/wavekit:v0.1.0-pgbundle
 
 ut:
 	COLOR=ALWAYS go test -race -covermode=atomic -coverprofile=coverage.out -tags ut ./... 

@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS database_connections (
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
-    UNIQUE (name),
+    UNIQUE (organization_id, name),
     PRIMARY KEY (id)
 );
 

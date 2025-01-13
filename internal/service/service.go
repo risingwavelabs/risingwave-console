@@ -40,7 +40,7 @@ const (
 
 type ServiceInterface interface {
 	// Create a new user and its default organization
-	CreateNewUser(ctx context.Context, username, password string) error
+	CreateNewUser(ctx context.Context, username, password string) (int32, error)
 
 	// SignIn authenticates a user and returns credentials
 	SignIn(ctx context.Context, params apigen.SignInRequest) (*apigen.Credentials, error)
@@ -186,12 +186,13 @@ func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken s
 	}, nil
 }
 
-func (s *Service) CreateNewUser(ctx context.Context, username, password string) error {
+func (s *Service) CreateNewUser(ctx context.Context, username, password string) (int32, error) {
 	salt, hash, err := s.generateHashAndSalt(password)
 	if err != nil {
-		return errors.Wrapf(err, "failed to generate hash and salt")
+		return 0, errors.Wrapf(err, "failed to generate hash and salt")
 	}
-	return s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
+	var orgID int32
+	if err := s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
 		org, err := txm.CreateOrganization(ctx, fmt.Sprintf("%s's Org", username))
 		if err != nil {
 			return errors.Wrapf(err, "failed to create organization")
@@ -211,8 +212,12 @@ func (s *Service) CreateNewUser(ctx context.Context, username, password string) 
 		if err != nil {
 			return errors.Wrapf(err, "failed to create user")
 		}
+		orgID = org.ID
 		return nil
-	})
+	}); err != nil {
+		return 0, err
+	}
+	return orgID, nil
 }
 
 func (s *Service) CreateCluster(ctx context.Context, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error) {

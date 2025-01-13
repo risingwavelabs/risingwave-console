@@ -105,11 +105,11 @@ func NewModel(cfg *config.Config) (ModelInterface, error) {
 
 	m, err := migrate.New(fmt.Sprintf("file://%s", cfg.Pg.Migration), fmt.Sprintf("pgx5://%s", url))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to init migrate")
+		return nil, errors.Wrapf(err, "failed to init migrate: %s", cfg.Pg.Migration)
 	}
 	if err := m.Up(); err != nil {
 		if !errors.Is(err, migrate.ErrNoChange) {
-			return nil, errors.Wrap(err, "failed to migrate up")
+			return nil, errors.Wrapf(err, "failed to migrate up: %s", cfg.Pg.Migration)
 		}
 	}
 

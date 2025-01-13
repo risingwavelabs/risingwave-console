@@ -1,0 +1,26 @@
+FROM ubuntu:20.04
+WORKDIR /app
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y postgresql-12 && rm -rf /var/lib/apt/lists/*
+
+RUN echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/12/main/pg_hba.conf
+# RUN echo "listen_addresses='*'\nport = 5432" >> /etc/postgresql/12/main/postgresql.conf
+
+COPY ./bin/wavekit-server /app/wavekit-server
+COPY ./web/out /app/web/out
+COPY ./docker/config.bundle.yaml /app/config.yaml
+COPY ./sql/migrations /app/sql/migrations
+
+# Create startup script
+COPY <<EOF /app/start.sh
+#!/bin/bash
+service postgresql start
+su - postgres -c "psql -c \\\"ALTER USER postgres WITH PASSWORD 'postgres';\\\""
+echo 'starting wavekit-server'
+/app/wavekit-server
+EOF
+RUN chmod +x /app/start.sh
+
+ENTRYPOINT ["/app/start.sh"]

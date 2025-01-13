@@ -201,6 +201,53 @@ func (q *Queries) GetOrgDatabaseConnection(ctx context.Context, arg GetOrgDataba
 	return &i, err
 }
 
+const initDatabaseConnection = `-- name: InitDatabaseConnection :one
+INSERT INTO database_connections (
+    name,
+    cluster_id,
+    username,
+    password,
+    database,
+    organization_id
+) VALUES (
+    $1, $2, $3, $4, $5, $6
+) ON CONFLICT (organization_id, name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+RETURNING id, organization_id, name, cluster_id, username, password, database, created_at, updated_at
+`
+
+type InitDatabaseConnectionParams struct {
+	Name           string
+	ClusterID      int32
+	Username       string
+	Password       *string
+	Database       string
+	OrganizationID int32
+}
+
+func (q *Queries) InitDatabaseConnection(ctx context.Context, arg InitDatabaseConnectionParams) (*DatabaseConnection, error) {
+	row := q.db.QueryRow(ctx, initDatabaseConnection,
+		arg.Name,
+		arg.ClusterID,
+		arg.Username,
+		arg.Password,
+		arg.Database,
+		arg.OrganizationID,
+	)
+	var i DatabaseConnection
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.Name,
+		&i.ClusterID,
+		&i.Username,
+		&i.Password,
+		&i.Database,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const listOrgDatabaseConnections = `-- name: ListOrgDatabaseConnections :many
 SELECT id, organization_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
 WHERE organization_id = $1

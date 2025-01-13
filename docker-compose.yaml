@@ -2,7 +2,7 @@ version: "3.9"
 services:
   dev:
     build: 
-      dockerfile: ./Dockerfile.dev
+      dockerfile: ./docker/Dockerfile.dev
     ports:
       - "8020:8020"
     command:
@@ -19,11 +19,13 @@ services:
       WK_PG_MIGRATION: ./sql/migrations
       WK_JWT_SECRET: 9138e41195112b568e22480f18a42dd69b38fab5ee1a36fbf63d49b22097d22a
       WK_ROOT_PASSWORD: '123456'
+      WK_INIT: ./init.yaml
     volumes:
       - ./:/app
       - go-data:/go/pkg/mod
       - go-build-data:/root/.cache/go-build
       - ./web/out:/app/web/out
+      - ./init.yaml:/app/init.yaml
   db: 
     image: "postgres:latest"
     ports:

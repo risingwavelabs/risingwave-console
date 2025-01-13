@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+
 	"github.com/cloudcarver/edc/conf"
 )
 
@@ -23,6 +25,8 @@ type Root struct {
 }
 
 type Config struct {
+	Init string `yaml:"init,omitempty"`
+
 	Port int `yaml:"port,omitempty"`
 
 	Jwt Jwt `yaml:"jwt,omitempty"`
@@ -33,7 +37,12 @@ type Config struct {
 
 func NewConfig() (*Config, error) {
 	c := &Config{}
-	if err := conf.FetchConfig("", "WK_", c); err != nil {
+	if err := conf.FetchConfig((func() string {
+		if _, err := os.Stat("config.yaml"); err != nil {
+			return ""
+		}
+		return "config.yaml"
+	})(), "WK_", c); err != nil {
 		return nil, err
 	}
 	return c, nil

@@ -9,6 +9,18 @@ INSERT INTO clusters (
     $1, $2, $3, $4, $5
 ) RETURNING *;
 
+-- name: InitCluster :one
+INSERT INTO clusters (
+    organization_id,
+    name,
+    host,
+    sql_port,
+    meta_port
+) VALUES (
+    $1, $2, $3, $4, $5
+) ON CONFLICT (organization_id, name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+RETURNING *;
+
 -- name: GetOrgCluster :one
 SELECT * FROM clusters
 WHERE id = $1 AND organization_id = $2;

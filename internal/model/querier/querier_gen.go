@@ -30,6 +30,8 @@ type Querier interface {
 	GetRefreshToken(ctx context.Context, arg GetRefreshTokenParams) (*RefreshToken, error)
 	GetUser(ctx context.Context, id int32) (*User, error)
 	GetUserByName(ctx context.Context, name string) (*User, error)
+	InitCluster(ctx context.Context, arg InitClusterParams) (*Cluster, error)
+	InitDatabaseConnection(ctx context.Context, arg InitDatabaseConnectionParams) (*DatabaseConnection, error)
 	ListOrgClusters(ctx context.Context, organizationID int32) ([]*Cluster, error)
 	ListOrgDatabaseConnections(ctx context.Context, organizationID int32) ([]*DatabaseConnection, error)
 	ListOrganizations(ctx context.Context) ([]*Organization, error)
