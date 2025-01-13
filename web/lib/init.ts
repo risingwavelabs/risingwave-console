@@ -20,9 +20,9 @@ const initService = () => {
     },
 
     async function (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      const { status } = error.response;
       console.log(error);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const { status } = error;
 
       if (status === 401) {
         const refreshToken = localStorage.getItem(refreshTokenKey);
@@ -55,8 +55,15 @@ const initService = () => {
           message: "An error occurred. Please try again later.",
         });
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-        toast.error(error.response.data);
+        if (error.status >= 500) {
+          toast.error(error.response.data);
+        }
+        if (error.status === 403) {
+          toast.error("You are not authorized to perform this action");
+        }
+        if (error.status === 401) {
+          toast.error("Cluster is running, please stop it before deleting");
+        }
         return Promise.reject(error);
       }
     },

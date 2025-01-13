@@ -687,6 +687,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, s
           className="border-b bg-background/95"
         />
         <DatabaseInsight
+          width={`${width}px`}
           height={graphHeight}
           databaseSchema={databaseSchema}
           result={queryResult}

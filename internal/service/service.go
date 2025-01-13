@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -23,11 +24,12 @@ type (
 )
 
 var (
-	ErrUserNotFound        = errors.New("user not found")
-	ErrInvalidPassword     = errors.New("invalid password")
-	ErrRefreshTokenExpired = errors.New("refresh token expired")
-	ErrDatabaseNotFound    = errors.New("database not found")
-	ErrClusterNotFound     = errors.New("cluster not found")
+	ErrUserNotFound                  = errors.New("user not found")
+	ErrInvalidPassword               = errors.New("invalid password")
+	ErrRefreshTokenExpired           = errors.New("refresh token expired")
+	ErrDatabaseNotFound              = errors.New("database not found")
+	ErrClusterNotFound               = errors.New("cluster not found")
+	ErrClusterHasDatabaseConnections = errors.New("cluster has database connections")
 )
 
 const (
@@ -50,16 +52,16 @@ type ServiceInterface interface {
 	CreateCluster(ctx context.Context, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error)
 
 	// GetCluster gets a cluster by its ID
-	GetCluster(ctx context.Context, id int32) (*apigen.Cluster, error)
+	GetCluster(ctx context.Context, id int32, orgID int32) (*apigen.Cluster, error)
 
 	// ListClusters lists all clusters in an organization
 	ListClusters(ctx context.Context, orgID int32) ([]apigen.Cluster, error)
 
 	// UpdateCluster updates a cluster
-	UpdateCluster(ctx context.Context, id int32, params apigen.ClusterCreate) (*apigen.Cluster, error)
+	UpdateCluster(ctx context.Context, id int32, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error)
 
 	// DeleteCluster deletes a cluster
-	DeleteCluster(ctx context.Context, id int32) error
+	DeleteCluster(ctx context.Context, id int32, cascade bool, orgID int32) error
 
 	// Database management
 	CreateDatabase(ctx context.Context, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error)
@@ -77,7 +79,7 @@ type ServiceInterface interface {
 	DeleteDatabase(ctx context.Context, id int32, orgID int32) error
 
 	// TestDatabaseConnection tests a database connection
-	TestDatabaseConnection(ctx context.Context, params apigen.TestConnectionPayload) (*apigen.TestConnectionResult, error)
+	TestDatabaseConnection(ctx context.Context, params apigen.TestConnectionPayload, orgID int32) (*apigen.TestConnectionResult, error)
 
 	// QueryDatabase executes a query on a database
 	QueryDatabase(ctx context.Context, id int32, params apigen.QueryRequest, orgID int32) (*apigen.QueryResponse, error)
@@ -237,8 +239,11 @@ func (s *Service) CreateCluster(ctx context.Context, params apigen.ClusterCreate
 	}, nil
 }
 
-func (s *Service) GetCluster(ctx context.Context, id int32) (*apigen.Cluster, error) {
-	cluster, err := s.m.GetCluster(ctx, id)
+func (s *Service) GetCluster(ctx context.Context, id int32, orgID int32) (*apigen.Cluster, error) {
+	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
+		ID:             id,
+		OrganizationID: orgID,
+	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, ErrClusterNotFound
@@ -259,7 +264,7 @@ func (s *Service) GetCluster(ctx context.Context, id int32) (*apigen.Cluster, er
 }
 
 func (s *Service) ListClusters(ctx context.Context, orgID int32) ([]apigen.Cluster, error) {
-	clusters, err := s.m.ListClusters(ctx, orgID)
+	clusters, err := s.m.ListOrgClusters(ctx, orgID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
@@ -283,13 +288,14 @@ func (s *Service) ListClusters(ctx context.Context, orgID int32) ([]apigen.Clust
 	return result, nil
 }
 
-func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.ClusterCreate) (*apigen.Cluster, error) {
-	cluster, err := s.m.UpdateCluster(ctx, querier.UpdateClusterParams{
-		ID:       id,
-		Name:     params.Name,
-		Host:     params.Host,
-		SqlPort:  int32(params.SqlPort),
-		MetaPort: int32(params.MetaPort),
+func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error) {
+	cluster, err := s.m.UpdateOrgCluster(ctx, querier.UpdateOrgClusterParams{
+		ID:             id,
+		OrganizationID: orgID,
+		Name:           params.Name,
+		Host:           params.Host,
+		SqlPort:        int32(params.SqlPort),
+		MetaPort:       int32(params.MetaPort),
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -310,8 +316,53 @@ func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.Clu
 	}, nil
 }
 
-func (s *Service) DeleteCluster(ctx context.Context, id int32) error {
-	err := s.m.DeleteCluster(ctx, id)
+func (s *Service) DeleteCluster(ctx context.Context, id int32, cascade bool, orgID int32) error {
+	if cascade {
+		return s.deleteClusterCacasde(ctx, id, orgID)
+	}
+	return s.deleteClusterNonCacasde(ctx, id, orgID)
+}
+
+func (s *Service) deleteClusterCacasde(ctx context.Context, id int32, orgID int32) error {
+	return s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
+		if err := txm.DeleteAllOrgDatabaseConnectionsByClusterID(ctx, querier.DeleteAllOrgDatabaseConnectionsByClusterIDParams{
+			ClusterID:      id,
+			OrganizationID: orgID,
+		}); err != nil {
+			return errors.Wrapf(err, "failed to delete associated database connections")
+		}
+
+		if err := txm.DeleteOrgCluster(ctx, querier.DeleteOrgClusterParams{
+			ID:             id,
+			OrganizationID: orgID,
+		}); err != nil {
+			return errors.Wrapf(err, "failed to delete cluster")
+		}
+		return nil
+	})
+}
+
+func (s *Service) deleteClusterNonCacasde(ctx context.Context, id int32, orgID int32) error {
+	dbConnections, err := s.m.GetAllOrgDatabseConnectionsByClusterID(ctx, querier.GetAllOrgDatabseConnectionsByClusterIDParams{
+		ClusterID:      id,
+		OrganizationID: orgID,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to get database connections")
+	}
+	names := make([]string, len(dbConnections))
+	for i, db := range dbConnections {
+		names[i] = db.Name
+	}
+
+	if len(dbConnections) > 0 {
+		return errors.Wrapf(ErrClusterHasDatabaseConnections, "cluster has %d database connections: %s", len(dbConnections), strings.Join(names, ", "))
+	}
+
+	err = s.m.DeleteOrgCluster(ctx, querier.DeleteOrgClusterParams{
+		ID:             id,
+		OrganizationID: orgID,
+	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete cluster")
 	}
@@ -345,7 +396,10 @@ func (s *Service) CreateDatabase(ctx context.Context, params apigen.DatabaseConn
 }
 
 func (s *Service) getConnStr(ctx context.Context, db *querier.DatabaseConnection) (string, error) {
-	cluster, err := s.m.GetCluster(ctx, db.ClusterID)
+	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
+		ID:             db.ClusterID,
+		OrganizationID: db.OrganizationID,
+	})
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to get cluster")
 	}
@@ -369,7 +423,10 @@ JOIN rw_schemas   ON rw_schemas.id = rw_relations.schema_id
 const getRwDependSQL = `SELECT * FROM rw_depend`
 
 func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apigen.Database, error) {
-	db, err := s.m.GetDatabaseConnection(ctx, id)
+	db, err := s.m.GetOrgDatabaseByID(ctx, querier.GetOrgDatabaseByIDParams{
+		ID:             id,
+		OrganizationID: orgID,
+	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, ErrDatabaseNotFound
@@ -458,7 +515,7 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 }
 
 func (s *Service) ListDatabases(ctx context.Context, orgID int32) ([]apigen.Database, error) {
-	dbs, err := s.m.ListDatabaseConnections(ctx, orgID)
+	dbs, err := s.m.ListOrgDatabaseConnections(ctx, orgID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
@@ -484,14 +541,15 @@ func (s *Service) ListDatabases(ctx context.Context, orgID int32) ([]apigen.Data
 }
 
 func (s *Service) UpdateDatabase(ctx context.Context, id int32, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error) {
-	db, err := s.m.UpdateDatabaseConnection(ctx, querier.UpdateDatabaseConnectionParams{
-		ID:             id,
-		ClusterID:      params.ClusterID,
-		Name:           params.Name,
-		Username:       params.Username,
-		Password:       params.Password,
-		Database:       params.Database,
-		OrganizationID: orgID,
+	db, err := s.m.UpdateOrgDatabaseConnection(ctx, querier.UpdateOrgDatabaseConnectionParams{
+		ID:               id,
+		ClusterID:        params.ClusterID,
+		Name:             params.Name,
+		Username:         params.Username,
+		Password:         params.Password,
+		Database:         params.Database,
+		OrganizationID:   orgID,
+		OrganizationID_2: orgID,
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -514,15 +572,21 @@ func (s *Service) UpdateDatabase(ctx context.Context, id int32, params apigen.Da
 }
 
 func (s *Service) DeleteDatabase(ctx context.Context, id int32, orgID int32) error {
-	err := s.m.DeleteDatabaseConnection(ctx, id)
+	err := s.m.DeleteOrgDatabaseConnection(ctx, querier.DeleteOrgDatabaseConnectionParams{
+		ID:             id,
+		OrganizationID: orgID,
+	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete database")
 	}
 	return nil
 }
 
-func (s *Service) TestDatabaseConnection(ctx context.Context, params apigen.TestConnectionPayload) (*apigen.TestConnectionResult, error) {
-	cluster, err := s.m.GetCluster(ctx, params.ClusterID)
+func (s *Service) TestDatabaseConnection(ctx context.Context, params apigen.TestConnectionPayload, orgID int32) (*apigen.TestConnectionResult, error) {
+	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
+		ID:             params.ClusterID,
+		OrganizationID: orgID,
+	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get cluster")
 	}
@@ -544,7 +608,7 @@ func (s *Service) TestDatabaseConnection(ctx context.Context, params apigen.Test
 }
 
 func (s *Service) QueryDatabase(ctx context.Context, id int32, params apigen.QueryRequest, orgID int32) (*apigen.QueryResponse, error) {
-	db, err := s.m.GetUserDatabaseByID(ctx, querier.GetUserDatabaseByIDParams{
+	db, err := s.m.GetOrgDatabaseByID(ctx, querier.GetOrgDatabaseByIDParams{
 		ID:             id,
 		OrganizationID: orgID,
 	})

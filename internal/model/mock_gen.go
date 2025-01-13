@@ -109,32 +109,46 @@ func (mr *MockModelInterfaceMockRecorder) CreateUser(ctx, arg interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockModelInterface)(nil).CreateUser), ctx, arg)
 }
 
-// DeleteCluster mocks base method.
-func (m *MockModelInterface) DeleteCluster(ctx context.Context, id int32) error {
+// DeleteAllOrgDatabaseConnectionsByClusterID mocks base method.
+func (m *MockModelInterface) DeleteAllOrgDatabaseConnectionsByClusterID(ctx context.Context, arg querier.DeleteAllOrgDatabaseConnectionsByClusterIDParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteCluster", ctx, id)
+	ret := m.ctrl.Call(m, "DeleteAllOrgDatabaseConnectionsByClusterID", ctx, arg)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteCluster indicates an expected call of DeleteCluster.
-func (mr *MockModelInterfaceMockRecorder) DeleteCluster(ctx, id interface{}) *gomock.Call {
+// DeleteAllOrgDatabaseConnectionsByClusterID indicates an expected call of DeleteAllOrgDatabaseConnectionsByClusterID.
+func (mr *MockModelInterfaceMockRecorder) DeleteAllOrgDatabaseConnectionsByClusterID(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCluster", reflect.TypeOf((*MockModelInterface)(nil).DeleteCluster), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllOrgDatabaseConnectionsByClusterID", reflect.TypeOf((*MockModelInterface)(nil).DeleteAllOrgDatabaseConnectionsByClusterID), ctx, arg)
 }
 
-// DeleteDatabaseConnection mocks base method.
-func (m *MockModelInterface) DeleteDatabaseConnection(ctx context.Context, id int32) error {
+// DeleteOrgCluster mocks base method.
+func (m *MockModelInterface) DeleteOrgCluster(ctx context.Context, arg querier.DeleteOrgClusterParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteDatabaseConnection", ctx, id)
+	ret := m.ctrl.Call(m, "DeleteOrgCluster", ctx, arg)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteDatabaseConnection indicates an expected call of DeleteDatabaseConnection.
-func (mr *MockModelInterfaceMockRecorder) DeleteDatabaseConnection(ctx, id interface{}) *gomock.Call {
+// DeleteOrgCluster indicates an expected call of DeleteOrgCluster.
+func (mr *MockModelInterfaceMockRecorder) DeleteOrgCluster(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).DeleteDatabaseConnection), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrgCluster", reflect.TypeOf((*MockModelInterface)(nil).DeleteOrgCluster), ctx, arg)
+}
+
+// DeleteOrgDatabaseConnection mocks base method.
+func (m *MockModelInterface) DeleteOrgDatabaseConnection(ctx context.Context, arg querier.DeleteOrgDatabaseConnectionParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOrgDatabaseConnection", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteOrgDatabaseConnection indicates an expected call of DeleteOrgDatabaseConnection.
+func (mr *MockModelInterfaceMockRecorder) DeleteOrgDatabaseConnection(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrgDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).DeleteOrgDatabaseConnection), ctx, arg)
 }
 
 // DeleteOrganization mocks base method.
@@ -179,34 +193,94 @@ func (mr *MockModelInterfaceMockRecorder) DeleteUserByName(ctx, name interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserByName", reflect.TypeOf((*MockModelInterface)(nil).DeleteUserByName), ctx, name)
 }
 
-// GetCluster mocks base method.
-func (m *MockModelInterface) GetCluster(ctx context.Context, id int32) (*querier.Cluster, error) {
+// GetAllOrgDatabseConnectionsByClusterID mocks base method.
+func (m *MockModelInterface) GetAllOrgDatabseConnectionsByClusterID(ctx context.Context, arg querier.GetAllOrgDatabseConnectionsByClusterIDParams) ([]*querier.DatabaseConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCluster", ctx, id)
+	ret := m.ctrl.Call(m, "GetAllOrgDatabseConnectionsByClusterID", ctx, arg)
+	ret0, _ := ret[0].([]*querier.DatabaseConnection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllOrgDatabseConnectionsByClusterID indicates an expected call of GetAllOrgDatabseConnectionsByClusterID.
+func (mr *MockModelInterfaceMockRecorder) GetAllOrgDatabseConnectionsByClusterID(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllOrgDatabseConnectionsByClusterID", reflect.TypeOf((*MockModelInterface)(nil).GetAllOrgDatabseConnectionsByClusterID), ctx, arg)
+}
+
+// GetClusterByID mocks base method.
+func (m *MockModelInterface) GetClusterByID(ctx context.Context, id int32) (*querier.Cluster, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClusterByID", ctx, id)
 	ret0, _ := ret[0].(*querier.Cluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetCluster indicates an expected call of GetCluster.
-func (mr *MockModelInterfaceMockRecorder) GetCluster(ctx, id interface{}) *gomock.Call {
+// GetClusterByID indicates an expected call of GetClusterByID.
+func (mr *MockModelInterfaceMockRecorder) GetClusterByID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCluster", reflect.TypeOf((*MockModelInterface)(nil).GetCluster), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterByID", reflect.TypeOf((*MockModelInterface)(nil).GetClusterByID), ctx, id)
 }
 
-// GetDatabaseConnection mocks base method.
-func (m *MockModelInterface) GetDatabaseConnection(ctx context.Context, id int32) (*querier.DatabaseConnection, error) {
+// GetDatabaseConnectionByID mocks base method.
+func (m *MockModelInterface) GetDatabaseConnectionByID(ctx context.Context, id int32) (*querier.DatabaseConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDatabaseConnection", ctx, id)
+	ret := m.ctrl.Call(m, "GetDatabaseConnectionByID", ctx, id)
 	ret0, _ := ret[0].(*querier.DatabaseConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetDatabaseConnection indicates an expected call of GetDatabaseConnection.
-func (mr *MockModelInterfaceMockRecorder) GetDatabaseConnection(ctx, id interface{}) *gomock.Call {
+// GetDatabaseConnectionByID indicates an expected call of GetDatabaseConnectionByID.
+func (mr *MockModelInterfaceMockRecorder) GetDatabaseConnectionByID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).GetDatabaseConnection), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatabaseConnectionByID", reflect.TypeOf((*MockModelInterface)(nil).GetDatabaseConnectionByID), ctx, id)
+}
+
+// GetOrgCluster mocks base method.
+func (m *MockModelInterface) GetOrgCluster(ctx context.Context, arg querier.GetOrgClusterParams) (*querier.Cluster, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrgCluster", ctx, arg)
+	ret0, _ := ret[0].(*querier.Cluster)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrgCluster indicates an expected call of GetOrgCluster.
+func (mr *MockModelInterfaceMockRecorder) GetOrgCluster(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgCluster", reflect.TypeOf((*MockModelInterface)(nil).GetOrgCluster), ctx, arg)
+}
+
+// GetOrgDatabaseByID mocks base method.
+func (m *MockModelInterface) GetOrgDatabaseByID(ctx context.Context, arg querier.GetOrgDatabaseByIDParams) (*querier.DatabaseConnection, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrgDatabaseByID", ctx, arg)
+	ret0, _ := ret[0].(*querier.DatabaseConnection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrgDatabaseByID indicates an expected call of GetOrgDatabaseByID.
+func (mr *MockModelInterfaceMockRecorder) GetOrgDatabaseByID(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgDatabaseByID", reflect.TypeOf((*MockModelInterface)(nil).GetOrgDatabaseByID), ctx, arg)
+}
+
+// GetOrgDatabaseConnection mocks base method.
+func (m *MockModelInterface) GetOrgDatabaseConnection(ctx context.Context, arg querier.GetOrgDatabaseConnectionParams) (*querier.DatabaseConnection, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrgDatabaseConnection", ctx, arg)
+	ret0, _ := ret[0].(*querier.DatabaseConnection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrgDatabaseConnection indicates an expected call of GetOrgDatabaseConnection.
+func (mr *MockModelInterfaceMockRecorder) GetOrgDatabaseConnection(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).GetOrgDatabaseConnection), ctx, arg)
 }
 
 // GetOrganization mocks base method.
@@ -269,21 +343,6 @@ func (mr *MockModelInterfaceMockRecorder) GetUserByName(ctx, name interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByName", reflect.TypeOf((*MockModelInterface)(nil).GetUserByName), ctx, name)
 }
 
-// GetUserDatabaseByID mocks base method.
-func (m *MockModelInterface) GetUserDatabaseByID(ctx context.Context, arg querier.GetUserDatabaseByIDParams) (*querier.DatabaseConnection, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserDatabaseByID", ctx, arg)
-	ret0, _ := ret[0].(*querier.DatabaseConnection)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserDatabaseByID indicates an expected call of GetUserDatabaseByID.
-func (mr *MockModelInterfaceMockRecorder) GetUserDatabaseByID(ctx, arg interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDatabaseByID", reflect.TypeOf((*MockModelInterface)(nil).GetUserDatabaseByID), ctx, arg)
-}
-
 // InTransaction mocks base method.
 func (m *MockModelInterface) InTransaction() bool {
 	m.ctrl.T.Helper()
@@ -298,34 +357,34 @@ func (mr *MockModelInterfaceMockRecorder) InTransaction() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InTransaction", reflect.TypeOf((*MockModelInterface)(nil).InTransaction))
 }
 
-// ListClusters mocks base method.
-func (m *MockModelInterface) ListClusters(ctx context.Context, organizationID int32) ([]*querier.Cluster, error) {
+// ListOrgClusters mocks base method.
+func (m *MockModelInterface) ListOrgClusters(ctx context.Context, organizationID int32) ([]*querier.Cluster, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListClusters", ctx, organizationID)
+	ret := m.ctrl.Call(m, "ListOrgClusters", ctx, organizationID)
 	ret0, _ := ret[0].([]*querier.Cluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListClusters indicates an expected call of ListClusters.
-func (mr *MockModelInterfaceMockRecorder) ListClusters(ctx, organizationID interface{}) *gomock.Call {
+// ListOrgClusters indicates an expected call of ListOrgClusters.
+func (mr *MockModelInterfaceMockRecorder) ListOrgClusters(ctx, organizationID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListClusters", reflect.TypeOf((*MockModelInterface)(nil).ListClusters), ctx, organizationID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrgClusters", reflect.TypeOf((*MockModelInterface)(nil).ListOrgClusters), ctx, organizationID)
 }
 
-// ListDatabaseConnections mocks base method.
-func (m *MockModelInterface) ListDatabaseConnections(ctx context.Context, organizationID int32) ([]*querier.DatabaseConnection, error) {
+// ListOrgDatabaseConnections mocks base method.
+func (m *MockModelInterface) ListOrgDatabaseConnections(ctx context.Context, organizationID int32) ([]*querier.DatabaseConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListDatabaseConnections", ctx, organizationID)
+	ret := m.ctrl.Call(m, "ListOrgDatabaseConnections", ctx, organizationID)
 	ret0, _ := ret[0].([]*querier.DatabaseConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListDatabaseConnections indicates an expected call of ListDatabaseConnections.
-func (mr *MockModelInterfaceMockRecorder) ListDatabaseConnections(ctx, organizationID interface{}) *gomock.Call {
+// ListOrgDatabaseConnections indicates an expected call of ListOrgDatabaseConnections.
+func (mr *MockModelInterfaceMockRecorder) ListOrgDatabaseConnections(ctx, organizationID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDatabaseConnections", reflect.TypeOf((*MockModelInterface)(nil).ListDatabaseConnections), ctx, organizationID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrgDatabaseConnections", reflect.TypeOf((*MockModelInterface)(nil).ListOrgDatabaseConnections), ctx, organizationID)
 }
 
 // ListOrganizations mocks base method.
@@ -357,34 +416,34 @@ func (mr *MockModelInterfaceMockRecorder) RunTransaction(ctx, f interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunTransaction", reflect.TypeOf((*MockModelInterface)(nil).RunTransaction), ctx, f)
 }
 
-// UpdateCluster mocks base method.
-func (m *MockModelInterface) UpdateCluster(ctx context.Context, arg querier.UpdateClusterParams) (*querier.Cluster, error) {
+// UpdateOrgCluster mocks base method.
+func (m *MockModelInterface) UpdateOrgCluster(ctx context.Context, arg querier.UpdateOrgClusterParams) (*querier.Cluster, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateCluster", ctx, arg)
+	ret := m.ctrl.Call(m, "UpdateOrgCluster", ctx, arg)
 	ret0, _ := ret[0].(*querier.Cluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UpdateCluster indicates an expected call of UpdateCluster.
-func (mr *MockModelInterfaceMockRecorder) UpdateCluster(ctx, arg interface{}) *gomock.Call {
+// UpdateOrgCluster indicates an expected call of UpdateOrgCluster.
+func (mr *MockModelInterfaceMockRecorder) UpdateOrgCluster(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCluster", reflect.TypeOf((*MockModelInterface)(nil).UpdateCluster), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrgCluster", reflect.TypeOf((*MockModelInterface)(nil).UpdateOrgCluster), ctx, arg)
 }
 
-// UpdateDatabaseConnection mocks base method.
-func (m *MockModelInterface) UpdateDatabaseConnection(ctx context.Context, arg querier.UpdateDatabaseConnectionParams) (*querier.DatabaseConnection, error) {
+// UpdateOrgDatabaseConnection mocks base method.
+func (m *MockModelInterface) UpdateOrgDatabaseConnection(ctx context.Context, arg querier.UpdateOrgDatabaseConnectionParams) (*querier.DatabaseConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateDatabaseConnection", ctx, arg)
+	ret := m.ctrl.Call(m, "UpdateOrgDatabaseConnection", ctx, arg)
 	ret0, _ := ret[0].(*querier.DatabaseConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UpdateDatabaseConnection indicates an expected call of UpdateDatabaseConnection.
-func (mr *MockModelInterfaceMockRecorder) UpdateDatabaseConnection(ctx, arg interface{}) *gomock.Call {
+// UpdateOrgDatabaseConnection indicates an expected call of UpdateOrgDatabaseConnection.
+func (mr *MockModelInterfaceMockRecorder) UpdateOrgDatabaseConnection(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).UpdateDatabaseConnection), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrgDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).UpdateOrgDatabaseConnection), ctx, arg)
 }
 
 // UpdateOrganization mocks base method.

@@ -9,26 +9,30 @@ INSERT INTO clusters (
     $1, $2, $3, $4, $5
 ) RETURNING *;
 
--- name: GetCluster :one
+-- name: GetOrgCluster :one
 SELECT * FROM clusters
-WHERE id = $1;
+WHERE id = $1 AND organization_id = $2;
 
--- name: ListClusters :many
+-- name: ListOrgClusters :many
 SELECT * FROM clusters
 WHERE organization_id = $1
 ORDER BY name;
 
--- name: UpdateCluster :one
+-- name: UpdateOrgCluster :one
 UPDATE clusters
 SET
-    name = $2,
-    host = $3,
-    sql_port = $4,
-    meta_port = $5,
+    name = $3,
+    host = $4,
+    sql_port = $5,
+    meta_port = $6,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
+WHERE id = $1 AND organization_id = $2
 RETURNING *;
 
--- name: DeleteCluster :exec
+-- name: DeleteOrgCluster :exec
 DELETE FROM clusters
+WHERE id = $1 AND organization_id = $2;
+
+-- name: GetClusterByID :one
+SELECT * FROM clusters
 WHERE id = $1;

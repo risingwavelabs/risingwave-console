@@ -258,14 +258,14 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHel
                         {schema.relations.map((relation: Relation) => (
                           <div key={relation.id} className="space-y-1">
                             <ContextMenu>
-                              <ContextMenuTrigger asChild>
-                                <div className="flex items-center gap-1 w-full group">
-                                  <button
+                              <div className="flex items-center gap-1 w-full group">
+                                <ContextMenuTrigger asChild>
+                                  <div
                                     onClick={(e) => {
                                       toggleRelation(e, relation.id)
                                       onSelectTable?.(db.id, relation.id)
                                     }}
-                                    className={`flex items-center gap-1 flex-1 hover:bg-muted/50 rounded-sm p-1 text-sm ${
+                                    className={`flex items-center gap-1 flex-1 hover:bg-muted/50 rounded-sm p-1 text-sm cursor-pointer ${
                                       selectedDbId === db.id ? 'text-foreground' : 'text-muted-foreground'
                                     } hover:text-foreground`}
                                   >
@@ -335,19 +335,19 @@ export function DatabaseList({ databases, onSelectTable, onUseDatabase, queryHel
                                       </TooltipProvider>
                                     )}
                                     <span className="truncate">{relation.name}</span>
-                                  </button>
-                                  <button
-                                    onClick={(e) => handleCopy(e, relation.name, String(relation.id))}
-                                    className="p-1 opacity-0 group-hover:opacity-100 hover:text-foreground transition-opacity"
-                                  >
-                                    {copiedId === String(relation.id) ? (
-                                      <Check className="h-3 w-3" />
-                                    ) : (
-                                      <Copy className="h-3 w-3" />
-                                    )}
-                                  </button>
+                                  </div>
+                                </ContextMenuTrigger>
+                                <div
+                                  onClick={(e) => handleCopy(e, relation.name, String(relation.id))}
+                                  className="p-1 opacity-0 group-hover:opacity-100 hover:text-foreground transition-opacity cursor-pointer"
+                                >
+                                  {copiedId === String(relation.id) ? (
+                                    <Check className="h-3 w-3" />
+                                  ) : (
+                                    <Copy className="h-3 w-3" />
+                                  )}
                                 </div>
-                              </ContextMenuTrigger>
+                              </div>
                               <ContextMenuContent className="w-48">
                                 <ContextMenuItem onClick={() => handleViewData(relation, schema)}>
                                   View Data (100 rows)

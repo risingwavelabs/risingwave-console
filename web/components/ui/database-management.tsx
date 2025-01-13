@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { X, Settings2, Trash2, Plus, ArrowLeft } from "lucide-react"
+import { X, Settings2, Trash2, Plus, ArrowLeft, RefreshCw } from "lucide-react"
 import { useCallback, useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,7 +16,6 @@ import { toast } from "sonner"
 interface DatabaseManagementProps {
   isOpen: boolean
   onClose: () => void
-  clusters: Array<{ id: string, name: string }>
   onDatabaseChange?: () => void
 }
 
@@ -28,7 +27,7 @@ const databaseSchema = yup.object().shape({
   database: yup.string().required("Database name is required"),
 })
 
-export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange }: DatabaseManagementProps) {
+export function DatabaseManagement({ isOpen, onClose, onDatabaseChange }: DatabaseManagementProps) {
   if (!isOpen) return null
 
   const [databases, setDatabases] = useState<Database[]>([])
@@ -40,6 +39,8 @@ export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange
   const [isTesting, setIsTesting] = useState(false)
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
   const [selectedClusterId, setSelectedClusterId] = useState<string>('')
+  const [clusters, setClusters] = useState<Array<{ id: string, name: string }>>([])
+  const [isRefreshingClusters, setIsRefreshingClusters] = useState(false)
 
   const {
     register,
@@ -84,6 +85,31 @@ export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange
 
     fetchDatabases()
   }, [])
+
+  // Fetch clusters on component mount and when refreshing
+  const fetchClusters = useCallback(async () => {
+    try {
+      setIsRefreshingClusters(true)
+      const data = await DefaultService.listClusters()
+      const transformedClusters = data.map(cluster => ({
+        id: String(cluster.ID),
+        name: cluster.name
+      }))
+      setClusters(transformedClusters)
+      toast.success("Clusters refreshed")
+    } catch (error) {
+      toast.error("Failed to refresh clusters")
+      console.error("Error fetching clusters:", error)
+    } finally {
+      setIsRefreshingClusters(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchClusters()
+    }
+  }, [isOpen, fetchClusters])
 
   const handleDeleteDatabase = async (id: number) => {
     try {
@@ -164,8 +190,6 @@ export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange
     setValue('database', db.database)
     
     try {
-      // Get cluster info since that's where the connection details are
-      const cluster = await DefaultService.getCluster(String(db.clusterID))
       setValue('username', db.username || '')
       setValue('password', db.password || '')
       setValue('clusterID', db.clusterID)
@@ -183,6 +207,11 @@ export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange
   }, [onClose])
 
   const isEditing = isAddingDatabase || isConfiguring
+
+  // Update the refresh button click handler
+  const handleRefreshClusters = () => {
+    fetchClusters()
+  }
 
   return (
     <div 
@@ -310,7 +339,18 @@ export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cluster">Cluster</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="cluster">Cluster</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={handleRefreshClusters}
+                      disabled={isRefreshingClusters}
+                    >
+                      <RefreshCw className={`h-4 w-4 ${isRefreshingClusters ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </div>
                   <Select
                     onValueChange={(value) => {
                       setValue('clusterID', parseInt(value))
@@ -322,11 +362,24 @@ export function DatabaseManagement({ isOpen, onClose, clusters, onDatabaseChange
                       <SelectValue placeholder="Select a cluster" />
                     </SelectTrigger>
                     <SelectContent>
-                      {clusters.map((cluster) => (
-                        <SelectItem key={cluster.id} value={cluster.id}>
-                          {cluster.name}
-                        </SelectItem>
-                      ))}
+                      {clusters.length === 0 ? (
+                        <div className="p-2 text-sm text-center">
+                          <p className="text-muted-foreground mb-2">No clusters found</p>
+                          <Button
+                            variant="link"
+                            className="h-auto p-0"
+                            onClick={() => window.open('/clusters', '_blank')}
+                          >
+                            Create a new cluster
+                          </Button>
+                        </div>
+                      ) : (
+                        clusters.map((cluster) => (
+                          <SelectItem key={cluster.id} value={cluster.id}>
+                            {cluster.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   {errors.clusterID && (

@@ -48,10 +48,31 @@ const convertToStreamingGraph = (schema: APISchema): RisingWaveNodeData[] => {
   }))
 }
 
+// Utility function to fetch and transform databases and clusters data
+const fetchDatabasesAndClusters = async () => {
+  const [dbData, clusterData] = await Promise.all([
+    DefaultService.listDatabases(),
+    DefaultService.listClusters()
+  ])
+
+  // Transform databases data
+  return dbData.map(db => {
+    const cluster = clusterData.find(c => c.ID === db.clusterID)
+    return {
+      id: String(db.ID),
+      name: db.name,
+      clusterId: String(db.clusterID),
+      clusterName: cluster?.name || 'Unknown Cluster',
+      user: db.username,
+      password: db.password,
+      database: db.database
+    }
+  })
+}
+
 export default function SQLConsole() {
   const [isManagementOpen, setIsManagementOpen] = useState(false)
   const [databases, setDatabases] = useState<DatabaseItem[]>([])
-  const [clusters, setClusters] = useState<Array<{ id: string, name: string }>>([])
   const [isLoading, setIsLoading] = useState(true)
   const [editorWidth, setEditorWidth] = useState(0)
   const [isResizing, setIsResizing] = useState(false)
@@ -99,31 +120,7 @@ export default function SQLConsole() {
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true)
-      const [dbData, clusterData] = await Promise.all([
-        DefaultService.listDatabases(),
-        DefaultService.listClusters()
-      ])
-
-      // Transform clusters data
-      const transformedClusters = clusterData.map(cluster => ({
-        id: String(cluster.ID),
-        name: cluster.name
-      }))
-      setClusters(transformedClusters)
-
-      // Transform databases data
-      const transformedDatabases = dbData.map(db => {
-        const cluster = clusterData.find(c => c.ID === db.clusterID)
-        return {
-          id: String(db.ID),
-          name: db.name,
-          clusterId: String(db.clusterID),
-          clusterName: cluster?.name || 'Unknown Cluster',
-          user: db.username,
-          password: db.password,
-          database: db.database
-        }
-      })
+      const transformedDatabases = await fetchDatabasesAndClusters()
 
       // Get the database ID to select
       const savedId = typeof window !== 'undefined' ? localStorage.getItem(SELECTED_DB_KEY) : null
@@ -170,7 +167,7 @@ export default function SQLConsole() {
     } finally {
       setIsLoading(false)
     }
-  }, [setSelectedDatabase])
+  }, [setSelectedDatabase, setDatabases, setDatabaseSchema, setIsLoading])
 
   useEffect(() => {
     const calculateEditorWidth = () => {
@@ -385,38 +382,12 @@ export default function SQLConsole() {
         }
       }
     }
-  }, [expandedDbs, databases, selectedDatabaseId])
+  }, [expandedDbs, databases, selectedDatabaseId, setDatabases, setDatabaseSchema, setExpandedDbs])
 
   const handleRefresh = useCallback(async () => {
     try {
       setIsRefreshing(true)
-      
-      // First get the list of databases and clusters
-      const [dbData, clusterData] = await Promise.all([
-        DefaultService.listDatabases(),
-        DefaultService.listClusters()
-      ])
-
-      // Transform clusters data
-      const transformedClusters = clusterData.map(cluster => ({
-        id: String(cluster.ID),
-        name: cluster.name
-      }))
-      setClusters(transformedClusters)
-
-      // Transform databases data
-      const transformedDatabases = dbData.map(db => {
-        const cluster = clusterData.find(c => c.ID === db.clusterID)
-        return {
-          id: String(db.ID),
-          name: db.name,
-          clusterId: String(db.clusterID),
-          clusterName: cluster?.name || 'Unknown Cluster',
-          user: db.username,
-          password: db.password,
-          database: db.database
-        }
-      })
+      const transformedDatabases = await fetchDatabasesAndClusters()
 
       // Create a set of database IDs to fetch details for (expanded + selected)
       const dbsToFetch = new Set([...expandedDbs])
@@ -466,7 +437,7 @@ export default function SQLConsole() {
     } finally {
       setIsRefreshing(false)
     }
-  }, [expandedDbs, selectedDatabaseId])
+  }, [expandedDbs, selectedDatabaseId, setDatabases, setDatabaseSchema, setIsRefreshing])
 
   return (
     <div ref={containerRef} className="flex h-screen overflow-hidden">
@@ -530,7 +501,6 @@ export default function SQLConsole() {
       <DatabaseManagement
         isOpen={isManagementOpen}
         onClose={() => setIsManagementOpen(false)}
-        clusters={clusters}
         onDatabaseChange={handleDatabaseChange}
       />
     </div>

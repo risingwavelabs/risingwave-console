@@ -14,23 +14,27 @@ type Querier interface {
 	CreateOrganization(ctx context.Context, name string) (*Organization, error)
 	CreateOrganizationOwner(ctx context.Context, arg CreateOrganizationOwnerParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
-	DeleteCluster(ctx context.Context, id int32) error
-	DeleteDatabaseConnection(ctx context.Context, id int32) error
+	DeleteAllOrgDatabaseConnectionsByClusterID(ctx context.Context, arg DeleteAllOrgDatabaseConnectionsByClusterIDParams) error
+	DeleteOrgCluster(ctx context.Context, arg DeleteOrgClusterParams) error
+	DeleteOrgDatabaseConnection(ctx context.Context, arg DeleteOrgDatabaseConnectionParams) error
 	DeleteOrganization(ctx context.Context, id int32) error
 	DeleteRefreshToken(ctx context.Context, arg DeleteRefreshTokenParams) error
 	DeleteUserByName(ctx context.Context, name string) error
-	GetCluster(ctx context.Context, id int32) (*Cluster, error)
-	GetDatabaseConnection(ctx context.Context, id int32) (*DatabaseConnection, error)
+	GetAllOrgDatabseConnectionsByClusterID(ctx context.Context, arg GetAllOrgDatabseConnectionsByClusterIDParams) ([]*DatabaseConnection, error)
+	GetClusterByID(ctx context.Context, id int32) (*Cluster, error)
+	GetDatabaseConnectionByID(ctx context.Context, id int32) (*DatabaseConnection, error)
+	GetOrgCluster(ctx context.Context, arg GetOrgClusterParams) (*Cluster, error)
+	GetOrgDatabaseByID(ctx context.Context, arg GetOrgDatabaseByIDParams) (*DatabaseConnection, error)
+	GetOrgDatabaseConnection(ctx context.Context, arg GetOrgDatabaseConnectionParams) (*DatabaseConnection, error)
 	GetOrganization(ctx context.Context, id int32) (*Organization, error)
 	GetRefreshToken(ctx context.Context, arg GetRefreshTokenParams) (*RefreshToken, error)
 	GetUser(ctx context.Context, id int32) (*User, error)
 	GetUserByName(ctx context.Context, name string) (*User, error)
-	GetUserDatabaseByID(ctx context.Context, arg GetUserDatabaseByIDParams) (*DatabaseConnection, error)
-	ListClusters(ctx context.Context, organizationID int32) ([]*Cluster, error)
-	ListDatabaseConnections(ctx context.Context, organizationID int32) ([]*DatabaseConnection, error)
+	ListOrgClusters(ctx context.Context, organizationID int32) ([]*Cluster, error)
+	ListOrgDatabaseConnections(ctx context.Context, organizationID int32) ([]*DatabaseConnection, error)
 	ListOrganizations(ctx context.Context) ([]*Organization, error)
-	UpdateCluster(ctx context.Context, arg UpdateClusterParams) (*Cluster, error)
-	UpdateDatabaseConnection(ctx context.Context, arg UpdateDatabaseConnectionParams) (*DatabaseConnection, error)
+	UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterParams) (*Cluster, error)
+	UpdateOrgDatabaseConnection(ctx context.Context, arg UpdateOrgDatabaseConnectionParams) (*DatabaseConnection, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (*Organization, error)
 	UpsertRefreshToken(ctx context.Context, arg UpsertRefreshTokenParams) error
 }

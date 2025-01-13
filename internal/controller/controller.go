@@ -9,6 +9,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/service"
+	"github.com/risingwavelabs/wavekit/internal/utils"
 )
 
 type Controller struct {
@@ -86,14 +87,22 @@ func (controller *Controller) CreateCluster(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(cluster)
 }
 
-func (controller *Controller) DeleteCluster(c *fiber.Ctx, id string) error {
+func (controller *Controller) DeleteCluster(c *fiber.Ctx, id string, params apigen.DeleteClusterParams) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
 	clusterID, err := strconv.Atoi(id)
 	if err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	err = controller.svc.DeleteCluster(c.Context(), int32(clusterID))
+	err = controller.svc.DeleteCluster(c.Context(), int32(clusterID), utils.UnwrapOrDefault(params.Cascade, false), user.OrganizationID)
 	if err != nil {
+		if errors.Is(err, service.ErrClusterHasDatabaseConnections) {
+			return c.Status(fiber.StatusConflict).SendString(err.Error())
+		}
 		return err
 	}
 
@@ -101,12 +110,17 @@ func (controller *Controller) DeleteCluster(c *fiber.Ctx, id string) error {
 }
 
 func (controller *Controller) GetCluster(c *fiber.Ctx, id string) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
 	clusterID, err := strconv.Atoi(id)
 	if err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	cluster, err := controller.svc.GetCluster(c.Context(), int32(clusterID))
+	cluster, err := controller.svc.GetCluster(c.Context(), int32(clusterID), user.OrganizationID)
 	if err != nil {
 		if errors.Is(err, service.ErrClusterNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
@@ -118,6 +132,11 @@ func (controller *Controller) GetCluster(c *fiber.Ctx, id string) error {
 }
 
 func (controller *Controller) UpdateCluster(c *fiber.Ctx, id string) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
 	var params apigen.ClusterCreate
 	if err := c.BodyParser(&params); err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
@@ -128,7 +147,7 @@ func (controller *Controller) UpdateCluster(c *fiber.Ctx, id string) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	cluster, err := controller.svc.UpdateCluster(c.Context(), int32(clusterID), params)
+	cluster, err := controller.svc.UpdateCluster(c.Context(), int32(clusterID), params, user.OrganizationID)
 	if err != nil {
 		if errors.Is(err, service.ErrClusterNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
@@ -268,12 +287,17 @@ func (controller *Controller) CancelDDLProgress(c *fiber.Ctx, id int32, ddlID st
 }
 
 func (controller *Controller) TestDatabaseConnection(c *fiber.Ctx) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
 	var params apigen.TestConnectionPayload
 	if err := c.BodyParser(&params); err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	result, err := controller.svc.TestDatabaseConnection(c.Context(), params)
+	result, err := controller.svc.TestDatabaseConnection(c.Context(), params, user.OrganizationID)
 	if err != nil {
 		return err
 	}

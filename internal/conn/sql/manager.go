@@ -27,12 +27,12 @@ func NewSQLConnectionManager(m model.ModelInterface) SQLConnectionManegerInterfa
 }
 
 func (s *SQLConnectionManager) NewConn(ctx context.Context, databaseID int32) (SQLConnectionInterface, error) {
-	databaseInfo, err := s.m.GetDatabaseConnection(ctx, databaseID)
+	databaseInfo, err := s.m.GetDatabaseConnectionByID(ctx, databaseID)
 	if err != nil {
 		return nil, err
 	}
 
-	clusterInfo, err := s.m.GetCluster(ctx, databaseInfo.ClusterID)
+	clusterInfo, err := s.m.GetClusterByID(ctx, databaseInfo.ClusterID)
 	if err != nil {
 		return nil, err
 	}

@@ -87,10 +87,10 @@ export function QueryResult({ result, isLoading = false }: QueryResultProps) {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto">
-        <div className="space-y-4 p-4">
-          <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col">
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full flex flex-col">
+          <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-4">
               <div className={`text-xs ${result.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
                 {result.message}
@@ -106,7 +106,7 @@ export function QueryResult({ result, isLoading = false }: QueryResultProps) {
             )}
           </div>
           {result.rows && result.rows.length > 0 && result.columns && (
-            <div className="overflow-auto">
+            <div className="flex-1 overflow-auto">
               <table className="w-full border-collapse">
                 <thead>
                   <tr>

@@ -1,11 +1,14 @@
 "use client"
 
+import { AxiosError } from "axios"
 import { useEffect, useState } from "react"
 import { ClusterList, Cluster as UICluster } from "@/components/ui/cluster-list"
 import { ClusterDialog, ClusterFormData } from "@/components/ui/new-cluster-dialog"
-import { DefaultService } from "@/api-gen"
+import { ApiError, DefaultService } from "@/api-gen"
 import { Cluster as APICluster } from "@/api-gen/models/Cluster"
 import toast from "react-hot-toast"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 function mapAPIClusterToUICluster(apiCluster: APICluster): UICluster {
   return {
@@ -21,6 +24,8 @@ function mapAPIClusterToUICluster(apiCluster: APICluster): UICluster {
 export default function ClustersPage() {
   const [clusters, setClusters] = useState<UICluster[]>([])
   const [loading, setLoading] = useState(true)
+  const [cascadeDeleteCluster, setCascadeDeleteCluster] = useState<UICluster | null>(null)
+  const [cascadeDeleteError, setCascadeDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchClusters = async () => {
@@ -57,7 +62,7 @@ export default function ClustersPage() {
         sqlPort: cluster.sqlPort,
         metaPort: cluster.metaPort,
       })
-      setClusters(prev => prev.map(c => 
+      setClusters(prev => prev.map(c =>
         c.id === cluster.id ? mapAPIClusterToUICluster(updatedCluster) : c
       ))
       toast.success("Cluster updated successfully")
@@ -73,8 +78,30 @@ export default function ClustersPage() {
       setClusters(prev => prev.filter(c => c.id !== cluster.id))
       toast.success("Cluster deleted successfully")
     } catch (error) {
+      console.log("cascade delete cluster")
+      if (error instanceof ApiError && error.status === 409) {
+        const errorMessage = error.message || "This cluster has active database connections."
+        setCascadeDeleteCluster(cluster)
+        setCascadeDeleteError(errorMessage)
+      } else {
+        toast.error("Failed to delete cluster")
+        console.error("Error deleting cluster:", error)
+      }
+    }
+  }
+
+  const handleCascadeDelete = async () => {
+    if (!cascadeDeleteCluster) return
+
+    try {
+      await DefaultService.deleteCluster(cascadeDeleteCluster.id, true)
+      setClusters(prev => prev.filter(c => c.id !== cascadeDeleteCluster.id))
+      toast.success("Cluster and associated connections deleted successfully")
+    } catch (error) {
       toast.error("Failed to delete cluster")
       console.error("Error deleting cluster:", error)
+    } finally {
+      setCascadeDeleteCluster(null)
     }
   }
 
@@ -99,11 +126,32 @@ export default function ClustersPage() {
         </div>
         <ClusterDialog mode="create" onSubmit={handleCreateCluster} />
       </div>
-      <ClusterList 
+      <ClusterList
         clusters={clusters}
         onEdit={handleEditCluster}
         onDelete={handleDeleteCluster}
       />
+      {cascadeDeleteCluster && (
+        <Dialog open={!!cascadeDeleteCluster} onOpenChange={() => setCascadeDeleteCluster(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Cluster</DialogTitle>
+              <DialogDescription>
+                {cascadeDeleteError}
+                This cluster has active database connections. Would you like to delete the cluster and all associated connections?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCascadeDeleteCluster(null)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleCascadeDelete}>
+                Yes, delete everything
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

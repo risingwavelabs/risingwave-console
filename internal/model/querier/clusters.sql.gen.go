@@ -51,23 +51,28 @@ func (q *Queries) CreateCluster(ctx context.Context, arg CreateClusterParams) (*
 	return &i, err
 }
 
-const deleteCluster = `-- name: DeleteCluster :exec
+const deleteOrgCluster = `-- name: DeleteOrgCluster :exec
 DELETE FROM clusters
-WHERE id = $1
+WHERE id = $1 AND organization_id = $2
 `
 
-func (q *Queries) DeleteCluster(ctx context.Context, id int32) error {
-	_, err := q.db.Exec(ctx, deleteCluster, id)
+type DeleteOrgClusterParams struct {
+	ID             int32
+	OrganizationID int32
+}
+
+func (q *Queries) DeleteOrgCluster(ctx context.Context, arg DeleteOrgClusterParams) error {
+	_, err := q.db.Exec(ctx, deleteOrgCluster, arg.ID, arg.OrganizationID)
 	return err
 }
 
-const getCluster = `-- name: GetCluster :one
+const getClusterByID = `-- name: GetClusterByID :one
 SELECT id, organization_id, name, host, sql_port, meta_port, created_at, updated_at FROM clusters
 WHERE id = $1
 `
 
-func (q *Queries) GetCluster(ctx context.Context, id int32) (*Cluster, error) {
-	row := q.db.QueryRow(ctx, getCluster, id)
+func (q *Queries) GetClusterByID(ctx context.Context, id int32) (*Cluster, error) {
+	row := q.db.QueryRow(ctx, getClusterByID, id)
 	var i Cluster
 	err := row.Scan(
 		&i.ID,
@@ -82,14 +87,40 @@ func (q *Queries) GetCluster(ctx context.Context, id int32) (*Cluster, error) {
 	return &i, err
 }
 
-const listClusters = `-- name: ListClusters :many
+const getOrgCluster = `-- name: GetOrgCluster :one
+SELECT id, organization_id, name, host, sql_port, meta_port, created_at, updated_at FROM clusters
+WHERE id = $1 AND organization_id = $2
+`
+
+type GetOrgClusterParams struct {
+	ID             int32
+	OrganizationID int32
+}
+
+func (q *Queries) GetOrgCluster(ctx context.Context, arg GetOrgClusterParams) (*Cluster, error) {
+	row := q.db.QueryRow(ctx, getOrgCluster, arg.ID, arg.OrganizationID)
+	var i Cluster
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.Name,
+		&i.Host,
+		&i.SqlPort,
+		&i.MetaPort,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const listOrgClusters = `-- name: ListOrgClusters :many
 SELECT id, organization_id, name, host, sql_port, meta_port, created_at, updated_at FROM clusters
 WHERE organization_id = $1
 ORDER BY name
 `
 
-func (q *Queries) ListClusters(ctx context.Context, organizationID int32) ([]*Cluster, error) {
-	rows, err := q.db.Query(ctx, listClusters, organizationID)
+func (q *Queries) ListOrgClusters(ctx context.Context, organizationID int32) ([]*Cluster, error) {
+	rows, err := q.db.Query(ctx, listOrgClusters, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -117,29 +148,31 @@ func (q *Queries) ListClusters(ctx context.Context, organizationID int32) ([]*Cl
 	return items, nil
 }
 
-const updateCluster = `-- name: UpdateCluster :one
+const updateOrgCluster = `-- name: UpdateOrgCluster :one
 UPDATE clusters
 SET
-    name = $2,
-    host = $3,
-    sql_port = $4,
-    meta_port = $5,
+    name = $3,
+    host = $4,
+    sql_port = $5,
+    meta_port = $6,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
+WHERE id = $1 AND organization_id = $2
 RETURNING id, organization_id, name, host, sql_port, meta_port, created_at, updated_at
 `
 
-type UpdateClusterParams struct {
-	ID       int32
-	Name     string
-	Host     string
-	SqlPort  int32
-	MetaPort int32
+type UpdateOrgClusterParams struct {
+	ID             int32
+	OrganizationID int32
+	Name           string
+	Host           string
+	SqlPort        int32
+	MetaPort       int32
 }
 
-func (q *Queries) UpdateCluster(ctx context.Context, arg UpdateClusterParams) (*Cluster, error) {
-	row := q.db.QueryRow(ctx, updateCluster,
+func (q *Queries) UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterParams) (*Cluster, error) {
+	row := q.db.QueryRow(ctx, updateOrgCluster,
 		arg.ID,
+		arg.OrganizationID,
 		arg.Name,
 		arg.Host,
 		arg.SqlPort,

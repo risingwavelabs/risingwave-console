@@ -7,6 +7,7 @@ import { ExecutionHistory } from "./execution-history";
 import { QueryResult } from "./query-result";
 
 interface DatabaseInsightProps {
+  width?: string;
   height?: string;
   databaseSchema?: RisingWaveNodeData[];
   result?: { type: 'success' | 'error', message: string, rows?: any[] };
@@ -25,6 +26,7 @@ interface DatabaseInsightProps {
 }
 
 export function DatabaseInsight({
+  width,
   height = '30vh',
   databaseSchema = [],
   result,
@@ -36,7 +38,7 @@ export function DatabaseInsight({
   isQueryLoading = false
 }: DatabaseInsightProps) {
   return (
-    <div className="flex flex-col h-full overflow-hidden" style={{ height }}>
+    <div className="flex flex-col h-full overflow-hidden" style={{ height, width }}>
       <div className="border-b flex">
         <button
           onClick={() => onTabChange('result')}

@@ -260,17 +260,22 @@ export class DefaultService {
      * Delete cluster
      * Delete a specific cluster
      * @param id
+     * @param cascade
      * @returns void
      * @throws ApiError
      */
     public static deleteCluster(
         id: string,
+        cascade?: boolean,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
             url: '/clusters/{ID}',
             path: {
                 'ID': id,
+            },
+            query: {
+                'cascade': cascade,
             },
         });
     }

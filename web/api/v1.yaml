@@ -277,6 +277,12 @@ paths:
       operationId: deleteCluster
       security:
         - BearerAuth: []
+      parameters:
+        - name: cascade
+          in: query
+          required: false
+          schema:
+            type: boolean
       responses:
         '204':
           description: Cluster deleted successfully

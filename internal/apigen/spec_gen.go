@@ -294,6 +294,11 @@ type UpdateClusterRequest struct {
 	SqlPort  int32  `json:"sqlPort"`
 }
 
+// DeleteClusterParams defines parameters for DeleteCluster.
+type DeleteClusterParams struct {
+	Cascade *bool `form:"cascade,omitempty" json:"cascade,omitempty"`
+}
+
 // ListClusterDiagnosticsParams defines parameters for ListClusterDiagnostics.
 type ListClusterDiagnosticsParams struct {
 	// From Start date for filtering diagnostic data
@@ -434,7 +439,7 @@ type ClientInterface interface {
 	CreateCluster(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteCluster request
-	DeleteCluster(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteCluster(ctx context.Context, iD string, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetCluster request
 	GetCluster(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -597,8 +602,8 @@ func (c *Client) CreateCluster(ctx context.Context, body CreateClusterJSONReques
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteCluster(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteClusterRequest(c.Server, iD)
+func (c *Client) DeleteCluster(ctx context.Context, iD string, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteClusterRequest(c.Server, iD, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1093,7 +1098,7 @@ func NewCreateClusterRequestWithBody(server string, contentType string, body io.
 }
 
 // NewDeleteClusterRequest generates requests for DeleteCluster
-func NewDeleteClusterRequest(server string, iD string) (*http.Request, error) {
+func NewDeleteClusterRequest(server string, iD string, params *DeleteClusterParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1116,6 +1121,28 @@ func NewDeleteClusterRequest(server string, iD string) (*http.Request, error) {
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Cascade != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "cascade", runtime.ParamLocationQuery, *params.Cascade); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
@@ -2042,7 +2069,7 @@ type ClientWithResponsesInterface interface {
 	CreateClusterWithResponse(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterResponse, error)
 
 	// DeleteClusterWithResponse request
-	DeleteClusterWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error)
+	DeleteClusterWithResponse(ctx context.Context, iD string, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error)
 
 	// GetClusterWithResponse request
 	GetClusterWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterResponse, error)
@@ -2738,8 +2765,8 @@ func (c *ClientWithResponses) CreateClusterWithResponse(ctx context.Context, bod
 }
 
 // DeleteClusterWithResponse request returning *DeleteClusterResponse
-func (c *ClientWithResponses) DeleteClusterWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error) {
-	rsp, err := c.DeleteCluster(ctx, iD, reqEditors...)
+func (c *ClientWithResponses) DeleteClusterWithResponse(ctx context.Context, iD string, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error) {
+	rsp, err := c.DeleteCluster(ctx, iD, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -3617,7 +3644,7 @@ type ServerInterface interface {
 	CreateCluster(c *fiber.Ctx) error
 	// Delete cluster
 	// (DELETE /clusters/{ID})
-	DeleteCluster(c *fiber.Ctx, iD string) error
+	DeleteCluster(c *fiber.Ctx, iD string, params DeleteClusterParams) error
 	// Get cluster details
 	// (GET /clusters/{ID})
 	GetCluster(c *fiber.Ctx, iD string) error
@@ -3730,7 +3757,23 @@ func (siw *ServerInterfaceWrapper) DeleteCluster(c *fiber.Ctx) error {
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.DeleteCluster(c, iD)
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteClusterParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "cascade" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "cascade", query, &params.Cascade)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter cascade: %w", err).Error())
+	}
+
+	return siw.Handler.DeleteCluster(c, iD, params)
 }
 
 // GetCluster operation middleware
