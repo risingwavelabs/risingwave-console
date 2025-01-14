@@ -240,7 +240,7 @@ export default function SQLConsole() {
     }
   }, [setSelectedDatabase, databases])
 
-  const handleRunQuery = useCallback(async (query: string) => {
+  const handleRunQuery = useCallback(async (query: string, backgroundDDL: boolean = false) => {
     if (!selectedDatabaseId) {
       return {
         type: 'error' as const,
@@ -251,6 +251,7 @@ export default function SQLConsole() {
     try {
       const result = await DefaultService.queryDatabase(Number(selectedDatabaseId), {
         query,
+        backgroundDDL,
       })
       if (result.error) {
         return {

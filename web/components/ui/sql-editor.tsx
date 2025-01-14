@@ -4,11 +4,18 @@ import { useState, useCallback, useEffect, useRef, forwardRef, useImperativeHand
 import Editor, { useMonaco, OnMount } from '@monaco-editor/react'
 import type { languages } from 'monaco-editor'
 import { Button } from "@/components/ui/button"
-import { Play, X, Plus } from 'lucide-react'
+import { Play, X, Plus, HelpCircle } from 'lucide-react'
 import { GenerateQuery } from "@/components/ui/generate-query"
 import { DatabaseInsight } from "@/components/ui/database-insight"
 import { RisingWaveNodeData } from "@/components/streaming-graph"
 import { useTheme } from 'next-themes'
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 // Move these to a separate constants file if needed
 const SQL_COMPLETIONS = {
@@ -25,7 +32,7 @@ interface EditorTab {
 
 interface SQLEditorProps {
   width: number
-  onRunQuery?: (query: string) => Promise<{ type: 'success' | 'error', message: string, rows?: Record<string, string>[], columns?: string[] }>
+  onRunQuery?: (query: string, backgroundDdl: boolean) => Promise<{ type: 'success' | 'error', message: string, rows?: Record<string, string>[], columns?: string[] }>
   databaseSchema?: RisingWaveNodeData[]
   selectedDatabaseId?: string | null
   onCancelProgress?: (ddlId: string) => void
@@ -121,6 +128,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, o
   }>>([])
   const [activeResultTab, setActiveResultTab] = useState<'result' | 'graph' | 'progress' | 'history'>('result')
   const [isQueryLoading, setIsQueryLoading] = useState(false)
+  const [isBackgroundDDL, setIsBackgroundDDL] = useState(false)
 
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
@@ -399,7 +407,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, o
       setIsQueryLoading(true)
       setActiveResultTab('result')
       const startTime = performance.now();
-      const result = await onRunQuery?.(query)
+      const result = await onRunQuery?.(query, isBackgroundDDL)
       const endTime = performance.now();
       const latencyMs = Math.round(endTime - startTime);
 
@@ -520,6 +528,29 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, o
           <Play className="w-4 h-4 mr-1" />
           Run
         </Button>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="background-ddl"
+            checked={isBackgroundDDL}
+            onCheckedChange={(checked) => setIsBackgroundDDL(checked as boolean)}
+          />
+          <label
+            htmlFor="background-ddl"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            Background DDL
+          </label>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-4 w-4 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Execute DDL statements in the background without blocking</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
 
       <div className="border-b bg-muted/30 px-2 flex-shrink-0">

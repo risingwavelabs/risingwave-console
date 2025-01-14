@@ -182,6 +182,9 @@ type DiagnosticData struct {
 
 // QueryRequest defines model for QueryRequest.
 type QueryRequest struct {
+	// BackgroundDDL Whether to execute the query in background DDL mode
+	BackgroundDDL *bool `json:"backgroundDDL,omitempty"`
+
 	// Query SQL query to execute
 	Query string `json:"query"`
 }
@@ -195,7 +198,7 @@ type QueryResponse struct {
 	Rows  []map[string]interface{} `json:"rows"`
 
 	// RowsAffected Number of rows affected by the query
-	RowsAffected int64 `json:"rowsAffected"`
+	RowsAffected int32 `json:"rowsAffected"`
 }
 
 // RefreshTokenRequest defines model for RefreshTokenRequest.

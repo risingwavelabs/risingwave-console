@@ -7,5 +7,9 @@ export type QueryRequest = {
      * SQL query to execute
      */
     query: string;
+    /**
+     * Whether to execute the query in background DDL mode
+     */
+    backgroundDDL?: boolean;
 };
 

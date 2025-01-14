@@ -316,7 +316,7 @@ func (controller *Controller) QueryDatabase(c *fiber.Ctx, id int32) error {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	result, err := controller.svc.QueryDatabase(c.Context(), id, params, user.OrganizationID)
+	result, err := controller.svc.QueryDatabase(c.Context(), id, params, user.OrganizationID, utils.UnwrapOrDefault(params.BackgroundDDL, false))
 	if err != nil {
 		if errors.Is(err, service.ErrDatabaseNotFound) {
 			return c.Status(fiber.StatusNotFound).SendString(fmt.Sprintf("database %d not found", id))

@@ -82,7 +82,7 @@ type ServiceInterface interface {
 	TestDatabaseConnection(ctx context.Context, params apigen.TestConnectionPayload, orgID int32) (*apigen.TestConnectionResult, error)
 
 	// QueryDatabase executes a query on a database
-	QueryDatabase(ctx context.Context, id int32, params apigen.QueryRequest, orgID int32) (*apigen.QueryResponse, error)
+	QueryDatabase(ctx context.Context, id int32, params apigen.QueryRequest, orgID int32, backgroundDDL bool) (*apigen.QueryResponse, error)
 
 	// GetDDLProgress gets the progress of DDL operations
 	GetDDLProgress(ctx context.Context, id int32, orgID int32) ([]apigen.DDLProgress, error)
@@ -427,7 +427,7 @@ JOIN rw_schemas   ON rw_schemas.id = rw_relations.schema_id
 
 const getRwDependSQL = `SELECT * FROM rw_depend`
 
-func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apigen.Database, error) {
+func (s *Service) getDb(ctx context.Context, id int32, orgID int32) (*querier.DatabaseConnection, error) {
 	db, err := s.m.GetOrgDatabaseByID(ctx, querier.GetOrgDatabaseByIDParams{
 		ID:             id,
 		OrganizationID: orgID,
@@ -438,13 +438,21 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 		}
 		return nil, errors.Wrapf(err, "failed to get database")
 	}
+	return db, nil
+}
+
+func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apigen.Database, error) {
+	db, err := s.getDb(ctx, id, orgID)
+	if err != nil {
+		return nil, err
+	}
 
 	connStr, err := s.getConnStr(ctx, db)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get connection string")
 	}
 
-	result, err := sql.Query(ctx, connStr, getRelationsSQL)
+	result, err := sql.Query(ctx, connStr, getRelationsSQL, false)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query database")
 	}
@@ -452,7 +460,7 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 	data := make(map[string]map[string]apigen.Relation)
 
 	idToDepends := make(map[int32][]int32)
-	depend, err := sql.Query(ctx, connStr, getRwDependSQL)
+	depend, err := sql.Query(ctx, connStr, getRwDependSQL, false)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query database")
 	}
@@ -598,7 +606,7 @@ func (s *Service) TestDatabaseConnection(ctx context.Context, params apigen.Test
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", params.Username, utils.UnwrapOrDefault(params.Password, ""), cluster.Host, cluster.SqlPort, params.Database)
 
-	_, err = sql.Query(ctx, connStr, "SELECT 1")
+	_, err = sql.Query(ctx, connStr, "SELECT 1", false)
 	if err != nil {
 		return &apigen.TestConnectionResult{
 			Success: false,
@@ -612,7 +620,7 @@ func (s *Service) TestDatabaseConnection(ctx context.Context, params apigen.Test
 	}, nil
 }
 
-func (s *Service) QueryDatabase(ctx context.Context, id int32, params apigen.QueryRequest, orgID int32) (*apigen.QueryResponse, error) {
+func (s *Service) QueryDatabase(ctx context.Context, id int32, params apigen.QueryRequest, orgID int32, backgroundDDL bool) (*apigen.QueryResponse, error) {
 	db, err := s.m.GetOrgDatabaseByID(ctx, querier.GetOrgDatabaseByIDParams{
 		ID:             id,
 		OrganizationID: orgID,
@@ -634,7 +642,7 @@ func (s *Service) QueryDatabase(ctx context.Context, id int32, params apigen.Que
 		return nil, errors.Wrapf(err, "failed to get database connection")
 	}
 
-	result, err := conn.Query(ctx, params.Query)
+	result, err := conn.Query(ctx, params.Query, backgroundDDL)
 	if err != nil {
 		if errors.Is(err, sql.ErrQueryFailed) {
 			return &apigen.QueryResponse{
@@ -658,22 +666,29 @@ func (s *Service) QueryDatabase(ctx context.Context, id int32, params apigen.Que
 	}, nil
 }
 
+const getDDLProgressSQL = `SELECT * FROM rw_ddl_progress ORDER BY initialized_at DESC`
+
 func (s *Service) GetDDLProgress(ctx context.Context, id int32, orgID int32) ([]apigen.DDLProgress, error) {
-	// TODO: Implement actual DDL progress tracking
-	return []apigen.DDLProgress{
-		{
-			ID:            1,
-			Statement:     "CREATE MATERIALIZED VIEW ...",
-			Progress:      "50%",
-			InitializedAt: s.now().Round(time.Hour),
-		},
-		{
-			ID:            2,
-			Statement:     "CREATE MATERIALIZED VIEW ...",
-			Progress:      "100%",
-			InitializedAt: s.now().Round(time.Hour),
-		},
-	}, nil
+	conn, err := s.sqlm.GetConn(ctx, id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get database connection")
+	}
+
+	result, err := conn.Query(ctx, getDDLProgressSQL, false)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get DDL progress")
+	}
+
+	progress := []apigen.DDLProgress{}
+	for _, row := range result.Rows {
+		progress = append(progress, apigen.DDLProgress{
+			ID:            row["ddl_id"].(int64),
+			Statement:     row["ddl_statement"].(string),
+			Progress:      row["progress"].(string),
+			InitializedAt: row["initialized_at"].(time.Time),
+		})
+	}
+	return progress, nil
 }
 
 func (s *Service) CancelDDLProgress(ctx context.Context, id int32, ddlID string, orgID int32) error {

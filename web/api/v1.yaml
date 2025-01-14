@@ -939,6 +939,10 @@ components:
         query:
           type: string
           description: SQL query to execute
+        backgroundDDL:
+          type: boolean
+          description: Whether to execute the query in background DDL mode
+          default: false
 
     QueryResponse:
       type: object
@@ -958,7 +962,7 @@ components:
             description: Row of the query result, the key is the column name and the value is the column value
         rowsAffected:
           type: integer
-          format: int64
+          format: int32
           description: Number of rows affected by the query
         error:
           type: string

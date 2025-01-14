@@ -22,23 +22,30 @@ type Result struct {
 }
 
 type SQLConnectionInterface interface {
-	Query(context.Context, string) (*Result, error)
+	Query(context.Context, string, bool) (*Result, error)
 }
 
 type SimpleSQLConnection struct {
 	connStr string
 }
 
-func (s *SimpleSQLConnection) Query(ctx context.Context, query string) (*Result, error) {
-	return Query(ctx, s.connStr, query)
+func (s *SimpleSQLConnection) Query(ctx context.Context, query string, backgroundDDL bool) (*Result, error) {
+	return Query(ctx, s.connStr, query, backgroundDDL)
 }
 
-func Query(ctx context.Context, connStr string, query string) (*Result, error) {
+func Query(ctx context.Context, connStr string, query string, backgroundDDL bool) (*Result, error) {
 	conn, err := pgx.Connect(ctx, connStr)
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close(ctx)
+
+	if backgroundDDL {
+		_, err := conn.Exec(ctx, "SET BACKGROUND_DDL = true")
+		if err != nil {
+			return nil, errors.Wrap(ErrQueryFailed, err.Error())
+		}
+	}
 
 	rows, err := conn.Query(ctx, query)
 	if err != nil {
