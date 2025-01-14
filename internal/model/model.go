@@ -7,10 +7,11 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
+	"github.com/risingwavelabs/wavekit"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/logger"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
@@ -103,13 +104,18 @@ func NewModel(cfg *config.Config) (ModelInterface, error) {
 		time.Sleep(3 * time.Second)
 	}
 
-	m, err := migrate.New(fmt.Sprintf("file://%s", cfg.Pg.Migration), fmt.Sprintf("pgx5://%s", url))
+	d, err := iofs.New(wavekit.Migrations, "sql/migrations")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to init migrate: %s", cfg.Pg.Migration)
+		return nil, errors.Wrap(err, "failed to create migration source driver")
+	}
+
+	m, err := migrate.NewWithSourceInstance("iofs", d, fmt.Sprintf("pgx5://%s", url))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to init migrate")
 	}
 	if err := m.Up(); err != nil {
 		if !errors.Is(err, migrate.ErrNoChange) {
-			return nil, errors.Wrapf(err, "failed to migrate up: %s", cfg.Pg.Migration)
+			return nil, errors.Wrap(err, "failed to migrate up")
 		}
 	}
 

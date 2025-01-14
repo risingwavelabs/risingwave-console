@@ -1,39 +1,59 @@
 # Go-starter 
 
-## Quick start
+## Get Started
 
-```
+### Quick start with Docker (for testing)
+
+The wavekit server requires a PostgreSQL database to store the data. The pgbundle version of the wavekit server is a docker image that bundles the PostgreSQL database and the wavekit server. Note that this is NOT recommended for production, as it does not support multiple nodes.
+
+```shell
 docker run -p 8020:8020 cloudcarver/wavekit:v0.1.0-pgbundle
 ```
 
-## Development flow
-
-1. Generate code
+To persist data, you can use a volume:
 
 ```shell
-make gen
+docker run -p 8020:8020 -v wavekit-data:/var/lib/postgresql cloudcarver/wavekit:v0.1.0-pgbundle
 ```
 
-2. Start development environment
+#### Networking issue with docker setup
+
+Since the wavekit server is running in a docker container, you need to make sure your RisingWave clusters can be accessed inside that wavekit server container.
+
+##### Option 1: Use bridge network
 
 ```shell
-make dev
+docker network create wavekit-network
+docker run -d --name risingwave --net=test risingwavelabs/risingwave:v2.1.0
+docker run -d --name wavekit-server --network wavekit-network -p 8020:8020 cloudcarver/wavekit:v0.1.0-pgbundle
 ```
 
-3. Reload code 
+With this setup, you can access the RisingWave cluster with the hostname `risingwave`.
+
+##### Option 2: Use the host network (Recommended)
 
 ```shell
-make reload
+docker run -d --name risingwave --net=host risingwavelabs/risingwave:v2.1.0
+docker run -d --name wavekit-server --net=host -p 8020:8020 cloudcarver/wavekit:v0.1.0-pgbundle
 ```
 
-4. Run unit tests
+With this setup, you can access the RisingWave cluster with the hostname `localhost`.
 
-```shell
-make ut
-```
+Note that WSL2 does not support the host network, so this option is not recommended for WSL2.
 
-5. Run end-to-end test
+### Docker compose
 
-```shell
-make test
-```
+TODO
+
+### Kubernetes deployment
+
+TODO
+
+
+### Binary
+
+TODO
+
+## Configuration
+
+

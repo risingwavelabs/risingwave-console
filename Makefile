@@ -105,10 +105,15 @@ build-server:
 
 build-docker:
 	docker build -f docker/Dockerfile.pgbundle -t cloudcarver/wavekit:v0.1.0-pgbundle .
+	docker build -f docker/Dockerfile -t cloudcarver/wavekit:v0.1.0 .
+
+docker-push:
+	docker push cloudcarver/wavekit:v0.1.0-pgbundle
+	docker push cloudcarver/wavekit:v0.1.0
 
 build: build-web build-server build-docker
 
-push:
+push: docker-push
 	docker push cloudcarver/wavekit:v0.1.0-pgbundle
 
 ut:

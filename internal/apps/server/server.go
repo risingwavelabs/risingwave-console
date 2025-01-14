@@ -3,13 +3,16 @@ package server
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/pkg/errors"
+	"github.com/risingwavelabs/wavekit"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
@@ -63,10 +66,12 @@ func (s *Server) registerMiddleware() {
 		EnableStackTrace: true,
 	}))
 
-	s.app.Static("/", "./web/out", fiber.Static{
-		Browse: true,
-		Index:  "index.html",
-	})
+	s.app.Use("/", filesystem.New(filesystem.Config{
+		Root:         http.FS(wavekit.StaticFiles),
+		PathPrefix:   "web/out",
+		NotFoundFile: "404.html",
+		Index:        "index.html",
+	}))
 
 	s.app.Use(cors.New(cors.Config{}))
 	s.app.Use(requestid.New())
