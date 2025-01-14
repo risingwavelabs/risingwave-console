@@ -4,7 +4,6 @@ import { Button } from './button';
 import Editor from '@monaco-editor/react';
 import { useTheme } from 'next-themes';
 import { DefaultService } from '@/api-gen';
-import { number } from 'yup';
 
 // Export the interface so it can be used by other components
 export interface ProgressItem {
