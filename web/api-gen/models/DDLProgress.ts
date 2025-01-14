@@ -12,6 +12,6 @@ export type DDLProgress = {
     /**
      * When the DDL operation was initialized
      */
-    initializedAt: string;
+    initializedAt?: string;
 };
 

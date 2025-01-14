@@ -272,7 +272,7 @@ func (controller *Controller) GetDDLProgress(c *fiber.Ctx, id int32) error {
 	return c.Status(fiber.StatusOK).JSON(progress)
 }
 
-func (controller *Controller) CancelDDLProgress(c *fiber.Ctx, id int32, ddlID string) error {
+func (controller *Controller) CancelDDLProgress(c *fiber.Ctx, id int32, ddlID int64) error {
 	user, err := auth.GetUser(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)

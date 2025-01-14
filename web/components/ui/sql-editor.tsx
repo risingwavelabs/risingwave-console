@@ -35,7 +35,7 @@ interface SQLEditorProps {
   onRunQuery?: (query: string, backgroundDdl: boolean) => Promise<{ type: 'success' | 'error', message: string, rows?: Record<string, string>[], columns?: string[] }>
   databaseSchema?: RisingWaveNodeData[]
   selectedDatabaseId?: string | null
-  onCancelProgress?: (ddlId: string) => void
+  onCancelProgress?: (ddlId: number) => void
 }
 
 // Sample AI-generated queries

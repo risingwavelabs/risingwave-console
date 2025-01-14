@@ -98,7 +98,7 @@ type DDLProgress struct {
 	ID int64 `json:"ID"`
 
 	// InitializedAt When the DDL operation was initialized
-	InitializedAt time.Time `json:"initializedAt"`
+	InitializedAt *time.Time `json:"initializedAt,omitempty"`
 
 	// Progress Progress of the materialized view creation
 	Progress  string `json:"progress"`
@@ -513,7 +513,7 @@ type ClientInterface interface {
 	GetDDLProgress(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CancelDDLProgress request
-	CancelDDLProgress(ctx context.Context, iD int32, ddlID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CancelDDLProgress(ctx context.Context, iD int32, ddlID int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// QueryDatabaseWithBody request with any body
 	QueryDatabaseWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -917,7 +917,7 @@ func (c *Client) GetDDLProgress(ctx context.Context, iD int32, reqEditors ...Req
 	return c.Client.Do(req)
 }
 
-func (c *Client) CancelDDLProgress(ctx context.Context, iD int32, ddlID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CancelDDLProgress(ctx context.Context, iD int32, ddlID int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCancelDDLProgressRequest(c.Server, iD, ddlID)
 	if err != nil {
 		return nil, err
@@ -1923,7 +1923,7 @@ func NewGetDDLProgressRequest(server string, iD int32) (*http.Request, error) {
 }
 
 // NewCancelDDLProgressRequest generates requests for CancelDDLProgress
-func NewCancelDDLProgressRequest(server string, iD int32, ddlID string) (*http.Request, error) {
+func NewCancelDDLProgressRequest(server string, iD int32, ddlID int64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2143,7 +2143,7 @@ type ClientWithResponsesInterface interface {
 	GetDDLProgressWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetDDLProgressResponse, error)
 
 	// CancelDDLProgressWithResponse request
-	CancelDDLProgressWithResponse(ctx context.Context, iD int32, ddlID string, reqEditors ...RequestEditorFn) (*CancelDDLProgressResponse, error)
+	CancelDDLProgressWithResponse(ctx context.Context, iD int32, ddlID int64, reqEditors ...RequestEditorFn) (*CancelDDLProgressResponse, error)
 
 	// QueryDatabaseWithBodyWithResponse request with any body
 	QueryDatabaseWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
@@ -2995,7 +2995,7 @@ func (c *ClientWithResponses) GetDDLProgressWithResponse(ctx context.Context, iD
 }
 
 // CancelDDLProgressWithResponse request returning *CancelDDLProgressResponse
-func (c *ClientWithResponses) CancelDDLProgressWithResponse(ctx context.Context, iD int32, ddlID string, reqEditors ...RequestEditorFn) (*CancelDDLProgressResponse, error) {
+func (c *ClientWithResponses) CancelDDLProgressWithResponse(ctx context.Context, iD int32, ddlID int64, reqEditors ...RequestEditorFn) (*CancelDDLProgressResponse, error) {
 	rsp, err := c.CancelDDLProgress(ctx, iD, ddlID, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -3704,7 +3704,7 @@ type ServerInterface interface {
 	GetDDLProgress(c *fiber.Ctx, iD int32) error
 
 	// (POST /databases/{ID}/ddl-progress/{ddlID}/cancel)
-	CancelDDLProgress(c *fiber.Ctx, iD int32, ddlID string) error
+	CancelDDLProgress(c *fiber.Ctx, iD int32, ddlID int64) error
 	// Query database
 	// (POST /databases/{ID}/query)
 	QueryDatabase(c *fiber.Ctx, iD int32) error
@@ -4140,7 +4140,7 @@ func (siw *ServerInterfaceWrapper) CancelDDLProgress(c *fiber.Ctx) error {
 	}
 
 	// ------------- Path parameter "ddlID" -------------
-	var ddlID string
+	var ddlID int64
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ddlID", c.Params("ddlID"), &ddlID, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {

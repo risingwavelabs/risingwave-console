@@ -12,7 +12,7 @@ interface DatabaseInsightProps {
   databaseSchema?: RisingWaveNodeData[];
   result?: { type: 'success' | 'error', message: string, rows?: Record<string, unknown>[] };
   selectedDatabaseId?: string | null;
-  onCancelProgress?: (ddlId: string) => void;
+  onCancelProgress?: (ddlId: number) => void;
   executionHistory?: Array<{
     query: string;
     timestamp: string;

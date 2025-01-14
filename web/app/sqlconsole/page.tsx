@@ -308,7 +308,7 @@ export default function SQLConsole() {
     setIsManagementOpen(false)
   }, [fetchData])
 
-  const handleCancelDDL = useCallback(async (ddlId: string) => {
+  const handleCancelDDL = useCallback(async (ddlId: number) => {
     if (!selectedDatabaseId) return
     try {
       await DefaultService.cancelDdlProgress(Number(selectedDatabaseId), ddlId)

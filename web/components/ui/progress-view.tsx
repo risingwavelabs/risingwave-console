@@ -11,21 +11,21 @@ export interface ProgressItem {
   name: string;
   status: 'running' | 'completed' | 'failed';
   progress: string;
-  startTime: number;
+  startTime?: number;
   sql: string;
-  ddlId: string;
+  ddlId: number;
 }
 
 export interface ProgressViewProps {
   databaseId?: string | null;
-  onCancel?: (ddlId: string) => void;
+  onCancel?: (ddlId: number) => void;
 }
 
 export function ProgressView({ databaseId, onCancel }: ProgressViewProps) {
   const [items, setItems] = useState<ProgressItem[]>([]);
-  const [cancelId, setCancelId] = useState<string | null>(null);
+  const [cancelId, setCancelId] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const { theme } = useTheme();
 
   // Fetch progress items
@@ -39,9 +39,9 @@ export function ProgressView({ databaseId, onCancel }: ProgressViewProps) {
           name: p.statement,
           status: parseProgress(p.progress) === 100 ? 'completed' : 'running',
           progress: p.progress,
-          startTime: Date.parse(p.initializedAt),
+          startTime: p.initializedAt ? Date.parse(p.initializedAt) : undefined,
           sql: p.statement,
-          ddlId: String(p.ID)
+          ddlId: p.ID
         })));
       } catch (error) {
         console.error('Error fetching DDL progress:', error);
@@ -67,7 +67,7 @@ export function ProgressView({ databaseId, onCancel }: ProgressViewProps) {
     }
   }, [items]);
 
-  const toggleExpand = (ddlId: string) => {
+  const toggleExpand = (ddlId: number) => {
     setExpandedItems(prev => {
       const newSet = new Set(prev);
       if (newSet.has(ddlId)) {
@@ -109,7 +109,8 @@ export function ProgressView({ databaseId, onCancel }: ProgressViewProps) {
     return 0
   };
 
-  const formatDuration = (startTime: number) => {
+  const formatDuration = (startTime: number | undefined) => {
+    if (!startTime) return 'unknown (probably still deleting...)'
     const duration = Math.floor((now - startTime) / 1000); // duration in seconds
     const hours = Math.floor(duration / 3600);
     const minutes = Math.floor((duration % 3600) / 60);
@@ -124,7 +125,7 @@ export function ProgressView({ databaseId, onCancel }: ProgressViewProps) {
     }
   };
 
-  const handleConfirmCancel = (ddlId: string) => {
+  const handleConfirmCancel = (ddlId: number) => {
     if (onCancel) {
       onCancel(ddlId)
     }

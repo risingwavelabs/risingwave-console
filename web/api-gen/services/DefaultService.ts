@@ -176,7 +176,7 @@ export class DefaultService {
      */
     public static cancelDdlProgress(
         id: number,
-        ddlId: string,
+        ddlId: number,
     ): CancelablePromise<any> {
         return __request(OpenAPI, {
             method: 'POST',
