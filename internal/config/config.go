@@ -33,6 +33,9 @@ type Config struct {
 	Pg  Pg  `yaml:"pg,omitempty"`
 
 	Root *Root `yaml:"root,omitempty"`
+
+	NoInternet bool   `yaml:"nointernet,omitempty"`
+	RisectlDir string `yaml:"risectldir,omitempty"`
 }
 
 func NewConfig() (*Config, error) {

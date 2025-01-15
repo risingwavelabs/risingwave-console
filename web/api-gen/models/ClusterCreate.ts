@@ -19,5 +19,9 @@ export type ClusterCreate = {
      * Metadata node port
      */
     metaPort: number;
+    /**
+     * Version of the cluster
+     */
+    version: string;
 };
 

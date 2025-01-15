@@ -46,6 +46,7 @@ type Cluster struct {
 	OrganizationID int32     `json:"organizationID"`
 	SqlPort        int32     `json:"sqlPort"`
 	UpdatedAt      time.Time `json:"updatedAt"`
+	Version        string    `json:"version"`
 }
 
 // ClusterCreate defines model for ClusterCreate.
@@ -61,6 +62,9 @@ type ClusterCreate struct {
 
 	// SqlPort SQL connection port
 	SqlPort int `json:"sqlPort"`
+
+	// Version Version of the cluster
+	Version string `json:"version"`
 }
 
 // Column defines model for Column.
@@ -244,8 +248,11 @@ type SignInRequest struct {
 
 // Snapshot defines model for Snapshot.
 type Snapshot struct {
+	// ClusterID ID of the cluster this snapshot belongs to
+	ClusterID int32 `json:"ClusterID"`
+
 	// ID Unique identifier of the snapshot
-	ID string `json:"ID"`
+	ID int64 `json:"ID"`
 
 	// CreatedAt Creation timestamp of the snapshot
 	CreatedAt time.Time `json:"createdAt"`
@@ -295,6 +302,7 @@ type UpdateClusterRequest struct {
 	MetaPort int32  `json:"metaPort"`
 	Name     string `json:"name"`
 	SqlPort  int32  `json:"sqlPort"`
+	Version  string `json:"version"`
 }
 
 // DeleteClusterParams defines parameters for DeleteCluster.
@@ -433,6 +441,9 @@ type ClientInterface interface {
 
 	SignIn(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListClusterVersions request
+	ListClusterVersions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListClusters request
 	ListClusters(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -442,48 +453,48 @@ type ClientInterface interface {
 	CreateCluster(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteCluster request
-	DeleteCluster(ctx context.Context, iD string, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteCluster(ctx context.Context, iD int32, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetCluster request
-	GetCluster(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetCluster(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateClusterWithBody request with any body
-	UpdateClusterWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateClusterWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateCluster(ctx context.Context, iD string, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateCluster(ctx context.Context, iD int32, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListClusterDiagnostics request
-	ListClusterDiagnostics(ctx context.Context, iD string, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListClusterDiagnostics(ctx context.Context, iD int32, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetClusterDiagnosticConfig request
-	GetClusterDiagnosticConfig(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetClusterDiagnosticConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateClusterDiagnosticConfigWithBody request with any body
-	UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateClusterDiagnosticConfig(ctx context.Context, iD string, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateClusterDiagnosticConfig(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetClusterSnapshotConfig request
-	GetClusterSnapshotConfig(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetClusterSnapshotConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateClusterSnapshotConfigWithBody request with any body
-	UpdateClusterSnapshotConfigWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateClusterSnapshotConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateClusterSnapshotConfig(ctx context.Context, iD string, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateClusterSnapshotConfig(ctx context.Context, iD int32, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListClusterSnapshots request
-	ListClusterSnapshots(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListClusterSnapshots(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateClusterSnapshotWithBody request with any body
-	CreateClusterSnapshotWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateClusterSnapshotWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateClusterSnapshot(ctx context.Context, iD string, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateClusterSnapshot(ctx context.Context, iD int32, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteClusterSnapshot request
-	DeleteClusterSnapshot(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteClusterSnapshot(ctx context.Context, iD int32, snapshotId int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// RestoreClusterSnapshot request
-	RestoreClusterSnapshot(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	RestoreClusterSnapshot(ctx context.Context, iD int32, snapshotId int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListDatabases request
 	ListDatabases(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -569,6 +580,18 @@ func (c *Client) SignIn(ctx context.Context, body SignInJSONRequestBody, reqEdit
 	return c.Client.Do(req)
 }
 
+func (c *Client) ListClusterVersions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListClusterVersionsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListClusters(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListClustersRequest(c.Server)
 	if err != nil {
@@ -605,7 +628,7 @@ func (c *Client) CreateCluster(ctx context.Context, body CreateClusterJSONReques
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteCluster(ctx context.Context, iD string, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) DeleteCluster(ctx context.Context, iD int32, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteClusterRequest(c.Server, iD, params)
 	if err != nil {
 		return nil, err
@@ -617,7 +640,7 @@ func (c *Client) DeleteCluster(ctx context.Context, iD string, params *DeleteClu
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetCluster(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetCluster(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetClusterRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
@@ -629,7 +652,7 @@ func (c *Client) GetCluster(ctx context.Context, iD string, reqEditors ...Reques
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateClusterWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateClusterWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateClusterRequestWithBody(c.Server, iD, contentType, body)
 	if err != nil {
 		return nil, err
@@ -641,7 +664,7 @@ func (c *Client) UpdateClusterWithBody(ctx context.Context, iD string, contentTy
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateCluster(ctx context.Context, iD string, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateCluster(ctx context.Context, iD int32, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateClusterRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
@@ -653,7 +676,7 @@ func (c *Client) UpdateCluster(ctx context.Context, iD string, body UpdateCluste
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListClusterDiagnostics(ctx context.Context, iD string, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) ListClusterDiagnostics(ctx context.Context, iD int32, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListClusterDiagnosticsRequest(c.Server, iD, params)
 	if err != nil {
 		return nil, err
@@ -665,7 +688,7 @@ func (c *Client) ListClusterDiagnostics(ctx context.Context, iD string, params *
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetClusterDiagnosticConfig(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetClusterDiagnosticConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetClusterDiagnosticConfigRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
@@ -677,7 +700,7 @@ func (c *Client) GetClusterDiagnosticConfig(ctx context.Context, iD string, reqE
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateClusterDiagnosticConfigRequestWithBody(c.Server, iD, contentType, body)
 	if err != nil {
 		return nil, err
@@ -689,7 +712,7 @@ func (c *Client) UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD s
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateClusterDiagnosticConfig(ctx context.Context, iD string, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateClusterDiagnosticConfig(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateClusterDiagnosticConfigRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
@@ -701,7 +724,7 @@ func (c *Client) UpdateClusterDiagnosticConfig(ctx context.Context, iD string, b
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetClusterSnapshotConfig(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetClusterSnapshotConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetClusterSnapshotConfigRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
@@ -713,7 +736,7 @@ func (c *Client) GetClusterSnapshotConfig(ctx context.Context, iD string, reqEdi
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateClusterSnapshotConfigWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateClusterSnapshotConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateClusterSnapshotConfigRequestWithBody(c.Server, iD, contentType, body)
 	if err != nil {
 		return nil, err
@@ -725,7 +748,7 @@ func (c *Client) UpdateClusterSnapshotConfigWithBody(ctx context.Context, iD str
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateClusterSnapshotConfig(ctx context.Context, iD string, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) UpdateClusterSnapshotConfig(ctx context.Context, iD int32, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateClusterSnapshotConfigRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
@@ -737,7 +760,7 @@ func (c *Client) UpdateClusterSnapshotConfig(ctx context.Context, iD string, bod
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListClusterSnapshots(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) ListClusterSnapshots(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListClusterSnapshotsRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
@@ -749,7 +772,7 @@ func (c *Client) ListClusterSnapshots(ctx context.Context, iD string, reqEditors
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateClusterSnapshotWithBody(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CreateClusterSnapshotWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateClusterSnapshotRequestWithBody(c.Server, iD, contentType, body)
 	if err != nil {
 		return nil, err
@@ -761,7 +784,7 @@ func (c *Client) CreateClusterSnapshotWithBody(ctx context.Context, iD string, c
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateClusterSnapshot(ctx context.Context, iD string, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CreateClusterSnapshot(ctx context.Context, iD int32, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateClusterSnapshotRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
@@ -773,7 +796,7 @@ func (c *Client) CreateClusterSnapshot(ctx context.Context, iD string, body Crea
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteClusterSnapshot(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) DeleteClusterSnapshot(ctx context.Context, iD int32, snapshotId int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteClusterSnapshotRequest(c.Server, iD, snapshotId)
 	if err != nil {
 		return nil, err
@@ -785,7 +808,7 @@ func (c *Client) DeleteClusterSnapshot(ctx context.Context, iD string, snapshotI
 	return c.Client.Do(req)
 }
 
-func (c *Client) RestoreClusterSnapshot(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) RestoreClusterSnapshot(ctx context.Context, iD int32, snapshotId int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRestoreClusterSnapshotRequest(c.Server, iD, snapshotId)
 	if err != nil {
 		return nil, err
@@ -1033,6 +1056,33 @@ func NewSignInRequestWithBody(server string, contentType string, body io.Reader)
 	return req, nil
 }
 
+// NewListClusterVersionsRequest generates requests for ListClusterVersions
+func NewListClusterVersionsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cluster-versions")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListClustersRequest generates requests for ListClusters
 func NewListClustersRequest(server string) (*http.Request, error) {
 	var err error
@@ -1101,7 +1151,7 @@ func NewCreateClusterRequestWithBody(server string, contentType string, body io.
 }
 
 // NewDeleteClusterRequest generates requests for DeleteCluster
-func NewDeleteClusterRequest(server string, iD string, params *DeleteClusterParams) (*http.Request, error) {
+func NewDeleteClusterRequest(server string, iD int32, params *DeleteClusterParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1157,7 +1207,7 @@ func NewDeleteClusterRequest(server string, iD string, params *DeleteClusterPara
 }
 
 // NewGetClusterRequest generates requests for GetCluster
-func NewGetClusterRequest(server string, iD string) (*http.Request, error) {
+func NewGetClusterRequest(server string, iD int32) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1191,7 +1241,7 @@ func NewGetClusterRequest(server string, iD string) (*http.Request, error) {
 }
 
 // NewUpdateClusterRequest calls the generic UpdateCluster builder with application/json body
-func NewUpdateClusterRequest(server string, iD string, body UpdateClusterJSONRequestBody) (*http.Request, error) {
+func NewUpdateClusterRequest(server string, iD int32, body UpdateClusterJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -1202,7 +1252,7 @@ func NewUpdateClusterRequest(server string, iD string, body UpdateClusterJSONReq
 }
 
 // NewUpdateClusterRequestWithBody generates requests for UpdateCluster with any type of body
-func NewUpdateClusterRequestWithBody(server string, iD string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateClusterRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1238,7 +1288,7 @@ func NewUpdateClusterRequestWithBody(server string, iD string, contentType strin
 }
 
 // NewListClusterDiagnosticsRequest generates requests for ListClusterDiagnostics
-func NewListClusterDiagnosticsRequest(server string, iD string, params *ListClusterDiagnosticsParams) (*http.Request, error) {
+func NewListClusterDiagnosticsRequest(server string, iD int32, params *ListClusterDiagnosticsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1342,7 +1392,7 @@ func NewListClusterDiagnosticsRequest(server string, iD string, params *ListClus
 }
 
 // NewGetClusterDiagnosticConfigRequest generates requests for GetClusterDiagnosticConfig
-func NewGetClusterDiagnosticConfigRequest(server string, iD string) (*http.Request, error) {
+func NewGetClusterDiagnosticConfigRequest(server string, iD int32) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1376,7 +1426,7 @@ func NewGetClusterDiagnosticConfigRequest(server string, iD string) (*http.Reque
 }
 
 // NewUpdateClusterDiagnosticConfigRequest calls the generic UpdateClusterDiagnosticConfig builder with application/json body
-func NewUpdateClusterDiagnosticConfigRequest(server string, iD string, body UpdateClusterDiagnosticConfigJSONRequestBody) (*http.Request, error) {
+func NewUpdateClusterDiagnosticConfigRequest(server string, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -1387,7 +1437,7 @@ func NewUpdateClusterDiagnosticConfigRequest(server string, iD string, body Upda
 }
 
 // NewUpdateClusterDiagnosticConfigRequestWithBody generates requests for UpdateClusterDiagnosticConfig with any type of body
-func NewUpdateClusterDiagnosticConfigRequestWithBody(server string, iD string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateClusterDiagnosticConfigRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1423,7 +1473,7 @@ func NewUpdateClusterDiagnosticConfigRequestWithBody(server string, iD string, c
 }
 
 // NewGetClusterSnapshotConfigRequest generates requests for GetClusterSnapshotConfig
-func NewGetClusterSnapshotConfigRequest(server string, iD string) (*http.Request, error) {
+func NewGetClusterSnapshotConfigRequest(server string, iD int32) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1457,7 +1507,7 @@ func NewGetClusterSnapshotConfigRequest(server string, iD string) (*http.Request
 }
 
 // NewUpdateClusterSnapshotConfigRequest calls the generic UpdateClusterSnapshotConfig builder with application/json body
-func NewUpdateClusterSnapshotConfigRequest(server string, iD string, body UpdateClusterSnapshotConfigJSONRequestBody) (*http.Request, error) {
+func NewUpdateClusterSnapshotConfigRequest(server string, iD int32, body UpdateClusterSnapshotConfigJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -1468,7 +1518,7 @@ func NewUpdateClusterSnapshotConfigRequest(server string, iD string, body Update
 }
 
 // NewUpdateClusterSnapshotConfigRequestWithBody generates requests for UpdateClusterSnapshotConfig with any type of body
-func NewUpdateClusterSnapshotConfigRequestWithBody(server string, iD string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateClusterSnapshotConfigRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1504,7 +1554,7 @@ func NewUpdateClusterSnapshotConfigRequestWithBody(server string, iD string, con
 }
 
 // NewListClusterSnapshotsRequest generates requests for ListClusterSnapshots
-func NewListClusterSnapshotsRequest(server string, iD string) (*http.Request, error) {
+func NewListClusterSnapshotsRequest(server string, iD int32) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1538,7 +1588,7 @@ func NewListClusterSnapshotsRequest(server string, iD string) (*http.Request, er
 }
 
 // NewCreateClusterSnapshotRequest calls the generic CreateClusterSnapshot builder with application/json body
-func NewCreateClusterSnapshotRequest(server string, iD string, body CreateClusterSnapshotJSONRequestBody) (*http.Request, error) {
+func NewCreateClusterSnapshotRequest(server string, iD int32, body CreateClusterSnapshotJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -1549,7 +1599,7 @@ func NewCreateClusterSnapshotRequest(server string, iD string, body CreateCluste
 }
 
 // NewCreateClusterSnapshotRequestWithBody generates requests for CreateClusterSnapshot with any type of body
-func NewCreateClusterSnapshotRequestWithBody(server string, iD string, contentType string, body io.Reader) (*http.Request, error) {
+func NewCreateClusterSnapshotRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1585,7 +1635,7 @@ func NewCreateClusterSnapshotRequestWithBody(server string, iD string, contentTy
 }
 
 // NewDeleteClusterSnapshotRequest generates requests for DeleteClusterSnapshot
-func NewDeleteClusterSnapshotRequest(server string, iD string, snapshotId string) (*http.Request, error) {
+func NewDeleteClusterSnapshotRequest(server string, iD int32, snapshotId int64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1626,7 +1676,7 @@ func NewDeleteClusterSnapshotRequest(server string, iD string, snapshotId string
 }
 
 // NewRestoreClusterSnapshotRequest generates requests for RestoreClusterSnapshot
-func NewRestoreClusterSnapshotRequest(server string, iD string, snapshotId string) (*http.Request, error) {
+func NewRestoreClusterSnapshotRequest(server string, iD int32, snapshotId int64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2063,6 +2113,9 @@ type ClientWithResponsesInterface interface {
 
 	SignInWithResponse(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*SignInResponse, error)
 
+	// ListClusterVersionsWithResponse request
+	ListClusterVersionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListClusterVersionsResponse, error)
+
 	// ListClustersWithResponse request
 	ListClustersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListClustersResponse, error)
 
@@ -2072,48 +2125,48 @@ type ClientWithResponsesInterface interface {
 	CreateClusterWithResponse(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterResponse, error)
 
 	// DeleteClusterWithResponse request
-	DeleteClusterWithResponse(ctx context.Context, iD string, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error)
+	DeleteClusterWithResponse(ctx context.Context, iD int32, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error)
 
 	// GetClusterWithResponse request
-	GetClusterWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterResponse, error)
+	GetClusterWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterResponse, error)
 
 	// UpdateClusterWithBodyWithResponse request with any body
-	UpdateClusterWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error)
+	UpdateClusterWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error)
 
-	UpdateClusterWithResponse(ctx context.Context, iD string, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error)
+	UpdateClusterWithResponse(ctx context.Context, iD int32, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error)
 
 	// ListClusterDiagnosticsWithResponse request
-	ListClusterDiagnosticsWithResponse(ctx context.Context, iD string, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*ListClusterDiagnosticsResponse, error)
+	ListClusterDiagnosticsWithResponse(ctx context.Context, iD int32, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*ListClusterDiagnosticsResponse, error)
 
 	// GetClusterDiagnosticConfigWithResponse request
-	GetClusterDiagnosticConfigWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticConfigResponse, error)
+	GetClusterDiagnosticConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticConfigResponse, error)
 
 	// UpdateClusterDiagnosticConfigWithBodyWithResponse request with any body
-	UpdateClusterDiagnosticConfigWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
+	UpdateClusterDiagnosticConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
 
-	UpdateClusterDiagnosticConfigWithResponse(ctx context.Context, iD string, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
+	UpdateClusterDiagnosticConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
 
 	// GetClusterSnapshotConfigWithResponse request
-	GetClusterSnapshotConfigWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterSnapshotConfigResponse, error)
+	GetClusterSnapshotConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterSnapshotConfigResponse, error)
 
 	// UpdateClusterSnapshotConfigWithBodyWithResponse request with any body
-	UpdateClusterSnapshotConfigWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error)
+	UpdateClusterSnapshotConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error)
 
-	UpdateClusterSnapshotConfigWithResponse(ctx context.Context, iD string, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error)
+	UpdateClusterSnapshotConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error)
 
 	// ListClusterSnapshotsWithResponse request
-	ListClusterSnapshotsWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*ListClusterSnapshotsResponse, error)
+	ListClusterSnapshotsWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*ListClusterSnapshotsResponse, error)
 
 	// CreateClusterSnapshotWithBodyWithResponse request with any body
-	CreateClusterSnapshotWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error)
+	CreateClusterSnapshotWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error)
 
-	CreateClusterSnapshotWithResponse(ctx context.Context, iD string, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error)
+	CreateClusterSnapshotWithResponse(ctx context.Context, iD int32, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error)
 
 	// DeleteClusterSnapshotWithResponse request
-	DeleteClusterSnapshotWithResponse(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*DeleteClusterSnapshotResponse, error)
+	DeleteClusterSnapshotWithResponse(ctx context.Context, iD int32, snapshotId int64, reqEditors ...RequestEditorFn) (*DeleteClusterSnapshotResponse, error)
 
 	// RestoreClusterSnapshotWithResponse request
-	RestoreClusterSnapshotWithResponse(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*RestoreClusterSnapshotResponse, error)
+	RestoreClusterSnapshotWithResponse(ctx context.Context, iD int32, snapshotId int64, reqEditors ...RequestEditorFn) (*RestoreClusterSnapshotResponse, error)
 
 	// ListDatabasesWithResponse request
 	ListDatabasesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDatabasesResponse, error)
@@ -2189,6 +2242,28 @@ func (r SignInResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r SignInResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListClusterVersionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]string
+}
+
+// Status returns HTTPResponse.Status
+func (r ListClusterVersionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListClusterVersionsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2741,6 +2816,15 @@ func (c *ClientWithResponses) SignInWithResponse(ctx context.Context, body SignI
 	return ParseSignInResponse(rsp)
 }
 
+// ListClusterVersionsWithResponse request returning *ListClusterVersionsResponse
+func (c *ClientWithResponses) ListClusterVersionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListClusterVersionsResponse, error) {
+	rsp, err := c.ListClusterVersions(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListClusterVersionsResponse(rsp)
+}
+
 // ListClustersWithResponse request returning *ListClustersResponse
 func (c *ClientWithResponses) ListClustersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListClustersResponse, error) {
 	rsp, err := c.ListClusters(ctx, reqEditors...)
@@ -2768,7 +2852,7 @@ func (c *ClientWithResponses) CreateClusterWithResponse(ctx context.Context, bod
 }
 
 // DeleteClusterWithResponse request returning *DeleteClusterResponse
-func (c *ClientWithResponses) DeleteClusterWithResponse(ctx context.Context, iD string, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error) {
+func (c *ClientWithResponses) DeleteClusterWithResponse(ctx context.Context, iD int32, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error) {
 	rsp, err := c.DeleteCluster(ctx, iD, params, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2777,7 +2861,7 @@ func (c *ClientWithResponses) DeleteClusterWithResponse(ctx context.Context, iD 
 }
 
 // GetClusterWithResponse request returning *GetClusterResponse
-func (c *ClientWithResponses) GetClusterWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterResponse, error) {
+func (c *ClientWithResponses) GetClusterWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterResponse, error) {
 	rsp, err := c.GetCluster(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2786,7 +2870,7 @@ func (c *ClientWithResponses) GetClusterWithResponse(ctx context.Context, iD str
 }
 
 // UpdateClusterWithBodyWithResponse request with arbitrary body returning *UpdateClusterResponse
-func (c *ClientWithResponses) UpdateClusterWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error) {
+func (c *ClientWithResponses) UpdateClusterWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error) {
 	rsp, err := c.UpdateClusterWithBody(ctx, iD, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2794,7 +2878,7 @@ func (c *ClientWithResponses) UpdateClusterWithBodyWithResponse(ctx context.Cont
 	return ParseUpdateClusterResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateClusterWithResponse(ctx context.Context, iD string, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error) {
+func (c *ClientWithResponses) UpdateClusterWithResponse(ctx context.Context, iD int32, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error) {
 	rsp, err := c.UpdateCluster(ctx, iD, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2803,7 +2887,7 @@ func (c *ClientWithResponses) UpdateClusterWithResponse(ctx context.Context, iD 
 }
 
 // ListClusterDiagnosticsWithResponse request returning *ListClusterDiagnosticsResponse
-func (c *ClientWithResponses) ListClusterDiagnosticsWithResponse(ctx context.Context, iD string, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*ListClusterDiagnosticsResponse, error) {
+func (c *ClientWithResponses) ListClusterDiagnosticsWithResponse(ctx context.Context, iD int32, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*ListClusterDiagnosticsResponse, error) {
 	rsp, err := c.ListClusterDiagnostics(ctx, iD, params, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2812,7 +2896,7 @@ func (c *ClientWithResponses) ListClusterDiagnosticsWithResponse(ctx context.Con
 }
 
 // GetClusterDiagnosticConfigWithResponse request returning *GetClusterDiagnosticConfigResponse
-func (c *ClientWithResponses) GetClusterDiagnosticConfigWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticConfigResponse, error) {
+func (c *ClientWithResponses) GetClusterDiagnosticConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticConfigResponse, error) {
 	rsp, err := c.GetClusterDiagnosticConfig(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2821,7 +2905,7 @@ func (c *ClientWithResponses) GetClusterDiagnosticConfigWithResponse(ctx context
 }
 
 // UpdateClusterDiagnosticConfigWithBodyWithResponse request with arbitrary body returning *UpdateClusterDiagnosticConfigResponse
-func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error) {
+func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error) {
 	rsp, err := c.UpdateClusterDiagnosticConfigWithBody(ctx, iD, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2829,7 +2913,7 @@ func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithBodyWithResponse(
 	return ParseUpdateClusterDiagnosticConfigResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithResponse(ctx context.Context, iD string, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error) {
+func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error) {
 	rsp, err := c.UpdateClusterDiagnosticConfig(ctx, iD, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2838,7 +2922,7 @@ func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithResponse(ctx cont
 }
 
 // GetClusterSnapshotConfigWithResponse request returning *GetClusterSnapshotConfigResponse
-func (c *ClientWithResponses) GetClusterSnapshotConfigWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*GetClusterSnapshotConfigResponse, error) {
+func (c *ClientWithResponses) GetClusterSnapshotConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterSnapshotConfigResponse, error) {
 	rsp, err := c.GetClusterSnapshotConfig(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2847,7 +2931,7 @@ func (c *ClientWithResponses) GetClusterSnapshotConfigWithResponse(ctx context.C
 }
 
 // UpdateClusterSnapshotConfigWithBodyWithResponse request with arbitrary body returning *UpdateClusterSnapshotConfigResponse
-func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error) {
+func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error) {
 	rsp, err := c.UpdateClusterSnapshotConfigWithBody(ctx, iD, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2855,7 +2939,7 @@ func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithBodyWithResponse(ct
 	return ParseUpdateClusterSnapshotConfigResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithResponse(ctx context.Context, iD string, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error) {
+func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error) {
 	rsp, err := c.UpdateClusterSnapshotConfig(ctx, iD, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2864,7 +2948,7 @@ func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithResponse(ctx contex
 }
 
 // ListClusterSnapshotsWithResponse request returning *ListClusterSnapshotsResponse
-func (c *ClientWithResponses) ListClusterSnapshotsWithResponse(ctx context.Context, iD string, reqEditors ...RequestEditorFn) (*ListClusterSnapshotsResponse, error) {
+func (c *ClientWithResponses) ListClusterSnapshotsWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*ListClusterSnapshotsResponse, error) {
 	rsp, err := c.ListClusterSnapshots(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2873,7 +2957,7 @@ func (c *ClientWithResponses) ListClusterSnapshotsWithResponse(ctx context.Conte
 }
 
 // CreateClusterSnapshotWithBodyWithResponse request with arbitrary body returning *CreateClusterSnapshotResponse
-func (c *ClientWithResponses) CreateClusterSnapshotWithBodyWithResponse(ctx context.Context, iD string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error) {
+func (c *ClientWithResponses) CreateClusterSnapshotWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error) {
 	rsp, err := c.CreateClusterSnapshotWithBody(ctx, iD, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2881,7 +2965,7 @@ func (c *ClientWithResponses) CreateClusterSnapshotWithBodyWithResponse(ctx cont
 	return ParseCreateClusterSnapshotResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateClusterSnapshotWithResponse(ctx context.Context, iD string, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error) {
+func (c *ClientWithResponses) CreateClusterSnapshotWithResponse(ctx context.Context, iD int32, body CreateClusterSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterSnapshotResponse, error) {
 	rsp, err := c.CreateClusterSnapshot(ctx, iD, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2890,7 +2974,7 @@ func (c *ClientWithResponses) CreateClusterSnapshotWithResponse(ctx context.Cont
 }
 
 // DeleteClusterSnapshotWithResponse request returning *DeleteClusterSnapshotResponse
-func (c *ClientWithResponses) DeleteClusterSnapshotWithResponse(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*DeleteClusterSnapshotResponse, error) {
+func (c *ClientWithResponses) DeleteClusterSnapshotWithResponse(ctx context.Context, iD int32, snapshotId int64, reqEditors ...RequestEditorFn) (*DeleteClusterSnapshotResponse, error) {
 	rsp, err := c.DeleteClusterSnapshot(ctx, iD, snapshotId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -2899,7 +2983,7 @@ func (c *ClientWithResponses) DeleteClusterSnapshotWithResponse(ctx context.Cont
 }
 
 // RestoreClusterSnapshotWithResponse request returning *RestoreClusterSnapshotResponse
-func (c *ClientWithResponses) RestoreClusterSnapshotWithResponse(ctx context.Context, iD string, snapshotId string, reqEditors ...RequestEditorFn) (*RestoreClusterSnapshotResponse, error) {
+func (c *ClientWithResponses) RestoreClusterSnapshotWithResponse(ctx context.Context, iD int32, snapshotId int64, reqEditors ...RequestEditorFn) (*RestoreClusterSnapshotResponse, error) {
 	rsp, err := c.RestoreClusterSnapshot(ctx, iD, snapshotId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -3062,6 +3146,32 @@ func ParseSignInResponse(rsp *http.Response) (*SignInResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Credentials
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListClusterVersionsResponse parses an HTTP response from a ListClusterVersionsWithResponse call
+func ParseListClusterVersionsResponse(rsp *http.Response) (*ListClusterVersionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListClusterVersionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []string
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -3639,6 +3749,9 @@ type ServerInterface interface {
 	// Sign in user
 	// (POST /auth/sign-in)
 	SignIn(c *fiber.Ctx) error
+	// List all cluster versions
+	// (GET /cluster-versions)
+	ListClusterVersions(c *fiber.Ctx) error
 	// List all clusters
 	// (GET /clusters)
 	ListClusters(c *fiber.Ctx) error
@@ -3647,40 +3760,40 @@ type ServerInterface interface {
 	CreateCluster(c *fiber.Ctx) error
 	// Delete cluster
 	// (DELETE /clusters/{ID})
-	DeleteCluster(c *fiber.Ctx, iD string, params DeleteClusterParams) error
+	DeleteCluster(c *fiber.Ctx, iD int32, params DeleteClusterParams) error
 	// Get cluster details
 	// (GET /clusters/{ID})
-	GetCluster(c *fiber.Ctx, iD string) error
+	GetCluster(c *fiber.Ctx, iD int32) error
 	// Update cluster
 	// (PUT /clusters/{ID})
-	UpdateCluster(c *fiber.Ctx, iD string) error
+	UpdateCluster(c *fiber.Ctx, iD int32) error
 	// List diagnostic data
 	// (GET /clusters/{ID}/diagnostics)
-	ListClusterDiagnostics(c *fiber.Ctx, iD string, params ListClusterDiagnosticsParams) error
+	ListClusterDiagnostics(c *fiber.Ctx, iD int32, params ListClusterDiagnosticsParams) error
 	// Get diagnostic configuration
 	// (GET /clusters/{ID}/diagnostics/config)
-	GetClusterDiagnosticConfig(c *fiber.Ctx, iD string) error
+	GetClusterDiagnosticConfig(c *fiber.Ctx, iD int32) error
 	// Update diagnostic configuration
 	// (PUT /clusters/{ID}/diagnostics/config)
-	UpdateClusterDiagnosticConfig(c *fiber.Ctx, iD string) error
+	UpdateClusterDiagnosticConfig(c *fiber.Ctx, iD int32) error
 	// Get snapshot configuration
 	// (GET /clusters/{ID}/snapshot-config)
-	GetClusterSnapshotConfig(c *fiber.Ctx, iD string) error
+	GetClusterSnapshotConfig(c *fiber.Ctx, iD int32) error
 	// Update snapshot configuration
 	// (PUT /clusters/{ID}/snapshot-config)
-	UpdateClusterSnapshotConfig(c *fiber.Ctx, iD string) error
+	UpdateClusterSnapshotConfig(c *fiber.Ctx, iD int32) error
 	// List cluster snapshots
 	// (GET /clusters/{ID}/snapshots)
-	ListClusterSnapshots(c *fiber.Ctx, iD string) error
+	ListClusterSnapshots(c *fiber.Ctx, iD int32) error
 	// Create a new snapshot
 	// (POST /clusters/{ID}/snapshots)
-	CreateClusterSnapshot(c *fiber.Ctx, iD string) error
+	CreateClusterSnapshot(c *fiber.Ctx, iD int32) error
 	// Delete snapshot
 	// (DELETE /clusters/{ID}/snapshots/{snapshotId})
-	DeleteClusterSnapshot(c *fiber.Ctx, iD string, snapshotId string) error
+	DeleteClusterSnapshot(c *fiber.Ctx, iD int32, snapshotId int64) error
 	// Restore snapshot
 	// (POST /clusters/{ID}/snapshots/{snapshotId})
-	RestoreClusterSnapshot(c *fiber.Ctx, iD string, snapshotId string) error
+	RestoreClusterSnapshot(c *fiber.Ctx, iD int32, snapshotId int64) error
 	// List all databases
 	// (GET /databases)
 	ListDatabases(c *fiber.Ctx) error
@@ -3729,6 +3842,12 @@ func (siw *ServerInterfaceWrapper) SignIn(c *fiber.Ctx) error {
 	return siw.Handler.SignIn(c)
 }
 
+// ListClusterVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListClusterVersions(c *fiber.Ctx) error {
+
+	return siw.Handler.ListClusterVersions(c)
+}
+
 // ListClusters operation middleware
 func (siw *ServerInterfaceWrapper) ListClusters(c *fiber.Ctx) error {
 
@@ -3751,7 +3870,7 @@ func (siw *ServerInterfaceWrapper) DeleteCluster(c *fiber.Ctx) error {
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD string
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -3785,7 +3904,7 @@ func (siw *ServerInterfaceWrapper) GetCluster(c *fiber.Ctx) error {
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD string
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -3803,7 +3922,7 @@ func (siw *ServerInterfaceWrapper) UpdateCluster(c *fiber.Ctx) error {
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD string
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -3821,7 +3940,7 @@ func (siw *ServerInterfaceWrapper) ListClusterDiagnostics(c *fiber.Ctx) error {
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD string
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -3876,7 +3995,7 @@ func (siw *ServerInterfaceWrapper) GetClusterDiagnosticConfig(c *fiber.Ctx) erro
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD string
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -3894,7 +4013,7 @@ func (siw *ServerInterfaceWrapper) UpdateClusterDiagnosticConfig(c *fiber.Ctx) e
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD string
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -3912,7 +4031,7 @@ func (siw *ServerInterfaceWrapper) GetClusterSnapshotConfig(c *fiber.Ctx) error 
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD string
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -3930,7 +4049,7 @@ func (siw *ServerInterfaceWrapper) UpdateClusterSnapshotConfig(c *fiber.Ctx) err
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD string
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -3948,7 +4067,7 @@ func (siw *ServerInterfaceWrapper) ListClusterSnapshots(c *fiber.Ctx) error {
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD string
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -3966,7 +4085,7 @@ func (siw *ServerInterfaceWrapper) CreateClusterSnapshot(c *fiber.Ctx) error {
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD string
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -3984,7 +4103,7 @@ func (siw *ServerInterfaceWrapper) DeleteClusterSnapshot(c *fiber.Ctx) error {
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD string
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -3992,7 +4111,7 @@ func (siw *ServerInterfaceWrapper) DeleteClusterSnapshot(c *fiber.Ctx) error {
 	}
 
 	// ------------- Path parameter "snapshotId" -------------
-	var snapshotId string
+	var snapshotId int64
 
 	err = runtime.BindStyledParameterWithOptions("simple", "snapshotId", c.Params("snapshotId"), &snapshotId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -4010,7 +4129,7 @@ func (siw *ServerInterfaceWrapper) RestoreClusterSnapshot(c *fiber.Ctx) error {
 	var err error
 
 	// ------------- Path parameter "ID" -------------
-	var iD string
+	var iD int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -4018,7 +4137,7 @@ func (siw *ServerInterfaceWrapper) RestoreClusterSnapshot(c *fiber.Ctx) error {
 	}
 
 	// ------------- Path parameter "snapshotId" -------------
-	var snapshotId string
+	var snapshotId int64
 
 	err = runtime.BindStyledParameterWithOptions("simple", "snapshotId", c.Params("snapshotId"), &snapshotId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
@@ -4194,6 +4313,8 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	router.Post(options.BaseURL+"/auth/refresh", wrapper.RefreshToken)
 
 	router.Post(options.BaseURL+"/auth/sign-in", wrapper.SignIn)
+
+	router.Get(options.BaseURL+"/cluster-versions", wrapper.ListClusterVersions)
 
 	router.Get(options.BaseURL+"/clusters", wrapper.ListClusters)
 

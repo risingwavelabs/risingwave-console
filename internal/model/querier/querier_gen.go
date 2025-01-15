@@ -10,11 +10,13 @@ import (
 
 type Querier interface {
 	CreateCluster(ctx context.Context, arg CreateClusterParams) (*Cluster, error)
+	CreateClusterSnapshot(ctx context.Context, arg CreateClusterSnapshotParams) error
 	CreateDatabaseConnection(ctx context.Context, arg CreateDatabaseConnectionParams) (*DatabaseConnection, error)
 	CreateOrganization(ctx context.Context, name string) (*Organization, error)
 	CreateOrganizationOwner(ctx context.Context, arg CreateOrganizationOwnerParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	DeleteAllOrgDatabaseConnectionsByClusterID(ctx context.Context, arg DeleteAllOrgDatabaseConnectionsByClusterIDParams) error
+	DeleteClusterSnapshot(ctx context.Context, arg DeleteClusterSnapshotParams) error
 	DeleteOrgCluster(ctx context.Context, arg DeleteOrgClusterParams) error
 	DeleteOrgDatabaseConnection(ctx context.Context, arg DeleteOrgDatabaseConnectionParams) error
 	DeleteOrganization(ctx context.Context, id int32) error
@@ -32,6 +34,7 @@ type Querier interface {
 	GetUserByName(ctx context.Context, name string) (*User, error)
 	InitCluster(ctx context.Context, arg InitClusterParams) (*Cluster, error)
 	InitDatabaseConnection(ctx context.Context, arg InitDatabaseConnectionParams) (*DatabaseConnection, error)
+	ListClusterSnapshots(ctx context.Context, clusterID int32) ([]*ClusterSnapshot, error)
 	ListOrgClusters(ctx context.Context, organizationID int32) ([]*Cluster, error)
 	ListOrgDatabaseConnections(ctx context.Context, organizationID int32) ([]*DatabaseConnection, error)
 	ListOrganizations(ctx context.Context) ([]*Organization, error)

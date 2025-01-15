@@ -188,6 +188,18 @@ export class DefaultService {
         });
     }
     /**
+     * List all cluster versions
+     * Retrieve a list of all cluster versions
+     * @returns string Successfully retrieved cluster version list
+     * @throws ApiError
+     */
+    public static listClusterVersions(): CancelablePromise<Array<string>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/cluster-versions',
+        });
+    }
+    /**
      * List all clusters
      * Retrieve a list of all database clusters
      * @returns Cluster Successfully retrieved cluster list
@@ -224,7 +236,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public static getCluster(
-        id: string,
+        id: number,
     ): CancelablePromise<Cluster> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -243,7 +255,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public static updateCluster(
-        id: string,
+        id: number,
         requestBody: UpdateClusterRequest,
     ): CancelablePromise<Cluster> {
         return __request(OpenAPI, {
@@ -265,7 +277,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public static deleteCluster(
-        id: string,
+        id: number,
         cascade?: boolean,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
@@ -287,7 +299,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public static listClusterSnapshots(
-        id: string,
+        id: number,
     ): CancelablePromise<Array<Snapshot>> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -306,7 +318,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public static createClusterSnapshot(
-        id: string,
+        id: number,
         requestBody: SnapshotCreate,
     ): CancelablePromise<Snapshot> {
         return __request(OpenAPI, {
@@ -328,8 +340,8 @@ export class DefaultService {
      * @throws ApiError
      */
     public static deleteClusterSnapshot(
-        id: string,
-        snapshotId: string,
+        id: number,
+        snapshotId: number,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
@@ -349,8 +361,8 @@ export class DefaultService {
      * @throws ApiError
      */
     public static restoreClusterSnapshot(
-        id: string,
-        snapshotId: string,
+        id: number,
+        snapshotId: number,
     ): CancelablePromise<any> {
         return __request(OpenAPI, {
             method: 'POST',
@@ -369,7 +381,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public static getClusterSnapshotConfig(
-        id: string,
+        id: number,
     ): CancelablePromise<SnapshotConfig> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -388,7 +400,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public static updateClusterSnapshotConfig(
-        id: string,
+        id: number,
         requestBody: SnapshotConfig,
     ): CancelablePromise<SnapshotConfig> {
         return __request(OpenAPI, {
@@ -413,7 +425,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public static listClusterDiagnostics(
-        id: string,
+        id: number,
         from?: string,
         to?: string,
         page: number = 1,
@@ -455,7 +467,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public static getClusterDiagnosticConfig(
-        id: string,
+        id: number,
     ): CancelablePromise<DiagnosticConfig> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -474,7 +486,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public static updateClusterDiagnosticConfig(
-        id: string,
+        id: number,
         requestBody: DiagnosticConfig,
     ): CancelablePromise<DiagnosticConfig> {
         return __request(OpenAPI, {

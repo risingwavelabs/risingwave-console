@@ -77,7 +77,7 @@ export function ClusterDialog({
     defaultValues: defaultValues || {
       host: "",
       sqlPort: 4566,
-      metaPort: 5691
+      metaPort: 5690
     }
   })
 

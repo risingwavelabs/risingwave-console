@@ -25,6 +25,7 @@ type ClusterConnections struct {
 
 type Cluster struct {
 	Name        string              `yaml:"name" validate:"required"`
+	Version     string              `yaml:"version" validate:"required"`
 	Connections *ClusterConnections `yaml:"connections" validate:"required"`
 }
 
@@ -104,6 +105,7 @@ func (s *InitService) initDatabase(ctx context.Context, cfg *InitConfig, orgID i
 				Host:           cluster.Connections.Host,
 				SqlPort:        cluster.Connections.SqlPort,
 				MetaPort:       cluster.Connections.MetaPort,
+				Version:        cluster.Version,
 			})
 			if err != nil {
 				return errors.Wrapf(err, "failed to create cluster: %s", cluster.Name)

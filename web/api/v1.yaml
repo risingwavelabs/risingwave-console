@@ -191,6 +191,21 @@ paths:
         '200':
           description: Successfully canceled DDL operation
 
+  /cluster-versions:
+    get:
+      summary: List all cluster versions
+      description: Retrieve a list of all cluster versions
+      operationId: listClusterVersions
+      responses:
+        '200':
+          description: Successfully retrieved cluster version list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
   /clusters:
     get:
       summary: List all clusters
@@ -235,7 +250,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
+          format: int32
     get:
       summary: Get cluster details
       description: Retrieve details of a specific cluster
@@ -294,7 +310,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
+          format: int32
     get:
       summary: List cluster snapshots
       description: Retrieve a list of all snapshots for a specific cluster
@@ -336,12 +353,14 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
+          format: int32
       - name: snapshotId
         in: path
         required: true
         schema:
-          type: string
+          type: integer
+          format: int64
     delete:
       summary: Delete snapshot
       description: Delete a specific snapshot
@@ -367,7 +386,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
+          format: int32
     get:
       summary: Get snapshot configuration
       description: Get automatic snapshot configuration for a cluster
@@ -407,7 +427,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
+          format: int32
     get:
       summary: List diagnostic data
       description: Retrieve diagnostic data for a specific cluster with optional date range filtering
@@ -479,7 +500,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
+          format: int32
     get:
       summary: Get diagnostic configuration
       description: Get diagnostic data collection configuration for a cluster
@@ -714,6 +736,7 @@ components:
         - host
         - sqlPort
         - metaPort
+        - version
       properties:
         name:
           type: string
@@ -727,6 +750,9 @@ components:
         metaPort:
           type: integer
           description: Metadata node port
+        version:
+          type: string
+          description: Version of the cluster
 
     Cluster:
       type: object
@@ -737,6 +763,7 @@ components:
         - host
         - sqlPort
         - metaPort
+        - version
         - createdAt
         - updatedAt
       properties:
@@ -756,6 +783,8 @@ components:
         metaPort:
           type: integer
           format: int32
+        version:
+          type: string
         createdAt:
           type: string
           format: date-time
@@ -770,6 +799,7 @@ components:
         - host
         - sqlPort
         - metaPort
+        - version
       properties:
         name:
           type: string
@@ -781,6 +811,8 @@ components:
         metaPort:
           type: integer
           format: int32
+        version:
+          type: string
 
     SnapshotCreate:
       type: object
@@ -795,12 +827,18 @@ components:
       type: object
       required:
         - ID
+        - ClusterID
         - name
         - createdAt
       properties:
         ID:
-          type: string
+          type: integer
+          format: int64
           description: Unique identifier of the snapshot
+        ClusterID:
+          type: integer
+          format: int32
+          description: ID of the cluster this snapshot belongs to
         name:
           type: string
           description: Name of the snapshot

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 import { OpenAPI } from "../api-gen";
 import { DefaultService } from "../api-gen";
@@ -19,10 +19,13 @@ const initService = () => {
       return response;
     },
 
-    async function (error) {
+    async function (error: AxiosError) {
       console.log(error);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const { status } = error;
+      if (error.request?.responseURL?.includes("/auth/sign-in")) {
+        return Promise.reject(error);
+      }
 
       if (status === 401) {
         const refreshToken = localStorage.getItem(refreshTokenKey);
@@ -35,8 +38,11 @@ const initService = () => {
             
             // Retry the original request with the new token
             const config = error.config;
-            config.headers.Authorization = `Bearer ${response.accessToken}`;
-            return axios(config);
+            if (config) {
+              config.headers.Authorization = `Bearer ${response.accessToken}`;
+              return axios(config);
+            }
+            return Promise.reject(error);
           } catch (refreshError) {
             console.error("Refresh token failed", refreshError);
             // If refresh token fails, clear storage and redirect to login
@@ -56,8 +62,8 @@ const initService = () => {
           message: "An error occurred. Please try again later.",
         });
       } else {
-        if (error.status >= 500) {
-          toast.error(error.response.data);
+        if (error.status && error.status >= 500) {
+          toast.error(error.response?.data);
         }
         if (error.status === 403) {
           toast.error("You are not authorized to perform this action");

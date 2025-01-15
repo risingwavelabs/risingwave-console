@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS clusters (
     host            TEXT        NOT NULL,
     sql_port        INTEGER     NOT NULL,
     meta_port       INTEGER     NOT NULL,
+    version         TEXT        NOT NULL,
     
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -73,6 +74,16 @@ CREATE TABLE IF NOT EXISTS database_connections (
 
     UNIQUE (organization_id, name),
     PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS cluster_snapshots (
+    cluster_id      INTEGER     NOT NULL REFERENCES clusters(id),
+    snapshot_id     BIGINT      NOT NULL,
+    name            TEXT        NOT NULL,
+    created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    PRIMARY KEY (cluster_id, snapshot_id)
 );
 
 COMMIT;

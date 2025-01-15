@@ -3,7 +3,6 @@ package controller
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
@@ -87,18 +86,13 @@ func (controller *Controller) CreateCluster(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(cluster)
 }
 
-func (controller *Controller) DeleteCluster(c *fiber.Ctx, id string, params apigen.DeleteClusterParams) error {
+func (controller *Controller) DeleteCluster(c *fiber.Ctx, id int32, params apigen.DeleteClusterParams) error {
 	user, err := auth.GetUser(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	clusterID, err := strconv.Atoi(id)
-	if err != nil {
-		return c.SendStatus(fiber.StatusBadRequest)
-	}
-
-	err = controller.svc.DeleteCluster(c.Context(), int32(clusterID), utils.UnwrapOrDefault(params.Cascade, false), user.OrganizationID)
+	err = controller.svc.DeleteCluster(c.Context(), id, utils.UnwrapOrDefault(params.Cascade, false), user.OrganizationID)
 	if err != nil {
 		if errors.Is(err, service.ErrClusterHasDatabaseConnections) {
 			return c.Status(fiber.StatusConflict).SendString(err.Error())
@@ -109,18 +103,13 @@ func (controller *Controller) DeleteCluster(c *fiber.Ctx, id string, params apig
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-func (controller *Controller) GetCluster(c *fiber.Ctx, id string) error {
+func (controller *Controller) GetCluster(c *fiber.Ctx, id int32) error {
 	user, err := auth.GetUser(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	clusterID, err := strconv.Atoi(id)
-	if err != nil {
-		return c.SendStatus(fiber.StatusBadRequest)
-	}
-
-	cluster, err := controller.svc.GetCluster(c.Context(), int32(clusterID), user.OrganizationID)
+	cluster, err := controller.svc.GetCluster(c.Context(), id, user.OrganizationID)
 	if err != nil {
 		if errors.Is(err, service.ErrClusterNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
@@ -131,7 +120,7 @@ func (controller *Controller) GetCluster(c *fiber.Ctx, id string) error {
 	return c.Status(fiber.StatusOK).JSON(cluster)
 }
 
-func (controller *Controller) UpdateCluster(c *fiber.Ctx, id string) error {
+func (controller *Controller) UpdateCluster(c *fiber.Ctx, id int32) error {
 	user, err := auth.GetUser(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
@@ -142,12 +131,7 @@ func (controller *Controller) UpdateCluster(c *fiber.Ctx, id string) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	clusterID, err := strconv.Atoi(id)
-	if err != nil {
-		return c.SendStatus(fiber.StatusBadRequest)
-	}
-
-	cluster, err := controller.svc.UpdateCluster(c.Context(), int32(clusterID), params, user.OrganizationID)
+	cluster, err := controller.svc.UpdateCluster(c.Context(), id, params, user.OrganizationID)
 	if err != nil {
 		if errors.Is(err, service.ErrClusterNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
@@ -327,38 +311,61 @@ func (controller *Controller) QueryDatabase(c *fiber.Ctx, id int32) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-func (controller *Controller) CreateClusterSnapshot(c *fiber.Ctx, id string) error {
+func (controller *Controller) CreateClusterSnapshot(c *fiber.Ctx, id int32) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	var params apigen.CreateClusterSnapshotJSONRequestBody
+	if err := c.BodyParser(&params); err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	snapshot, err := controller.svc.CreateClusterSnapshot(c.Context(), id, params.Name, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(snapshot)
+}
+
+func (controller *Controller) DeleteClusterSnapshot(c *fiber.Ctx, id int32, snapshotId int64) error {
 	return c.Status(fiber.StatusOK).SendString("Hello, World!")
 }
 
-func (controller *Controller) DeleteClusterSnapshot(c *fiber.Ctx, id string, snapshotId string) error {
+func (controller *Controller) RestoreClusterSnapshot(c *fiber.Ctx, id int32, snapshotId int64) error {
 	return c.Status(fiber.StatusOK).SendString("Hello, World!")
 }
 
-func (controller *Controller) RestoreClusterSnapshot(c *fiber.Ctx, id string, snapshotId string) error {
+func (controller *Controller) ListClusterSnapshots(c *fiber.Ctx, id int32) error {
 	return c.Status(fiber.StatusOK).SendString("Hello, World!")
 }
 
-func (controller *Controller) ListClusterSnapshots(c *fiber.Ctx, id string) error {
+func (controller *Controller) GetClusterSnapshotConfig(c *fiber.Ctx, id int32) error {
 	return c.Status(fiber.StatusOK).SendString("Hello, World!")
 }
 
-func (controller *Controller) GetClusterSnapshotConfig(c *fiber.Ctx, id string) error {
+func (controller *Controller) UpdateClusterSnapshotConfig(c *fiber.Ctx, id int32) error {
 	return c.Status(fiber.StatusOK).SendString("Hello, World!")
 }
 
-func (controller *Controller) UpdateClusterSnapshotConfig(c *fiber.Ctx, id string) error {
+func (controller *Controller) ListClusterDiagnostics(c *fiber.Ctx, id int32, params apigen.ListClusterDiagnosticsParams) error {
 	return c.Status(fiber.StatusOK).SendString("Hello, World!")
 }
 
-func (controller *Controller) ListClusterDiagnostics(c *fiber.Ctx, id string, params apigen.ListClusterDiagnosticsParams) error {
+func (controller *Controller) GetClusterDiagnosticConfig(c *fiber.Ctx, id int32) error {
 	return c.Status(fiber.StatusOK).SendString("Hello, World!")
 }
 
-func (controller *Controller) GetClusterDiagnosticConfig(c *fiber.Ctx, id string) error {
+func (controller *Controller) UpdateClusterDiagnosticConfig(c *fiber.Ctx, id int32) error {
 	return c.Status(fiber.StatusOK).SendString("Hello, World!")
 }
 
-func (controller *Controller) UpdateClusterDiagnosticConfig(c *fiber.Ctx, id string) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+func (controller *Controller) ListClusterVersions(c *fiber.Ctx) error {
+	versions, err := controller.svc.ListClusterVersions(c.Context())
+	if err != nil {
+		return err
+	}
+	return c.Status(fiber.StatusOK).JSON(versions)
 }

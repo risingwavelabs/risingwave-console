@@ -49,7 +49,7 @@ interface ClusterData {
   metaPort: number
   nodes: number
   snapshots: Array<{
-    id: string
+    id: number
     name: string
     created_at: string
   }>
@@ -72,7 +72,7 @@ interface ClusterData {
 
 interface ClusterPageProps {
   params: {
-    id: string
+    id: number
   }
 }
 
@@ -85,11 +85,12 @@ export default function ClusterPage({ params }: ClusterPageProps) {
   const [expiration, setExpiration] = useState("")
   const [noExpiration, setNoExpiration] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [deleteSnapshotId, setDeleteSnapshotId] = useState<string | null>(null)
+  const [deleteSnapshotId, setDeleteSnapshotId] = useState<number | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(false)
   const [autoBackupInterval, setAutoBackupInterval] = useState("24h")
   const [autoBackupKeepCount, setAutoBackupKeepCount] = useState(7)
+  const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)
 
   useEffect(() => {
     const fetchClusterData = async () => {
@@ -172,7 +173,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
   const startIndex = (currentPage - 1) * itemsPerPage
   const currentItems = filteredItems.slice(startIndex, startIndex + itemsPerPage)
 
-  const handleDeleteSnapshot = async (id: string) => {
+  const handleDeleteSnapshot = async (id: number) => {
     try {
       await DefaultService.deleteClusterSnapshot(clusterId, id)
       setClusterData(prev => prev ? {
@@ -185,6 +186,31 @@ export default function ClusterPage({ params }: ClusterPageProps) {
       toast.error("Failed to delete snapshot")
     }
     setDeleteSnapshotId(null)
+  }
+
+  const createSnapshot = async () => {
+    setIsCreatingSnapshot(true)
+    try {
+      const snapshot = await DefaultService.createClusterSnapshot(clusterId, {
+        name: `snapshot-${new Date().toISOString().split('T')[0]}`
+      })
+      // Transform the API snapshot to match our local type
+      const transformedSnapshot = {
+        id: snapshot.ID,
+        name: snapshot.name,
+        created_at: snapshot.createdAt
+      }
+      setClusterData(prev => prev ? {
+        ...prev,
+        snapshots: [...prev.snapshots, transformedSnapshot]
+      } : null)
+      toast.success("Snapshot created successfully")
+    } catch (error) {
+      console.error("Error creating snapshot:", error)
+      toast.error("Failed to create snapshot")
+    } finally {
+      setIsCreatingSnapshot(false)
+    }
   }
 
   return (
@@ -252,7 +278,19 @@ export default function ClusterPage({ params }: ClusterPageProps) {
               Backup and restore cluster metadata. Keep snapshots minimal as excessive snapshots may affect performance.
             </p>
           </div>
-          <Button size="sm">Create Snapshot</Button>
+          <Button className="select-none" size="sm" onClick={createSnapshot} disabled={isCreatingSnapshot}>
+            {isCreatingSnapshot ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Creating...
+              </>
+            ) : (
+              "Create Snapshot"
+            )}
+          </Button>
         </div>
 
         <div className="max-w-4xl space-y-4 border rounded-lg p-4">

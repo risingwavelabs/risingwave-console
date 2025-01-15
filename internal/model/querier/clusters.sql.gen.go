@@ -15,10 +15,11 @@ INSERT INTO clusters (
     name,
     host,
     sql_port,
-    meta_port
+    meta_port,
+    version
 ) VALUES (
-    $1, $2, $3, $4, $5
-) RETURNING id, organization_id, name, host, sql_port, meta_port, created_at, updated_at
+    $1, $2, $3, $4, $5, $6
+) RETURNING id, organization_id, name, host, sql_port, meta_port, version, created_at, updated_at
 `
 
 type CreateClusterParams struct {
@@ -27,6 +28,7 @@ type CreateClusterParams struct {
 	Host           string
 	SqlPort        int32
 	MetaPort       int32
+	Version        string
 }
 
 func (q *Queries) CreateCluster(ctx context.Context, arg CreateClusterParams) (*Cluster, error) {
@@ -36,6 +38,7 @@ func (q *Queries) CreateCluster(ctx context.Context, arg CreateClusterParams) (*
 		arg.Host,
 		arg.SqlPort,
 		arg.MetaPort,
+		arg.Version,
 	)
 	var i Cluster
 	err := row.Scan(
@@ -45,6 +48,7 @@ func (q *Queries) CreateCluster(ctx context.Context, arg CreateClusterParams) (*
 		&i.Host,
 		&i.SqlPort,
 		&i.MetaPort,
+		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -67,7 +71,7 @@ func (q *Queries) DeleteOrgCluster(ctx context.Context, arg DeleteOrgClusterPara
 }
 
 const getClusterByID = `-- name: GetClusterByID :one
-SELECT id, organization_id, name, host, sql_port, meta_port, created_at, updated_at FROM clusters
+SELECT id, organization_id, name, host, sql_port, meta_port, version, created_at, updated_at FROM clusters
 WHERE id = $1
 `
 
@@ -81,6 +85,7 @@ func (q *Queries) GetClusterByID(ctx context.Context, id int32) (*Cluster, error
 		&i.Host,
 		&i.SqlPort,
 		&i.MetaPort,
+		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -88,7 +93,7 @@ func (q *Queries) GetClusterByID(ctx context.Context, id int32) (*Cluster, error
 }
 
 const getOrgCluster = `-- name: GetOrgCluster :one
-SELECT id, organization_id, name, host, sql_port, meta_port, created_at, updated_at FROM clusters
+SELECT id, organization_id, name, host, sql_port, meta_port, version, created_at, updated_at FROM clusters
 WHERE id = $1 AND organization_id = $2
 `
 
@@ -107,6 +112,7 @@ func (q *Queries) GetOrgCluster(ctx context.Context, arg GetOrgClusterParams) (*
 		&i.Host,
 		&i.SqlPort,
 		&i.MetaPort,
+		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -119,11 +125,12 @@ INSERT INTO clusters (
     name,
     host,
     sql_port,
-    meta_port
+    meta_port,
+    version
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 ) ON CONFLICT (organization_id, name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
-RETURNING id, organization_id, name, host, sql_port, meta_port, created_at, updated_at
+RETURNING id, organization_id, name, host, sql_port, meta_port, version, created_at, updated_at
 `
 
 type InitClusterParams struct {
@@ -132,6 +139,7 @@ type InitClusterParams struct {
 	Host           string
 	SqlPort        int32
 	MetaPort       int32
+	Version        string
 }
 
 func (q *Queries) InitCluster(ctx context.Context, arg InitClusterParams) (*Cluster, error) {
@@ -141,6 +149,7 @@ func (q *Queries) InitCluster(ctx context.Context, arg InitClusterParams) (*Clus
 		arg.Host,
 		arg.SqlPort,
 		arg.MetaPort,
+		arg.Version,
 	)
 	var i Cluster
 	err := row.Scan(
@@ -150,6 +159,7 @@ func (q *Queries) InitCluster(ctx context.Context, arg InitClusterParams) (*Clus
 		&i.Host,
 		&i.SqlPort,
 		&i.MetaPort,
+		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -157,7 +167,7 @@ func (q *Queries) InitCluster(ctx context.Context, arg InitClusterParams) (*Clus
 }
 
 const listOrgClusters = `-- name: ListOrgClusters :many
-SELECT id, organization_id, name, host, sql_port, meta_port, created_at, updated_at FROM clusters
+SELECT id, organization_id, name, host, sql_port, meta_port, version, created_at, updated_at FROM clusters
 WHERE organization_id = $1
 ORDER BY name
 `
@@ -178,6 +188,7 @@ func (q *Queries) ListOrgClusters(ctx context.Context, organizationID int32) ([]
 			&i.Host,
 			&i.SqlPort,
 			&i.MetaPort,
+			&i.Version,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -198,9 +209,10 @@ SET
     host = $4,
     sql_port = $5,
     meta_port = $6,
+    version = $7,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND organization_id = $2
-RETURNING id, organization_id, name, host, sql_port, meta_port, created_at, updated_at
+RETURNING id, organization_id, name, host, sql_port, meta_port, version, created_at, updated_at
 `
 
 type UpdateOrgClusterParams struct {
@@ -210,6 +222,7 @@ type UpdateOrgClusterParams struct {
 	Host           string
 	SqlPort        int32
 	MetaPort       int32
+	Version        string
 }
 
 func (q *Queries) UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterParams) (*Cluster, error) {
@@ -220,6 +233,7 @@ func (q *Queries) UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterPara
 		arg.Host,
 		arg.SqlPort,
 		arg.MetaPort,
+		arg.Version,
 	)
 	var i Cluster
 	err := row.Scan(
@@ -229,6 +243,7 @@ func (q *Queries) UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterPara
 		&i.Host,
 		&i.SqlPort,
 		&i.MetaPort,
+		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

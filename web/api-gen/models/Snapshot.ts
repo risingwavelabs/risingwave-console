@@ -6,7 +6,11 @@ export type Snapshot = {
     /**
      * Unique identifier of the snapshot
      */
-    ID: string;
+    ID: number;
+    /**
+     * ID of the cluster this snapshot belongs to
+     */
+    ClusterID: number;
     /**
      * Name of the snapshot
      */

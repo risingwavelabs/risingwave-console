@@ -11,6 +11,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
+	"github.com/risingwavelabs/wavekit/internal/conn/risectl"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
@@ -89,24 +90,31 @@ type ServiceInterface interface {
 
 	// CancelDDLProgress cancels a DDL operation
 	CancelDDLProgress(ctx context.Context, id int32, ddlID int64, orgID int32) error
+
+	ListClusterVersions(ctx context.Context) ([]string, error)
+
+	// ClusterSnapshot management
+	CreateClusterSnapshot(ctx context.Context, id int32, name string, orgID int32) (*apigen.Snapshot, error)
 }
 
 type Service struct {
-	m    model.ModelInterface
-	auth auth.AuthInterface
-	sqlm sql.SQLConnectionManegerInterface
+	m        model.ModelInterface
+	auth     auth.AuthInterface
+	sqlm     sql.SQLConnectionManegerInterface
+	risectlm risectl.RisectlManagerInterface
 
 	now                 func() time.Time
 	generateHashAndSalt func(password string) (string, string, error)
 }
 
-func NewService(cfg *config.Config, m model.ModelInterface, auth auth.AuthInterface, sqlm sql.SQLConnectionManegerInterface) ServiceInterface {
+func NewService(cfg *config.Config, m model.ModelInterface, auth auth.AuthInterface, sqlm sql.SQLConnectionManegerInterface, risectlm risectl.RisectlManagerInterface) ServiceInterface {
 	return &Service{
 		m:                   m,
 		now:                 time.Now,
 		generateHashAndSalt: utils.GenerateHashAndSalt,
 		auth:                auth,
 		sqlm:                sqlm,
+		risectlm:            risectlm,
 	}
 }
 
@@ -227,6 +235,7 @@ func (s *Service) CreateCluster(ctx context.Context, params apigen.ClusterCreate
 		Host:           params.Host,
 		SqlPort:        int32(params.SqlPort),
 		MetaPort:       int32(params.MetaPort),
+		Version:        params.Version,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create cluster")
@@ -706,4 +715,44 @@ func (s *Service) CancelDDLProgress(ctx context.Context, id int32, ddlID int64, 
 	}
 
 	return nil
+}
+
+func (s *Service) ListClusterVersions(ctx context.Context) ([]string, error) {
+	return s.risectlm.ListVersions(ctx)
+}
+
+func (s *Service) getRisectlConn(ctx context.Context, id int32) (risectl.RisectlConn, error) {
+	cluster, err := s.m.GetClusterByID(ctx, id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get cluster")
+	}
+
+	return s.risectlm.NewConn(ctx, cluster.Version, fmt.Sprintf("http://%s:%d", cluster.Host, cluster.MetaPort))
+}
+
+func (s *Service) CreateClusterSnapshot(ctx context.Context, id int32, name string, orgID int32) (*apigen.Snapshot, error) {
+	conn, err := s.getRisectlConn(ctx, id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get risectl connection")
+	}
+
+	snapshotID, err := conn.MetaBackup(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create snapshot")
+	}
+
+	if err := s.m.CreateClusterSnapshot(ctx, querier.CreateClusterSnapshotParams{
+		ClusterID:  id,
+		SnapshotID: snapshotID,
+		Name:       name,
+	}); err != nil {
+		return nil, errors.Wrapf(err, "failed to create snapshot")
+	}
+
+	return &apigen.Snapshot{
+		ID:        snapshotID,
+		Name:      name,
+		ClusterID: id,
+		CreatedAt: time.Now(),
+	}, nil
 }

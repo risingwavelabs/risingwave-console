@@ -4,9 +4,10 @@ INSERT INTO clusters (
     name,
     host,
     sql_port,
-    meta_port
+    meta_port,
+    version
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 ) RETURNING *;
 
 -- name: InitCluster :one
@@ -15,9 +16,10 @@ INSERT INTO clusters (
     name,
     host,
     sql_port,
-    meta_port
+    meta_port,
+    version
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 ) ON CONFLICT (organization_id, name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
 RETURNING *;
 
@@ -37,6 +39,7 @@ SET
     host = $4,
     sql_port = $5,
     meta_port = $6,
+    version = $7,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND organization_id = $2
 RETURNING *;

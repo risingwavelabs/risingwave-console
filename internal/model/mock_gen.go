@@ -50,6 +50,20 @@ func (mr *MockModelInterfaceMockRecorder) CreateCluster(ctx, arg interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCluster", reflect.TypeOf((*MockModelInterface)(nil).CreateCluster), ctx, arg)
 }
 
+// CreateClusterSnapshot mocks base method.
+func (m *MockModelInterface) CreateClusterSnapshot(ctx context.Context, arg querier.CreateClusterSnapshotParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateClusterSnapshot", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateClusterSnapshot indicates an expected call of CreateClusterSnapshot.
+func (mr *MockModelInterfaceMockRecorder) CreateClusterSnapshot(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateClusterSnapshot", reflect.TypeOf((*MockModelInterface)(nil).CreateClusterSnapshot), ctx, arg)
+}
+
 // CreateDatabaseConnection mocks base method.
 func (m *MockModelInterface) CreateDatabaseConnection(ctx context.Context, arg querier.CreateDatabaseConnectionParams) (*querier.DatabaseConnection, error) {
 	m.ctrl.T.Helper()
@@ -121,6 +135,20 @@ func (m *MockModelInterface) DeleteAllOrgDatabaseConnectionsByClusterID(ctx cont
 func (mr *MockModelInterfaceMockRecorder) DeleteAllOrgDatabaseConnectionsByClusterID(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllOrgDatabaseConnectionsByClusterID", reflect.TypeOf((*MockModelInterface)(nil).DeleteAllOrgDatabaseConnectionsByClusterID), ctx, arg)
+}
+
+// DeleteClusterSnapshot mocks base method.
+func (m *MockModelInterface) DeleteClusterSnapshot(ctx context.Context, arg querier.DeleteClusterSnapshotParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteClusterSnapshot", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteClusterSnapshot indicates an expected call of DeleteClusterSnapshot.
+func (mr *MockModelInterfaceMockRecorder) DeleteClusterSnapshot(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteClusterSnapshot", reflect.TypeOf((*MockModelInterface)(nil).DeleteClusterSnapshot), ctx, arg)
 }
 
 // DeleteOrgCluster mocks base method.
@@ -385,6 +413,21 @@ func (m *MockModelInterface) InitDatabaseConnection(ctx context.Context, arg que
 func (mr *MockModelInterfaceMockRecorder) InitDatabaseConnection(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).InitDatabaseConnection), ctx, arg)
+}
+
+// ListClusterSnapshots mocks base method.
+func (m *MockModelInterface) ListClusterSnapshots(ctx context.Context, clusterID int32) ([]*querier.ClusterSnapshot, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListClusterSnapshots", ctx, clusterID)
+	ret0, _ := ret[0].([]*querier.ClusterSnapshot)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListClusterSnapshots indicates an expected call of ListClusterSnapshots.
+func (mr *MockModelInterfaceMockRecorder) ListClusterSnapshots(ctx, clusterID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListClusterSnapshots", reflect.TypeOf((*MockModelInterface)(nil).ListClusterSnapshots), ctx, clusterID)
 }
 
 // ListOrgClusters mocks base method.

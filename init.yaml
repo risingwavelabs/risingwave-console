@@ -1,9 +1,10 @@
 clusters:
   - name: Init Local Cluster
+    version: v2.1.2
     connections:
       host: rw
       sqlPort: 4566
-      metaPort: 5691
+      metaPort: 5690
 databases:
   - name: rw
     cluster: Init Local Cluster

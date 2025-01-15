@@ -15,8 +15,17 @@ type Cluster struct {
 	Host           string
 	SqlPort        int32
 	MetaPort       int32
+	Version        string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+}
+
+type ClusterSnapshot struct {
+	ClusterID  int32
+	SnapshotID int64
+	Name       string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 type DatabaseConnection struct {
