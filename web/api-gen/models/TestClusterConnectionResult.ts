@@ -2,9 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type TestConnectionResult = {
+export type TestClusterConnectionResult = {
     /**
-     * Whether the database connection was successful
+     * Whether the cluster connection was successful
      */
     success: boolean;
     /**

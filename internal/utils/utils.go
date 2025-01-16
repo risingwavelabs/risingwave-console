@@ -1,10 +1,13 @@
 package utils
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -69,4 +72,16 @@ func UnwrapOrDefault[T any](v *T, def T) T {
 		return def
 	}
 	return *v
+}
+
+func TestTCPConnection(ctx context.Context, host string, port int32, timeout time.Duration) error {
+	var d net.Dialer
+	d.Timeout = timeout
+
+	conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", host, port))
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	return nil
 }

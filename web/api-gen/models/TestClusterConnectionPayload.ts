@@ -2,10 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type TestConnectionPayload = {
-    clusterID: number;
-    username: string;
-    password?: string;
-    database: string;
+export type TestClusterConnectionPayload = {
+    host: string;
+    sqlPort: number;
+    metaPort: number;
+    httpPort: number;
 };
 

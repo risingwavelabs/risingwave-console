@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
 	"github.com/risingwavelabs/wavekit/internal/utils"
+	"golang.org/x/mod/semver"
 )
 
 type (
@@ -80,7 +82,7 @@ type ServiceInterface interface {
 	DeleteDatabase(ctx context.Context, id int32, orgID int32) error
 
 	// TestDatabaseConnection tests a database connection
-	TestDatabaseConnection(ctx context.Context, params apigen.TestConnectionPayload, orgID int32) (*apigen.TestConnectionResult, error)
+	TestDatabaseConnection(ctx context.Context, params apigen.TestDatabaseConnectionPayload, orgID int32) (*apigen.TestDatabaseConnectionResult, error)
 
 	// QueryDatabase executes a query on a database
 	QueryDatabase(ctx context.Context, id int32, params apigen.QueryRequest, orgID int32, backgroundDDL bool) (*apigen.QueryResponse, error)
@@ -95,6 +97,13 @@ type ServiceInterface interface {
 
 	// ClusterSnapshot management
 	CreateClusterSnapshot(ctx context.Context, id int32, name string, orgID int32) (*apigen.Snapshot, error)
+
+	// ListClusterSnapshots lists all snapshots of a cluster
+	ListClusterSnapshots(ctx context.Context, id int32, orgID int32) ([]apigen.Snapshot, error)
+
+	DeleteClusterSnapshot(ctx context.Context, id int32, snapshotID int64, orgID int32) error
+
+	TestClusterConnection(ctx context.Context, params apigen.TestClusterConnectionPayload, orgID int32) (*apigen.TestClusterConnectionResult, error)
 }
 
 type Service struct {
@@ -233,8 +242,9 @@ func (s *Service) CreateCluster(ctx context.Context, params apigen.ClusterCreate
 		OrganizationID: orgID,
 		Name:           params.Name,
 		Host:           params.Host,
-		SqlPort:        int32(params.SqlPort),
-		MetaPort:       int32(params.MetaPort),
+		SqlPort:        params.SqlPort,
+		MetaPort:       params.MetaPort,
+		HttpPort:       params.HttpPort,
 		Version:        params.Version,
 	})
 	if err != nil {
@@ -246,8 +256,10 @@ func (s *Service) CreateCluster(ctx context.Context, params apigen.ClusterCreate
 		OrganizationID: cluster.OrganizationID,
 		Name:           cluster.Name,
 		Host:           cluster.Host,
+		Version:        cluster.Version,
 		SqlPort:        cluster.SqlPort,
 		MetaPort:       cluster.MetaPort,
+		HttpPort:       cluster.HttpPort,
 		CreatedAt:      cluster.CreatedAt,
 		UpdatedAt:      cluster.UpdatedAt,
 	}, nil
@@ -270,8 +282,10 @@ func (s *Service) GetCluster(ctx context.Context, id int32, orgID int32) (*apige
 		OrganizationID: cluster.OrganizationID,
 		Name:           cluster.Name,
 		Host:           cluster.Host,
+		Version:        cluster.Version,
 		SqlPort:        cluster.SqlPort,
 		MetaPort:       cluster.MetaPort,
+		HttpPort:       cluster.HttpPort,
 		CreatedAt:      cluster.CreatedAt,
 		UpdatedAt:      cluster.UpdatedAt,
 	}, nil
@@ -293,8 +307,10 @@ func (s *Service) ListClusters(ctx context.Context, orgID int32) ([]apigen.Clust
 			OrganizationID: cluster.OrganizationID,
 			Name:           cluster.Name,
 			Host:           cluster.Host,
+			Version:        cluster.Version,
 			SqlPort:        cluster.SqlPort,
 			MetaPort:       cluster.MetaPort,
+			HttpPort:       cluster.HttpPort,
 			CreatedAt:      cluster.CreatedAt,
 			UpdatedAt:      cluster.UpdatedAt,
 		}
@@ -308,8 +324,10 @@ func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.Clu
 		OrganizationID: orgID,
 		Name:           params.Name,
 		Host:           params.Host,
+		Version:        params.Version,
 		SqlPort:        int32(params.SqlPort),
 		MetaPort:       int32(params.MetaPort),
+		HttpPort:       int32(params.HttpPort),
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -323,8 +341,10 @@ func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.Clu
 		OrganizationID: cluster.OrganizationID,
 		Name:           cluster.Name,
 		Host:           cluster.Host,
+		Version:        cluster.Version,
 		SqlPort:        cluster.SqlPort,
 		MetaPort:       cluster.MetaPort,
+		HttpPort:       cluster.HttpPort,
 		CreatedAt:      cluster.CreatedAt,
 		UpdatedAt:      cluster.UpdatedAt,
 	}, nil
@@ -604,7 +624,7 @@ func (s *Service) DeleteDatabase(ctx context.Context, id int32, orgID int32) err
 	return nil
 }
 
-func (s *Service) TestDatabaseConnection(ctx context.Context, params apigen.TestConnectionPayload, orgID int32) (*apigen.TestConnectionResult, error) {
+func (s *Service) TestDatabaseConnection(ctx context.Context, params apigen.TestDatabaseConnectionPayload, orgID int32) (*apigen.TestDatabaseConnectionResult, error) {
 	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
 		ID:             params.ClusterID,
 		OrganizationID: orgID,
@@ -617,13 +637,13 @@ func (s *Service) TestDatabaseConnection(ctx context.Context, params apigen.Test
 
 	_, err = sql.Query(ctx, connStr, "SELECT 1", false)
 	if err != nil {
-		return &apigen.TestConnectionResult{
+		return &apigen.TestDatabaseConnectionResult{
 			Success: false,
 			Result:  err.Error(),
 		}, nil
 	}
 
-	return &apigen.TestConnectionResult{
+	return &apigen.TestDatabaseConnectionResult{
 		Success: true,
 		Result:  "Connection successful",
 	}, nil
@@ -718,7 +738,14 @@ func (s *Service) CancelDDLProgress(ctx context.Context, id int32, ddlID int64, 
 }
 
 func (s *Service) ListClusterVersions(ctx context.Context) ([]string, error) {
-	return s.risectlm.ListVersions(ctx)
+	versions, err := s.risectlm.ListVersions(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list cluster versions")
+	}
+	sort.Slice(versions, func(i, j int) bool {
+		return semver.Compare(versions[i], versions[j]) > 0
+	})
+	return versions, nil
 }
 
 func (s *Service) getRisectlConn(ctx context.Context, id int32) (risectl.RisectlConn, error) {
@@ -754,5 +781,54 @@ func (s *Service) CreateClusterSnapshot(ctx context.Context, id int32, name stri
 		Name:      name,
 		ClusterID: id,
 		CreatedAt: time.Now(),
+	}, nil
+}
+
+func (s *Service) ListClusterSnapshots(ctx context.Context, id int32, orgID int32) ([]apigen.Snapshot, error) {
+	snapshots, err := s.m.ListClusterSnapshots(ctx, id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list cluster snapshots")
+	}
+
+	result := make([]apigen.Snapshot, len(snapshots))
+	for i, snapshot := range snapshots {
+		result[i] = apigen.Snapshot{
+			ID:        snapshot.SnapshotID,
+			Name:      snapshot.Name,
+			ClusterID: snapshot.ClusterID,
+			CreatedAt: snapshot.CreatedAt,
+		}
+	}
+	return result, nil
+}
+
+func (s *Service) DeleteClusterSnapshot(ctx context.Context, id int32, snapshotID int64, orgID int32) error {
+	conn, err := s.getRisectlConn(ctx, id)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get risectl connection")
+	}
+
+	if err := conn.DeleteSnapshot(ctx, snapshotID); err != nil {
+		return errors.Wrapf(err, "failed to delete snapshot")
+	}
+
+	return nil
+}
+
+func (s *Service) TestClusterConnection(ctx context.Context, params apigen.TestClusterConnectionPayload, orgID int32) (*apigen.TestClusterConnectionResult, error) {
+	errMsg := ""
+	if err := utils.TestTCPConnection(ctx, params.Host, params.MetaPort, 5*time.Second); err != nil {
+		errMsg += fmt.Sprintf("Failed to connect to meta port: %s\n", err.Error())
+	}
+	if err := utils.TestTCPConnection(ctx, params.Host, params.SqlPort, 5*time.Second); err != nil {
+		errMsg += fmt.Sprintf("Failed to connect to sql port: %s\n", err.Error())
+	}
+	if err := utils.TestTCPConnection(ctx, params.Host, params.HttpPort, 5*time.Second); err != nil {
+		errMsg += fmt.Sprintf("Failed to connect to http port: %s\n", err.Error())
+	}
+
+	return &apigen.TestClusterConnectionResult{
+		Success: errMsg == "",
+		Result:  utils.IfElse(errMsg == "", "Connection successful", errMsg),
 	}, nil
 }

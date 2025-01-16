@@ -15,6 +15,7 @@ type Cluster struct {
 	Host           string
 	SqlPort        int32
 	MetaPort       int32
+	HttpPort       int32
 	Version        string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time

@@ -7,6 +7,7 @@ export type UpdateClusterRequest = {
     host: string;
     sqlPort: number;
     metaPort: number;
+    httpPort: number;
     version: string;
 };
 

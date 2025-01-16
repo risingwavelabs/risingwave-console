@@ -21,6 +21,7 @@ type ClusterConnections struct {
 	Host     string `yaml:"host" validate:"required,hostname_rfc1123"`
 	SqlPort  int32  `yaml:"sqlPort" validate:"required,min=1,max=65535"`
 	MetaPort int32  `yaml:"metaPort" validate:"required,min=1,max=65535"`
+	HttpPort int32  `yaml:"httpPort" validate:"required,min=1,max=65535"`
 }
 
 type Cluster struct {
@@ -105,6 +106,7 @@ func (s *InitService) initDatabase(ctx context.Context, cfg *InitConfig, orgID i
 				Host:           cluster.Connections.Host,
 				SqlPort:        cluster.Connections.SqlPort,
 				MetaPort:       cluster.Connections.MetaPort,
+				HttpPort:       cluster.Connections.HttpPort,
 				Version:        cluster.Version,
 			})
 			if err != nil {

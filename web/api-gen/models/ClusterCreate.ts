@@ -20,6 +20,10 @@ export type ClusterCreate = {
      */
     metaPort: number;
     /**
+     * HTTP port
+     */
+    httpPort: number;
+    /**
      * Version of the cluster
      */
     version: string;

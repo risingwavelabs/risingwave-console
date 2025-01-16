@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS clusters (
     host            TEXT        NOT NULL,
     sql_port        INTEGER     NOT NULL,
     meta_port       INTEGER     NOT NULL,
+    http_port       INTEGER     NOT NULL,
     version         TEXT        NOT NULL,
     
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,

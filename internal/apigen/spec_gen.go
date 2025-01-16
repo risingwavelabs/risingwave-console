@@ -41,6 +41,7 @@ type Cluster struct {
 	ID             int32     `json:"ID"`
 	CreatedAt      time.Time `json:"createdAt"`
 	Host           string    `json:"host"`
+	HttpPort       int32     `json:"httpPort"`
 	MetaPort       int32     `json:"metaPort"`
 	Name           string    `json:"name"`
 	OrganizationID int32     `json:"organizationID"`
@@ -54,14 +55,17 @@ type ClusterCreate struct {
 	// Host Cluster host address
 	Host string `json:"host"`
 
+	// HttpPort HTTP port
+	HttpPort int32 `json:"httpPort"`
+
 	// MetaPort Metadata node port
-	MetaPort int `json:"metaPort"`
+	MetaPort int32 `json:"metaPort"`
 
 	// Name Name of the cluster
 	Name string `json:"name"`
 
 	// SqlPort SQL connection port
-	SqlPort int `json:"sqlPort"`
+	SqlPort int32 `json:"sqlPort"`
 
 	// Version Version of the cluster
 	Version string `json:"version"`
@@ -279,16 +283,33 @@ type SnapshotCreate struct {
 	Name string `json:"name"`
 }
 
-// TestConnectionPayload defines model for TestConnectionPayload.
-type TestConnectionPayload struct {
+// TestClusterConnectionPayload defines model for TestClusterConnectionPayload.
+type TestClusterConnectionPayload struct {
+	Host     string `json:"host"`
+	HttpPort int32  `json:"httpPort"`
+	MetaPort int32  `json:"metaPort"`
+	SqlPort  int32  `json:"sqlPort"`
+}
+
+// TestClusterConnectionResult defines model for TestClusterConnectionResult.
+type TestClusterConnectionResult struct {
+	// Result Test result
+	Result string `json:"result"`
+
+	// Success Whether the cluster connection was successful
+	Success bool `json:"success"`
+}
+
+// TestDatabaseConnectionPayload defines model for TestDatabaseConnectionPayload.
+type TestDatabaseConnectionPayload struct {
 	ClusterID int32   `json:"clusterID"`
 	Database  string  `json:"database"`
 	Password  *string `json:"password,omitempty"`
 	Username  string  `json:"username"`
 }
 
-// TestConnectionResult defines model for TestConnectionResult.
-type TestConnectionResult struct {
+// TestDatabaseConnectionResult defines model for TestDatabaseConnectionResult.
+type TestDatabaseConnectionResult struct {
 	// Result Test result
 	Result string `json:"result"`
 
@@ -299,6 +320,7 @@ type TestConnectionResult struct {
 // UpdateClusterRequest defines model for UpdateClusterRequest.
 type UpdateClusterRequest struct {
 	Host     string `json:"host"`
+	HttpPort int32  `json:"httpPort"`
 	MetaPort int32  `json:"metaPort"`
 	Name     string `json:"name"`
 	SqlPort  int32  `json:"sqlPort"`
@@ -350,13 +372,16 @@ type CreateClusterSnapshotJSONRequestBody = SnapshotCreate
 type CreateDatabaseJSONRequestBody = DatabaseConnectInfo
 
 // TestDatabaseConnectionJSONRequestBody defines body for TestDatabaseConnection for application/json ContentType.
-type TestDatabaseConnectionJSONRequestBody = TestConnectionPayload
+type TestDatabaseConnectionJSONRequestBody = TestDatabaseConnectionPayload
 
 // UpdateDatabaseJSONRequestBody defines body for UpdateDatabase for application/json ContentType.
 type UpdateDatabaseJSONRequestBody = DatabaseConnectInfo
 
 // QueryDatabaseJSONRequestBody defines body for QueryDatabase for application/json ContentType.
 type QueryDatabaseJSONRequestBody = QueryRequest
+
+// TestClusterConnectionJSONRequestBody defines body for TestClusterConnection for application/json ContentType.
+type TestClusterConnectionJSONRequestBody = TestClusterConnectionPayload
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -530,6 +555,11 @@ type ClientInterface interface {
 	QueryDatabaseWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	QueryDatabase(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestClusterConnectionWithBody request with any body
+	TestClusterConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	TestClusterConnection(ctx context.Context, body TestClusterConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) RefreshTokenWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -966,6 +996,30 @@ func (c *Client) QueryDatabaseWithBody(ctx context.Context, iD int32, contentTyp
 
 func (c *Client) QueryDatabase(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewQueryDatabaseRequest(c.Server, iD, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestClusterConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestClusterConnectionRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestClusterConnection(ctx context.Context, body TestClusterConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestClusterConnectionRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2060,6 +2114,46 @@ func NewQueryDatabaseRequestWithBody(server string, iD int32, contentType string
 	return req, nil
 }
 
+// NewTestClusterConnectionRequest calls the generic TestClusterConnection builder with application/json body
+func NewTestClusterConnectionRequest(server string, body TestClusterConnectionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewTestClusterConnectionRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewTestClusterConnectionRequestWithBody generates requests for TestClusterConnection with any type of body
+func NewTestClusterConnectionRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-cluster-connection")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -2202,6 +2296,11 @@ type ClientWithResponsesInterface interface {
 	QueryDatabaseWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
 
 	QueryDatabaseWithResponse(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
+
+	// TestClusterConnectionWithBodyWithResponse request with any body
+	TestClusterConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TestClusterConnectionResponse, error)
+
+	TestClusterConnectionWithResponse(ctx context.Context, body TestClusterConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*TestClusterConnectionResponse, error)
 }
 
 type RefreshTokenResponse struct {
@@ -2633,7 +2732,7 @@ func (r CreateDatabaseResponse) StatusCode() int {
 type TestDatabaseConnectionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *TestConnectionResult
+	JSON200      *TestDatabaseConnectionResult
 }
 
 // Status returns HTTPResponse.Status
@@ -2776,6 +2875,28 @@ func (r QueryDatabaseResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r QueryDatabaseResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestClusterConnectionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TestClusterConnectionResult
+}
+
+// Status returns HTTPResponse.Status
+func (r TestClusterConnectionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestClusterConnectionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3102,6 +3223,23 @@ func (c *ClientWithResponses) QueryDatabaseWithResponse(ctx context.Context, iD 
 		return nil, err
 	}
 	return ParseQueryDatabaseResponse(rsp)
+}
+
+// TestClusterConnectionWithBodyWithResponse request with arbitrary body returning *TestClusterConnectionResponse
+func (c *ClientWithResponses) TestClusterConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TestClusterConnectionResponse, error) {
+	rsp, err := c.TestClusterConnectionWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestClusterConnectionResponse(rsp)
+}
+
+func (c *ClientWithResponses) TestClusterConnectionWithResponse(ctx context.Context, body TestClusterConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*TestClusterConnectionResponse, error) {
+	rsp, err := c.TestClusterConnection(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestClusterConnectionResponse(rsp)
 }
 
 // ParseRefreshTokenResponse parses an HTTP response from a RefreshTokenWithResponse call
@@ -3594,7 +3732,7 @@ func ParseTestDatabaseConnectionResponse(rsp *http.Response) (*TestDatabaseConne
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TestConnectionResult
+		var dest TestDatabaseConnectionResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -3741,6 +3879,32 @@ func ParseQueryDatabaseResponse(rsp *http.Response) (*QueryDatabaseResponse, err
 	return response, nil
 }
 
+// ParseTestClusterConnectionResponse parses an HTTP response from a TestClusterConnectionWithResponse call
+func ParseTestClusterConnectionResponse(rsp *http.Response) (*TestClusterConnectionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestClusterConnectionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestClusterConnectionResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Refresh access token
@@ -3821,6 +3985,9 @@ type ServerInterface interface {
 	// Query database
 	// (POST /databases/{ID}/query)
 	QueryDatabase(c *fiber.Ctx, iD int32) error
+	// Test cluster connection
+	// (POST /test-cluster-connection)
+	TestClusterConnection(c *fiber.Ctx) error
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -4289,6 +4456,14 @@ func (siw *ServerInterfaceWrapper) QueryDatabase(c *fiber.Ctx) error {
 	return siw.Handler.QueryDatabase(c, iD)
 }
 
+// TestClusterConnection operation middleware
+func (siw *ServerInterfaceWrapper) TestClusterConnection(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.TestClusterConnection(c)
+}
+
 // FiberServerOptions provides options for the Fiber server.
 type FiberServerOptions struct {
 	BaseURL     string
@@ -4361,5 +4536,7 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	router.Post(options.BaseURL+"/databases/:ID/ddl-progress/:ddlID/cancel", wrapper.CancelDDLProgress)
 
 	router.Post(options.BaseURL+"/databases/:ID/query", wrapper.QueryDatabase)
+
+	router.Post(options.BaseURL+"/test-cluster-connection", wrapper.TestClusterConnection)
 
 }

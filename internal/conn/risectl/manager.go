@@ -12,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/google/go-github/v68/github"
 	"github.com/risingwavelabs/wavekit/internal/config"
@@ -28,6 +30,10 @@ type RisectlManagerInterface interface {
 type RisectlManager struct {
 	risectlDir string
 	noInternet bool
+
+	cache []string
+	mu    sync.RWMutex
+	exp   time.Time
 }
 
 func NewRisectlManager(cfg *config.Config) (RisectlManagerInterface, error) {
@@ -48,6 +54,10 @@ func NewRisectlManager(cfg *config.Config) (RisectlManagerInterface, error) {
 }
 
 func (m *RisectlManager) NewConn(ctx context.Context, version string, endpoint string) (RisectlConn, error) {
+	if version == "" {
+		return nil, fmt.Errorf("version is required")
+	}
+
 	path := filepath.Join(m.risectlDir, version, risectlFileName)
 
 	_, err := os.Stat(path)
@@ -94,6 +104,11 @@ func (m *RisectlManager) listVersionsNoInternet() ([]string, error) {
 }
 
 func (m *RisectlManager) listVersions(ctx context.Context) ([]string, error) {
+	if time.Now().Before(m.exp) {
+		m.mu.RLock()
+		defer m.mu.RUnlock()
+		return m.cache, nil
+	}
 	client := github.NewClient(nil)
 
 	releases, _, err := client.Repositories.ListReleases(ctx, "risingwavelabs", "risingwave", nil)
@@ -107,6 +122,11 @@ func (m *RisectlManager) listVersions(ctx context.Context) ([]string, error) {
 			versions = append(versions, *release.TagName)
 		}
 	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.cache = versions
+	m.exp = time.Now().Add(5 * time.Minute)
 
 	return versions, nil
 }

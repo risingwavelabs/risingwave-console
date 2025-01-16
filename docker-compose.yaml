@@ -32,8 +32,8 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_PASSWORD: postgres
-    volumes:
-      - db-data:/var/lib/postgresql/data
+    # volumes:
+    #   - db-data:/var/lib/postgresql/data
 
   rw:
     image: risingwavelabs/risingwave:v2.1.2

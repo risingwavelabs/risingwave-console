@@ -7,11 +7,15 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+
+	"github.com/risingwavelabs/wavekit/internal/utils"
+	"golang.org/x/mod/semver"
 )
 
 type RisectlConn interface {
 	Run(ctx context.Context, args ...string) (string, int, error)
 	MetaBackup(ctx context.Context) (int64, error)
+	DeleteSnapshot(ctx context.Context, snapshotID int64) error
 }
 
 type RisectlConnection struct {
@@ -50,4 +54,18 @@ func (c *RisectlConnection) MetaBackup(ctx context.Context) (int64, error) {
 
 	jobID := matches[1]
 	return strconv.ParseInt(jobID, 10, 64)
+}
+
+func (c *RisectlConnection) DeleteSnapshot(ctx context.Context, snapshotID int64) error {
+	res, ec, err := c.Run(ctx,
+		utils.IfElse(
+			semver.Compare(c.version, "v2.0.1") >= 0,
+			[]string{"meta", "delete-meta-snapshots", "--snapshot-ids", strconv.FormatInt(snapshotID, 10)},
+			[]string{"meta", "delete-meta-snapshots", strconv.FormatInt(snapshotID, 10)},
+		)...,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to delete snapshot: %w, output: %s, exit code: %d", err, res, ec)
+	}
+	return nil
 }

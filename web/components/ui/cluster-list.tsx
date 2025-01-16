@@ -11,12 +11,14 @@ import { ClusterDialog, ClusterFormData } from "./new-cluster-dialog"
 import { ConfirmationPopup } from "./confirmation-popup"
 
 export interface Cluster {
-  id: string
+  id: number
   name: string
   status: "running" | "stopped" | "error"
   host: string
   sqlPort: number
   metaPort: number
+  httpPort: number
+  version: string
 }
 
 type ViewMode = "grid" | "list"
@@ -137,7 +139,9 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit, o
                     name: cluster.name,
                     host: cluster.host,
                     sqlPort: cluster.sqlPort,
-                    metaPort: cluster.metaPort
+                    metaPort: cluster.metaPort,
+                    httpPort: cluster.httpPort,
+                    version: cluster.version
                   }}
                   trigger={<Button variant="outline" size="sm">Edit</Button>}
                   onSubmit={(data: ClusterFormData) => onEdit?.({
@@ -176,8 +180,15 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit, o
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-sm text-muted-foreground">
-              <div>Host: <span className="text-foreground">{cluster.host}</span></div>
-              <div>SQL Port: <span className="text-foreground">{cluster.sqlPort}</span> Meta Port: <span className="text-foreground">{cluster.metaPort}</span></div>
+              <div>
+                Host: <span className="text-foreground">{cluster.host}</span>
+                <div>Version: <span className="text-foreground">{cluster.version}</span></div>
+              </div>
+              <div>
+                SQL Port: <span className="text-foreground">{cluster.sqlPort}</span>{" "}
+                Meta Port: <span className="text-foreground">{cluster.metaPort}</span>{" "}
+                HTTP Port: <span className="text-foreground">{cluster.httpPort}</span>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -194,7 +205,7 @@ export function ClusterList({ clusters: initialClusters, onEdit, onDelete }: Clu
   useEffect(() => {
     const savedOrder = localStorage.getItem(STORAGE_KEY)
     if (savedOrder) {
-      const orderIds = JSON.parse(savedOrder) as string[]
+      const orderIds = JSON.parse(savedOrder) as number[]
       const orderedClusters = [...initialClusters]
       orderedClusters.sort((a, b) => {
         const aIndex = orderIds.indexOf(a.id)

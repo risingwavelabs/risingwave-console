@@ -9,6 +9,7 @@ export type Cluster = {
     host: string;
     sqlPort: number;
     metaPort: number;
+    httpPort: number;
     version: string;
     createdAt: string;
     updatedAt: string;

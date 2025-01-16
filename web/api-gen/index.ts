@@ -25,8 +25,10 @@ export type { SignInRequest } from './models/SignInRequest';
 export type { Snapshot } from './models/Snapshot';
 export type { SnapshotConfig } from './models/SnapshotConfig';
 export type { SnapshotCreate } from './models/SnapshotCreate';
-export type { TestConnectionPayload } from './models/TestConnectionPayload';
-export type { TestConnectionResult } from './models/TestConnectionResult';
+export type { TestClusterConnectionPayload } from './models/TestClusterConnectionPayload';
+export type { TestClusterConnectionResult } from './models/TestClusterConnectionResult';
+export type { TestDatabaseConnectionPayload } from './models/TestDatabaseConnectionPayload';
+export type { TestDatabaseConnectionResult } from './models/TestDatabaseConnectionResult';
 export type { UpdateClusterRequest } from './models/UpdateClusterRequest';
 export type { User } from './models/User';
 

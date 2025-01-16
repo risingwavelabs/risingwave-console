@@ -17,8 +17,10 @@ import type { SignInRequest } from '../models/SignInRequest';
 import type { Snapshot } from '../models/Snapshot';
 import type { SnapshotConfig } from '../models/SnapshotConfig';
 import type { SnapshotCreate } from '../models/SnapshotCreate';
-import type { TestConnectionPayload } from '../models/TestConnectionPayload';
-import type { TestConnectionResult } from '../models/TestConnectionResult';
+import type { TestClusterConnectionPayload } from '../models/TestClusterConnectionPayload';
+import type { TestClusterConnectionResult } from '../models/TestClusterConnectionResult';
+import type { TestDatabaseConnectionPayload } from '../models/TestDatabaseConnectionPayload';
+import type { TestDatabaseConnectionResult } from '../models/TestDatabaseConnectionResult';
 import type { UpdateClusterRequest } from '../models/UpdateClusterRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -57,12 +59,12 @@ export class DefaultService {
      * Test database connection
      * Test a database connection
      * @param requestBody
-     * @returns TestConnectionResult Successfully tested database connection
+     * @returns TestDatabaseConnectionResult Successfully tested database connection
      * @throws ApiError
      */
     public static testDatabaseConnection(
-        requestBody: TestConnectionPayload,
-    ): CancelablePromise<TestConnectionResult> {
+        requestBody: TestDatabaseConnectionPayload,
+    ): CancelablePromise<TestDatabaseConnectionResult> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/databases/test-connection',
@@ -185,6 +187,23 @@ export class DefaultService {
                 'ID': id,
                 'ddlID': ddlId,
             },
+        });
+    }
+    /**
+     * Test cluster connection
+     * Test a cluster connection
+     * @param requestBody
+     * @returns TestClusterConnectionResult Successfully tested cluster connection
+     * @throws ApiError
+     */
+    public static testClusterConnection(
+        requestBody: TestClusterConnectionPayload,
+    ): CancelablePromise<TestClusterConnectionResult> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/test-cluster-connection',
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**

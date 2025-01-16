@@ -58,14 +58,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TestConnectionPayload'
+              $ref: '#/components/schemas/TestDatabaseConnectionPayload'
       responses:
         '200':
           description: Successfully tested database connection
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestConnectionResult'
+                $ref: '#/components/schemas/TestDatabaseConnectionResult'
 
   /databases/{ID}:
     parameters:
@@ -191,6 +191,27 @@ paths:
         '200':
           description: Successfully canceled DDL operation
 
+  /test-cluster-connection:
+    post:
+      summary: Test cluster connection
+      description: Test a cluster connection
+      operationId: testClusterConnection
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestClusterConnectionPayload'
+      responses:
+        '200':
+          description: Successfully tested cluster connection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestClusterConnectionResult'
+
   /cluster-versions:
     get:
       summary: List all cluster versions
@@ -205,6 +226,7 @@ paths:
                 type: array
                 items:
                   type: string
+                  
 
   /clusters:
     get:
@@ -736,6 +758,7 @@ components:
         - host
         - sqlPort
         - metaPort
+        - httpPort
         - version
       properties:
         name:
@@ -746,10 +769,16 @@ components:
           description: Cluster host address
         sqlPort:
           type: integer
+          format: int32
           description: SQL connection port
         metaPort:
           type: integer
+          format: int32
           description: Metadata node port
+        httpPort:
+          type: integer
+          format: int32
+          description: HTTP port
         version:
           type: string
           description: Version of the cluster
@@ -763,6 +792,7 @@ components:
         - host
         - sqlPort
         - metaPort
+        - httpPort
         - version
         - createdAt
         - updatedAt
@@ -783,6 +813,9 @@ components:
         metaPort:
           type: integer
           format: int32
+        httpPort:
+          type: integer
+          format: int32
         version:
           type: string
         createdAt:
@@ -799,6 +832,7 @@ components:
         - host
         - sqlPort
         - metaPort
+        - httpPort
         - version
       properties:
         name:
@@ -809,6 +843,9 @@ components:
           type: integer
           format: int32
         metaPort:
+          type: integer
+          format: int32
+        httpPort:
           type: integer
           format: int32
         version:
@@ -1024,7 +1061,40 @@ components:
           format: date-time
           description: When the DDL operation was initialized
 
-    TestConnectionPayload:
+    TestClusterConnectionPayload:
+      type: object
+      required:
+        - host
+        - sqlPort
+        - metaPort
+        - httpPort
+      properties:
+        host:
+          type: string
+        sqlPort:
+          type: integer
+          format: int32
+        metaPort:
+          type: integer
+          format: int32
+        httpPort:
+          type: integer
+          format: int32
+    
+    TestClusterConnectionResult:
+      type: object
+      required:
+        - success
+        - result
+      properties:
+        success:
+          type: boolean
+          description: Whether the cluster connection was successful
+        result:
+          type: string
+          description: Test result
+
+    TestDatabaseConnectionPayload:
       type: object
       required:
         - clusterID
@@ -1041,7 +1111,7 @@ components:
         database:
           type: string
 
-    TestConnectionResult:
+    TestDatabaseConnectionResult:
       type: object
       required:
         - result

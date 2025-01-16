@@ -276,7 +276,7 @@ func (controller *Controller) TestDatabaseConnection(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	var params apigen.TestConnectionPayload
+	var params apigen.TestDatabaseConnectionPayload
 	if err := c.BodyParser(&params); err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
@@ -331,7 +331,16 @@ func (controller *Controller) CreateClusterSnapshot(c *fiber.Ctx, id int32) erro
 }
 
 func (controller *Controller) DeleteClusterSnapshot(c *fiber.Ctx, id int32, snapshotId int64) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	err = controller.svc.DeleteClusterSnapshot(c.Context(), id, snapshotId, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+	return c.SendStatus(fiber.StatusOK)
 }
 
 func (controller *Controller) RestoreClusterSnapshot(c *fiber.Ctx, id int32, snapshotId int64) error {
@@ -339,7 +348,16 @@ func (controller *Controller) RestoreClusterSnapshot(c *fiber.Ctx, id int32, sna
 }
 
 func (controller *Controller) ListClusterSnapshots(c *fiber.Ctx, id int32) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	snapshots, err := controller.svc.ListClusterSnapshots(c.Context(), id, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+	return c.Status(fiber.StatusOK).JSON(snapshots)
 }
 
 func (controller *Controller) GetClusterSnapshotConfig(c *fiber.Ctx, id int32) error {
@@ -368,4 +386,23 @@ func (controller *Controller) ListClusterVersions(c *fiber.Ctx) error {
 		return err
 	}
 	return c.Status(fiber.StatusOK).JSON(versions)
+}
+
+func (controller *Controller) TestClusterConnection(c *fiber.Ctx) error {
+	var params apigen.TestClusterConnectionPayload
+	if err := c.BodyParser(&params); err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	conn, err := controller.svc.TestClusterConnection(c.Context(), params, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(conn)
 }

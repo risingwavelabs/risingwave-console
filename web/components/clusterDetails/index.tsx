@@ -47,6 +47,7 @@ interface ClusterData {
   host: string
   sqlPort: number
   metaPort: number
+  httpPort: number
   nodes: number
   snapshots: Array<{
     id: number
@@ -85,6 +86,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
   const [expiration, setExpiration] = useState("")
   const [noExpiration, setNoExpiration] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [snapshotPage, setSnapshotPage] = useState(1)
   const [deleteSnapshotId, setDeleteSnapshotId] = useState<number | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(false)
@@ -96,6 +98,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
     const fetchClusterData = async () => {
       try {
         const data = await DefaultService.getCluster(clusterId)
+        const snapshots = await DefaultService.listClusterSnapshots(clusterId)
         // Transform API data to match our UI needs
         const transformedData: ClusterData = {
           id: data.ID.toString(),
@@ -104,8 +107,13 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           host: data.host,
           sqlPort: data.sqlPort,
           metaPort: data.metaPort,
+          httpPort: data.httpPort,
           nodes: 1, // Set default or get from API if available
-          snapshots: [], // Initialize empty, you might want to fetch this separately
+          snapshots: snapshots.map(s => ({
+            id: s.ID,
+            name: s.name,
+            created_at: s.createdAt
+          })),
           autoBackup: {
             enabled: false,
             interval: "24h",
@@ -152,7 +160,13 @@ export default function ClusterPage({ params }: ClusterPageProps) {
     return null
   }
 
-  const itemsPerPage = 5
+  const ITEMS_PER_PAGE = 5
+  const paginatedSnapshots = clusterData?.snapshots.slice(
+    (snapshotPage - 1) * ITEMS_PER_PAGE,
+    snapshotPage * ITEMS_PER_PAGE
+  ) || []
+  const totalSnapshotPages = Math.ceil((clusterData?.snapshots.length || 0) / ITEMS_PER_PAGE)
+
   const filteredItems = clusterData.diagnostics.history
     .filter(item => {
       if (!dateRange?.from && !dateRange?.to) return true
@@ -169,9 +183,9 @@ export default function ClusterPage({ params }: ClusterPageProps) {
       return true
     })
 
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const currentItems = filteredItems.slice(startIndex, startIndex + itemsPerPage)
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const currentItems = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE)
 
   const handleDeleteSnapshot = async (id: number) => {
     try {
@@ -262,6 +276,10 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                 <div>
                   <p className="text-sm text-muted-foreground">Meta Node Port</p>
                   <p className="text-sm font-medium">{clusterData.metaPort}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">HTTP Port</p>
+                  <p className="text-sm font-medium">{clusterData.httpPort}</p>
                 </div>
               </div>
             </CardContent>
@@ -359,34 +377,73 @@ export default function ClusterPage({ params }: ClusterPageProps) {
               No snapshots available. Create a snapshot to backup your cluster metadata.
             </div>
           ) : (
-            clusterData.snapshots.map(snapshot => (
-              <div key={snapshot.id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
-                <div>
-                  <p className="text-sm font-medium">{snapshot.name}</p>
-                  <p className="text-sm text-muted-foreground">{snapshot.created_at}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">Restore</Button>
-                  <div className="relative">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => setDeleteSnapshotId(snapshot.id)}
-                    >
-                      Delete
-                    </Button>
-                    {deleteSnapshotId === snapshot.id && (
-                      <ConfirmationPopup
-                        message="Delete this snapshot?"
-                        onConfirm={() => handleDeleteSnapshot(snapshot.id)}
-                        onCancel={() => setDeleteSnapshotId(null)}
-                      />
-                    )}
+            <>
+              {paginatedSnapshots.map(snapshot => (
+                <div key={snapshot.id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
+                  <div>
+                    <p className="text-sm font-medium">{snapshot.name}</p>
+                    <p className="text-sm text-muted-foreground">{snapshot.created_at}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    {/* <Button variant="outline" size="sm">Restore</Button> */}
+                    <div className="relative">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-500 hover:text-red-600"
+                        onClick={() => setDeleteSnapshotId(snapshot.id)}
+                      >
+                        Delete
+                      </Button>
+                      {deleteSnapshotId === snapshot.id && (
+                        <ConfirmationPopup
+                          message="Delete this snapshot?"
+                          onConfirm={() => handleDeleteSnapshot(snapshot.id)}
+                          onCancel={() => setDeleteSnapshotId(null)}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (snapshotPage > 1) setSnapshotPage(p => p - 1);
+                      }}
+                    />
+                  </PaginationItem>
+                  {[...Array(totalSnapshotPages)].map((_, i) => (
+                    <PaginationItem key={i + 1}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSnapshotPage(i + 1);
+                        }}
+                        isActive={snapshotPage === i + 1}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (snapshotPage < totalSnapshotPages) setSnapshotPage(p => p + 1);
+                      }}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </>
           )}
         </div>
       </div>

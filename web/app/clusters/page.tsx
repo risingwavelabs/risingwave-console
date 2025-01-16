@@ -11,12 +11,14 @@ import { Button } from "@/components/ui/button"
 
 function mapAPIClusterToUICluster(apiCluster: APICluster): UICluster {
   return {
-    id: apiCluster.ID.toString(),
+    id: apiCluster.ID,
     name: apiCluster.name,
     status: "running", // You might want to derive this from API data
     host: apiCluster.host,
     sqlPort: apiCluster.sqlPort,
     metaPort: apiCluster.metaPort,
+    httpPort: apiCluster.httpPort,
+    version: apiCluster.version
   }
 }
 
@@ -60,6 +62,8 @@ export default function ClustersPage() {
         host: cluster.host,
         sqlPort: cluster.sqlPort,
         metaPort: cluster.metaPort,
+        httpPort: cluster.httpPort,
+        version: cluster.version,
       })
       setClusters(prev => prev.map(c =>
         c.id === cluster.id ? mapAPIClusterToUICluster(updatedCluster) : c
