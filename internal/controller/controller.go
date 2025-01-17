@@ -369,7 +369,16 @@ func (controller *Controller) UpdateClusterSnapshotConfig(c *fiber.Ctx, id int32
 }
 
 func (controller *Controller) ListClusterDiagnostics(c *fiber.Ctx, id int32, params apigen.ListClusterDiagnosticsParams) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	diagnostics, err := controller.svc.ListClusterDiagnostics(c.Context(), id, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+	return c.Status(fiber.StatusOK).JSON(diagnostics)
 }
 
 func (controller *Controller) GetClusterDiagnosticConfig(c *fiber.Ctx, id int32) error {
@@ -424,4 +433,30 @@ func (controller *Controller) RunRisectlCommand(c *fiber.Ctx, id int32) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (controller *Controller) CreateClusterDiagnostic(c *fiber.Ctx, id int32) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	diagnostic, err := controller.svc.CreateClusterDiagnostic(c.Context(), id, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+	return c.Status(fiber.StatusOK).JSON(diagnostic)
+}
+
+func (controller *Controller) GetClusterDiagnostic(c *fiber.Ctx, id int32, diagnosticId int32) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	diagnostic, err := controller.svc.GetClusterDiagnostic(c.Context(), id, diagnosticId, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+	return c.Status(fiber.StatusOK).JSON(diagnostic)
 }

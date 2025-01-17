@@ -179,13 +179,13 @@ type DiagnosticConfig struct {
 // DiagnosticData defines model for DiagnosticData.
 type DiagnosticData struct {
 	// ID Unique identifier of the diagnostic entry
-	ID int `json:"ID"`
+	ID int32 `json:"ID"`
 
-	// Data Raw diagnostic data message containing system metrics and information
-	Data string `json:"data"`
+	// Content Raw diagnostic data message containing system metrics and information
+	Content string `json:"content"`
 
-	// Timestamp When the diagnostic data was collected
-	Timestamp time.Time `json:"timestamp"`
+	// CreatedAt When the diagnostic data was collected
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 // QueryRequest defines model for QueryRequest.
@@ -247,8 +247,11 @@ type RisectlCommandResult struct {
 	// ExitCode Exit code of the risectl command
 	ExitCode int32 `json:"exitCode"`
 
-	// Result Result of the risectl command
-	Result string `json:"result"`
+	// Stderr Standard error of the risectl command
+	Stderr string `json:"stderr"`
+
+	// Stdout Standard output of the risectl command
+	Stdout string `json:"stdout"`
 }
 
 // Schema defines model for Schema.
@@ -375,6 +378,9 @@ type CreateClusterJSONRequestBody = ClusterCreate
 
 // UpdateClusterJSONRequestBody defines body for UpdateCluster for application/json ContentType.
 type UpdateClusterJSONRequestBody = UpdateClusterRequest
+
+// CreateClusterDiagnosticJSONRequestBody defines body for CreateClusterDiagnostic for application/json ContentType.
+type CreateClusterDiagnosticJSONRequestBody = DiagnosticData
 
 // UpdateClusterDiagnosticConfigJSONRequestBody defines body for UpdateClusterDiagnosticConfig for application/json ContentType.
 type UpdateClusterDiagnosticConfigJSONRequestBody = DiagnosticConfig
@@ -511,6 +517,11 @@ type ClientInterface interface {
 	// ListClusterDiagnostics request
 	ListClusterDiagnostics(ctx context.Context, iD int32, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreateClusterDiagnosticWithBody request with any body
+	CreateClusterDiagnosticWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateClusterDiagnostic(ctx context.Context, iD int32, body CreateClusterDiagnosticJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetClusterDiagnosticConfig request
 	GetClusterDiagnosticConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -518,6 +529,9 @@ type ClientInterface interface {
 	UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	UpdateClusterDiagnosticConfig(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetClusterDiagnostic request
+	GetClusterDiagnostic(ctx context.Context, iD int32, diagnosticId int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// RunRisectlCommandWithBody request with any body
 	RunRisectlCommandWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -743,6 +757,30 @@ func (c *Client) ListClusterDiagnostics(ctx context.Context, iD int32, params *L
 	return c.Client.Do(req)
 }
 
+func (c *Client) CreateClusterDiagnosticWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateClusterDiagnosticRequestWithBody(c.Server, iD, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateClusterDiagnostic(ctx context.Context, iD int32, body CreateClusterDiagnosticJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateClusterDiagnosticRequest(c.Server, iD, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetClusterDiagnosticConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetClusterDiagnosticConfigRequest(c.Server, iD)
 	if err != nil {
@@ -769,6 +807,18 @@ func (c *Client) UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD i
 
 func (c *Client) UpdateClusterDiagnosticConfig(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateClusterDiagnosticConfigRequest(c.Server, iD, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetClusterDiagnostic(ctx context.Context, iD int32, diagnosticId int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetClusterDiagnosticRequest(c.Server, iD, diagnosticId)
 	if err != nil {
 		return nil, err
 	}
@@ -1494,6 +1544,53 @@ func NewListClusterDiagnosticsRequest(server string, iD int32, params *ListClust
 	return req, nil
 }
 
+// NewCreateClusterDiagnosticRequest calls the generic CreateClusterDiagnostic builder with application/json body
+func NewCreateClusterDiagnosticRequest(server string, iD int32, body CreateClusterDiagnosticJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateClusterDiagnosticRequestWithBody(server, iD, "application/json", bodyReader)
+}
+
+// NewCreateClusterDiagnosticRequestWithBody generates requests for CreateClusterDiagnostic with any type of body
+func NewCreateClusterDiagnosticRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clusters/%s/diagnostics", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetClusterDiagnosticConfigRequest generates requests for GetClusterDiagnosticConfig
 func NewGetClusterDiagnosticConfigRequest(server string, iD int32) (*http.Request, error) {
 	var err error
@@ -1571,6 +1668,47 @@ func NewUpdateClusterDiagnosticConfigRequestWithBody(server string, iD int32, co
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetClusterDiagnosticRequest generates requests for GetClusterDiagnostic
+func NewGetClusterDiagnosticRequest(server string, iD int32, diagnosticId int32) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "diagnosticId", runtime.ParamLocationPath, diagnosticId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clusters/%s/diagnostics/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -2328,6 +2466,11 @@ type ClientWithResponsesInterface interface {
 	// ListClusterDiagnosticsWithResponse request
 	ListClusterDiagnosticsWithResponse(ctx context.Context, iD int32, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*ListClusterDiagnosticsResponse, error)
 
+	// CreateClusterDiagnosticWithBodyWithResponse request with any body
+	CreateClusterDiagnosticWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterDiagnosticResponse, error)
+
+	CreateClusterDiagnosticWithResponse(ctx context.Context, iD int32, body CreateClusterDiagnosticJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterDiagnosticResponse, error)
+
 	// GetClusterDiagnosticConfigWithResponse request
 	GetClusterDiagnosticConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticConfigResponse, error)
 
@@ -2335,6 +2478,9 @@ type ClientWithResponsesInterface interface {
 	UpdateClusterDiagnosticConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
 
 	UpdateClusterDiagnosticConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
+
+	// GetClusterDiagnosticWithResponse request
+	GetClusterDiagnosticWithResponse(ctx context.Context, iD int32, diagnosticId int32, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticResponse, error)
 
 	// RunRisectlCommandWithBodyWithResponse request with any body
 	RunRisectlCommandWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RunRisectlCommandResponse, error)
@@ -2582,18 +2728,7 @@ func (r UpdateClusterResponse) StatusCode() int {
 type ListClusterDiagnosticsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		Items []DiagnosticData `json:"items"`
-
-		// Page Current page number
-		Page int `json:"page"`
-
-		// PerPage Number of items per page
-		PerPage int `json:"perPage"`
-
-		// Total Total number of diagnostic entries
-		Total int `json:"total"`
-	}
+	JSON200      *[]DiagnosticData
 }
 
 // Status returns HTTPResponse.Status
@@ -2606,6 +2741,27 @@ func (r ListClusterDiagnosticsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListClusterDiagnosticsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateClusterDiagnosticResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateClusterDiagnosticResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateClusterDiagnosticResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2650,6 +2806,28 @@ func (r UpdateClusterDiagnosticConfigResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UpdateClusterDiagnosticConfigResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetClusterDiagnosticResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DiagnosticData
+}
+
+// Status returns HTTPResponse.Status
+func (r GetClusterDiagnosticResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetClusterDiagnosticResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3139,6 +3317,23 @@ func (c *ClientWithResponses) ListClusterDiagnosticsWithResponse(ctx context.Con
 	return ParseListClusterDiagnosticsResponse(rsp)
 }
 
+// CreateClusterDiagnosticWithBodyWithResponse request with arbitrary body returning *CreateClusterDiagnosticResponse
+func (c *ClientWithResponses) CreateClusterDiagnosticWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterDiagnosticResponse, error) {
+	rsp, err := c.CreateClusterDiagnosticWithBody(ctx, iD, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateClusterDiagnosticResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateClusterDiagnosticWithResponse(ctx context.Context, iD int32, body CreateClusterDiagnosticJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterDiagnosticResponse, error) {
+	rsp, err := c.CreateClusterDiagnostic(ctx, iD, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateClusterDiagnosticResponse(rsp)
+}
+
 // GetClusterDiagnosticConfigWithResponse request returning *GetClusterDiagnosticConfigResponse
 func (c *ClientWithResponses) GetClusterDiagnosticConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticConfigResponse, error) {
 	rsp, err := c.GetClusterDiagnosticConfig(ctx, iD, reqEditors...)
@@ -3163,6 +3358,15 @@ func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithResponse(ctx cont
 		return nil, err
 	}
 	return ParseUpdateClusterDiagnosticConfigResponse(rsp)
+}
+
+// GetClusterDiagnosticWithResponse request returning *GetClusterDiagnosticResponse
+func (c *ClientWithResponses) GetClusterDiagnosticWithResponse(ctx context.Context, iD int32, diagnosticId int32, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticResponse, error) {
+	rsp, err := c.GetClusterDiagnostic(ctx, iD, diagnosticId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetClusterDiagnosticResponse(rsp)
 }
 
 // RunRisectlCommandWithBodyWithResponse request with arbitrary body returning *RunRisectlCommandResponse
@@ -3595,23 +3799,28 @@ func ParseListClusterDiagnosticsResponse(rsp *http.Response) (*ListClusterDiagno
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Items []DiagnosticData `json:"items"`
-
-			// Page Current page number
-			Page int `json:"page"`
-
-			// PerPage Number of items per page
-			PerPage int `json:"perPage"`
-
-			// Total Total number of diagnostic entries
-			Total int `json:"total"`
-		}
+		var dest []DiagnosticData
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseCreateClusterDiagnosticResponse parses an HTTP response from a CreateClusterDiagnosticWithResponse call
+func ParseCreateClusterDiagnosticResponse(rsp *http.Response) (*CreateClusterDiagnosticResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateClusterDiagnosticResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
 	}
 
 	return response, nil
@@ -3659,6 +3868,32 @@ func ParseUpdateClusterDiagnosticConfigResponse(rsp *http.Response) (*UpdateClus
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest DiagnosticConfig
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetClusterDiagnosticResponse parses an HTTP response from a GetClusterDiagnosticWithResponse call
+func ParseGetClusterDiagnosticResponse(rsp *http.Response) (*GetClusterDiagnosticResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetClusterDiagnosticResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DiagnosticData
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -4100,12 +4335,18 @@ type ServerInterface interface {
 	// List diagnostic data
 	// (GET /clusters/{ID}/diagnostics)
 	ListClusterDiagnostics(c *fiber.Ctx, iD int32, params ListClusterDiagnosticsParams) error
+	// Create diagnostic data
+	// (POST /clusters/{ID}/diagnostics)
+	CreateClusterDiagnostic(c *fiber.Ctx, iD int32) error
 	// Get diagnostic configuration
 	// (GET /clusters/{ID}/diagnostics/config)
 	GetClusterDiagnosticConfig(c *fiber.Ctx, iD int32) error
 	// Update diagnostic configuration
 	// (PUT /clusters/{ID}/diagnostics/config)
 	UpdateClusterDiagnosticConfig(c *fiber.Ctx, iD int32) error
+	// Get diagnostic data
+	// (GET /clusters/{ID}/diagnostics/{diagnosticId})
+	GetClusterDiagnostic(c *fiber.Ctx, iD int32, diagnosticId int32) error
 	// Run risectl command
 	// (POST /clusters/{ID}/risectl)
 	RunRisectlCommand(c *fiber.Ctx, iD int32) error
@@ -4325,6 +4566,24 @@ func (siw *ServerInterfaceWrapper) ListClusterDiagnostics(c *fiber.Ctx) error {
 	return siw.Handler.ListClusterDiagnostics(c, iD, params)
 }
 
+// CreateClusterDiagnostic operation middleware
+func (siw *ServerInterfaceWrapper) CreateClusterDiagnostic(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "ID" -------------
+	var iD int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CreateClusterDiagnostic(c, iD)
+}
+
 // GetClusterDiagnosticConfig operation middleware
 func (siw *ServerInterfaceWrapper) GetClusterDiagnosticConfig(c *fiber.Ctx) error {
 
@@ -4359,6 +4618,32 @@ func (siw *ServerInterfaceWrapper) UpdateClusterDiagnosticConfig(c *fiber.Ctx) e
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.UpdateClusterDiagnosticConfig(c, iD)
+}
+
+// GetClusterDiagnostic operation middleware
+func (siw *ServerInterfaceWrapper) GetClusterDiagnostic(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "ID" -------------
+	var iD int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
+	}
+
+	// ------------- Path parameter "diagnosticId" -------------
+	var diagnosticId int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "diagnosticId", c.Params("diagnosticId"), &diagnosticId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter diagnosticId: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.GetClusterDiagnostic(c, iD, diagnosticId)
 }
 
 // RunRisectlCommand operation middleware
@@ -4690,9 +4975,13 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Get(options.BaseURL+"/clusters/:ID/diagnostics", wrapper.ListClusterDiagnostics)
 
+	router.Post(options.BaseURL+"/clusters/:ID/diagnostics", wrapper.CreateClusterDiagnostic)
+
 	router.Get(options.BaseURL+"/clusters/:ID/diagnostics/config", wrapper.GetClusterDiagnosticConfig)
 
 	router.Put(options.BaseURL+"/clusters/:ID/diagnostics/config", wrapper.UpdateClusterDiagnosticConfig)
+
+	router.Get(options.BaseURL+"/clusters/:ID/diagnostics/:diagnosticId", wrapper.GetClusterDiagnostic)
 
 	router.Post(options.BaseURL+"/clusters/:ID/risectl", wrapper.RunRisectlCommand)
 

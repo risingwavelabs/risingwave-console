@@ -50,6 +50,21 @@ func (mr *MockModelInterfaceMockRecorder) CreateCluster(ctx, arg interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCluster", reflect.TypeOf((*MockModelInterface)(nil).CreateCluster), ctx, arg)
 }
 
+// CreateClusterDiagnostic mocks base method.
+func (m *MockModelInterface) CreateClusterDiagnostic(ctx context.Context, arg querier.CreateClusterDiagnosticParams) (*querier.ClusterDiagnostic, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateClusterDiagnostic", ctx, arg)
+	ret0, _ := ret[0].(*querier.ClusterDiagnostic)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateClusterDiagnostic indicates an expected call of CreateClusterDiagnostic.
+func (mr *MockModelInterfaceMockRecorder) CreateClusterDiagnostic(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateClusterDiagnostic", reflect.TypeOf((*MockModelInterface)(nil).CreateClusterDiagnostic), ctx, arg)
+}
+
 // CreateClusterSnapshot mocks base method.
 func (m *MockModelInterface) CreateClusterSnapshot(ctx context.Context, arg querier.CreateClusterSnapshotParams) error {
 	m.ctrl.T.Helper()
@@ -251,6 +266,21 @@ func (mr *MockModelInterfaceMockRecorder) GetClusterByID(ctx, id interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterByID", reflect.TypeOf((*MockModelInterface)(nil).GetClusterByID), ctx, id)
 }
 
+// GetClusterDiagnostic mocks base method.
+func (m *MockModelInterface) GetClusterDiagnostic(ctx context.Context, id int32) (*querier.ClusterDiagnostic, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClusterDiagnostic", ctx, id)
+	ret0, _ := ret[0].(*querier.ClusterDiagnostic)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetClusterDiagnostic indicates an expected call of GetClusterDiagnostic.
+func (mr *MockModelInterfaceMockRecorder) GetClusterDiagnostic(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterDiagnostic", reflect.TypeOf((*MockModelInterface)(nil).GetClusterDiagnostic), ctx, id)
+}
+
 // GetDatabaseConnectionByID mocks base method.
 func (m *MockModelInterface) GetDatabaseConnectionByID(ctx context.Context, id int32) (*querier.DatabaseConnection, error) {
 	m.ctrl.T.Helper()
@@ -413,6 +443,21 @@ func (m *MockModelInterface) InitDatabaseConnection(ctx context.Context, arg que
 func (mr *MockModelInterfaceMockRecorder) InitDatabaseConnection(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).InitDatabaseConnection), ctx, arg)
+}
+
+// ListClusterDiagnostics mocks base method.
+func (m *MockModelInterface) ListClusterDiagnostics(ctx context.Context, clusterID int32) ([]*querier.ListClusterDiagnosticsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListClusterDiagnostics", ctx, clusterID)
+	ret0, _ := ret[0].([]*querier.ListClusterDiagnosticsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListClusterDiagnostics indicates an expected call of ListClusterDiagnostics.
+func (mr *MockModelInterfaceMockRecorder) ListClusterDiagnostics(ctx, clusterID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListClusterDiagnostics", reflect.TypeOf((*MockModelInterface)(nil).ListClusterDiagnostics), ctx, clusterID)
 }
 
 // ListClusterSnapshots mocks base method.

@@ -21,6 +21,14 @@ type Cluster struct {
 	UpdatedAt      time.Time
 }
 
+type ClusterDiagnostic struct {
+	ID        int32
+	ClusterID int32
+	Content   string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type ClusterSnapshot struct {
 	ClusterID  int32
 	SnapshotID int64

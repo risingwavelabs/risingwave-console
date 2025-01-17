@@ -1,7 +1,7 @@
 //go:build !ut
 // +build !ut
 
-package risectl
+package meta
 
 import (
 	"context"

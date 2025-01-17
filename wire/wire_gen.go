@@ -10,7 +10,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apps/server"
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
-	"github.com/risingwavelabs/wavekit/internal/conn/risectl"
+	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/controller"
 	"github.com/risingwavelabs/wavekit/internal/model"
@@ -33,7 +33,7 @@ func InitializeServer() (*server.Server, error) {
 		return nil, err
 	}
 	sqlConnectionManegerInterface := sql.NewSQLConnectionManager(modelInterface)
-	risectlManagerInterface, err := risectl.NewRisectlManager(configConfig)
+	risectlManagerInterface, err := meta.NewRisectlManager(configConfig)
 	if err != nil {
 		return nil, err
 	}

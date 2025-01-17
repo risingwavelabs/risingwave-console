@@ -27,18 +27,13 @@ import {
 } from "@/components/ui/pagination"
 import { ChevronDown } from "lucide-react"
 import { ConfirmationPopup } from "@/components/ui/confirmation-popup"
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
 import { DateRange } from "react-day-picker"
 import { Card, CardContent } from "@/components/ui/card"
 import { DefaultService } from "@/api-gen"
+import { DiagnosticData } from "@/api-gen/models/DiagnosticData"
 import toast from "react-hot-toast"
+
+const width = "w-full"
 
 interface ClusterData {
   id: string
@@ -94,14 +89,26 @@ export default function ClusterPage({ params }: ClusterPageProps) {
   const [autoBackupKeepCount, setAutoBackupKeepCount] = useState(7)
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)
   const [risectlCommand, setRisectlCommand] = useState("")
-  const [risectlResult, setRisectlResult] = useState<{ exitCode: number; result: string; error: string } | null>(null)
+  const [risectlResult, setRisectlResult] = useState<{ exitCode: number; stdout: string; stderr: string; err: string } | null>(null)
   const [isRunningCommand, setIsRunningCommand] = useState(false)
+  const [isDiagnosing, setIsDiagnosing] = useState(false)
+  const [isResultOpen, setIsResultOpen] = useState(true)
+  const [diagnostics, setDiagnostics] = useState<Array<DiagnosticData>>([])
+  const [diagnosticContent, setDiagnosticContent] = useState<Record<number, string>>({})
+  const [isDiagnosticContentLoading, setIsDiagnosticContentLoading] = useState<Record<number, boolean>>({})
+  const [diagnosticPage, setDiagnosticPage] = useState(1)
+  const [totalDiagnostics, setTotalDiagnostics] = useState(0)
+  const DIAGNOSTICS_PER_PAGE = 5
 
   useEffect(() => {
     const fetchClusterData = async () => {
       try {
-        const data = await DefaultService.getCluster(clusterId)
-        const snapshots = await DefaultService.listClusterSnapshots(clusterId)
+        const [data, snapshots, diagnosticsData] = await Promise.all([
+          DefaultService.getCluster(clusterId),
+          DefaultService.listClusterSnapshots(clusterId),
+          DefaultService.listClusterDiagnostics(clusterId)
+        ])
+
         // Transform API data to match our UI needs
         const transformedData: ClusterData = {
           id: data.ID.toString(),
@@ -130,6 +137,12 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           }
         }
         setClusterData(transformedData)
+
+        // Set diagnostic data
+        console.log('Setting diagnostic data:', diagnosticsData)
+        setDiagnostics(diagnosticsData)
+        setTotalDiagnostics(diagnosticsData.length)
+
         // Initialize state with the fetched data
         setInterval(transformedData.diagnostics.interval)
         setExpiration(transformedData.diagnostics.expiration)
@@ -209,7 +222,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
     const args: string[] = []
     let currentArg = ''
     let insideQuotes = false
-    
+
     // Helper to add the current argument to args array
     const pushArg = () => {
       const trimmed = currentArg.trim()
@@ -219,7 +232,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
 
     for (let i = 0; i < command.length; i++) {
       const char = command[i]
-      
+
       if (char === '"') {
         if (insideQuotes) {
           // End of quoted section
@@ -232,18 +245,18 @@ export default function ClusterPage({ params }: ClusterPageProps) {
         }
         continue
       }
-      
+
       if (!insideQuotes && (char === ' ' || char === '\n')) {
         pushArg()
         continue
       }
-      
+
       currentArg += char
     }
-    
+
     // Add any remaining argument
     if (currentArg) pushArg()
-    
+
     return args
   }
 
@@ -254,6 +267,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
     }
 
     setIsRunningCommand(true)
+    setIsResultOpen(true)
     try {
       const args = parseCommandArgs(risectlCommand)
       const result = await DefaultService.runRisectlCommand(clusterId, {
@@ -261,8 +275,9 @@ export default function ClusterPage({ params }: ClusterPageProps) {
       })
       setRisectlResult({
         exitCode: result.exitCode,
-        result: result.result,
-        error: result.err
+        stdout: result.stdout,
+        stderr: result.stderr,
+        err: result.err
       })
       if (result.exitCode === 0) {
         toast.success("Command executed successfully")
@@ -274,8 +289,9 @@ export default function ClusterPage({ params }: ClusterPageProps) {
       toast.error("Failed to run command")
       setRisectlResult({
         exitCode: -1,
-        result: "",
-        error: "Failed to execute command"
+        stdout: "",
+        stderr: "Failed to execute command",
+        err: "Failed to execute command"
       })
     } finally {
       setIsRunningCommand(false)
@@ -306,6 +322,48 @@ export default function ClusterPage({ params }: ClusterPageProps) {
       setIsCreatingSnapshot(false)
     }
   }
+
+  const fetchDiagnosticContent = async (id: number) => {
+    if (diagnosticContent[id] || isDiagnosticContentLoading[id]) return
+
+    setIsDiagnosticContentLoading(prev => ({ ...prev, [id]: true }))
+    try {
+      const data = await DefaultService.getClusterDiagnostic(clusterId, id)
+      setDiagnosticContent(prev => ({ ...prev, [id]: data.content }))
+    } catch (error) {
+      console.error("Error fetching diagnostic content:", error)
+      toast.error("Failed to load diagnostic content")
+    } finally {
+      setIsDiagnosticContentLoading(prev => ({ ...prev, [id]: false }))
+    }
+  }
+
+  const runDiagnostic = async () => {
+    setIsDiagnosing(true)
+    try {
+      await DefaultService.createClusterDiagnostic(clusterId, {
+        ID: 0, // Server will assign the actual ID
+        createdAt: new Date().toISOString(),
+        content: "" // Server will collect the diagnostic data
+      })
+      // Refresh the diagnostics list
+      const diagnosticsData = await DefaultService.listClusterDiagnostics(clusterId)
+      setDiagnostics(diagnosticsData)
+      setTotalDiagnostics(diagnosticsData.length)
+      toast.success("Diagnostic data collection initiated")
+    } catch (error) {
+      console.error("Error running diagnostic:", error)
+      toast.error("Failed to run diagnostic")
+    } finally {
+      setIsDiagnosing(false)
+    }
+  }
+
+  // Calculate paginated diagnostics
+  const paginatedDiagnostics = diagnostics.slice(
+    (diagnosticPage - 1) * DIAGNOSTICS_PER_PAGE,
+    diagnosticPage * DIAGNOSTICS_PER_PAGE
+  )
 
   return (
     <div className="p-8 space-y-8">
@@ -376,25 +434,13 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           </p>
         </div>
 
-        <div className="max-w-4xl space-y-4 border rounded-lg p-4">
-          <div className="flex gap-2">
-            <textarea
-              value={risectlCommand}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRisectlCommand(e.target.value)}
-              placeholder={'Enter risectl command arguments\nAguments can be separated by spaces and also line breaks\nEnter help to check available commands'}
-              className="flex-1 min-h-[80px] px-3 py-2 border rounded-md text-sm font-mono resize-y"
-              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-                if (e.key === 'Enter' && e.metaKey) {
-                  e.preventDefault()
-                  void runRisectl()
-                }
-              }}
-            />
+        <div className={`${width} space-y-4 border rounded-lg p-4`}>
+          <div className="flex flex-col justify-start gap-2">
             <div className="flex flex-col justify-start">
-              <Button 
-                onClick={() => void runRisectl()} 
+              <Button
+                onClick={() => void runRisectl()}
                 disabled={isRunningCommand}
-                className="whitespace-nowrap select-none"
+                className="whitespace-nowrap select-none w-fit"
                 size="sm"
               >
                 {isRunningCommand ? (
@@ -409,14 +455,27 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                   "Run Command"
                 )}
               </Button>
-              {/* <p className="text-xs text-muted-foreground mt-2 text-center">
-                {navigator.platform.toLowerCase().includes('mac') ? '⌘' : 'Ctrl'}+Enter
-              </p> */}
             </div>
+            <textarea
+              value={risectlCommand}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRisectlCommand(e.target.value)}
+              placeholder={'Enter risectl command arguments\nAguments can be separated by spaces and also line breaks\nEnter help to check available commands'}
+              className="flex-1 min-h-[80px] px-3 py-2 border rounded-md text-sm font-mono resize-y"
+              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                if (e.key === 'Enter' && e.metaKey) {
+                  e.preventDefault()
+                  void runRisectl()
+                }
+              }}
+            />
+
           </div>
 
           {risectlResult && (
-            <Collapsible defaultOpen>
+            <Collapsible 
+              open={isResultOpen}
+              onOpenChange={setIsResultOpen}
+            >
               <CollapsibleTrigger className="flex items-center gap-2 w-full hover:bg-accent/50 p-2 rounded-md transition-colors">
                 <ChevronDown className="h-4 w-4" />
                 <div className="flex items-center gap-2">
@@ -428,27 +487,40 @@ export default function ClusterPage({ params }: ClusterPageProps) {
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-2">
                 <div className="space-y-2">
-                  {risectlResult.result && (
-                    <div className="space-y-1">
-                      <span className="text-sm font-medium">Output:</span>
-                      <div className="relative max-h-[400px] overflow-auto rounded-md">
-                        <pre className="p-3 bg-muted text-sm whitespace-pre overflow-auto">
-                          {risectlResult.result}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {risectlResult.error && (
+                  {risectlResult.err && (
                     <div className="space-y-1">
                       <span className="text-sm font-medium text-red-600">Error:</span>
                       <div className="relative max-h-[400px] overflow-auto rounded-md">
                         <pre className="p-3 bg-red-50 text-red-600 text-sm whitespace-pre overflow-auto">
-                          {risectlResult.error}
+                          {risectlResult.err}
                         </pre>
                       </div>
                     </div>
                   )}
+
+                  {risectlResult.stdout && (
+                    <div className="space-y-1">
+                      <span className="text-sm font-medium">stdout:</span>
+                      <div className="relative max-h-[400px] overflow-auto rounded-md">
+                        <pre className="p-3 bg-muted text-sm whitespace-pre overflow-auto">
+                          {risectlResult.stdout}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+
+                  {risectlResult.stderr && (
+                    <div className="space-y-1">
+                      <span className="text-sm font-medium text-red-600">stderr:</span>
+                      <div className="relative max-h-[400px] overflow-auto rounded-md">
+                        <pre className="p-3 bg-red-50 text-red-600 text-sm whitespace-pre overflow-auto">
+                          {risectlResult.stderr}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+
+
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -458,7 +530,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
 
       {/* Snapshots Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between max-w-4xl">
+        <div className={`flex items-center justify-between ${width}`}>
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">Metadata Snapshot</h3>
             <p className="text-sm text-muted-foreground">
@@ -480,7 +552,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           </Button>
         </div>
 
-        <div className="max-w-4xl space-y-4 border rounded-lg p-4">
+        <div className={`${width} space-y-4 border rounded-lg p-4`}>
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="text-sm font-medium">Auto Backup</Label>
@@ -540,7 +612,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           </div>
         </div>
 
-        <div className="space-y-4 max-w-4xl">
+        <div className={`${width} space-y-4`}>
           {clusterData.snapshots.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
               No snapshots available. Create a snapshot to backup your cluster metadata.
@@ -619,15 +691,36 @@ export default function ClusterPage({ params }: ClusterPageProps) {
 
       {/* Diagnostics Section */}
       <div className="space-y-4">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold">Diagnostic Information</h3>
-          <p className="text-sm text-muted-foreground">
-            Configure automatic collection of diagnostic data and system metrics
-          </p>
+        <div className={`flex items-center justify-between ${width}`}>
+          <div className="space-y-1">
+            <h3 className="text-lg font-semibold">Diagnostic Information</h3>
+            <p className="text-sm text-muted-foreground">
+              Configure automatic collection of diagnostic data and system metrics
+            </p>
+          </div>
+          <Button
+            onClick={() => void runDiagnostic()}
+            disabled={isDiagnosing}
+            className="select-none"
+            size="sm"
+          >
+            {isDiagnosing ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Collecting...
+              </>
+            ) : (
+              "Collect Diagnostic"
+            )}
+          </Button>
         </div>
 
         <div className="space-y-6">
-          <div className="max-w-4xl space-y-4 border rounded-lg p-4">
+          {/* Configuration Card */}
+          <div className={`${width} space-y-4 border rounded-lg p-4`}>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label className="text-sm font-medium">Collection Interval</Label>
@@ -679,63 +772,81 @@ export default function ClusterPage({ params }: ClusterPageProps) {
             </div>
           </div>
 
-          <div className="space-y-4 max-w-4xl">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">Collection History</h4>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="justify-start text-left font-normal"
-                    disabled={filteredItems.length === 0}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateRange?.from ? (
-                      dateRange.to ? (
-                        <>
-                          {format(dateRange.from, "LLL dd, y")} -{" "}
-                          {format(dateRange.to, "LLL dd, y")}
-                        </>
-                      ) : (
-                        format(dateRange.from, "LLL dd, y")
-                      )
-                    ) : (
-                      "Pick a date range"
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={dateRange?.from}
-                    selected={dateRange}
-                    onSelect={(range) => {
-                      setDateRange({ from: range?.from, to: range?.to });
-                      setCurrentPage(1); // Reset to first page when filter changes
-                    }}
-                    numberOfMonths={1}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {filteredItems.length === 0 ? (
+          {/* Diagnostics List */}
+          <div className={`${width} space-y-4`}>
+            {!diagnostics || diagnostics.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
-                No diagnostic data available. Data will appear here once collection begins.
+                No diagnostic data available. Click "Collect Diagnostic" to start collecting data.
               </div>
             ) : (
               <>
-                {currentItems.map((item) => (
-                  <Collapsible key={item.id} className="border rounded-lg">
-                    <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-accent/50 transition-colors">
-                      <span className="text-sm font-medium">{item.timestamp}</span>
-                      <ChevronDown className="h-4 w-4" />
+                {paginatedDiagnostics.map((diagnostic) => (
+                  <Collapsible
+                    key={diagnostic.ID}
+                    onOpenChange={(isOpen: boolean) => {
+                      if (isOpen && !diagnosticContent[diagnostic.ID]) {
+                        void fetchDiagnosticContent(diagnostic.ID)
+                      }
+                      return undefined
+                    }}
+                  >
+                    <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-accent/50 transition-colors border rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <ChevronDown className="h-4 w-4" />
+                        <span className="text-sm font-medium">
+                          Diagnostic {diagnostic.ID}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(diagnostic.createdAt).toLocaleString()}
+                        </span>
+                      </div>
                     </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="p-4 pt-0 font-mono text-sm bg-muted/50">
-                        <pre className="whitespace-pre-wrap">{item.data}</pre>
+                    <CollapsibleContent className="pt-2">
+                      <div className="p-4 border rounded-lg mt-2">
+                        {isDiagnosticContentLoading[diagnostic.ID] ? (
+                          <div className="flex items-center justify-center py-4">
+                            <svg className="animate-spin h-5 w-5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex justify-end">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => {
+                                  void navigator.clipboard.writeText(diagnosticContent[diagnostic.ID] || '')
+                                  toast.success('Content copied to clipboard')
+                                }}
+                              >
+                                <svg
+                                  width="15"
+                                  height="15"
+                                  viewBox="0 0 15 15"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4"
+                                >
+                                  <path
+                                    d="M1 9.50006C1 10.3285 1.67157 11.0001 2.5 11.0001H4L4 10.0001H2.5C2.22386 10.0001 2 9.7762 2 9.50006L2 2.50006C2 2.22392 2.22386 2.00006 2.5 2.00006L9.5 2.00006C9.77614 2.00006 10 2.22392 10 2.50006V4.00002H5.5C4.67157 4.00002 4 4.67159 4 5.50002V12.5C4 13.3284 4.67157 14 5.5 14H12.5C13.3284 14 14 13.3284 14 12.5V5.50002C14 4.67159 13.3284 4.00002 12.5 4.00002H11V2.50006C11 1.67163 10.3284 1.00006 9.5 1.00006H2.5C1.67157 1.00006 1 1.67163 1 2.50006V9.50006ZM5 5.50002C5 5.22388 5.22386 5.00002 5.5 5.00002H12.5C12.7761 5.00002 13 5.22388 13 5.50002V12.5C13 12.7762 12.7761 13 12.5 13H5.5C5.22386 13 5 12.7762 5 12.5V5.50002Z"
+                                    fill="currentColor"
+                                    fillRule="evenodd"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                <span className="sr-only">Copy content</span>
+                              </Button>
+                            </div>
+                            <div className="relative max-h-[400px] overflow-auto">
+                              <pre className="whitespace-pre text-sm min-w-max p-4">
+                                {diagnosticContent[diagnostic.ID] || 'No content available'}
+                              </pre>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
@@ -748,19 +859,19 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                         href="#"
                         onClick={(e) => {
                           e.preventDefault();
-                          if (currentPage > 1) setCurrentPage(p => p - 1);
+                          if (diagnosticPage > 1) setDiagnosticPage(p => p - 1);
                         }}
                       />
                     </PaginationItem>
-                    {[...Array(totalPages)].map((_, i) => (
+                    {[...Array(Math.ceil(totalDiagnostics / DIAGNOSTICS_PER_PAGE))].map((_, i) => (
                       <PaginationItem key={i + 1}>
                         <PaginationLink
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            setCurrentPage(i + 1);
+                            setDiagnosticPage(i + 1);
                           }}
-                          isActive={currentPage === i + 1}
+                          isActive={diagnosticPage === i + 1}
                         >
                           {i + 1}
                         </PaginationLink>
@@ -771,7 +882,9 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                         href="#"
                         onClick={(e) => {
                           e.preventDefault();
-                          if (currentPage < totalPages) setCurrentPage(p => p + 1);
+                          if (diagnosticPage < Math.ceil(totalDiagnostics / DIAGNOSTICS_PER_PAGE)) {
+                            setDiagnosticPage(p => p + 1);
+                          }
                         }}
                       />
                     </PaginationItem>

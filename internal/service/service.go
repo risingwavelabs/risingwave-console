@@ -12,7 +12,8 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
-	"github.com/risingwavelabs/wavekit/internal/conn/risectl"
+	"github.com/risingwavelabs/wavekit/internal/conn/http"
+	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
@@ -33,6 +34,7 @@ var (
 	ErrDatabaseNotFound              = errors.New("database not found")
 	ErrClusterNotFound               = errors.New("cluster not found")
 	ErrClusterHasDatabaseConnections = errors.New("cluster has database connections")
+	ErrDiagnosticNotFound            = errors.New("diagnostic not found")
 )
 
 const (
@@ -106,19 +108,25 @@ type ServiceInterface interface {
 	TestClusterConnection(ctx context.Context, params apigen.TestClusterConnectionPayload, orgID int32) (*apigen.TestClusterConnectionResult, error)
 
 	RunRisectlCommand(ctx context.Context, id int32, params apigen.RisectlCommand, orgID int32) (*apigen.RisectlCommandResult, error)
+
+	GetClusterDiagnostic(ctx context.Context, id int32, diagnosticID int32, orgID int32) (*apigen.DiagnosticData, error)
+
+	ListClusterDiagnostics(ctx context.Context, id int32, orgID int32) ([]apigen.DiagnosticData, error)
+
+	CreateClusterDiagnostic(ctx context.Context, id int32, orgID int32) (*apigen.DiagnosticData, error)
 }
 
 type Service struct {
 	m        model.ModelInterface
 	auth     auth.AuthInterface
 	sqlm     sql.SQLConnectionManegerInterface
-	risectlm risectl.RisectlManagerInterface
+	risectlm meta.RisectlManagerInterface
 
 	now                 func() time.Time
 	generateHashAndSalt func(password string) (string, string, error)
 }
 
-func NewService(cfg *config.Config, m model.ModelInterface, auth auth.AuthInterface, sqlm sql.SQLConnectionManegerInterface, risectlm risectl.RisectlManagerInterface) ServiceInterface {
+func NewService(cfg *config.Config, m model.ModelInterface, auth auth.AuthInterface, sqlm sql.SQLConnectionManegerInterface, risectlm meta.RisectlManagerInterface) ServiceInterface {
 	return &Service{
 		m:                   m,
 		now:                 time.Now,
@@ -750,13 +758,21 @@ func (s *Service) ListClusterVersions(ctx context.Context) ([]string, error) {
 	return versions, nil
 }
 
-func (s *Service) getRisectlConn(ctx context.Context, id int32) (risectl.RisectlConn, error) {
+func (s *Service) getRisectlConn(ctx context.Context, id int32) (meta.RisectlConn, error) {
 	cluster, err := s.m.GetClusterByID(ctx, id)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get cluster")
 	}
 
 	return s.risectlm.NewConn(ctx, cluster.Version, fmt.Sprintf("http://%s:%d", cluster.Host, cluster.MetaPort))
+}
+
+func (s *Service) getMetaHttpConn(ctx context.Context, id int32) (http.MetaHttpConn, error) {
+	cluster, err := s.m.GetClusterByID(ctx, id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get cluster")
+	}
+	return http.NewMetaHttpConnection(fmt.Sprintf("http://%s:%d", cluster.Host, cluster.HttpPort)), nil
 }
 
 func (s *Service) CreateClusterSnapshot(ctx context.Context, id int32, name string, orgID int32) (*apigen.Snapshot, error) {
@@ -842,15 +858,96 @@ func (s *Service) RunRisectlCommand(ctx context.Context, id int32, params apigen
 		return nil, errors.Wrapf(err, "failed to get risectl connection")
 	}
 
-	result, exitCode, err := conn.Run(ctx, params.Args...)
+	stdout, stderr, exitCode, err := conn.Run(ctx, params.Args...)
 	errMsg := ""
 	if err != nil {
 		errMsg = err.Error()
 	}
 
 	return &apigen.RisectlCommandResult{
-		Result:   result,
+		Stdout:   stdout,
+		Stderr:   stderr,
 		ExitCode: int32(exitCode),
 		Err:      errMsg,
+	}, nil
+}
+
+func (s *Service) CreateClusterDiagnostic(ctx context.Context, id int32, orgID int32) (*apigen.DiagnosticData, error) {
+	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
+		ID:             id,
+		OrganizationID: orgID,
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get cluster")
+	}
+
+	conn, err := s.getMetaHttpConn(ctx, cluster.ID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get meta http connection")
+	}
+	content, err := conn.GetDiagnose(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get diagnose")
+	}
+	diag, err := s.m.CreateClusterDiagnostic(ctx, querier.CreateClusterDiagnosticParams{
+		ClusterID: cluster.ID,
+		Content:   content,
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create cluster diagnostic")
+	}
+	return &apigen.DiagnosticData{
+		ID:        diag.ID,
+		CreatedAt: diag.CreatedAt,
+		Content:   diag.Content,
+	}, nil
+}
+
+func (s *Service) ListClusterDiagnostics(ctx context.Context, id int32, orgID int32) ([]apigen.DiagnosticData, error) {
+	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
+		ID:             id,
+		OrganizationID: orgID,
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get cluster")
+	}
+
+	diagnostics, err := s.m.ListClusterDiagnostics(ctx, cluster.ID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list cluster diagnostics")
+	}
+
+	result := make([]apigen.DiagnosticData, len(diagnostics))
+	for i, diagnostic := range diagnostics {
+		result[i] = apigen.DiagnosticData{
+			ID:        diagnostic.ID,
+			CreatedAt: diagnostic.CreatedAt,
+		}
+	}
+	return result, nil
+}
+
+func (s *Service) GetClusterDiagnostic(ctx context.Context, id int32, diagnosticID int32, orgID int32) (*apigen.DiagnosticData, error) {
+	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
+		ID:             id,
+		OrganizationID: orgID,
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get cluster")
+	}
+
+	diagnostic, err := s.m.GetClusterDiagnostic(ctx, diagnosticID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get cluster diagnostic")
+	}
+
+	if diagnostic.ClusterID != cluster.ID {
+		return nil, ErrDiagnosticNotFound
+	}
+
+	return &apigen.DiagnosticData{
+		ID:        diagnostic.ID,
+		CreatedAt: diagnostic.CreatedAt,
+		Content:   diagnostic.Content,
 	}, nil
 }

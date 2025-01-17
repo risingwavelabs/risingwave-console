@@ -2,7 +2,7 @@ openapi: 3.0.0
 
 info:
   title: AI Agent API
-  version: '1.0'
+  version: "1.0"
   description: API for interacting with AI models and managing settings
 
 servers:
@@ -18,14 +18,14 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Successfully retrieved database list
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Database'
+                  $ref: "#/components/schemas/Database"
     post:
       summary: Create a new database
       description: Create a new database
@@ -37,14 +37,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DatabaseConnectInfo'
+              $ref: "#/components/schemas/DatabaseConnectInfo"
       responses:
-        '201':
+        "201":
           description: Database created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Database'
+                $ref: "#/components/schemas/Database"
 
   /databases/test-connection:
     post:
@@ -58,14 +58,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TestDatabaseConnectionPayload'
+              $ref: "#/components/schemas/TestDatabaseConnectionPayload"
       responses:
-        '200':
+        "200":
           description: Successfully tested database connection
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestDatabaseConnectionResult'
+                $ref: "#/components/schemas/TestDatabaseConnectionResult"
 
   /databases/{ID}:
     parameters:
@@ -82,12 +82,12 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Successfully retrieved database
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Database'
+                $ref: "#/components/schemas/Database"
     put:
       summary: Update database
       description: Update a specific database
@@ -99,14 +99,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DatabaseConnectInfo'
+              $ref: "#/components/schemas/DatabaseConnectInfo"
       responses:
-        '200':
+        "200":
           description: Database updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Database'
+                $ref: "#/components/schemas/Database"
     delete:
       summary: Delete database
       description: Delete a specific database
@@ -114,7 +114,7 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '204':
+        "204":
           description: Database deleted successfully
 
   /databases/{ID}/query:
@@ -136,14 +136,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/QueryRequest'
+              $ref: "#/components/schemas/QueryRequest"
       responses:
-        '200':
+        "200":
           description: Query executed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/QueryResponse'
+                $ref: "#/components/schemas/QueryResponse"
 
   /databases/{ID}/ddl-progress:
     get:
@@ -160,15 +160,15 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Successfully retrieved DDL progress
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DDLProgress'
-    
+                  $ref: "#/components/schemas/DDLProgress"
+
   /databases/{ID}/ddl-progress/{ddlID}/cancel:
     post:
       operationId: cancelDDLProgress
@@ -188,7 +188,7 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Successfully canceled DDL operation
 
   /test-cluster-connection:
@@ -203,14 +203,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TestClusterConnectionPayload'
+              $ref: "#/components/schemas/TestClusterConnectionPayload"
       responses:
-        '200':
+        "200":
           description: Successfully tested cluster connection
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestClusterConnectionResult'
+                $ref: "#/components/schemas/TestClusterConnectionResult"
 
   /cluster-versions:
     get:
@@ -218,7 +218,7 @@ paths:
       description: Retrieve a list of all cluster versions
       operationId: listClusterVersions
       responses:
-        '200':
+        "200":
           description: Successfully retrieved cluster version list
           content:
             application/json:
@@ -226,7 +226,6 @@ paths:
                 type: array
                 items:
                   type: string
-                  
 
   /clusters:
     get:
@@ -234,14 +233,14 @@ paths:
       description: Retrieve a list of all database clusters
       operationId: listClusters
       responses:
-        '200':
+        "200":
           description: Successfully retrieved cluster list
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Cluster'
+                  $ref: "#/components/schemas/Cluster"
       security:
         - BearerAuth: []
 
@@ -254,14 +253,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ClusterCreate'
+              $ref: "#/components/schemas/ClusterCreate"
       responses:
-        '201':
+        "201":
           description: Cluster created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Cluster'
+                $ref: "#/components/schemas/Cluster"
 
       security:
         - BearerAuth: []
@@ -281,14 +280,14 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Successfully retrieved cluster
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Cluster'
+                $ref: "#/components/schemas/Cluster"
     security:
-        - BearerAuth: []
+      - BearerAuth: []
 
     put:
       summary: Update cluster
@@ -299,14 +298,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateClusterRequest'
+              $ref: "#/components/schemas/UpdateClusterRequest"
       responses:
-        '200':
+        "200":
           description: Cluster updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Cluster'
+                $ref: "#/components/schemas/Cluster"
       security:
         - BearerAuth: []
 
@@ -323,7 +322,7 @@ paths:
           schema:
             type: boolean
       responses:
-        '204':
+        "204":
           description: Cluster deleted successfully
 
   /clusters/{ID}/risectl:
@@ -345,14 +344,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RisectlCommand'
+              $ref: "#/components/schemas/RisectlCommand"
       responses:
-        '200':
+        "200":
           description: Successfully ran risectl command
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RisectlCommandResult'
+                $ref: "#/components/schemas/RisectlCommandResult"
 
   /clusters/{ID}/snapshots:
     parameters:
@@ -369,14 +368,14 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Successfully retrieved snapshot list
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Snapshot'
+                  $ref: "#/components/schemas/Snapshot"
     post:
       summary: Create a new snapshot
       description: Create a new metadata snapshot for a specific cluster
@@ -388,14 +387,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SnapshotCreate'
+              $ref: "#/components/schemas/SnapshotCreate"
       responses:
-        '201':
+        "201":
           description: Snapshot created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Snapshot'
+                $ref: "#/components/schemas/Snapshot"
 
   /clusters/{ID}/snapshots/{snapshotId}:
     parameters:
@@ -418,7 +417,7 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '204':
+        "204":
           description: Snapshot deleted successfully
     post:
       summary: Restore snapshot
@@ -427,7 +426,7 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Snapshot restored successfully
 
   /clusters/{ID}/snapshot-config:
@@ -445,12 +444,12 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Successfully retrieved snapshot configuration
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SnapshotConfig'
+                $ref: "#/components/schemas/SnapshotConfig"
     put:
       summary: Update snapshot configuration
       description: Update automatic snapshot configuration for a cluster
@@ -462,14 +461,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SnapshotConfig'
+              $ref: "#/components/schemas/SnapshotConfig"
       responses:
-        '200':
+        "200":
           description: Snapshot configuration updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SnapshotConfig'
+                $ref: "#/components/schemas/SnapshotConfig"
 
   /clusters/{ID}/diagnostics:
     parameters:
@@ -479,6 +478,18 @@ paths:
         schema:
           type: integer
           format: int32
+    post:
+      summary: Create diagnostic data
+      description: Create diagnostic data for a specific cluster
+      operationId: createClusterDiagnostic
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiagnosticData"
     get:
       summary: List diagnostic data
       description: Retrieve diagnostic data for a specific cluster with optional date range filtering
@@ -518,31 +529,42 @@ paths:
             default: 20
           description: Number of items per page
       responses:
-        '200':
+        "200":
           description: Successfully retrieved diagnostic data
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - items
-                  - total
-                  - page
-                  - perPage
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/DiagnosticData'
-                  total:
-                    type: integer
-                    description: Total number of diagnostic entries
-                  page:
-                    type: integer
-                    description: Current page number
-                  perPage:
-                    type: integer
-                    description: Number of items per page
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiagnosticData"
+
+  /clusters/{ID}/diagnostics/{diagnosticId}:
+    parameters:
+      - name: ID
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - name: diagnosticId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+    get:
+      summary: Get diagnostic data
+      description: Get diagnostic data for a specific cluster
+      operationId: getClusterDiagnostic
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved diagnostic data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiagnosticData"
 
   /clusters/{ID}/diagnostics/config:
     parameters:
@@ -559,12 +581,12 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Successfully retrieved diagnostic configuration
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DiagnosticConfig'
+                $ref: "#/components/schemas/DiagnosticConfig"
     put:
       summary: Update diagnostic configuration
       description: Update diagnostic data collection configuration for a cluster
@@ -576,14 +598,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DiagnosticConfig'
+              $ref: "#/components/schemas/DiagnosticConfig"
       responses:
-        '200':
+        "200":
           description: Diagnostic configuration updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DiagnosticConfig'
+                $ref: "#/components/schemas/DiagnosticConfig"
 
   /auth/sign-in:
     post:
@@ -595,15 +617,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SignInRequest'
+              $ref: "#/components/schemas/SignInRequest"
       responses:
-        '200':
+        "200":
           description: Successfully authenticated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Credentials'
-        '401':
+                $ref: "#/components/schemas/Credentials"
+        "401":
           description: Invalid credentials
 
   /auth/refresh:
@@ -616,15 +638,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefreshTokenRequest'
+              $ref: "#/components/schemas/RefreshTokenRequest"
       responses:
-        '200':
+        "200":
           description: Successfully refreshed token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Credentials'
-        '401':
+                $ref: "#/components/schemas/Credentials"
+        "401":
           description: Invalid or expired refresh token
 
 components:
@@ -709,7 +731,7 @@ components:
         schemas:
           type: array
           items:
-            $ref: '#/components/schemas/Schema'
+            $ref: "#/components/schemas/Schema"
           description: List of schemas in the database
 
     Column:
@@ -745,7 +767,7 @@ components:
         relations:
           type: array
           items:
-            $ref: '#/components/schemas/Relation'
+            $ref: "#/components/schemas/Relation"
 
     Relation:
       type: object
@@ -765,12 +787,12 @@ components:
           description: Name of the table
         type:
           type: string
-          enum: ['table', 'source', 'sink', 'materializedView', "system table"]
+          enum: ["table", "source", "sink", "materializedView", "system table"]
           description: Type of the relation
         columns:
           type: array
           items:
-            $ref: '#/components/schemas/Column'
+            $ref: "#/components/schemas/Column"
           description: List of columns in the table
         dependencies:
           type: array
@@ -951,17 +973,18 @@ components:
       type: object
       required:
         - ID
-        - timestamp
-        - data
+        - createdAt
+        - content
       properties:
         ID:
           type: integer
+          format: int32
           description: Unique identifier of the diagnostic entry
-        timestamp:
+        createdAt:
           type: string
           format: date-time
           description: When the diagnostic data was collected
-        data:
+        content:
           type: string
           description: Raw diagnostic data message containing system metrics and information
 
@@ -994,7 +1017,7 @@ components:
           description: JWT refresh token for obtaining new access tokens
         tokenType:
           type: string
-          enum: ['Bearer']
+          enum: ["Bearer"]
           description: Token type
 
     RefreshTokenRequest:
@@ -1058,7 +1081,7 @@ components:
         columns:
           type: array
           items:
-            $ref: '#/components/schemas/Column'
+            $ref: "#/components/schemas/Column"
         rows:
           type: array
           items:
@@ -1108,7 +1131,7 @@ components:
         httpPort:
           type: integer
           format: int32
-    
+
     TestClusterConnectionResult:
       type: object
       required:
@@ -1165,13 +1188,17 @@ components:
     RisectlCommandResult:
       type: object
       required:
-        - result
+        - stdout
+        - stderr
         - exitCode
         - err
       properties:
-        result:
+        stdout:
           type: string
-          description: Result of the risectl command
+          description: Standard output of the risectl command
+        stderr:
+          type: string
+          description: Standard error of the risectl command
         exitCode:
           type: integer
           format: int32

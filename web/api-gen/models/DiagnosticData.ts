@@ -10,10 +10,10 @@ export type DiagnosticData = {
     /**
      * When the diagnostic data was collected
      */
-    timestamp: string;
+    createdAt: string;
     /**
      * Raw diagnostic data message containing system metrics and information
      */
-    data: string;
+    content: string;
 };
 

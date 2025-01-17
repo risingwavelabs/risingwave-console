@@ -87,4 +87,14 @@ CREATE TABLE IF NOT EXISTS cluster_snapshots (
     PRIMARY KEY (cluster_id, snapshot_id)
 );
 
+CREATE TABLE IF NOT EXISTS cluster_diagnostics (
+    id              SERIAL,
+    cluster_id      INTEGER     NOT NULL REFERENCES clusters(id),
+    content         TEXT        NOT NULL,
+    created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    PRIMARY KEY (id)
+);
+
 COMMIT;

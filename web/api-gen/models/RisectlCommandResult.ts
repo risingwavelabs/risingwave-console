@@ -4,9 +4,13 @@
 /* eslint-disable */
 export type RisectlCommandResult = {
     /**
-     * Result of the risectl command
+     * Standard output of the risectl command
      */
-    result: string;
+    stdout: string;
+    /**
+     * Standard error of the risectl command
+     */
+    stderr: string;
     /**
      * Exit code of the risectl command
      */

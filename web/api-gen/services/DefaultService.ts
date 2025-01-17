@@ -457,6 +457,27 @@ export class DefaultService {
         });
     }
     /**
+     * Create diagnostic data
+     * Create diagnostic data for a specific cluster
+     * @param id
+     * @param requestBody
+     * @throws ApiError
+     */
+    public static createClusterDiagnostic(
+        id: number,
+        requestBody: DiagnosticData,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clusters/{ID}/diagnostics',
+            path: {
+                'ID': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
      * List diagnostic data
      * Retrieve diagnostic data for a specific cluster with optional date range filtering
      * @param id
@@ -464,7 +485,7 @@ export class DefaultService {
      * @param to End date for filtering diagnostic data
      * @param page Page number for pagination
      * @param perPage Number of items per page
-     * @returns any Successfully retrieved diagnostic data
+     * @returns DiagnosticData Successfully retrieved diagnostic data
      * @throws ApiError
      */
     public static listClusterDiagnostics(
@@ -473,21 +494,7 @@ export class DefaultService {
         to?: string,
         page: number = 1,
         perPage: number = 20,
-    ): CancelablePromise<{
-        items: Array<DiagnosticData>;
-        /**
-         * Total number of diagnostic entries
-         */
-        total: number;
-        /**
-         * Current page number
-         */
-        page: number;
-        /**
-         * Number of items per page
-         */
-        perPage: number;
-    }> {
+    ): CancelablePromise<Array<DiagnosticData>> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/clusters/{ID}/diagnostics',
@@ -499,6 +506,27 @@ export class DefaultService {
                 'to': to,
                 'page': page,
                 'perPage': perPage,
+            },
+        });
+    }
+    /**
+     * Get diagnostic data
+     * Get diagnostic data for a specific cluster
+     * @param id
+     * @param diagnosticId
+     * @returns DiagnosticData Successfully retrieved diagnostic data
+     * @throws ApiError
+     */
+    public static getClusterDiagnostic(
+        id: number,
+        diagnosticId: number,
+    ): CancelablePromise<DiagnosticData> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/clusters/{ID}/diagnostics/{diagnosticId}',
+            path: {
+                'ID': id,
+                'diagnosticId': diagnosticId,
             },
         });
     }

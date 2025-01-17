@@ -1,4 +1,4 @@
-package risectl
+package meta
 
 import (
 	"archive/tar"

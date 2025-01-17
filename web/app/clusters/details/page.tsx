@@ -8,7 +8,9 @@ function ClusterDetails() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   if (id) {
-    return <ClusterPage params={{ id: parseInt(id) }} />;
+    return <div className="w-full">
+      <ClusterPage params={{ id: parseInt(id) }} />
+    </div>;
   }
   return <div>No cluster id provided</div>;
 }
