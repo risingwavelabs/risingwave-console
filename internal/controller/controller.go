@@ -406,3 +406,22 @@ func (controller *Controller) TestClusterConnection(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(conn)
 }
+
+func (controller *Controller) RunRisectlCommand(c *fiber.Ctx, id int32) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	var params apigen.RisectlCommand
+	if err := c.BodyParser(&params); err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	result, err := controller.svc.RunRisectlCommand(c.Context(), id, params, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
+}

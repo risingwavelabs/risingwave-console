@@ -234,6 +234,23 @@ type Relation struct {
 // RelationType Type of the relation
 type RelationType string
 
+// RisectlCommand defines model for RisectlCommand.
+type RisectlCommand struct {
+	Args []string `json:"args"`
+}
+
+// RisectlCommandResult defines model for RisectlCommandResult.
+type RisectlCommandResult struct {
+	// Err Error message when try to run the risectl command
+	Err string `json:"err"`
+
+	// ExitCode Exit code of the risectl command
+	ExitCode int32 `json:"exitCode"`
+
+	// Result Result of the risectl command
+	Result string `json:"result"`
+}
+
 // Schema defines model for Schema.
 type Schema struct {
 	// Name Name of the schema
@@ -361,6 +378,9 @@ type UpdateClusterJSONRequestBody = UpdateClusterRequest
 
 // UpdateClusterDiagnosticConfigJSONRequestBody defines body for UpdateClusterDiagnosticConfig for application/json ContentType.
 type UpdateClusterDiagnosticConfigJSONRequestBody = DiagnosticConfig
+
+// RunRisectlCommandJSONRequestBody defines body for RunRisectlCommand for application/json ContentType.
+type RunRisectlCommandJSONRequestBody = RisectlCommand
 
 // UpdateClusterSnapshotConfigJSONRequestBody defines body for UpdateClusterSnapshotConfig for application/json ContentType.
 type UpdateClusterSnapshotConfigJSONRequestBody = SnapshotConfig
@@ -498,6 +518,11 @@ type ClientInterface interface {
 	UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	UpdateClusterDiagnosticConfig(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RunRisectlCommandWithBody request with any body
+	RunRisectlCommandWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RunRisectlCommand(ctx context.Context, iD int32, body RunRisectlCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetClusterSnapshotConfig request
 	GetClusterSnapshotConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -744,6 +769,30 @@ func (c *Client) UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD i
 
 func (c *Client) UpdateClusterDiagnosticConfig(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateClusterDiagnosticConfigRequest(c.Server, iD, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RunRisectlCommandWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRunRisectlCommandRequestWithBody(c.Server, iD, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RunRisectlCommand(ctx context.Context, iD int32, body RunRisectlCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRunRisectlCommandRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1526,6 +1575,53 @@ func NewUpdateClusterDiagnosticConfigRequestWithBody(server string, iD int32, co
 	return req, nil
 }
 
+// NewRunRisectlCommandRequest calls the generic RunRisectlCommand builder with application/json body
+func NewRunRisectlCommandRequest(server string, iD int32, body RunRisectlCommandJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRunRisectlCommandRequestWithBody(server, iD, "application/json", bodyReader)
+}
+
+// NewRunRisectlCommandRequestWithBody generates requests for RunRisectlCommand with any type of body
+func NewRunRisectlCommandRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clusters/%s/risectl", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetClusterSnapshotConfigRequest generates requests for GetClusterSnapshotConfig
 func NewGetClusterSnapshotConfigRequest(server string, iD int32) (*http.Request, error) {
 	var err error
@@ -2240,6 +2336,11 @@ type ClientWithResponsesInterface interface {
 
 	UpdateClusterDiagnosticConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
 
+	// RunRisectlCommandWithBodyWithResponse request with any body
+	RunRisectlCommandWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RunRisectlCommandResponse, error)
+
+	RunRisectlCommandWithResponse(ctx context.Context, iD int32, body RunRisectlCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*RunRisectlCommandResponse, error)
+
 	// GetClusterSnapshotConfigWithResponse request
 	GetClusterSnapshotConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterSnapshotConfigResponse, error)
 
@@ -2549,6 +2650,28 @@ func (r UpdateClusterDiagnosticConfigResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UpdateClusterDiagnosticConfigResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RunRisectlCommandResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RisectlCommandResult
+}
+
+// Status returns HTTPResponse.Status
+func (r RunRisectlCommandResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RunRisectlCommandResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3042,6 +3165,23 @@ func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithResponse(ctx cont
 	return ParseUpdateClusterDiagnosticConfigResponse(rsp)
 }
 
+// RunRisectlCommandWithBodyWithResponse request with arbitrary body returning *RunRisectlCommandResponse
+func (c *ClientWithResponses) RunRisectlCommandWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RunRisectlCommandResponse, error) {
+	rsp, err := c.RunRisectlCommandWithBody(ctx, iD, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRunRisectlCommandResponse(rsp)
+}
+
+func (c *ClientWithResponses) RunRisectlCommandWithResponse(ctx context.Context, iD int32, body RunRisectlCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*RunRisectlCommandResponse, error) {
+	rsp, err := c.RunRisectlCommand(ctx, iD, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRunRisectlCommandResponse(rsp)
+}
+
 // GetClusterSnapshotConfigWithResponse request returning *GetClusterSnapshotConfigResponse
 func (c *ClientWithResponses) GetClusterSnapshotConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterSnapshotConfigResponse, error) {
 	rsp, err := c.GetClusterSnapshotConfig(ctx, iD, reqEditors...)
@@ -3529,6 +3669,32 @@ func ParseUpdateClusterDiagnosticConfigResponse(rsp *http.Response) (*UpdateClus
 	return response, nil
 }
 
+// ParseRunRisectlCommandResponse parses an HTTP response from a RunRisectlCommandWithResponse call
+func ParseRunRisectlCommandResponse(rsp *http.Response) (*RunRisectlCommandResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RunRisectlCommandResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RisectlCommandResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetClusterSnapshotConfigResponse parses an HTTP response from a GetClusterSnapshotConfigWithResponse call
 func ParseGetClusterSnapshotConfigResponse(rsp *http.Response) (*GetClusterSnapshotConfigResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -3940,6 +4106,9 @@ type ServerInterface interface {
 	// Update diagnostic configuration
 	// (PUT /clusters/{ID}/diagnostics/config)
 	UpdateClusterDiagnosticConfig(c *fiber.Ctx, iD int32) error
+	// Run risectl command
+	// (POST /clusters/{ID}/risectl)
+	RunRisectlCommand(c *fiber.Ctx, iD int32) error
 	// Get snapshot configuration
 	// (GET /clusters/{ID}/snapshot-config)
 	GetClusterSnapshotConfig(c *fiber.Ctx, iD int32) error
@@ -4190,6 +4359,24 @@ func (siw *ServerInterfaceWrapper) UpdateClusterDiagnosticConfig(c *fiber.Ctx) e
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.UpdateClusterDiagnosticConfig(c, iD)
+}
+
+// RunRisectlCommand operation middleware
+func (siw *ServerInterfaceWrapper) RunRisectlCommand(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "ID" -------------
+	var iD int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.RunRisectlCommand(c, iD)
 }
 
 // GetClusterSnapshotConfig operation middleware
@@ -4506,6 +4693,8 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	router.Get(options.BaseURL+"/clusters/:ID/diagnostics/config", wrapper.GetClusterDiagnosticConfig)
 
 	router.Put(options.BaseURL+"/clusters/:ID/diagnostics/config", wrapper.UpdateClusterDiagnosticConfig)
+
+	router.Post(options.BaseURL+"/clusters/:ID/risectl", wrapper.RunRisectlCommand)
 
 	router.Get(options.BaseURL+"/clusters/:ID/snapshot-config", wrapper.GetClusterSnapshotConfig)
 

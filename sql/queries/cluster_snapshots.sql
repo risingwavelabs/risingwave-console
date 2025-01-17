@@ -8,4 +8,4 @@ WHERE cluster_id = $1 AND snapshot_id = $2;
 
 -- name: ListClusterSnapshots :many
 SELECT * FROM cluster_snapshots
-WHERE cluster_id = $1;
+WHERE cluster_id = $1 ORDER BY created_at DESC;

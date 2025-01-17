@@ -104,6 +104,8 @@ type ServiceInterface interface {
 	DeleteClusterSnapshot(ctx context.Context, id int32, snapshotID int64, orgID int32) error
 
 	TestClusterConnection(ctx context.Context, params apigen.TestClusterConnectionPayload, orgID int32) (*apigen.TestClusterConnectionResult, error)
+
+	RunRisectlCommand(ctx context.Context, id int32, params apigen.RisectlCommand, orgID int32) (*apigen.RisectlCommandResult, error)
 }
 
 type Service struct {
@@ -799,6 +801,7 @@ func (s *Service) ListClusterSnapshots(ctx context.Context, id int32, orgID int3
 			CreatedAt: snapshot.CreatedAt,
 		}
 	}
+
 	return result, nil
 }
 
@@ -830,5 +833,24 @@ func (s *Service) TestClusterConnection(ctx context.Context, params apigen.TestC
 	return &apigen.TestClusterConnectionResult{
 		Success: errMsg == "",
 		Result:  utils.IfElse(errMsg == "", "Connection successful", errMsg),
+	}, nil
+}
+
+func (s *Service) RunRisectlCommand(ctx context.Context, id int32, params apigen.RisectlCommand, orgID int32) (*apigen.RisectlCommandResult, error) {
+	conn, err := s.getRisectlConn(ctx, id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get risectl connection")
+	}
+
+	result, exitCode, err := conn.Run(ctx, params.Args...)
+	errMsg := ""
+	if err != nil {
+		errMsg = err.Error()
+	}
+
+	return &apigen.RisectlCommandResult{
+		Result:   result,
+		ExitCode: int32(exitCode),
+		Err:      errMsg,
 	}, nil
 }

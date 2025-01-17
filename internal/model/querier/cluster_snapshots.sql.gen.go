@@ -42,7 +42,7 @@ func (q *Queries) DeleteClusterSnapshot(ctx context.Context, arg DeleteClusterSn
 
 const listClusterSnapshots = `-- name: ListClusterSnapshots :many
 SELECT cluster_id, snapshot_id, name, created_at, updated_at FROM cluster_snapshots
-WHERE cluster_id = $1
+WHERE cluster_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListClusterSnapshots(ctx context.Context, clusterID int32) ([]*ClusterSnapshot, error) {

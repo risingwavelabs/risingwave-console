@@ -93,6 +93,9 @@ export default function ClusterPage({ params }: ClusterPageProps) {
   const [autoBackupInterval, setAutoBackupInterval] = useState("24h")
   const [autoBackupKeepCount, setAutoBackupKeepCount] = useState(7)
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)
+  const [risectlCommand, setRisectlCommand] = useState("")
+  const [risectlResult, setRisectlResult] = useState<{ exitCode: number; result: string; error: string } | null>(null)
+  const [isRunningCommand, setIsRunningCommand] = useState(false)
 
   useEffect(() => {
     const fetchClusterData = async () => {
@@ -202,6 +205,83 @@ export default function ClusterPage({ params }: ClusterPageProps) {
     setDeleteSnapshotId(null)
   }
 
+  const parseCommandArgs = (command: string): string[] => {
+    const args: string[] = []
+    let currentArg = ''
+    let insideQuotes = false
+    
+    // Helper to add the current argument to args array
+    const pushArg = () => {
+      const trimmed = currentArg.trim()
+      if (trimmed) args.push(trimmed)
+      currentArg = ''
+    }
+
+    for (let i = 0; i < command.length; i++) {
+      const char = command[i]
+      
+      if (char === '"') {
+        if (insideQuotes) {
+          // End of quoted section
+          pushArg()
+          insideQuotes = false
+        } else {
+          // Start of quoted section
+          if (currentArg.trim()) pushArg() // Push any existing arg
+          insideQuotes = true
+        }
+        continue
+      }
+      
+      if (!insideQuotes && (char === ' ' || char === '\n')) {
+        pushArg()
+        continue
+      }
+      
+      currentArg += char
+    }
+    
+    // Add any remaining argument
+    if (currentArg) pushArg()
+    
+    return args
+  }
+
+  const runRisectl = async () => {
+    if (!risectlCommand.trim()) {
+      toast.error("Please enter a command")
+      return
+    }
+
+    setIsRunningCommand(true)
+    try {
+      const args = parseCommandArgs(risectlCommand)
+      const result = await DefaultService.runRisectlCommand(clusterId, {
+        args
+      })
+      setRisectlResult({
+        exitCode: result.exitCode,
+        result: result.result,
+        error: result.err
+      })
+      if (result.exitCode === 0) {
+        toast.success("Command executed successfully")
+      } else {
+        toast.error("Command failed")
+      }
+    } catch (error) {
+      console.error("Error running risectl command:", error)
+      toast.error("Failed to run command")
+      setRisectlResult({
+        exitCode: -1,
+        result: "",
+        error: "Failed to execute command"
+      })
+    } finally {
+      setIsRunningCommand(false)
+    }
+  }
+
   const createSnapshot = async () => {
     setIsCreatingSnapshot(true)
     try {
@@ -284,6 +364,95 @@ export default function ClusterPage({ params }: ClusterPageProps) {
               </div>
             </CardContent>
           </Card>
+        </div>
+      </div>
+
+      {/* Risectl Command Section */}
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold">Risectl Command</h3>
+          <p className="text-sm text-muted-foreground">
+            Run risectl commands directly on the cluster
+          </p>
+        </div>
+
+        <div className="max-w-4xl space-y-4 border rounded-lg p-4">
+          <div className="flex gap-2">
+            <textarea
+              value={risectlCommand}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRisectlCommand(e.target.value)}
+              placeholder={'Enter risectl command arguments\nAguments can be separated by spaces and also line breaks\nEnter help to check available commands'}
+              className="flex-1 min-h-[80px] px-3 py-2 border rounded-md text-sm font-mono resize-y"
+              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                if (e.key === 'Enter' && e.metaKey) {
+                  e.preventDefault()
+                  void runRisectl()
+                }
+              }}
+            />
+            <div className="flex flex-col justify-start">
+              <Button 
+                onClick={() => void runRisectl()} 
+                disabled={isRunningCommand}
+                className="whitespace-nowrap select-none"
+                size="sm"
+              >
+                {isRunningCommand ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Running...
+                  </>
+                ) : (
+                  "Run Command"
+                )}
+              </Button>
+              {/* <p className="text-xs text-muted-foreground mt-2 text-center">
+                {navigator.platform.toLowerCase().includes('mac') ? '⌘' : 'Ctrl'}+Enter
+              </p> */}
+            </div>
+          </div>
+
+          {risectlResult && (
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex items-center gap-2 w-full hover:bg-accent/50 p-2 rounded-md transition-colors">
+                <ChevronDown className="h-4 w-4" />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Result</span>
+                  <span className={`text-sm ${risectlResult.exitCode === 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    (Exit Code: {risectlResult.exitCode})
+                  </span>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2">
+                <div className="space-y-2">
+                  {risectlResult.result && (
+                    <div className="space-y-1">
+                      <span className="text-sm font-medium">Output:</span>
+                      <div className="relative max-h-[400px] overflow-auto rounded-md">
+                        <pre className="p-3 bg-muted text-sm whitespace-pre overflow-auto">
+                          {risectlResult.result}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {risectlResult.error && (
+                    <div className="space-y-1">
+                      <span className="text-sm font-medium text-red-600">Error:</span>
+                      <div className="relative max-h-[400px] overflow-auto rounded-md">
+                        <pre className="p-3 bg-red-50 text-red-600 text-sm whitespace-pre overflow-auto">
+                          {risectlResult.error}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
         </div>
       </div>
 

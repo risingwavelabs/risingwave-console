@@ -13,6 +13,8 @@ import type { DiagnosticData } from '../models/DiagnosticData';
 import type { QueryRequest } from '../models/QueryRequest';
 import type { QueryResponse } from '../models/QueryResponse';
 import type { RefreshTokenRequest } from '../models/RefreshTokenRequest';
+import type { RisectlCommand } from '../models/RisectlCommand';
+import type { RisectlCommandResult } from '../models/RisectlCommandResult';
 import type { SignInRequest } from '../models/SignInRequest';
 import type { Snapshot } from '../models/Snapshot';
 import type { SnapshotConfig } from '../models/SnapshotConfig';
@@ -308,6 +310,28 @@ export class DefaultService {
             query: {
                 'cascade': cascade,
             },
+        });
+    }
+    /**
+     * Run risectl command
+     * Run a risectl command on a specific cluster
+     * @param id
+     * @param requestBody
+     * @returns RisectlCommandResult Successfully ran risectl command
+     * @throws ApiError
+     */
+    public static runRisectlCommand(
+        id: number,
+        requestBody: RisectlCommand,
+    ): CancelablePromise<RisectlCommandResult> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clusters/{ID}/risectl',
+            path: {
+                'ID': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**

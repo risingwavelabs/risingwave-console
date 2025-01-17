@@ -326,6 +326,34 @@ paths:
         '204':
           description: Cluster deleted successfully
 
+  /clusters/{ID}/risectl:
+    post:
+      summary: Run risectl command
+      description: Run a risectl command on a specific cluster
+      operationId: runRisectlCommand
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RisectlCommand'
+      responses:
+        '200':
+          description: Successfully ran risectl command
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RisectlCommandResult'
+
   /clusters/{ID}/snapshots:
     parameters:
       - name: ID
@@ -1123,3 +1151,31 @@ components:
         result:
           type: string
           description: Test result
+
+    RisectlCommand:
+      type: object
+      required:
+        - args
+      properties:
+        args:
+          type: array
+          items:
+            type: string
+
+    RisectlCommandResult:
+      type: object
+      required:
+        - result
+        - exitCode
+        - err
+      properties:
+        result:
+          type: string
+          description: Result of the risectl command
+        exitCode:
+          type: integer
+          format: int32
+          description: Exit code of the risectl command
+        err:
+          type: string
+          description: Error message when try to run the risectl command
