@@ -17,13 +17,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-// Move these to a separate constants file if needed
-const SQL_COMPLETIONS = {
-  keywords: ['SELECT', 'FROM', 'WHERE', 'GROUP BY', 'ORDER BY', 'HAVING', 'JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN', 'LIMIT', 'OFFSET'],
-  functions: ['COUNT', 'SUM', 'AVG', 'MAX', 'MIN', 'COALESCE', 'NULLIF', 'CAST', 'DATE', 'EXTRACT'],
-  operators: ['AND', 'OR', 'NOT', 'IN', 'BETWEEN', 'LIKE', 'IS NULL', 'IS NOT NULL'],
-}
-
 interface EditorTab {
   id: string
   name: string
@@ -179,41 +172,41 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, o
 
   // Configure Monaco Editor
   useEffect(() => {
-    if (monaco) {
-      const disposable = monaco.languages.registerCompletionItemProvider('sql', {
-        provideCompletionItems: (model, position) => {
-          const word = model.getWordUntilPosition(position)
-          const range = {
-            startLineNumber: position.lineNumber,
-            endLineNumber: position.lineNumber,
-            startColumn: word.startColumn,
-            endColumn: word.endColumn,
-          }
+    // if (monaco) {
+    //   const disposable = monaco.languages.registerCompletionItemProvider('pgsql', {
+    //     provideCompletionItems: (model, position) => {
+    //       const word = model.getWordUntilPosition(position)
+    //       const range = {
+    //         startLineNumber: position.lineNumber,
+    //         endLineNumber: position.lineNumber,
+    //         startColumn: word.startColumn,
+    //         endColumn: word.endColumn,
+    //       }
 
-          const suggestions: languages.CompletionItem[] = []
+    //       const suggestions: languages.CompletionItem[] = []
 
-          // Add suggestions for keywords, functions, operators
-          SQL_COMPLETIONS.keywords.forEach(keyword => {
-            if (keyword.startsWith(word.word.toUpperCase())) {
-              suggestions.push({
-                label: keyword,
-                kind: monaco.languages.CompletionItemKind.Keyword,
-                insertText: keyword,
-                range,
-                preselect: true,
-              })
-            }
-          })
+    //       // Add suggestions for keywords, functions, operators
+    //       SQL_COMPLETIONS.keywords.forEach(keyword => {
+    //         if (keyword.startsWith(word.word.toUpperCase())) {
+    //           suggestions.push({
+    //             label: keyword,
+    //             kind: monaco.languages.CompletionItemKind.Keyword,
+    //             insertText: keyword,
+    //             range,
+    //             preselect: true,
+    //           })
+    //         }
+    //       })
 
-          // ... Add other suggestions (functions, operators) similarly
+    //       // ... Add other suggestions (functions, operators) similarly
 
-          return { suggestions }
-        },
-        triggerCharacters: [' ', '.', '('],
-      })
+    //       return { suggestions }
+    //     },
+    //     triggerCharacters: [' ', '.', '('],
+    //   })
 
-      return () => disposable.dispose()
-    }
+    //   return () => disposable.dispose()
+    // }
   }, [monaco])
 
   // Tab management handlers
@@ -610,7 +603,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, o
         {mounted && (
           <Editor
             height="100%"
-            defaultLanguage="sql"
+            defaultLanguage="pgsql"
             theme={theme === 'dark' ? 'vs-dark' : 'light'}
             value={tabs.find(tab => tab.id === activeTab)?.content}
             onChange={handleEditorChange}
