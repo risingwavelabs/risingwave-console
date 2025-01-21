@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import Editor, { useMonaco, OnMount } from '@monaco-editor/react'
-import type { languages } from 'monaco-editor'
 import { Button } from "@/components/ui/button"
 import { Play, X, Plus, HelpCircle } from 'lucide-react'
 import { GenerateQuery } from "@/components/ui/generate-query"

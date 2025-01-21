@@ -27,13 +27,16 @@ import {
 } from "@/components/ui/pagination"
 import { ChevronDown } from "lucide-react"
 import { ConfirmationPopup } from "@/components/ui/confirmation-popup"
-import { DateRange } from "react-day-picker"
 import { Card, CardContent } from "@/components/ui/card"
 import { DefaultService } from "@/api-gen"
 import { DiagnosticData } from "@/api-gen/models/DiagnosticData"
 import toast from "react-hot-toast"
 
 const width = "w-full"
+
+const enableAutoDiagnostic = false
+
+const enableAutoBackup = false
 
 interface BaseCluster {
   name: string
@@ -90,10 +93,8 @@ export default function ClusterPage({ params }: ClusterPageProps) {
   const clusterId = params.id
   const [clusterData, setClusterData] = useState<ClusterData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState(1)
   const [snapshotPage, setSnapshotPage] = useState(1)
   const [deleteSnapshotId, setDeleteSnapshotId] = useState<number | null>(null)
-  const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(false)
   const [autoBackupInterval, setAutoBackupInterval] = useState("*/30 * * * *")
   const [autoBackupKeepCount, setAutoBackupKeepCount] = useState(7)
@@ -256,26 +257,6 @@ export default function ClusterPage({ params }: ClusterPageProps) {
     snapshotPage * ITEMS_PER_PAGE
   ) || []
   const totalSnapshotPages = Math.ceil((clusterData?.snapshots.length || 0) / ITEMS_PER_PAGE)
-
-  const filteredItems = clusterData.diagnostics.history
-    .filter(item => {
-      if (!dateRange?.from && !dateRange?.to) return true
-      const itemDate = new Date(item.timestamp)
-      if (dateRange.from && dateRange.to) {
-        return itemDate >= dateRange.from && itemDate <= dateRange.to
-      }
-      if (dateRange.from) {
-        return itemDate >= dateRange.from
-      }
-      if (dateRange.to) {
-        return itemDate <= dateRange.to
-      }
-      return true
-    })
-
-  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE)
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-  const currentItems = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE)
 
   const handleDeleteSnapshot = async (id: number) => {
     try {
@@ -626,7 +607,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           </Button>
         </div>
 
-        <div className={`${width} space-y-4 border rounded-lg p-4`}>
+        <div className={`${width} space-y-4 border rounded-lg p-4 ${enableAutoBackup ? '' : 'hidden'}`}>
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="text-sm font-medium">Auto Backup</Label>
@@ -806,7 +787,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
 
         <div className="space-y-6">
           {/* Configuration Card */}
-          <div className={`${width} space-y-4 border rounded-lg p-4`}>
+          <div className={`${width} space-y-4 border rounded-lg p-4 ${enableAutoDiagnostic ? '' : 'hidden'}`}>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label className="text-sm font-medium">Auto Diagnostic</Label>
@@ -892,7 +873,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           <div className={`${width} space-y-4`}>
             {!diagnostics || diagnostics.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
-                No diagnostic data available. Click "Collect Diagnostic" to start collecting data.
+                No diagnostic data available. Click &quot;Collect Diagnostic&quot; to start collecting data.
               </div>
             ) : (
               <>

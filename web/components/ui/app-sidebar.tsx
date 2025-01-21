@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sidebar"
 import {
   Server,
-  Settings,
+  // Settings,
   Code,
   Moon,
   Sun,
@@ -49,11 +49,11 @@ const mainMenuItems = [
     href: "/sqlconsole",
     icon: Code,
   },
-  {
-    title: "Settings",
-    href: "/settings",
-    icon: Settings,
-  },
+  // {
+  //   title: "Settings",
+  //   href: "/settings",
+  //   icon: Settings,
+  // },
 ]
 
 export function AppSidebar() {
