@@ -2,13 +2,14 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { AutoBackupConfig } from '../models/AutoBackupConfig';
+import type { AutoDiagnosticConfig } from '../models/AutoDiagnosticConfig';
 import type { Cluster } from '../models/Cluster';
 import type { ClusterCreate } from '../models/ClusterCreate';
 import type { Credentials } from '../models/Credentials';
 import type { Database } from '../models/Database';
 import type { DatabaseConnectInfo } from '../models/DatabaseConnectInfo';
 import type { DDLProgress } from '../models/DDLProgress';
-import type { DiagnosticConfig } from '../models/DiagnosticConfig';
 import type { DiagnosticData } from '../models/DiagnosticData';
 import type { QueryRequest } from '../models/QueryRequest';
 import type { QueryResponse } from '../models/QueryResponse';
@@ -17,7 +18,6 @@ import type { RisectlCommand } from '../models/RisectlCommand';
 import type { RisectlCommandResult } from '../models/RisectlCommandResult';
 import type { SignInRequest } from '../models/SignInRequest';
 import type { Snapshot } from '../models/Snapshot';
-import type { SnapshotConfig } from '../models/SnapshotConfig';
 import type { SnapshotCreate } from '../models/SnapshotCreate';
 import type { TestClusterConnectionPayload } from '../models/TestClusterConnectionPayload';
 import type { TestClusterConnectionResult } from '../models/TestClusterConnectionResult';
@@ -420,15 +420,15 @@ export class DefaultService {
      * Get snapshot configuration
      * Get automatic snapshot configuration for a cluster
      * @param id
-     * @returns SnapshotConfig Successfully retrieved snapshot configuration
+     * @returns AutoBackupConfig Successfully retrieved snapshot configuration
      * @throws ApiError
      */
-    public static getClusterSnapshotConfig(
+    public static getClusterAutoBackupConfig(
         id: number,
-    ): CancelablePromise<SnapshotConfig> {
+    ): CancelablePromise<AutoBackupConfig> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/clusters/{ID}/snapshot-config',
+            url: '/clusters/{ID}/auto-backup-config',
             path: {
                 'ID': id,
             },
@@ -439,16 +439,16 @@ export class DefaultService {
      * Update automatic snapshot configuration for a cluster
      * @param id
      * @param requestBody
-     * @returns SnapshotConfig Snapshot configuration updated successfully
+     * @returns any Snapshot configuration updated successfully
      * @throws ApiError
      */
-    public static updateClusterSnapshotConfig(
+    public static updateClusterAutoBackupConfig(
         id: number,
-        requestBody: SnapshotConfig,
-    ): CancelablePromise<SnapshotConfig> {
+        requestBody: AutoBackupConfig,
+    ): CancelablePromise<any> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/clusters/{ID}/snapshot-config',
+            url: '/clusters/{ID}/auto-backup-config',
             path: {
                 'ID': id,
             },
@@ -534,12 +534,12 @@ export class DefaultService {
      * Get diagnostic configuration
      * Get diagnostic data collection configuration for a cluster
      * @param id
-     * @returns DiagnosticConfig Successfully retrieved diagnostic configuration
+     * @returns AutoDiagnosticConfig Successfully retrieved diagnostic configuration
      * @throws ApiError
      */
-    public static getClusterDiagnosticConfig(
+    public static getClusterAutoDiagnosticConfig(
         id: number,
-    ): CancelablePromise<DiagnosticConfig> {
+    ): CancelablePromise<AutoDiagnosticConfig> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/clusters/{ID}/diagnostics/config',
@@ -553,13 +553,13 @@ export class DefaultService {
      * Update diagnostic data collection configuration for a cluster
      * @param id
      * @param requestBody
-     * @returns DiagnosticConfig Diagnostic configuration updated successfully
+     * @returns any Diagnostic configuration updated successfully
      * @throws ApiError
      */
-    public static updateClusterDiagnosticConfig(
+    public static updateClusterAutoDiagnosticConfig(
         id: number,
-        requestBody: DiagnosticConfig,
-    ): CancelablePromise<DiagnosticConfig> {
+        requestBody: AutoDiagnosticConfig,
+    ): CancelablePromise<any> {
         return __request(OpenAPI, {
             method: 'PUT',
             url: '/clusters/{ID}/diagnostics/config',

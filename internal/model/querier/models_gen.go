@@ -8,6 +8,24 @@ import (
 	"time"
 )
 
+type AutoBackupConfig struct {
+	ClusterID      int32
+	Enabled        bool
+	CronExpression string
+	KeepLast       int32
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+type AutoDiagnosticsConfig struct {
+	ClusterID         int32
+	Enabled           bool
+	CronExpression    string
+	RetentionDuration *string
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+}
+
 type Cluster struct {
 	ID             int32
 	OrganizationID int32
@@ -45,6 +63,13 @@ type DatabaseConnection struct {
 	Username       string
 	Password       *string
 	Database       string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+type OrgSetting struct {
+	OrganizationID int32
+	Timezone       string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }

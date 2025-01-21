@@ -251,6 +251,36 @@ func (mr *MockModelInterfaceMockRecorder) GetAllOrgDatabseConnectionsByClusterID
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllOrgDatabseConnectionsByClusterID", reflect.TypeOf((*MockModelInterface)(nil).GetAllOrgDatabseConnectionsByClusterID), ctx, arg)
 }
 
+// GetAutoBackupConfig mocks base method.
+func (m *MockModelInterface) GetAutoBackupConfig(ctx context.Context, clusterID int32) (*querier.AutoBackupConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAutoBackupConfig", ctx, clusterID)
+	ret0, _ := ret[0].(*querier.AutoBackupConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAutoBackupConfig indicates an expected call of GetAutoBackupConfig.
+func (mr *MockModelInterfaceMockRecorder) GetAutoBackupConfig(ctx, clusterID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAutoBackupConfig", reflect.TypeOf((*MockModelInterface)(nil).GetAutoBackupConfig), ctx, clusterID)
+}
+
+// GetAutoDiagnosticsConfig mocks base method.
+func (m *MockModelInterface) GetAutoDiagnosticsConfig(ctx context.Context, clusterID int32) (*querier.AutoDiagnosticsConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAutoDiagnosticsConfig", ctx, clusterID)
+	ret0, _ := ret[0].(*querier.AutoDiagnosticsConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAutoDiagnosticsConfig indicates an expected call of GetAutoDiagnosticsConfig.
+func (mr *MockModelInterfaceMockRecorder) GetAutoDiagnosticsConfig(ctx, clusterID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAutoDiagnosticsConfig", reflect.TypeOf((*MockModelInterface)(nil).GetAutoDiagnosticsConfig), ctx, clusterID)
+}
+
 // GetClusterByID mocks base method.
 func (m *MockModelInterface) GetClusterByID(ctx context.Context, id int32) (*querier.Cluster, error) {
 	m.ctrl.T.Helper()
@@ -577,6 +607,34 @@ func (m *MockModelInterface) UpdateOrganization(ctx context.Context, arg querier
 func (mr *MockModelInterfaceMockRecorder) UpdateOrganization(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrganization", reflect.TypeOf((*MockModelInterface)(nil).UpdateOrganization), ctx, arg)
+}
+
+// UpsertAutoBackupConfig mocks base method.
+func (m *MockModelInterface) UpsertAutoBackupConfig(ctx context.Context, arg querier.UpsertAutoBackupConfigParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertAutoBackupConfig", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertAutoBackupConfig indicates an expected call of UpsertAutoBackupConfig.
+func (mr *MockModelInterfaceMockRecorder) UpsertAutoBackupConfig(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertAutoBackupConfig", reflect.TypeOf((*MockModelInterface)(nil).UpsertAutoBackupConfig), ctx, arg)
+}
+
+// UpsertAutoDiagnosticsConfig mocks base method.
+func (m *MockModelInterface) UpsertAutoDiagnosticsConfig(ctx context.Context, arg querier.UpsertAutoDiagnosticsConfigParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertAutoDiagnosticsConfig", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertAutoDiagnosticsConfig indicates an expected call of UpsertAutoDiagnosticsConfig.
+func (mr *MockModelInterfaceMockRecorder) UpsertAutoDiagnosticsConfig(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertAutoDiagnosticsConfig", reflect.TypeOf((*MockModelInterface)(nil).UpsertAutoDiagnosticsConfig), ctx, arg)
 }
 
 // UpsertRefreshToken mocks base method.

@@ -2,18 +2,18 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type SnapshotConfig = {
+export type AutoBackupConfig = {
     /**
      * Whether automatic snapshots are enabled
      */
     enabled: boolean;
     /**
-     * Interval between automatic snapshots (e.g., '30m', '6h', '12h', '24h')
+     * Cron expression for automatic snapshots (e.g., '0 0 * * *')
      */
-    interval: string;
+    cronExpression: string;
     /**
      * Number of automatic snapshots to retain
      */
-    keepCount: number;
+    keepLast: number;
 };
 

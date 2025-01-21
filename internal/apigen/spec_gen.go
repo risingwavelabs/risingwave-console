@@ -36,6 +36,30 @@ const (
 	Table            RelationType = "table"
 )
 
+// AutoBackupConfig defines model for AutoBackupConfig.
+type AutoBackupConfig struct {
+	// CronExpression Cron expression for automatic snapshots (e.g., '0 0 * * *')
+	CronExpression string `json:"cronExpression"`
+
+	// Enabled Whether automatic snapshots are enabled
+	Enabled bool `json:"enabled"`
+
+	// KeepLast Number of automatic snapshots to retain
+	KeepLast int32 `json:"keepLast"`
+}
+
+// AutoDiagnosticConfig defines model for AutoDiagnosticConfig.
+type AutoDiagnosticConfig struct {
+	// CronExpression Cron expression for diagnostic data collection (e.g., '0 0 * * *')
+	CronExpression string `json:"cronExpression"`
+
+	// Enabled Whether to enable automatic diagnostics
+	Enabled bool `json:"enabled"`
+
+	// RetentionDuration How long to retain diagnostic data (e.g., '1d', '7d', '14d', '30d', '90d')
+	RetentionDuration *string `json:"retentionDuration,omitempty"`
+}
+
 // Cluster defines model for Cluster.
 type Cluster struct {
 	ID             int32     `json:"ID"`
@@ -164,18 +188,6 @@ type DatabaseConnectInfo struct {
 	Username string `json:"username"`
 }
 
-// DiagnosticConfig defines model for DiagnosticConfig.
-type DiagnosticConfig struct {
-	// Expiration How long to retain diagnostic data (e.g., '1d', '7d', '14d', '30d', '90d')
-	Expiration string `json:"expiration"`
-
-	// Interval Interval between diagnostic data collections (e.g., '15m', '30m', '1h', '6h', '12h', '24h')
-	Interval string `json:"interval"`
-
-	// NoExpiration Whether to keep diagnostic data indefinitely
-	NoExpiration bool `json:"noExpiration"`
-}
-
 // DiagnosticData defines model for DiagnosticData.
 type DiagnosticData struct {
 	// ID Unique identifier of the diagnostic entry
@@ -285,18 +297,6 @@ type Snapshot struct {
 	Name string `json:"name"`
 }
 
-// SnapshotConfig defines model for SnapshotConfig.
-type SnapshotConfig struct {
-	// Enabled Whether automatic snapshots are enabled
-	Enabled bool `json:"enabled"`
-
-	// Interval Interval between automatic snapshots (e.g., '30m', '6h', '12h', '24h')
-	Interval string `json:"interval"`
-
-	// KeepCount Number of automatic snapshots to retain
-	KeepCount int `json:"keepCount"`
-}
-
 // SnapshotCreate defines model for SnapshotCreate.
 type SnapshotCreate struct {
 	// Name Name of the snapshot
@@ -379,17 +379,17 @@ type CreateClusterJSONRequestBody = ClusterCreate
 // UpdateClusterJSONRequestBody defines body for UpdateCluster for application/json ContentType.
 type UpdateClusterJSONRequestBody = UpdateClusterRequest
 
+// UpdateClusterAutoBackupConfigJSONRequestBody defines body for UpdateClusterAutoBackupConfig for application/json ContentType.
+type UpdateClusterAutoBackupConfigJSONRequestBody = AutoBackupConfig
+
 // CreateClusterDiagnosticJSONRequestBody defines body for CreateClusterDiagnostic for application/json ContentType.
 type CreateClusterDiagnosticJSONRequestBody = DiagnosticData
 
-// UpdateClusterDiagnosticConfigJSONRequestBody defines body for UpdateClusterDiagnosticConfig for application/json ContentType.
-type UpdateClusterDiagnosticConfigJSONRequestBody = DiagnosticConfig
+// UpdateClusterAutoDiagnosticConfigJSONRequestBody defines body for UpdateClusterAutoDiagnosticConfig for application/json ContentType.
+type UpdateClusterAutoDiagnosticConfigJSONRequestBody = AutoDiagnosticConfig
 
 // RunRisectlCommandJSONRequestBody defines body for RunRisectlCommand for application/json ContentType.
 type RunRisectlCommandJSONRequestBody = RisectlCommand
-
-// UpdateClusterSnapshotConfigJSONRequestBody defines body for UpdateClusterSnapshotConfig for application/json ContentType.
-type UpdateClusterSnapshotConfigJSONRequestBody = SnapshotConfig
 
 // CreateClusterSnapshotJSONRequestBody defines body for CreateClusterSnapshot for application/json ContentType.
 type CreateClusterSnapshotJSONRequestBody = SnapshotCreate
@@ -514,6 +514,14 @@ type ClientInterface interface {
 
 	UpdateCluster(ctx context.Context, iD int32, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetClusterAutoBackupConfig request
+	GetClusterAutoBackupConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateClusterAutoBackupConfigWithBody request with any body
+	UpdateClusterAutoBackupConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateClusterAutoBackupConfig(ctx context.Context, iD int32, body UpdateClusterAutoBackupConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListClusterDiagnostics request
 	ListClusterDiagnostics(ctx context.Context, iD int32, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -522,13 +530,13 @@ type ClientInterface interface {
 
 	CreateClusterDiagnostic(ctx context.Context, iD int32, body CreateClusterDiagnosticJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetClusterDiagnosticConfig request
-	GetClusterDiagnosticConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetClusterAutoDiagnosticConfig request
+	GetClusterAutoDiagnosticConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UpdateClusterDiagnosticConfigWithBody request with any body
-	UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// UpdateClusterAutoDiagnosticConfigWithBody request with any body
+	UpdateClusterAutoDiagnosticConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateClusterDiagnosticConfig(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateClusterAutoDiagnosticConfig(ctx context.Context, iD int32, body UpdateClusterAutoDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetClusterDiagnostic request
 	GetClusterDiagnostic(ctx context.Context, iD int32, diagnosticId int32, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -537,14 +545,6 @@ type ClientInterface interface {
 	RunRisectlCommandWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	RunRisectlCommand(ctx context.Context, iD int32, body RunRisectlCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetClusterSnapshotConfig request
-	GetClusterSnapshotConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// UpdateClusterSnapshotConfigWithBody request with any body
-	UpdateClusterSnapshotConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	UpdateClusterSnapshotConfig(ctx context.Context, iD int32, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListClusterSnapshots request
 	ListClusterSnapshots(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -745,6 +745,42 @@ func (c *Client) UpdateCluster(ctx context.Context, iD int32, body UpdateCluster
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetClusterAutoBackupConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetClusterAutoBackupConfigRequest(c.Server, iD)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateClusterAutoBackupConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateClusterAutoBackupConfigRequestWithBody(c.Server, iD, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateClusterAutoBackupConfig(ctx context.Context, iD int32, body UpdateClusterAutoBackupConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateClusterAutoBackupConfigRequest(c.Server, iD, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListClusterDiagnostics(ctx context.Context, iD int32, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListClusterDiagnosticsRequest(c.Server, iD, params)
 	if err != nil {
@@ -781,8 +817,8 @@ func (c *Client) CreateClusterDiagnostic(ctx context.Context, iD int32, body Cre
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetClusterDiagnosticConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetClusterDiagnosticConfigRequest(c.Server, iD)
+func (c *Client) GetClusterAutoDiagnosticConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetClusterAutoDiagnosticConfigRequest(c.Server, iD)
 	if err != nil {
 		return nil, err
 	}
@@ -793,8 +829,8 @@ func (c *Client) GetClusterDiagnosticConfig(ctx context.Context, iD int32, reqEd
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateClusterDiagnosticConfigRequestWithBody(c.Server, iD, contentType, body)
+func (c *Client) UpdateClusterAutoDiagnosticConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateClusterAutoDiagnosticConfigRequestWithBody(c.Server, iD, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -805,8 +841,8 @@ func (c *Client) UpdateClusterDiagnosticConfigWithBody(ctx context.Context, iD i
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateClusterDiagnosticConfig(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateClusterDiagnosticConfigRequest(c.Server, iD, body)
+func (c *Client) UpdateClusterAutoDiagnosticConfig(ctx context.Context, iD int32, body UpdateClusterAutoDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateClusterAutoDiagnosticConfigRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
 	}
@@ -843,42 +879,6 @@ func (c *Client) RunRisectlCommandWithBody(ctx context.Context, iD int32, conten
 
 func (c *Client) RunRisectlCommand(ctx context.Context, iD int32, body RunRisectlCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRunRisectlCommandRequest(c.Server, iD, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetClusterSnapshotConfig(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetClusterSnapshotConfigRequest(c.Server, iD)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdateClusterSnapshotConfigWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateClusterSnapshotConfigRequestWithBody(c.Server, iD, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdateClusterSnapshotConfig(ctx context.Context, iD int32, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateClusterSnapshotConfigRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1440,6 +1440,87 @@ func NewUpdateClusterRequestWithBody(server string, iD int32, contentType string
 	return req, nil
 }
 
+// NewGetClusterAutoBackupConfigRequest generates requests for GetClusterAutoBackupConfig
+func NewGetClusterAutoBackupConfigRequest(server string, iD int32) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clusters/%s/auto-backup-config", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateClusterAutoBackupConfigRequest calls the generic UpdateClusterAutoBackupConfig builder with application/json body
+func NewUpdateClusterAutoBackupConfigRequest(server string, iD int32, body UpdateClusterAutoBackupConfigJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateClusterAutoBackupConfigRequestWithBody(server, iD, "application/json", bodyReader)
+}
+
+// NewUpdateClusterAutoBackupConfigRequestWithBody generates requests for UpdateClusterAutoBackupConfig with any type of body
+func NewUpdateClusterAutoBackupConfigRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clusters/%s/auto-backup-config", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListClusterDiagnosticsRequest generates requests for ListClusterDiagnostics
 func NewListClusterDiagnosticsRequest(server string, iD int32, params *ListClusterDiagnosticsParams) (*http.Request, error) {
 	var err error
@@ -1591,8 +1672,8 @@ func NewCreateClusterDiagnosticRequestWithBody(server string, iD int32, contentT
 	return req, nil
 }
 
-// NewGetClusterDiagnosticConfigRequest generates requests for GetClusterDiagnosticConfig
-func NewGetClusterDiagnosticConfigRequest(server string, iD int32) (*http.Request, error) {
+// NewGetClusterAutoDiagnosticConfigRequest generates requests for GetClusterAutoDiagnosticConfig
+func NewGetClusterAutoDiagnosticConfigRequest(server string, iD int32) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1625,19 +1706,19 @@ func NewGetClusterDiagnosticConfigRequest(server string, iD int32) (*http.Reques
 	return req, nil
 }
 
-// NewUpdateClusterDiagnosticConfigRequest calls the generic UpdateClusterDiagnosticConfig builder with application/json body
-func NewUpdateClusterDiagnosticConfigRequest(server string, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody) (*http.Request, error) {
+// NewUpdateClusterAutoDiagnosticConfigRequest calls the generic UpdateClusterAutoDiagnosticConfig builder with application/json body
+func NewUpdateClusterAutoDiagnosticConfigRequest(server string, iD int32, body UpdateClusterAutoDiagnosticConfigJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateClusterDiagnosticConfigRequestWithBody(server, iD, "application/json", bodyReader)
+	return NewUpdateClusterAutoDiagnosticConfigRequestWithBody(server, iD, "application/json", bodyReader)
 }
 
-// NewUpdateClusterDiagnosticConfigRequestWithBody generates requests for UpdateClusterDiagnosticConfig with any type of body
-func NewUpdateClusterDiagnosticConfigRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
+// NewUpdateClusterAutoDiagnosticConfigRequestWithBody generates requests for UpdateClusterAutoDiagnosticConfig with any type of body
+func NewUpdateClusterAutoDiagnosticConfigRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1751,87 +1832,6 @@ func NewRunRisectlCommandRequestWithBody(server string, iD int32, contentType st
 	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewGetClusterSnapshotConfigRequest generates requests for GetClusterSnapshotConfig
-func NewGetClusterSnapshotConfigRequest(server string, iD int32) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/clusters/%s/snapshot-config", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewUpdateClusterSnapshotConfigRequest calls the generic UpdateClusterSnapshotConfig builder with application/json body
-func NewUpdateClusterSnapshotConfigRequest(server string, iD int32, body UpdateClusterSnapshotConfigJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewUpdateClusterSnapshotConfigRequestWithBody(server, iD, "application/json", bodyReader)
-}
-
-// NewUpdateClusterSnapshotConfigRequestWithBody generates requests for UpdateClusterSnapshotConfig with any type of body
-func NewUpdateClusterSnapshotConfigRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/clusters/%s/snapshot-config", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("PUT", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -2463,6 +2463,14 @@ type ClientWithResponsesInterface interface {
 
 	UpdateClusterWithResponse(ctx context.Context, iD int32, body UpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterResponse, error)
 
+	// GetClusterAutoBackupConfigWithResponse request
+	GetClusterAutoBackupConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterAutoBackupConfigResponse, error)
+
+	// UpdateClusterAutoBackupConfigWithBodyWithResponse request with any body
+	UpdateClusterAutoBackupConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterAutoBackupConfigResponse, error)
+
+	UpdateClusterAutoBackupConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterAutoBackupConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterAutoBackupConfigResponse, error)
+
 	// ListClusterDiagnosticsWithResponse request
 	ListClusterDiagnosticsWithResponse(ctx context.Context, iD int32, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*ListClusterDiagnosticsResponse, error)
 
@@ -2471,13 +2479,13 @@ type ClientWithResponsesInterface interface {
 
 	CreateClusterDiagnosticWithResponse(ctx context.Context, iD int32, body CreateClusterDiagnosticJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterDiagnosticResponse, error)
 
-	// GetClusterDiagnosticConfigWithResponse request
-	GetClusterDiagnosticConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticConfigResponse, error)
+	// GetClusterAutoDiagnosticConfigWithResponse request
+	GetClusterAutoDiagnosticConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterAutoDiagnosticConfigResponse, error)
 
-	// UpdateClusterDiagnosticConfigWithBodyWithResponse request with any body
-	UpdateClusterDiagnosticConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
+	// UpdateClusterAutoDiagnosticConfigWithBodyWithResponse request with any body
+	UpdateClusterAutoDiagnosticConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterAutoDiagnosticConfigResponse, error)
 
-	UpdateClusterDiagnosticConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error)
+	UpdateClusterAutoDiagnosticConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterAutoDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterAutoDiagnosticConfigResponse, error)
 
 	// GetClusterDiagnosticWithResponse request
 	GetClusterDiagnosticWithResponse(ctx context.Context, iD int32, diagnosticId int32, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticResponse, error)
@@ -2486,14 +2494,6 @@ type ClientWithResponsesInterface interface {
 	RunRisectlCommandWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RunRisectlCommandResponse, error)
 
 	RunRisectlCommandWithResponse(ctx context.Context, iD int32, body RunRisectlCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*RunRisectlCommandResponse, error)
-
-	// GetClusterSnapshotConfigWithResponse request
-	GetClusterSnapshotConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterSnapshotConfigResponse, error)
-
-	// UpdateClusterSnapshotConfigWithBodyWithResponse request with any body
-	UpdateClusterSnapshotConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error)
-
-	UpdateClusterSnapshotConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error)
 
 	// ListClusterSnapshotsWithResponse request
 	ListClusterSnapshotsWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*ListClusterSnapshotsResponse, error)
@@ -2725,6 +2725,49 @@ func (r UpdateClusterResponse) StatusCode() int {
 	return 0
 }
 
+type GetClusterAutoBackupConfigResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AutoBackupConfig
+}
+
+// Status returns HTTPResponse.Status
+func (r GetClusterAutoBackupConfigResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetClusterAutoBackupConfigResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateClusterAutoBackupConfigResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateClusterAutoBackupConfigResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateClusterAutoBackupConfigResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListClusterDiagnosticsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2768,14 +2811,14 @@ func (r CreateClusterDiagnosticResponse) StatusCode() int {
 	return 0
 }
 
-type GetClusterDiagnosticConfigResponse struct {
+type GetClusterAutoDiagnosticConfigResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *DiagnosticConfig
+	JSON200      *AutoDiagnosticConfig
 }
 
 // Status returns HTTPResponse.Status
-func (r GetClusterDiagnosticConfigResponse) Status() string {
+func (r GetClusterAutoDiagnosticConfigResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -2783,21 +2826,20 @@ func (r GetClusterDiagnosticConfigResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetClusterDiagnosticConfigResponse) StatusCode() int {
+func (r GetClusterAutoDiagnosticConfigResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type UpdateClusterDiagnosticConfigResponse struct {
+type UpdateClusterAutoDiagnosticConfigResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *DiagnosticConfig
 }
 
 // Status returns HTTPResponse.Status
-func (r UpdateClusterDiagnosticConfigResponse) Status() string {
+func (r UpdateClusterAutoDiagnosticConfigResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -2805,7 +2847,7 @@ func (r UpdateClusterDiagnosticConfigResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r UpdateClusterDiagnosticConfigResponse) StatusCode() int {
+func (r UpdateClusterAutoDiagnosticConfigResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2850,50 +2892,6 @@ func (r RunRisectlCommandResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r RunRisectlCommandResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetClusterSnapshotConfigResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *SnapshotConfig
-}
-
-// Status returns HTTPResponse.Status
-func (r GetClusterSnapshotConfigResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetClusterSnapshotConfigResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type UpdateClusterSnapshotConfigResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *SnapshotConfig
-}
-
-// Status returns HTTPResponse.Status
-func (r UpdateClusterSnapshotConfigResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r UpdateClusterSnapshotConfigResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3308,6 +3306,32 @@ func (c *ClientWithResponses) UpdateClusterWithResponse(ctx context.Context, iD 
 	return ParseUpdateClusterResponse(rsp)
 }
 
+// GetClusterAutoBackupConfigWithResponse request returning *GetClusterAutoBackupConfigResponse
+func (c *ClientWithResponses) GetClusterAutoBackupConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterAutoBackupConfigResponse, error) {
+	rsp, err := c.GetClusterAutoBackupConfig(ctx, iD, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetClusterAutoBackupConfigResponse(rsp)
+}
+
+// UpdateClusterAutoBackupConfigWithBodyWithResponse request with arbitrary body returning *UpdateClusterAutoBackupConfigResponse
+func (c *ClientWithResponses) UpdateClusterAutoBackupConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterAutoBackupConfigResponse, error) {
+	rsp, err := c.UpdateClusterAutoBackupConfigWithBody(ctx, iD, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateClusterAutoBackupConfigResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateClusterAutoBackupConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterAutoBackupConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterAutoBackupConfigResponse, error) {
+	rsp, err := c.UpdateClusterAutoBackupConfig(ctx, iD, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateClusterAutoBackupConfigResponse(rsp)
+}
+
 // ListClusterDiagnosticsWithResponse request returning *ListClusterDiagnosticsResponse
 func (c *ClientWithResponses) ListClusterDiagnosticsWithResponse(ctx context.Context, iD int32, params *ListClusterDiagnosticsParams, reqEditors ...RequestEditorFn) (*ListClusterDiagnosticsResponse, error) {
 	rsp, err := c.ListClusterDiagnostics(ctx, iD, params, reqEditors...)
@@ -3334,30 +3358,30 @@ func (c *ClientWithResponses) CreateClusterDiagnosticWithResponse(ctx context.Co
 	return ParseCreateClusterDiagnosticResponse(rsp)
 }
 
-// GetClusterDiagnosticConfigWithResponse request returning *GetClusterDiagnosticConfigResponse
-func (c *ClientWithResponses) GetClusterDiagnosticConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterDiagnosticConfigResponse, error) {
-	rsp, err := c.GetClusterDiagnosticConfig(ctx, iD, reqEditors...)
+// GetClusterAutoDiagnosticConfigWithResponse request returning *GetClusterAutoDiagnosticConfigResponse
+func (c *ClientWithResponses) GetClusterAutoDiagnosticConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterAutoDiagnosticConfigResponse, error) {
+	rsp, err := c.GetClusterAutoDiagnosticConfig(ctx, iD, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetClusterDiagnosticConfigResponse(rsp)
+	return ParseGetClusterAutoDiagnosticConfigResponse(rsp)
 }
 
-// UpdateClusterDiagnosticConfigWithBodyWithResponse request with arbitrary body returning *UpdateClusterDiagnosticConfigResponse
-func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error) {
-	rsp, err := c.UpdateClusterDiagnosticConfigWithBody(ctx, iD, contentType, body, reqEditors...)
+// UpdateClusterAutoDiagnosticConfigWithBodyWithResponse request with arbitrary body returning *UpdateClusterAutoDiagnosticConfigResponse
+func (c *ClientWithResponses) UpdateClusterAutoDiagnosticConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterAutoDiagnosticConfigResponse, error) {
+	rsp, err := c.UpdateClusterAutoDiagnosticConfigWithBody(ctx, iD, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateClusterDiagnosticConfigResponse(rsp)
+	return ParseUpdateClusterAutoDiagnosticConfigResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateClusterDiagnosticConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterDiagnosticConfigResponse, error) {
-	rsp, err := c.UpdateClusterDiagnosticConfig(ctx, iD, body, reqEditors...)
+func (c *ClientWithResponses) UpdateClusterAutoDiagnosticConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterAutoDiagnosticConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterAutoDiagnosticConfigResponse, error) {
+	rsp, err := c.UpdateClusterAutoDiagnosticConfig(ctx, iD, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateClusterDiagnosticConfigResponse(rsp)
+	return ParseUpdateClusterAutoDiagnosticConfigResponse(rsp)
 }
 
 // GetClusterDiagnosticWithResponse request returning *GetClusterDiagnosticResponse
@@ -3384,32 +3408,6 @@ func (c *ClientWithResponses) RunRisectlCommandWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseRunRisectlCommandResponse(rsp)
-}
-
-// GetClusterSnapshotConfigWithResponse request returning *GetClusterSnapshotConfigResponse
-func (c *ClientWithResponses) GetClusterSnapshotConfigWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetClusterSnapshotConfigResponse, error) {
-	rsp, err := c.GetClusterSnapshotConfig(ctx, iD, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetClusterSnapshotConfigResponse(rsp)
-}
-
-// UpdateClusterSnapshotConfigWithBodyWithResponse request with arbitrary body returning *UpdateClusterSnapshotConfigResponse
-func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error) {
-	rsp, err := c.UpdateClusterSnapshotConfigWithBody(ctx, iD, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseUpdateClusterSnapshotConfigResponse(rsp)
-}
-
-func (c *ClientWithResponses) UpdateClusterSnapshotConfigWithResponse(ctx context.Context, iD int32, body UpdateClusterSnapshotConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateClusterSnapshotConfigResponse, error) {
-	rsp, err := c.UpdateClusterSnapshotConfig(ctx, iD, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseUpdateClusterSnapshotConfigResponse(rsp)
 }
 
 // ListClusterSnapshotsWithResponse request returning *ListClusterSnapshotsResponse
@@ -3784,6 +3782,48 @@ func ParseUpdateClusterResponse(rsp *http.Response) (*UpdateClusterResponse, err
 	return response, nil
 }
 
+// ParseGetClusterAutoBackupConfigResponse parses an HTTP response from a GetClusterAutoBackupConfigWithResponse call
+func ParseGetClusterAutoBackupConfigResponse(rsp *http.Response) (*GetClusterAutoBackupConfigResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetClusterAutoBackupConfigResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AutoBackupConfig
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateClusterAutoBackupConfigResponse parses an HTTP response from a UpdateClusterAutoBackupConfigWithResponse call
+func ParseUpdateClusterAutoBackupConfigResponse(rsp *http.Response) (*UpdateClusterAutoBackupConfigResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateClusterAutoBackupConfigResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseListClusterDiagnosticsResponse parses an HTTP response from a ListClusterDiagnosticsWithResponse call
 func ParseListClusterDiagnosticsResponse(rsp *http.Response) (*ListClusterDiagnosticsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -3826,22 +3866,22 @@ func ParseCreateClusterDiagnosticResponse(rsp *http.Response) (*CreateClusterDia
 	return response, nil
 }
 
-// ParseGetClusterDiagnosticConfigResponse parses an HTTP response from a GetClusterDiagnosticConfigWithResponse call
-func ParseGetClusterDiagnosticConfigResponse(rsp *http.Response) (*GetClusterDiagnosticConfigResponse, error) {
+// ParseGetClusterAutoDiagnosticConfigResponse parses an HTTP response from a GetClusterAutoDiagnosticConfigWithResponse call
+func ParseGetClusterAutoDiagnosticConfigResponse(rsp *http.Response) (*GetClusterAutoDiagnosticConfigResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetClusterDiagnosticConfigResponse{
+	response := &GetClusterAutoDiagnosticConfigResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DiagnosticConfig
+		var dest AutoDiagnosticConfig
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -3852,27 +3892,17 @@ func ParseGetClusterDiagnosticConfigResponse(rsp *http.Response) (*GetClusterDia
 	return response, nil
 }
 
-// ParseUpdateClusterDiagnosticConfigResponse parses an HTTP response from a UpdateClusterDiagnosticConfigWithResponse call
-func ParseUpdateClusterDiagnosticConfigResponse(rsp *http.Response) (*UpdateClusterDiagnosticConfigResponse, error) {
+// ParseUpdateClusterAutoDiagnosticConfigResponse parses an HTTP response from a UpdateClusterAutoDiagnosticConfigWithResponse call
+func ParseUpdateClusterAutoDiagnosticConfigResponse(rsp *http.Response) (*UpdateClusterAutoDiagnosticConfigResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &UpdateClusterDiagnosticConfigResponse{
+	response := &UpdateClusterAutoDiagnosticConfigResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DiagnosticConfig
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -3920,58 +3950,6 @@ func ParseRunRisectlCommandResponse(rsp *http.Response) (*RunRisectlCommandRespo
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest RisectlCommandResult
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseGetClusterSnapshotConfigResponse parses an HTTP response from a GetClusterSnapshotConfigWithResponse call
-func ParseGetClusterSnapshotConfigResponse(rsp *http.Response) (*GetClusterSnapshotConfigResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetClusterSnapshotConfigResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest SnapshotConfig
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseUpdateClusterSnapshotConfigResponse parses an HTTP response from a UpdateClusterSnapshotConfigWithResponse call
-func ParseUpdateClusterSnapshotConfigResponse(rsp *http.Response) (*UpdateClusterSnapshotConfigResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &UpdateClusterSnapshotConfigResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest SnapshotConfig
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -4332,6 +4310,12 @@ type ServerInterface interface {
 	// Update cluster
 	// (PUT /clusters/{ID})
 	UpdateCluster(c *fiber.Ctx, iD int32) error
+	// Get snapshot configuration
+	// (GET /clusters/{ID}/auto-backup-config)
+	GetClusterAutoBackupConfig(c *fiber.Ctx, iD int32) error
+	// Update snapshot configuration
+	// (PUT /clusters/{ID}/auto-backup-config)
+	UpdateClusterAutoBackupConfig(c *fiber.Ctx, iD int32) error
 	// List diagnostic data
 	// (GET /clusters/{ID}/diagnostics)
 	ListClusterDiagnostics(c *fiber.Ctx, iD int32, params ListClusterDiagnosticsParams) error
@@ -4340,22 +4324,16 @@ type ServerInterface interface {
 	CreateClusterDiagnostic(c *fiber.Ctx, iD int32) error
 	// Get diagnostic configuration
 	// (GET /clusters/{ID}/diagnostics/config)
-	GetClusterDiagnosticConfig(c *fiber.Ctx, iD int32) error
+	GetClusterAutoDiagnosticConfig(c *fiber.Ctx, iD int32) error
 	// Update diagnostic configuration
 	// (PUT /clusters/{ID}/diagnostics/config)
-	UpdateClusterDiagnosticConfig(c *fiber.Ctx, iD int32) error
+	UpdateClusterAutoDiagnosticConfig(c *fiber.Ctx, iD int32) error
 	// Get diagnostic data
 	// (GET /clusters/{ID}/diagnostics/{diagnosticId})
 	GetClusterDiagnostic(c *fiber.Ctx, iD int32, diagnosticId int32) error
 	// Run risectl command
 	// (POST /clusters/{ID}/risectl)
 	RunRisectlCommand(c *fiber.Ctx, iD int32) error
-	// Get snapshot configuration
-	// (GET /clusters/{ID}/snapshot-config)
-	GetClusterSnapshotConfig(c *fiber.Ctx, iD int32) error
-	// Update snapshot configuration
-	// (PUT /clusters/{ID}/snapshot-config)
-	UpdateClusterSnapshotConfig(c *fiber.Ctx, iD int32) error
 	// List cluster snapshots
 	// (GET /clusters/{ID}/snapshots)
 	ListClusterSnapshots(c *fiber.Ctx, iD int32) error
@@ -4511,6 +4489,42 @@ func (siw *ServerInterfaceWrapper) UpdateCluster(c *fiber.Ctx) error {
 	return siw.Handler.UpdateCluster(c, iD)
 }
 
+// GetClusterAutoBackupConfig operation middleware
+func (siw *ServerInterfaceWrapper) GetClusterAutoBackupConfig(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "ID" -------------
+	var iD int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.GetClusterAutoBackupConfig(c, iD)
+}
+
+// UpdateClusterAutoBackupConfig operation middleware
+func (siw *ServerInterfaceWrapper) UpdateClusterAutoBackupConfig(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "ID" -------------
+	var iD int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.UpdateClusterAutoBackupConfig(c, iD)
+}
+
 // ListClusterDiagnostics operation middleware
 func (siw *ServerInterfaceWrapper) ListClusterDiagnostics(c *fiber.Ctx) error {
 
@@ -4584,8 +4598,8 @@ func (siw *ServerInterfaceWrapper) CreateClusterDiagnostic(c *fiber.Ctx) error {
 	return siw.Handler.CreateClusterDiagnostic(c, iD)
 }
 
-// GetClusterDiagnosticConfig operation middleware
-func (siw *ServerInterfaceWrapper) GetClusterDiagnosticConfig(c *fiber.Ctx) error {
+// GetClusterAutoDiagnosticConfig operation middleware
+func (siw *ServerInterfaceWrapper) GetClusterAutoDiagnosticConfig(c *fiber.Ctx) error {
 
 	var err error
 
@@ -4599,11 +4613,11 @@ func (siw *ServerInterfaceWrapper) GetClusterDiagnosticConfig(c *fiber.Ctx) erro
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.GetClusterDiagnosticConfig(c, iD)
+	return siw.Handler.GetClusterAutoDiagnosticConfig(c, iD)
 }
 
-// UpdateClusterDiagnosticConfig operation middleware
-func (siw *ServerInterfaceWrapper) UpdateClusterDiagnosticConfig(c *fiber.Ctx) error {
+// UpdateClusterAutoDiagnosticConfig operation middleware
+func (siw *ServerInterfaceWrapper) UpdateClusterAutoDiagnosticConfig(c *fiber.Ctx) error {
 
 	var err error
 
@@ -4617,7 +4631,7 @@ func (siw *ServerInterfaceWrapper) UpdateClusterDiagnosticConfig(c *fiber.Ctx) e
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.UpdateClusterDiagnosticConfig(c, iD)
+	return siw.Handler.UpdateClusterAutoDiagnosticConfig(c, iD)
 }
 
 // GetClusterDiagnostic operation middleware
@@ -4662,42 +4676,6 @@ func (siw *ServerInterfaceWrapper) RunRisectlCommand(c *fiber.Ctx) error {
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.RunRisectlCommand(c, iD)
-}
-
-// GetClusterSnapshotConfig operation middleware
-func (siw *ServerInterfaceWrapper) GetClusterSnapshotConfig(c *fiber.Ctx) error {
-
-	var err error
-
-	// ------------- Path parameter "ID" -------------
-	var iD int32
-
-	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
-	}
-
-	c.Context().SetUserValue(BearerAuthScopes, []string{})
-
-	return siw.Handler.GetClusterSnapshotConfig(c, iD)
-}
-
-// UpdateClusterSnapshotConfig operation middleware
-func (siw *ServerInterfaceWrapper) UpdateClusterSnapshotConfig(c *fiber.Ctx) error {
-
-	var err error
-
-	// ------------- Path parameter "ID" -------------
-	var iD int32
-
-	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
-	}
-
-	c.Context().SetUserValue(BearerAuthScopes, []string{})
-
-	return siw.Handler.UpdateClusterSnapshotConfig(c, iD)
 }
 
 // ListClusterSnapshots operation middleware
@@ -4973,21 +4951,21 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Put(options.BaseURL+"/clusters/:ID", wrapper.UpdateCluster)
 
+	router.Get(options.BaseURL+"/clusters/:ID/auto-backup-config", wrapper.GetClusterAutoBackupConfig)
+
+	router.Put(options.BaseURL+"/clusters/:ID/auto-backup-config", wrapper.UpdateClusterAutoBackupConfig)
+
 	router.Get(options.BaseURL+"/clusters/:ID/diagnostics", wrapper.ListClusterDiagnostics)
 
 	router.Post(options.BaseURL+"/clusters/:ID/diagnostics", wrapper.CreateClusterDiagnostic)
 
-	router.Get(options.BaseURL+"/clusters/:ID/diagnostics/config", wrapper.GetClusterDiagnosticConfig)
+	router.Get(options.BaseURL+"/clusters/:ID/diagnostics/config", wrapper.GetClusterAutoDiagnosticConfig)
 
-	router.Put(options.BaseURL+"/clusters/:ID/diagnostics/config", wrapper.UpdateClusterDiagnosticConfig)
+	router.Put(options.BaseURL+"/clusters/:ID/diagnostics/config", wrapper.UpdateClusterAutoDiagnosticConfig)
 
 	router.Get(options.BaseURL+"/clusters/:ID/diagnostics/:diagnosticId", wrapper.GetClusterDiagnostic)
 
 	router.Post(options.BaseURL+"/clusters/:ID/risectl", wrapper.RunRisectlCommand)
-
-	router.Get(options.BaseURL+"/clusters/:ID/snapshot-config", wrapper.GetClusterSnapshotConfig)
-
-	router.Put(options.BaseURL+"/clusters/:ID/snapshot-config", wrapper.UpdateClusterSnapshotConfig)
 
 	router.Get(options.BaseURL+"/clusters/:ID/snapshots", wrapper.ListClusterSnapshots)
 

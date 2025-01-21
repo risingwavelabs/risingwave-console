@@ -114,6 +114,14 @@ type ServiceInterface interface {
 	ListClusterDiagnostics(ctx context.Context, id int32, orgID int32) ([]apigen.DiagnosticData, error)
 
 	CreateClusterDiagnostic(ctx context.Context, id int32, orgID int32) (*apigen.DiagnosticData, error)
+
+	UpdateClusterAutoBackupConfig(ctx context.Context, id int32, params apigen.AutoBackupConfig, orgID int32) error
+
+	UpdateClusterAutoDiagnosticConfig(ctx context.Context, id int32, params apigen.AutoDiagnosticConfig, orgID int32) error
+
+	GetClusterAutoBackupConfig(ctx context.Context, id int32, orgID int32) (*apigen.AutoBackupConfig, error)
+
+	GetClusterAutoDiagnosticConfig(ctx context.Context, id int32, orgID int32) (*apigen.AutoDiagnosticConfig, error)
 }
 
 type Service struct {
@@ -949,5 +957,82 @@ func (s *Service) GetClusterDiagnostic(ctx context.Context, id int32, diagnostic
 		ID:        diagnostic.ID,
 		CreatedAt: diagnostic.CreatedAt,
 		Content:   diagnostic.Content,
+	}, nil
+}
+
+func (s *Service) UpdateClusterAutoBackupConfig(ctx context.Context, id int32, params apigen.AutoBackupConfig, orgID int32) error {
+	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
+		ID:             id,
+		OrganizationID: orgID,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to get cluster")
+	}
+
+	if err := s.m.UpsertAutoBackupConfig(ctx, querier.UpsertAutoBackupConfigParams{
+		ClusterID:      cluster.ID,
+		Enabled:        params.Enabled,
+		CronExpression: params.CronExpression,
+		KeepLast:       params.KeepLast,
+	}); err != nil {
+		return errors.Wrapf(err, "failed to update auto backup config")
+	}
+
+	return nil
+}
+
+func (s *Service) UpdateClusterAutoDiagnosticConfig(ctx context.Context, id int32, params apigen.AutoDiagnosticConfig, orgID int32) error {
+	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
+		ID:             id,
+		OrganizationID: orgID,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to get cluster")
+	}
+
+	if err := s.m.UpsertAutoDiagnosticsConfig(ctx, querier.UpsertAutoDiagnosticsConfigParams{
+		ClusterID:         cluster.ID,
+		Enabled:           params.Enabled,
+		CronExpression:    params.CronExpression,
+		RetentionDuration: params.RetentionDuration,
+	}); err != nil {
+		return errors.Wrapf(err, "failed to update auto diagnostic config")
+	}
+
+	return nil
+}
+
+func (s *Service) GetClusterAutoBackupConfig(ctx context.Context, id int32, orgID int32) (*apigen.AutoBackupConfig, error) {
+	c, err := s.m.GetAutoBackupConfig(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &apigen.AutoBackupConfig{
+				Enabled: false,
+			}, nil
+		}
+		return nil, errors.Wrapf(err, "failed to get auto backup config")
+	}
+
+	return &apigen.AutoBackupConfig{
+		Enabled:        c.Enabled,
+		CronExpression: c.CronExpression,
+		KeepLast:       c.KeepLast,
+	}, nil
+}
+
+func (s *Service) GetClusterAutoDiagnosticConfig(ctx context.Context, id int32, orgID int32) (*apigen.AutoDiagnosticConfig, error) {
+	c, err := s.m.GetAutoDiagnosticsConfig(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &apigen.AutoDiagnosticConfig{
+				Enabled: false,
+			}, nil
+		}
+	}
+
+	return &apigen.AutoDiagnosticConfig{
+		Enabled:           c.Enabled,
+		CronExpression:    c.CronExpression,
+		RetentionDuration: c.RetentionDuration,
 	}, nil
 }

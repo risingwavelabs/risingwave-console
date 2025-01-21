@@ -360,14 +360,6 @@ func (controller *Controller) ListClusterSnapshots(c *fiber.Ctx, id int32) error
 	return c.Status(fiber.StatusOK).JSON(snapshots)
 }
 
-func (controller *Controller) GetClusterSnapshotConfig(c *fiber.Ctx, id int32) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
-}
-
-func (controller *Controller) UpdateClusterSnapshotConfig(c *fiber.Ctx, id int32) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
-}
-
 func (controller *Controller) ListClusterDiagnostics(c *fiber.Ctx, id int32, params apigen.ListClusterDiagnosticsParams) error {
 	user, err := auth.GetUser(c)
 	if err != nil {
@@ -381,12 +373,68 @@ func (controller *Controller) ListClusterDiagnostics(c *fiber.Ctx, id int32, par
 	return c.Status(fiber.StatusOK).JSON(diagnostics)
 }
 
-func (controller *Controller) GetClusterDiagnosticConfig(c *fiber.Ctx, id int32) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+func (controller *Controller) GetClusterAutoBackupConfig(c *fiber.Ctx, id int32) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	config, err := controller.svc.GetClusterAutoBackupConfig(c.Context(), id, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+	return c.Status(fiber.StatusOK).JSON(config)
 }
 
-func (controller *Controller) UpdateClusterDiagnosticConfig(c *fiber.Ctx, id int32) error {
-	return c.Status(fiber.StatusOK).SendString("Hello, World!")
+func (controller *Controller) UpdateClusterAutoBackupConfig(c *fiber.Ctx, id int32) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	var params apigen.AutoBackupConfig
+	if err := c.BodyParser(&params); err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	err = controller.svc.UpdateClusterAutoBackupConfig(c.Context(), id, params, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (controller *Controller) GetClusterAutoDiagnosticConfig(c *fiber.Ctx, id int32) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	config, err := controller.svc.GetClusterAutoDiagnosticConfig(c.Context(), id, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+	return c.Status(fiber.StatusOK).JSON(config)
+}
+
+func (controller *Controller) UpdateClusterAutoDiagnosticConfig(c *fiber.Ctx, id int32) error {
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	var params apigen.AutoDiagnosticConfig
+	if err := c.BodyParser(&params); err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	err = controller.svc.UpdateClusterAutoDiagnosticConfig(c.Context(), id, params, user.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusOK)
 }
 
 func (controller *Controller) ListClusterVersions(c *fiber.Ctx) error {

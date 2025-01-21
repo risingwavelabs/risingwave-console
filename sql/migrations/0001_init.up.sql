@@ -97,4 +97,38 @@ CREATE TABLE IF NOT EXISTS cluster_diagnostics (
     PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS auto_backup_configs (
+    cluster_id      INTEGER     NOT NULL REFERENCES clusters(id),
+    enabled         BOOLEAN     NOT NULL DEFAULT FALSE,
+    cron_expression TEXT        NOT NULL,
+    keep_last       INTEGER     NOT NULL DEFAULT 1,
+
+    created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    PRIMARY KEY (cluster_id)
+);
+
+CREATE TABLE IF NOT EXISTS auto_diagnostics_configs (
+    cluster_id         INTEGER     NOT NULL REFERENCES clusters(id),
+    enabled            BOOLEAN     NOT NULL DEFAULT FALSE,
+    cron_expression    TEXT        NOT NULL,
+    retention_duration TEXT, -- Null means no expiration
+
+    created_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    PRIMARY KEY (cluster_id)
+);
+
+CREATE TABLE IF NOT EXISTS org_settings (
+    organization_id INTEGER     NOT NULL REFERENCES organizations(id),
+    timezone        TEXT        NOT NULL DEFAULT 'UTC',
+
+    created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    PRIMARY KEY (organization_id)
+);
+
 COMMIT;

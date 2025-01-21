@@ -35,29 +35,42 @@ import toast from "react-hot-toast"
 
 const width = "w-full"
 
-interface ClusterData {
-  id: string
+interface BaseCluster {
   name: string
-  status: "running" | "stopped" | "error"
   host: string
   sqlPort: number
   metaPort: number
   httpPort: number
+  autoBackup?: {
+    enabled: boolean
+    interval: string
+    keepCount: number
+  }
+  diagnostics?: {
+    enabled: boolean
+    interval: string
+    expiration: string
+    noExpiration: boolean
+  }
+}
+
+// API response type
+interface Cluster extends BaseCluster {
+  ID: number
+}
+
+// UI data type
+interface ClusterData extends BaseCluster {
+  id: string
+  status: "running" | "stopped" | "error"
   nodes: number
   snapshots: Array<{
     id: number
     name: string
     created_at: string
   }>
-  autoBackup: {
-    enabled: boolean
-    interval: string
-    keepCount: number
-  }
-  diagnostics: {
-    interval: string
-    expiration: string
-    noExpiration: boolean
+  autoBackup: Required<NonNullable<BaseCluster['autoBackup']>>
+  diagnostics: Required<NonNullable<BaseCluster['diagnostics']>> & {
     history: Array<{
       id: number
       timestamp: string
@@ -77,17 +90,20 @@ export default function ClusterPage({ params }: ClusterPageProps) {
   const clusterId = params.id
   const [clusterData, setClusterData] = useState<ClusterData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [interval, setInterval] = useState("")
-  const [expiration, setExpiration] = useState("")
-  const [noExpiration, setNoExpiration] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [snapshotPage, setSnapshotPage] = useState(1)
   const [deleteSnapshotId, setDeleteSnapshotId] = useState<number | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(false)
-  const [autoBackupInterval, setAutoBackupInterval] = useState("24h")
+  const [autoBackupInterval, setAutoBackupInterval] = useState("*/30 * * * *")
   const [autoBackupKeepCount, setAutoBackupKeepCount] = useState(7)
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)
+  const [isUpdatingBackupConfig, setIsUpdatingBackupConfig] = useState(false)
+  const [autoDiagnosticInterval, setAutoDiagnosticInterval] = useState("*/30 * * * *")
+  const [autoDiagnosticExpiration, setAutoDiagnosticExpiration] = useState("7d")
+  const [autoDiagnosticNoExpiration, setAutoDiagnosticNoExpiration] = useState(false)
+  const [autoDiagnosticEnabled, setAutoDiagnosticEnabled] = useState(false)
+  const [isUpdatingDiagnosticConfig, setIsUpdatingDiagnosticConfig] = useState(false)
   const [risectlCommand, setRisectlCommand] = useState("")
   const [risectlResult, setRisectlResult] = useState<{ exitCode: number; stdout: string; stderr: string; err: string } | null>(null)
   const [isRunningCommand, setIsRunningCommand] = useState(false)
@@ -100,6 +116,60 @@ export default function ClusterPage({ params }: ClusterPageProps) {
   const [totalDiagnostics, setTotalDiagnostics] = useState(0)
   const DIAGNOSTICS_PER_PAGE = 5
 
+  const updateAutoBackupConfig = async (
+    enabled?: boolean,
+    interval?: string,
+    keepCount?: number
+  ) => {
+    setIsUpdatingBackupConfig(true)
+    try {
+      const config = {
+        enabled: enabled ?? autoBackupEnabled,
+        cronExpression: interval ?? autoBackupInterval,
+        keepLast: keepCount ?? autoBackupKeepCount
+      }
+      await DefaultService.updateClusterAutoBackupConfig(clusterId, config)
+      toast.success("Auto backup configuration updated")
+    } catch (error) {
+      console.error("Error updating auto backup config:", error)
+      toast.error("Failed to update auto backup configuration")
+      // Revert the state changes on error
+      setAutoBackupEnabled(clusterData?.autoBackup.enabled ?? false)
+      setAutoBackupInterval(clusterData?.autoBackup.interval ?? "*/30 * * * *")
+      setAutoBackupKeepCount(clusterData?.autoBackup.keepCount ?? 7)
+    } finally {
+      setIsUpdatingBackupConfig(false)
+    }
+  }
+
+  const updateAutoDiagnosticConfig = async (
+    enabled?: boolean,
+    interval?: string,
+    expiration?: string,
+    noExpiration?: boolean
+  ) => {
+    setIsUpdatingDiagnosticConfig(true)
+    try {
+      const noExp = noExpiration ?? autoDiagnosticNoExpiration
+      await DefaultService.updateClusterAutoDiagnosticConfig(clusterId, {
+        enabled: enabled ?? autoDiagnosticEnabled,
+        cronExpression: interval ?? autoDiagnosticInterval,
+        retentionDuration: noExp ? undefined : (expiration ?? autoDiagnosticExpiration)
+      })
+      toast.success("Auto diagnostic configuration updated")
+    } catch (error) {
+      console.error("Error updating auto diagnostic config:", error)
+      toast.error("Failed to update auto diagnostic configuration")
+      // Revert the state changes on error
+      setAutoDiagnosticEnabled(clusterData?.diagnostics.enabled ?? false)
+      setAutoDiagnosticInterval(clusterData?.diagnostics.interval ?? "*/30 * * * *")
+      setAutoDiagnosticExpiration(clusterData?.diagnostics.expiration ?? "7d")
+      setAutoDiagnosticNoExpiration(clusterData?.diagnostics.noExpiration ?? false)
+    } finally {
+      setIsUpdatingDiagnosticConfig(false)
+    }
+  }
+
   useEffect(() => {
     const fetchClusterData = async () => {
       try {
@@ -109,15 +179,17 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           DefaultService.listClusterDiagnostics(clusterId)
         ])
 
+        const cluster = data as Cluster // Type assertion to match our interface
+
         // Transform API data to match our UI needs
         const transformedData: ClusterData = {
-          id: data.ID.toString(),
-          name: data.name,
+          id: cluster.ID.toString(),
+          name: cluster.name,
           status: "running", // You might want to derive this from API data
-          host: data.host,
-          sqlPort: data.sqlPort,
-          metaPort: data.metaPort,
-          httpPort: data.httpPort,
+          host: cluster.host,
+          sqlPort: cluster.sqlPort,
+          metaPort: cluster.metaPort,
+          httpPort: cluster.httpPort,
           nodes: 1, // Set default or get from API if available
           snapshots: snapshots.map(s => ({
             id: s.ID,
@@ -125,14 +197,15 @@ export default function ClusterPage({ params }: ClusterPageProps) {
             created_at: s.createdAt
           })),
           autoBackup: {
-            enabled: false,
-            interval: "24h",
-            keepCount: 7
+            enabled: cluster.autoBackup?.enabled ?? false,
+            interval: cluster.autoBackup?.interval ?? "*/30 * * * *",
+            keepCount: cluster.autoBackup?.keepCount ?? 7
           },
           diagnostics: {
-            interval: "1h",
-            expiration: "7d",
-            noExpiration: false,
+            enabled: cluster.diagnostics?.enabled ?? false,
+            interval: cluster.diagnostics?.interval ?? "*/30 * * * *",
+            expiration: cluster.diagnostics?.expiration ?? "7d",
+            noExpiration: cluster.diagnostics?.noExpiration ?? false,
             history: []
           }
         }
@@ -144,12 +217,13 @@ export default function ClusterPage({ params }: ClusterPageProps) {
         setTotalDiagnostics(diagnosticsData.length)
 
         // Initialize state with the fetched data
-        setInterval(transformedData.diagnostics.interval)
-        setExpiration(transformedData.diagnostics.expiration)
-        setNoExpiration(transformedData.diagnostics.noExpiration)
         setAutoBackupEnabled(transformedData.autoBackup.enabled)
         setAutoBackupInterval(transformedData.autoBackup.interval)
         setAutoBackupKeepCount(transformedData.autoBackup.keepCount)
+        setAutoDiagnosticEnabled(transformedData.diagnostics.enabled)
+        setAutoDiagnosticInterval(transformedData.diagnostics.interval)
+        setAutoDiagnosticExpiration(transformedData.diagnostics.expiration)
+        setAutoDiagnosticNoExpiration(transformedData.diagnostics.noExpiration)
       } catch (error) {
         console.error("Error fetching cluster:", error)
         toast.error("Failed to load cluster details")
@@ -472,7 +546,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           </div>
 
           {risectlResult && (
-            <Collapsible 
+            <Collapsible
               open={isResultOpen}
               onOpenChange={setIsResultOpen}
             >
@@ -513,7 +587,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                     <div className="space-y-1">
                       <span className="text-sm font-medium text-red-600">stderr:</span>
                       <div className="relative max-h-[400px] overflow-auto rounded-md">
-                        <pre className="p-3 bg-red-50 text-red-600 text-sm whitespace-pre overflow-auto">
+                        <pre className="p-3 bg-muted text-sm whitespace-pre overflow-auto">
                           {risectlResult.stderr}
                         </pre>
                       </div>
@@ -560,7 +634,11 @@ export default function ClusterPage({ params }: ClusterPageProps) {
             </div>
             <Switch
               checked={autoBackupEnabled}
-              onCheckedChange={setAutoBackupEnabled}
+              onCheckedChange={(enabled) => {
+                setAutoBackupEnabled(enabled)
+                void updateAutoBackupConfig(enabled)
+              }}
+              disabled={isUpdatingBackupConfig}
             />
           </div>
 
@@ -572,17 +650,21 @@ export default function ClusterPage({ params }: ClusterPageProps) {
               </div>
               <Select
                 value={autoBackupInterval}
-                onValueChange={setAutoBackupInterval}
-                disabled={!autoBackupEnabled}
+                onValueChange={(interval) => {
+                  setAutoBackupInterval(interval)
+                  void updateAutoBackupConfig(undefined, interval)
+                }}
+                disabled={!autoBackupEnabled || isUpdatingBackupConfig}
               >
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="Select interval" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="30m">Every 30 minutes</SelectItem>
-                  <SelectItem value="6h">Every 6 hours</SelectItem>
-                  <SelectItem value="12h">Every 12 hours</SelectItem>
-                  <SelectItem value="24h">Every 24 hours</SelectItem>
+                  <SelectItem value="*/5 * * * *">Every 5 minutes</SelectItem>
+                  <SelectItem value="*/15 * * * *">Every 15 minutes</SelectItem>
+                  <SelectItem value="*/30 * * * *">Every 30 minutes</SelectItem>
+                  <SelectItem value="*/60 * * * *">Every 1 hour</SelectItem>
+                  <SelectItem value="*/120 * * * *">Every 2 hours</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -594,8 +676,12 @@ export default function ClusterPage({ params }: ClusterPageProps) {
               </div>
               <Select
                 value={autoBackupKeepCount.toString()}
-                onValueChange={(value) => setAutoBackupKeepCount(parseInt(value))}
-                disabled={!autoBackupEnabled}
+                onValueChange={(value) => {
+                  const keepCount = parseInt(value)
+                  setAutoBackupKeepCount(keepCount)
+                  void updateAutoBackupConfig(undefined, undefined, keepCount)
+                }}
+                disabled={!autoBackupEnabled || isUpdatingBackupConfig}
               >
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="Select count" />
@@ -723,52 +809,82 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           <div className={`${width} space-y-4 border rounded-lg p-4`}>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Auto Diagnostic</Label>
+                <p className="text-sm text-muted-foreground">Automatically collect diagnostic data</p>
+              </div>
+              <Switch
+                checked={autoDiagnosticEnabled}
+                onCheckedChange={(enabled) => {
+                  setAutoDiagnosticEnabled(enabled)
+                  void updateAutoDiagnosticConfig(enabled)
+                }}
+                disabled={isUpdatingDiagnosticConfig}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
                 <Label className="text-sm font-medium">Collection Interval</Label>
                 <p className="text-sm text-muted-foreground">How often to collect data</p>
               </div>
-              <Select value={interval} onValueChange={setInterval}>
-                <SelectTrigger className="w-[140px]">
+              <Select 
+                value={autoDiagnosticInterval} 
+                onValueChange={(interval) => {
+                  setAutoDiagnosticInterval(interval)
+                  void updateAutoDiagnosticConfig(undefined, interval)
+                }}
+                disabled={!autoDiagnosticEnabled || isUpdatingDiagnosticConfig}
+              >
+                <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select interval" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="15m">15 minutes</SelectItem>
-                  <SelectItem value="30m">30 minutes</SelectItem>
-                  <SelectItem value="1h">1 hour</SelectItem>
-                  <SelectItem value="6h">6 hours</SelectItem>
-                  <SelectItem value="12h">12 hours</SelectItem>
-                  <SelectItem value="24h">24 hours</SelectItem>
+                  <SelectItem value="*/5 * * * *">Every 5 minutes</SelectItem>
+                  <SelectItem value="*/15 * * * *">Every 15 minutes</SelectItem>
+                  <SelectItem value="*/30 * * * *">Every 30 minutes</SelectItem>
+                  <SelectItem value="0 * * * *">Every 1 hour</SelectItem>
+                  <SelectItem value="0 */2 * * *">Every 2 hours</SelectItem>
+                  <SelectItem value="0 */6 * * *">Every 6 hours</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label className="text-sm font-medium">Data Retention</Label>
                 <p className="text-sm text-muted-foreground">How long to keep data</p>
               </div>
-              <Select
-                value={expiration}
-                onValueChange={setExpiration}
-                disabled={noExpiration}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Select retention" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1d">1 day</SelectItem>
-                  <SelectItem value="7d">7 days</SelectItem>
-                  <SelectItem value="14d">14 days</SelectItem>
-                  <SelectItem value="30d">30 days</SelectItem>
-                  <SelectItem value="90d">90 days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center justify-end gap-1.5">
-              <Label className="text-sm text-muted-foreground">No expiration</Label>
-              <Switch
-                checked={noExpiration}
-                onCheckedChange={setNoExpiration}
-              />
+              <div className="flex flex-col gap-2">
+                <Select
+                  value={autoDiagnosticExpiration}
+                  onValueChange={(expiration) => {
+                    setAutoDiagnosticExpiration(expiration)
+                    void updateAutoDiagnosticConfig(undefined, undefined, expiration)
+                  }}
+                  disabled={autoDiagnosticNoExpiration || !autoDiagnosticEnabled || isUpdatingDiagnosticConfig}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Select retention" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1d">1 day</SelectItem>
+                    <SelectItem value="7d">7 days</SelectItem>
+                    <SelectItem value="14d">14 days</SelectItem>
+                    <SelectItem value="30d">30 days</SelectItem>
+                    <SelectItem value="90d">90 days</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center justify-end gap-1.5">
+                  <Label className="text-sm text-muted-foreground">No expiration</Label>
+                  <Switch
+                    checked={autoDiagnosticNoExpiration}
+                    onCheckedChange={(noExpiration) => {
+                      setAutoDiagnosticNoExpiration(noExpiration)
+                      void updateAutoDiagnosticConfig(undefined, undefined, undefined, noExpiration)
+                    }}
+                    disabled={!autoDiagnosticEnabled || isUpdatingDiagnosticConfig}
+                  />
+                </div>
+              </div>
+
             </div>
           </div>
 

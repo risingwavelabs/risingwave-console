@@ -24,6 +24,8 @@ type Querier interface {
 	DeleteRefreshToken(ctx context.Context, arg DeleteRefreshTokenParams) error
 	DeleteUserByName(ctx context.Context, name string) error
 	GetAllOrgDatabseConnectionsByClusterID(ctx context.Context, arg GetAllOrgDatabseConnectionsByClusterIDParams) ([]*DatabaseConnection, error)
+	GetAutoBackupConfig(ctx context.Context, clusterID int32) (*AutoBackupConfig, error)
+	GetAutoDiagnosticsConfig(ctx context.Context, clusterID int32) (*AutoDiagnosticsConfig, error)
 	GetClusterByID(ctx context.Context, id int32) (*Cluster, error)
 	GetClusterDiagnostic(ctx context.Context, id int32) (*ClusterDiagnostic, error)
 	GetDatabaseConnectionByID(ctx context.Context, id int32) (*DatabaseConnection, error)
@@ -44,6 +46,8 @@ type Querier interface {
 	UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterParams) (*Cluster, error)
 	UpdateOrgDatabaseConnection(ctx context.Context, arg UpdateOrgDatabaseConnectionParams) (*DatabaseConnection, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (*Organization, error)
+	UpsertAutoBackupConfig(ctx context.Context, arg UpsertAutoBackupConfigParams) error
+	UpsertAutoDiagnosticsConfig(ctx context.Context, arg UpsertAutoDiagnosticsConfigParams) error
 	UpsertRefreshToken(ctx context.Context, arg UpsertRefreshTokenParams) error
 }
 
