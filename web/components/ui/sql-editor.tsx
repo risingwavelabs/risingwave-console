@@ -75,7 +75,7 @@ export interface SQLEditorHandle {
 }
 
 export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, onRunQuery, databaseSchema, selectedDatabaseId, onCancelProgress }, ref) => {
-  const { theme } = useTheme()
+  const { theme, systemTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [tabs, setTabs] = useState<EditorTab[]>(() => {
     if (typeof window !== 'undefined') {
@@ -125,6 +125,9 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, o
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
   const monaco = useMonaco()
+
+  // Get the effective theme based on system preference when theme is "system"
+  const effectiveTheme = theme === "system" ? systemTheme : theme
 
   const calculateGraphHeight = useCallback(() => {
     if (typeof editorHeight === 'string' && editorHeight.endsWith('%')) {
@@ -603,7 +606,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, o
           <Editor
             height="100%"
             defaultLanguage="pgsql"
-            theme={theme === 'dark' ? 'vs-dark' : 'light'}
+            theme={effectiveTheme === 'dark' ? 'vs-dark' : 'light'}
             value={tabs.find(tab => tab.id === activeTab)?.content}
             onChange={handleEditorChange}
             onMount={(editor) => editorRef.current = editor}
