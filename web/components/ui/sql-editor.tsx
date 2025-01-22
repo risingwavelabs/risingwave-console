@@ -645,7 +645,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, o
           onGenerate={handleGenerateQuery}
           isGenerating={isGenerating}
           error={generateError}
-          className="border-b bg-background/95"
+          className="border-b bg-background/95 hidden"
         />
         <DatabaseInsight
           width={`${width}px`}
