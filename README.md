@@ -1,4 +1,24 @@
-# Go-starter 
+# Wavekit
+
+Wavekit is a platform for accessing and managing RisingWave clusters. 
+
+## Features
+
+v1.0:
+- [x] SQL Editor
+- [x] Materialized View Viewer
+- [x] Web UI for Risectl
+- [x] Meta Backup
+- [x] Collect Diagnostic Data
+- [ ] Auto Diagnostic
+- [ ] Auto Backup
+
+v2.0:
+- [ ] Monitoring
+- [ ] UDF Management
+- [ ] SSO
+- [ ] Access Control
+- [ ] SQL Review
 
 ## Get Started
 

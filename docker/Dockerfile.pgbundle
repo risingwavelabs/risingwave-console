@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y postgresql-12 && rm -rf /var/lib/apt/li
 RUN echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/12/main/pg_hba.conf
 # RUN echo "listen_addresses='*'\nport = 5432" >> /etc/postgresql/12/main/postgresql.conf
 
+RUN apt-get update && apt-get install -y ca-certificates
+
 COPY ./bin/wavekit-server /app/wavekit-server
 COPY ./docker/config.bundle.yaml /app/config.yaml
 
