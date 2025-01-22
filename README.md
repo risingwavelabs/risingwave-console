@@ -1,6 +1,6 @@
 # Wavekit
 
-Wavekit is a platform for accessing and managing RisingWave clusters. 
+Wavekit is a self-hosted platform for accessing and managing RisingWave clusters. 
 
 ## Features
 
@@ -21,6 +21,16 @@ v2.0:
 - [ ] SQL Review
 
 ## Get Started
+
+### Quck start with Docker Compose (for testing)
+
+```shell
+cd examples/docker-compose
+docker compose up
+```
+
+Open http://localhost:8020 in your browser to access the wavekit web UI. 
+The default user is `root` and the default password is `123456`.
 
 ### Quick start with Docker (for testing)
 
