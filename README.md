@@ -25,7 +25,8 @@ v2.0:
 ### Quck start with Docker Compose (for testing)
 
 ```shell
-cd examples/docker-compose
+git clone git@github.com:risingwavelabs/wavekit.git
+cd wavekit/examples/docker-compose
 docker compose up
 ```
 
