@@ -1,5 +1,5 @@
 clusters:
-  - name: Init Local Cluster
+  - name: Default Local Cluster
     version: v2.1.2
     connections:
       host: rw
@@ -8,7 +8,7 @@ clusters:
       httpPort: 5691
 databases:
   - name: rw
-    cluster: Init Local Cluster
+    cluster: Default Local Cluster
     username: root
     database: dev
 queries:

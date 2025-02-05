@@ -26,7 +26,7 @@ v2.0:
 
 ```shell
 git clone git@github.com:risingwavelabs/wavekit.git
-cd wavekit/examples/docker-compose
+cd wavekit/examples/docker-compose-test
 docker compose up
 ```
 
@@ -38,53 +38,26 @@ The default user is `root` and the default password is `123456`.
 The wavekit server requires a PostgreSQL database to store the data. The pgbundle version of the wavekit server is a docker image that bundles the PostgreSQL database and the wavekit server. Note that this is NOT recommended for production, as it does not support multiple nodes.
 
 ```shell
-docker run -p 8020:8020 cloudcarver/wavekit:v0.1.0-pgbundle
+docker run --net=host cloudcarver/wavekit:v0.1.1-pgbundle
 ```
 
 To persist data, you can use a volume:
 
 ```shell
-docker run -p 8020:8020 -v wavekit-data:/var/lib/postgresql cloudcarver/wavekit:v0.1.0-pgbundle
+docker run --net=host -v wavekit-data:/var/lib/postgresql cloudcarver/wavekit:v0.1.1-pgbundle
 ```
 
-#### Networking issue with docker setup
-
-Since the wavekit server is running in a docker container, you need to make sure your RisingWave clusters can be accessed inside that wavekit server container.
-
-##### Option 1: Use bridge network
-
-```shell
-docker network create wavekit-network
-docker run -d --name risingwave --net=test risingwavelabs/risingwave:v2.1.0
-docker run -d --name wavekit-server --network wavekit-network -p 8020:8020 cloudcarver/wavekit:v0.1.0-pgbundle
-```
-
-With this setup, you can access the RisingWave cluster with the hostname `risingwave`.
-
-##### Option 2: Use the host network (Recommended)
-
-```shell
-docker run -d --name risingwave --net=host risingwavelabs/risingwave:v2.1.0
-docker run -d --name wavekit-server --net=host -p 8020:8020 cloudcarver/wavekit:v0.1.0-pgbundle
-```
-
-With this setup, you can access the RisingWave cluster with the hostname `localhost`.
-
-Note that WSL2 does not support the host network, so this option is not recommended for WSL2.
+Note that WSL2 and rootless docker may have the host network issue, in that case, you can use the bridge network to connect the wavekit server and the RisingWave cluster.
 
 ### Docker compose
 
-TODO
+A sample docker compose file is provided in the `examples/docker-compose` directory.
 
-### Kubernetes deployment
+```shell
+cd wavekit/examples/docker-compose
+docker compose up
+```
 
-TODO
+### High Availability
 
-
-### Binary
-
-TODO
-
-## Configuration
-
-
+The wavekit server is a stateless service, you can deploy multiple instances of the wavekit server and use a load balancer to route the requests to the wavekit server. 

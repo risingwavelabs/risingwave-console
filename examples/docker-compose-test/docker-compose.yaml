@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   wavekit:
-    image: cloudcarver/wavekit:v0.1.1
+    image: cloudcarver/wavekit:v0.1.1-pgbundle
     ports:
       - "8020:8020"
     environment:
@@ -17,16 +17,6 @@ services:
       WK_RISECTLDIR: /
     volumes:
       - ./init.yaml:/app/init.yaml
-
-  db: 
-    image: "postgres:latest"
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - db-data:/var/lib/postgresql/data
-
   rw:
     image: risingwavelabs/risingwave:v2.1.2
     ports:
@@ -64,7 +54,3 @@ services:
                    --advertise-addr rw:6660 \
                    --meta-address http://0.0.0.0:5690 \
                    --compactor-total-memory-bytes=1000000000\""
-
-volumes:
-  db-data:
-  wavekit-data:
