@@ -37,18 +37,24 @@ type RisectlManager struct {
 }
 
 func NewRisectlManager(cfg *config.Config) (RisectlManagerInterface, error) {
-	_, err := os.Stat(cfg.RisectlDir)
+	risectlDir := cfg.RisectlDir
+	if risectlDir == "" {
+		risectlDir = filepath.Join(os.Getenv("HOME"), ".risectl")
+	}
+
+	_, err := os.Stat(risectlDir)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			if err := os.MkdirAll(cfg.RisectlDir, 0755); err != nil {
-				return nil, fmt.Errorf("failed to create risectl dir %s: %w", cfg.RisectlDir, err)
+			if err := os.MkdirAll(risectlDir, 0755); err != nil {
+				return nil, fmt.Errorf("failed to create risectl dir %s: %w", risectlDir, err)
 			}
+		} else {
+			return nil, fmt.Errorf("failed to stat risectl dir %s: %w", risectlDir, err)
 		}
-		return nil, fmt.Errorf("failed to stat risectl dir %s: %w", cfg.RisectlDir, err)
 	}
 
 	return &RisectlManager{
-		risectlDir: cfg.RisectlDir,
+		risectlDir: risectlDir,
 		noInternet: cfg.NoInternet,
 	}, nil
 }
