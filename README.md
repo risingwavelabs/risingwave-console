@@ -2,6 +2,8 @@
 
 Wavekit is a self-hosted platform for accessing and managing RisingWave clusters. 
 
+![Wavekit](assets/image.png)
+
 ## Features
 
 v1.0:
