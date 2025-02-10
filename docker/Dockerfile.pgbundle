@@ -24,4 +24,13 @@ exec /app/wavekit-server
 EOF
 RUN chmod +x /app/start.sh
 
+ENV WK_PORT=8020
+ENV WK_PG_HOST=localhost
+ENV WK_PG_PORT=5432
+ENV WK_PG_USER=postgres
+ENV WK_PG_PASSWORD=postgres
+ENV WK_PG_DB=postgres
+ENV WK_RISECTLDIR=/
+ENV WK_JWT_RANDOM_SECRET=true
+
 ENTRYPOINT ["/app/start.sh"]

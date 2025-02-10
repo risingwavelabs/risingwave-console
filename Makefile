@@ -104,7 +104,7 @@ build-web:
 build-server:
 	GOOS=linux GOARCH=amd64 go build -o ./bin/wavekit-server cmd/main.go
 
-IMG_TAG=v0.1.1
+IMG_TAG=v0.1.2
 
 build-docker:
 	docker build -f docker/Dockerfile.pgbundle -t cloudcarver/wavekit:${IMG_TAG}-pgbundle .
@@ -117,7 +117,6 @@ docker-push:
 build: build-web build-server build-docker
 
 push: docker-push
-	docker push cloudcarver/wavekit:${IMG_TAG}-pgbundle
 
 ut:
 	COLOR=ALWAYS go test -race -covermode=atomic -coverprofile=coverage.out -tags ut ./... 

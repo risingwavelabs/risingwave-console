@@ -17,7 +17,8 @@ type Pg struct {
 }
 
 type Jwt struct {
-	Secret string `yaml:"secret"`
+	Secret       string `yaml:"secret"`
+	RandomSecret bool   `yaml:"randomsecret"`
 }
 
 type Root struct {

@@ -50,12 +50,12 @@ type Auth struct {
 var _ AuthInterface = (*Auth)(nil)
 
 func NewAuth(cfg *config.Config) (AuthInterface, error) {
-	if len(cfg.Jwt.Secret) == 0 {
+	if len(cfg.Jwt.Secret) == 0 && !cfg.Jwt.RandomSecret {
 		return nil, errors.New("jwt secret is empty")
 	}
 
 	return &Auth{
-		jwtSecret: []byte(cfg.Jwt.Secret),
+		jwtSecret: []byte(utils.IfElse(cfg.Jwt.RandomSecret, randomString(32), cfg.Jwt.Secret)),
 	}, nil
 }
 
@@ -144,10 +144,7 @@ func (a *Auth) GetJWTSecret() []byte {
 }
 
 func (a *Auth) CreateRefreshToken(userID int32) (string, string, error) {
-	refreshToken, err := generateRefreshToken()
-	if err != nil {
-		return "", "", err
-	}
+	refreshToken := randomString(32)
 	jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userID": userID,
 		"token":  refreshToken,
@@ -187,14 +184,13 @@ func (a *Auth) ParseJWTRefreshToken(jwtToken string) (int32, string, error) {
 	return int32(userID), refreshToken, nil
 }
 
-func generateRefreshToken() (string, error) {
-	const length = 32
+func randomString(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)
 	for i := range b {
 		b[i] = charset[rand.Intn(len(charset))]
 	}
-	return string(b), nil
+	return string(b)
 }
 
 func GetUser(c *fiber.Ctx) (*User, error) {
