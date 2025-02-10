@@ -24,32 +24,25 @@ v2.0:
 
 ## Get Started
 
-### Quck start with Docker Compose (for testing)
-
-```shell
-git clone git@github.com:risingwavelabs/wavekit.git
-cd wavekit/examples/docker-compose-test
-docker compose up
-```
-
-Open http://localhost:8020 in your browser to access the wavekit web UI. 
-The default user is `root` and the default password is `123456`.
-
 ### Quick start with Docker (for testing)
 
 The wavekit server requires a PostgreSQL database to store the data. The pgbundle version of the wavekit server is a docker image that bundles the PostgreSQL database and the wavekit server. Note that this is NOT recommended for production, as it does not support multiple nodes.
 
 ```shell
-docker run --net=host cloudcarver/wavekit:v0.1.1-pgbundle
+# 1. start a risingwave instance for testing
+docker run --rm -p 4566:4566 -p 5690:5690 -p 5691:5691 risingwavelabs/risingwave:v2.1.2  
+
+# 2. start the wavekit server in the host network 
+sudo docker run -p 8020:8020 --net=host --name wavekit cloudcarver/wavekit:v0.1.2-pgbundle
 ```
+
+*Note that rootless docker might not be able to use the host network directly, which make it not able to connect to the RisingWave cluster exposed on the host network.*
 
 To persist data, you can use a volume:
 
 ```shell
-docker run --net=host -v wavekit-data:/var/lib/postgresql cloudcarver/wavekit:v0.1.1-pgbundle
+docker run -p 8020:8020 --net=host --name wavekit -v wavekit-data:/var/lib/postgresql cloudcarver/wavekit:v0.1.2-pgbundle
 ```
-
-Note that WSL2 and rootless docker may have the host network issue, in that case, you can use the bridge network to connect the wavekit server and the RisingWave cluster.
 
 ### Docker compose
 

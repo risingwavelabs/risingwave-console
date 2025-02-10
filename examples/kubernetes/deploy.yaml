@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wavekit
+  labels:
+    app: wavekit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wavekit
+  template:
+    metadata:
+      labels:
+        app: wavekit
+    spec:
+      containers:
+        - name: wavekit
+          image: cloudcarver/wavekit:v0.1.2
+          ports:
+            - containerPort: 8020
+          env:
+            - name: WK_JWT_SECRET
+              value: "jwtsecret"
+            - name: WK_RISECTLDIR
+              value: "/wavekit-data/risectl"
+            - name: WK_PG_HOST
+              value: "db"
+            - name: WK_PG_PORT
+              value: "5432"
+            - name: WK_PG_USER
+              value: "postgres"
+            - name: WK_PG_PASSWORD
+              value: "postgres"
+            - name: WK_PG_DB
+              value: "postgres"
+          volumeMounts:
+            - name: wavekit-data
+              mountPath: "/wavekit-data"
+      volumes:
+        - name: wavekit-data
+          persistentVolumeClaim:
+            claimName: wavekit-data
