@@ -83,6 +83,24 @@ gen: gen-spec gen-querier gen-wire gen-mock gen-frontend-client
 	@go mod tidy
 
 ###################################################
+### Documentation
+###################################################
+
+CONFTEXT_VERSION=v0.3.3
+CONFTEXT_BIN=$(PROJECT_DIR)/bin/conftext
+
+install-doc-tools:
+	GOBIN=$(PROJECT_DIR)/bin BIN=conftext VERSION=${CONFTEXT_VERSION} DIR=$(PROJECT_DIR)/bin REPO=github.com/cloudcarver/edc/cmd/conftext ./scripts/go-install.sh
+
+doc: install-doc-tools
+	@cat README.tmpl.md | \
+		sed 's#{{README_YAML}}#$(shell $(CONFTEXT_BIN) -prefix wk -path internal/config -yaml | tr '\n' '@')#g' | tr '@' '\n' | \
+		sed 's#{{README_ENV}}#$(shell $(CONFTEXT_BIN) -prefix wk -path internal/config -env -markdown | tr '\n' '@')#g' | tr '@' '\n' | \
+		sed 's#{{README_DOCKER_COMPOSE}}#$(shell cat examples/docker-compose/docker-compose.yaml | tr '\n' '@')#g' | tr '@' '\n' | \
+		sed 's#{{README_INIT}}#$(shell cat init.yaml | tr '\n' '@')#g' | tr '@' '\n' \
+		> README.md
+
+###################################################
 ### Dev enviornment
 ###################################################
 
@@ -105,14 +123,15 @@ build-server:
 	GOOS=linux GOARCH=amd64 go build -o ./bin/wavekit-server cmd/main.go
 
 IMG_TAG=v0.1.2
+DOCKER_REPO=risingwavelabs/wavekit
 
 build-docker:
-	docker build -f docker/Dockerfile.pgbundle -t cloudcarver/wavekit:${IMG_TAG}-pgbundle .
-	docker build -f docker/Dockerfile -t cloudcarver/wavekit:${IMG_TAG} .
+	docker build -f docker/Dockerfile.pgbundle -t ${DOCKER_REPO}:${IMG_TAG}-pgbundle .
+	docker build -f docker/Dockerfile -t ${DOCKER_REPO}:${IMG_TAG} .
 
 docker-push:
-	docker push cloudcarver/wavekit:${IMG_TAG}-pgbundle
-	docker push cloudcarver/wavekit:${IMG_TAG}
+	docker push ${DOCKER_REPO}:${IMG_TAG}-pgbundle
+	docker push ${DOCKER_REPO}:${IMG_TAG}
 
 build: build-web build-server build-docker
 
@@ -122,3 +141,5 @@ ut:
 	COLOR=ALWAYS go test -race -covermode=atomic -coverprofile=coverage.out -tags ut ./... 
 	@go tool cover -html coverage.out -o coverage.html
 	@go tool cover -func coverage.out | fgrep total | awk '{print "Coverage:", $$3}'
+
+

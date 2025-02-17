@@ -11,9 +11,3 @@ databases:
     cluster: Default Local Cluster
     username: root
     database: dev
-queries:
-  - statement: |
-      SELECT 1;
-  - name: Query 0
-    statement: |
-      SELECT 2;

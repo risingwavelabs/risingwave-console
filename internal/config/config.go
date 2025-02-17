@@ -7,35 +7,55 @@ import (
 )
 
 type Pg struct {
-	Host     string `yaml:"host"`
-	User     string `yaml:"user"`
+	// The host of the postgres database
+	Host string `yaml:"host"`
+
+	// The user of the postgres database
+	User string `yaml:"user"`
+
+	// The password of the postgres database
 	Password string `yaml:"password"`
-	Db       string `yaml:"db"`
-	Port     int    `yaml:"port"`
-	// the path of directory to store migration files
-	Migration string `yaml:"migration"`
+
+	// The database of the postgres database
+	Db string `yaml:"db"`
+
+	// The port of the postgres database
+	Port int `yaml:"port"`
 }
 
 type Jwt struct {
-	Secret       string `yaml:"secret"`
-	RandomSecret bool   `yaml:"randomsecret"`
+	// The secret of the jwt
+	Secret string `yaml:"secret"`
+
+	// Whether to use a random secret
+	RandomSecret bool `yaml:"randomsecret"`
 }
 
 type Root struct {
+	// The password of the root user, if not set, the default password is "123456"
 	Password string `yaml:"password"`
 }
 
 type Config struct {
+	// The path of file to store the initialization data
 	Init string `yaml:"init,omitempty"`
 
+	// The port of the wavekit server
 	Port int `yaml:"port,omitempty"`
 
+	// The jwt configuration
 	Jwt Jwt `yaml:"jwt,omitempty"`
-	Pg  Pg  `yaml:"pg,omitempty"`
 
+	// The postgres configuration
+	Pg Pg `yaml:"pg,omitempty"`
+
+	// The root user configuration
 	Root *Root `yaml:"root,omitempty"`
 
-	NoInternet bool   `yaml:"nointernet,omitempty"`
+	// Whether to disable internet access
+	NoInternet bool `yaml:"nointernet,omitempty"`
+
+	// The path of the directory to store the risectl files
 	RisectlDir string `yaml:"risectldir,omitempty"`
 }
 

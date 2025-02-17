@@ -66,7 +66,11 @@ func (s *InitService) Init(ctx context.Context, cfg *config.Config) error {
 	}
 
 	// create the root user
-	orgID, err := s.s.CreateNewUser(ctx, "root", cfg.Root.Password)
+	rootPwd := cfg.Root.Password
+	if rootPwd == "" {
+		rootPwd = "123456"
+	}
+	orgID, err := s.s.CreateNewUser(ctx, "root", rootPwd)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create root user")
 	}
