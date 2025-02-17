@@ -11,7 +11,7 @@ The WaveKit server requires a PostgreSQL database to store the data. The pgbundl
 docker run --rm -p 4566:4566 -p 5690:5690 -p 5691:5691 risingwavelabs/risingwave:v2.1.2  
 
 # 2. start the WaveKit server in the host network 
-sudo docker run -p 8020:8020 --net=host --name WaveKit risingwavelabs/wavekit:v0.1.2-pgbundle
+sudo docker run -p 8020:8020 --net=host --name wavekit risingwavelabs/wavekit:v0.1.2-pgbundle
 ```
 
 *Note that rootless docker might not be able to use the host network directly, which make it not able to connect to the RisingWave cluster exposed on the host network.*
@@ -19,7 +19,7 @@ sudo docker run -p 8020:8020 --net=host --name WaveKit risingwavelabs/wavekit:v0
 To persist data, you can use a volume:
 
 ```shell
-docker run -p 8020:8020 --net=host --name WaveKit -v WaveKit-data:/var/lib/postgresql risingwavelabs/wavekit:v0.1.2-pgbundle
+docker run -p 8020:8020 --net=host --name wavekit -v wavekit-data:/var/lib/postgresql risingwavelabs/wavekit:v0.1.2-pgbundle
 ``` 
 
 ## Deploy
