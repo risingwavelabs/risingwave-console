@@ -12,6 +12,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var CurrentVersion string
+
 func IfElse[T any](cond bool, t T, f T) T {
 	if cond {
 		return t
