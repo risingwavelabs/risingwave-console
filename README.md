@@ -2,6 +2,8 @@
 
 WaveKit is a simple on-prem tool designed to enhance observability for your RisingWave cluster, enabling faster issue detection, efficient troubleshooting, and improved performance.
 
+![WaveKit Cover](docs/images/cover.png)
+
 WaveKit supports all RisingWave deployment types, including Docker, Kubernetes, and RisingWave Cloud.
 
 > [!WARNING]
