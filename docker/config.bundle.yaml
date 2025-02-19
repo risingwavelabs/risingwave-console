@@ -1,12 +1,5 @@
-port: 8020
 pg:
-  host: localhost
-  port: 5432
-  user: postgres
-  password: postgres
-  db: postgres
-  migration: /app/sql/migrations
-jwt:
-  secret: 9138e411951l2b568e22480f18a42dd69b38fab5ee1a36fbf63d49b22097d22a
+  dsn: postgres://postgres:postgres@localhost:5432/postgres
 root:
   password: root
+risectldir: /
