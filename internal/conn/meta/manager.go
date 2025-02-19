@@ -40,6 +40,7 @@ func NewRisectlManager(cfg *config.Config) (RisectlManagerInterface, error) {
 	risectlDir := cfg.RisectlDir
 	if risectlDir == "" {
 		risectlDir = filepath.Join(os.Getenv("HOME"), ".risectl")
+		log.Default().Printf("Using default risectl dir: %s", risectlDir)
 	}
 
 	_, err := os.Stat(risectlDir)

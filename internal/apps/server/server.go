@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -34,9 +35,16 @@ func NewServer(cfg *config.Config, c *controller.Controller, auth auth.AuthInter
 		BodyLimit:    50 * 1024 * 1024, // 50MB
 	})
 
+	var port = 8020
+	if cfg.Port != 0 {
+		port = cfg.Port
+	} else {
+		log.Default().Printf("Using default port: %d", port)
+	}
+
 	s := &Server{
 		app:        app,
-		port:       cfg.Port,
+		port:       port,
 		auth:       auth,
 		controller: c,
 	}

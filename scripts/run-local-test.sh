@@ -6,13 +6,8 @@ CONTAINER_NAME=wavekit-testpg
 docker stop $CONTAINER_NAME
 docker run --rm -d -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres --name $CONTAINER_NAME postgres:14.1-alpine
 
-export WK_PG_HOST=localhost
-export WK_PG_PORT=5432
-export WK_PG_USER=postgres
-export WK_PG_PASSWORD=postgres
-export WK_PG_DB=postgres
+export WK_PG_DSN=postgres://postgres:postgres@localhost:5432/postgres
 export WK_PG_MIGRATION=../sql/migrations
-export WK_JWT_SECRET=jwt_secret
 export WK_ROOT_PASSWORD=123456
 
 exit_code=1

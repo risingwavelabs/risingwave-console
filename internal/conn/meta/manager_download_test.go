@@ -21,10 +21,10 @@ func TestDownloadRisectl(t *testing.T) {
 		risectlDir: risectlDir,
 	}
 
-	err := risectlManager.downloadRisectl(context.Background(), "v2.1.2")
+	err := risectlManager.downloadRisectl(context.Background(), "v2.2.1")
 	require.NoError(t, err)
 
-	risectlPath := filepath.Join(risectlDir, "v2.1.2", "risectl")
+	risectlPath := filepath.Join(risectlDir, "v2.2.1", "risectl")
 	require.FileExists(t, risectlPath)
 
 	out, err := exec.CommandContext(context.Background(), risectlPath, "help").Output()

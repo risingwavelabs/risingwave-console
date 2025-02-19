@@ -83,13 +83,7 @@ services:
       - "8020:8020"
     environment:
       WK_PORT: 8020
-      WK_PG_HOST: localhost
-      WK_PG_PORT: 5432
-      WK_PG_USER: postgres
-      WK_PG_PASSWORD: postgres
-      WK_PG_DB: postgres
-      WK_JWT_SECRET: 9138e41195112b568e22480f18a42dd69b38fab5ee1a36fbf63d49b22097d22a
-      WK_ROOT_PASSWORD: '123456'
+      WK_PG_DSN: postgres://postgres:postgres@localhost:5432/postgres
       WK_RISECTLDIR: /
 
   db: 

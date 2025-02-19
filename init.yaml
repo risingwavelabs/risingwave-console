@@ -1,6 +1,6 @@
 clusters:
   - name: Default Local Cluster
-    version: v2.1.2
+    version: v2.2.1
     connections:
       host: rw
       sqlPort: 4566
