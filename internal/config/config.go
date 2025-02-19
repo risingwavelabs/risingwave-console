@@ -7,6 +7,9 @@ import (
 )
 
 type Pg struct {
+	// The DSN (Data Source Name) for postgres database connection. If specified, Host, Port, User, Password, and Db settings will be ignored.
+	DSN *string `yaml:"dsn,omitempty"`
+
 	// The host of the postgres database
 	Host string `yaml:"host"`
 
@@ -24,11 +27,8 @@ type Pg struct {
 }
 
 type Jwt struct {
-	// The secret of the jwt
+	// The secret of the jwt. If not set, a random secret will be used.
 	Secret string `yaml:"secret"`
-
-	// Whether to use a random secret
-	RandomSecret bool `yaml:"randomsecret"`
 }
 
 type Root struct {

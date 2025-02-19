@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
 
@@ -50,12 +51,16 @@ type Auth struct {
 var _ AuthInterface = (*Auth)(nil)
 
 func NewAuth(cfg *config.Config) (AuthInterface, error) {
-	if len(cfg.Jwt.Secret) == 0 && !cfg.Jwt.RandomSecret {
-		return nil, errors.New("jwt secret is empty")
+	var secret string
+	if cfg.Jwt.Secret == "" {
+		secret = randomString(32)
+		log.Default().Println("JWT secret is not set, using random secret")
+	} else {
+		secret = cfg.Jwt.Secret
 	}
 
 	return &Auth{
-		jwtSecret: []byte(utils.IfElse(cfg.Jwt.RandomSecret, randomString(32), cfg.Jwt.Secret)),
+		jwtSecret: []byte(secret),
 	}, nil
 }
 

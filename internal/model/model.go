@@ -63,8 +63,11 @@ func (m *Model) RunTransaction(ctx context.Context, f func(model ModelInterface)
 }
 
 func NewModel(cfg *config.Config) (ModelInterface, error) {
-	url := fmt.Sprintf("%s:%s@%s:%d/%s?connect_timeout=%d&timezone=Asia/Shanghai", cfg.Pg.User, cfg.Pg.Password, cfg.Pg.Host, cfg.Pg.Port, cfg.Pg.Db, 15)
-	dsn := fmt.Sprintf("postgres://%s", url)
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?connect_timeout=%d", cfg.Pg.User, cfg.Pg.Password, cfg.Pg.Host, cfg.Pg.Port, cfg.Pg.Db, 15)
+	if cfg.Pg.DSN != nil {
+		dsn = *cfg.Pg.DSN
+	}
+
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse pgxpool config: %s", dsn)
@@ -109,7 +112,14 @@ func NewModel(cfg *config.Config) (ModelInterface, error) {
 		return nil, errors.Wrap(err, "failed to create migration source driver")
 	}
 
-	m, err := migrate.NewWithSourceInstance("iofs", d, fmt.Sprintf("pgx5://%s", url))
+	url := fmt.Sprintf("pgx5://%s:%s@%s:%d/%s",
+		config.ConnConfig.User,
+		config.ConnConfig.Password,
+		config.ConnConfig.Host,
+		config.ConnConfig.Port,
+		config.ConnConfig.Database,
+	)
+	m, err := migrate.NewWithSourceInstance("iofs", d, url)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init migrate")
 	}

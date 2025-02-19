@@ -1,8 +1,8 @@
 # WaveKit
 
-WaveKit is a simple tool designed to enhance observability for your on-prem RisingWave cluster, enabling faster issue detection, efficient troubleshooting, and improved performance.
+WaveKit is a simple on-prem tool designed to enhance observability for your RisingWave cluster, enabling faster issue detection, efficient troubleshooting, and improved performance.
 
-WaveKit supports all RisingWave deployment types, including both Docker and Kubernetes.
+WaveKit supports all RisingWave deployment types, including Docker, Kubernetes, and RisingWave Cloud.
 
 > [!WARNING]
 > **WaveKit is currently in the public preview stage.**
@@ -18,7 +18,7 @@ WaveKit supports all RisingWave deployment types, including both Docker and Kube
 
 This method installs WaveKit with a bundled PostgreSQL database for convenience. However, if you prefer to use your own self-hosted PostgreSQL database for data persistence, skip to the next section.  
 
-### **Starting the WaveKit Server**
+### **Starting the WaveKit Server**  
 
 You can start the WaveKit server in two ways:  
 

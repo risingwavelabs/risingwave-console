@@ -31,6 +31,5 @@ ENV WK_PG_USER=postgres
 ENV WK_PG_PASSWORD=postgres
 ENV WK_PG_DB=postgres
 ENV WK_RISECTLDIR=/
-ENV WK_JWT_RANDOM_SECRET=true
 
 ENTRYPOINT ["/app/start.sh"]
