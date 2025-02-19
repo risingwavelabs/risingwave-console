@@ -124,13 +124,32 @@ db:
 test:
 	TEST_DIR=$(PROJECT_DIR)/e2e HOLD="$(HOLD)" ./scripts/run-local-test.sh "$(K)" 
 
+
+###################################################
+### Build
+###################################################
+
+VERSION=v0.1.2
+
+
 build-web:
-	cd web && pnpm run build
+	@cd web && pnpm run build
+
+release: build-web
+	@rm -rf upload
+	@CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Darwin/x86_64/wavekit cmd/main.go
+	@CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Darwin/arm64/wavekit cmd/main.go
+	@CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/x86_64/wavekit cmd/main.go
+	@CGO_ENABLED=0 GOOS=linux   GOARCH=386   go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/i386/wavekit cmd/main.go
+	@CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/arm64/wavekit cmd/main.go
+	@cp scripts/download.sh upload/download.sh
+	@echo 'latest version: $(VERSION)' > upload/metadata.txt
+	@aws s3 cp --recursive upload/ s3://wavekit-release/	
 
 build-server:
 	GOOS=linux GOARCH=amd64 go build -o ./bin/wavekit-server cmd/main.go
 
-IMG_TAG=v0.1.2
+IMG_TAG=$(VERSION)
 DOCKER_REPO=risingwavelabs/wavekit
 
 build-docker:
