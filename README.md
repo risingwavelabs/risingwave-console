@@ -47,9 +47,24 @@ Use the following default credentials to log in:
 - **Password:** `root`  
 
 
-### Customizing WaveKit Settings
+## Installation (Binary)
 
-WaveKit offers flexible configuration options through either a configuration file or environment variables. For detailed information about available settings and configuration methods, please refer to our [configuration documentation](docs/config.md).
+To install WaveKit using a standalone binary, follow these steps:
+
+1. Download and install the latest WaveKit binary:
+
+  ```shell
+  curl https://wavekit-release.s3.ap-southeast-1.amazonaws.com/download.sh | sh
+  ```
+
+2. Run the following command to start the WaveKit server:
+
+  ```shell
+  WK_PG_DSN=postgres://postgres:postgres@localhost:5432/postgres ./wavekit
+  ```
+
+  > [!NOTE]
+  > Ensure you have a PostgreSQL database running on your machine and set the WK_PG_DSN environment variable to your database connection string.
 
 ## Installation (Recommended for production)
 
@@ -84,48 +99,9 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
 
-  rw:
-    image: risingwavelabs/risingwave:v2.1.2
-    ports:
-      - 4566:4566
-      - 5690:5690
-      - 5691:5691
-    command: "standalone --meta-opts=\" \
-                    --listen-addr 0.0.0.0:5690 \
-                    --advertise-addr rw:5690 \
-                    --dashboard-host 0.0.0.0:5691 \
-                    --prometheus-host 0.0.0.0:1250 \
-                    --backend sqlite  \
-                    --sql-endpoint /root/single_node.db \
-                    --state-store hummock+fs:///root/state_store \
-                    --data-directory hummock_001\" \
-                 --compute-opts=\" \
-                    --listen-addr 0.0.0.0:5688 \
-                    --prometheus-listener-addr 0.0.0.0:1250 \
-                    --advertise-addr rw:5688 \
-                    --async-stack-trace verbose \
-                    --parallelism 4 \
-                    --total-memory-bytes 2147483648 \
-                    --role both \
-                    --meta-address http://0.0.0.0:5690\" \
-                 --frontend-opts=\" \
-                   --listen-addr 0.0.0.0:4566 \
-                   --advertise-addr rw:4566 \
-                   --prometheus-listener-addr 0.0.0.0:1250 \
-                   --health-check-listener-addr 0.0.0.0:6786 \
-                   --meta-addr http://0.0.0.0:5690 \
-                   --frontend-total-memory-bytes=500000000\" \
-                 --compactor-opts=\" \
-                   --listen-addr 0.0.0.0:6660 \
-                   --prometheus-listener-addr 0.0.0.0:1250 \
-                   --advertise-addr rw:6660 \
-                   --meta-address http://0.0.0.0:5690 \
-                   --compactor-total-memory-bytes=1000000000\""
-
 volumes:
   db-data:
   wavekit-data:
-
 ```
 
 Start WaveKit by running the following command:
@@ -135,6 +111,11 @@ docker compose up
 ```
 
 When the server is running, open your browser and go to: **[http://localhost:8020](http://localhost:8020)**  
+
+
+## Customizing WaveKit Settings
+
+WaveKit offers flexible configuration options through either a configuration file or environment variables. For detailed information about available settings and configuration methods, please refer to our [configuration documentation](docs/config.md).
 
 
 ## Contributing to WaveKit

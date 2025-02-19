@@ -92,10 +92,6 @@ CONFTEXT_BIN=$(PROJECT_DIR)/bin/conftext
 install-doc-tools:
 	@GOBIN=$(PROJECT_DIR)/bin BIN=conftext VERSION=${CONFTEXT_VERSION} DIR=$(PROJECT_DIR)/bin REPO=github.com/cloudcarver/edc/cmd/conftext ./scripts/go-install.sh
 
-doc-readme:
-	@awk -v cmds='cat examples/docker-compose/docker-compose.yaml|README_DOCKER_COMPOSE' \
-		-f scripts/template-subst.awk docs/templates/README.tmpl.md > README.md
-
 doc-config:
 	@awk -v cmds='$(CONFTEXT_BIN) -prefix wk -path internal/config -yaml|CONFIG_SAMPLE_YAML;\
 		$(CONFTEXT_BIN) -prefix wk -path internal/config -env -markdown|CONFIG_ENV;\
