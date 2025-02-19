@@ -49,17 +49,22 @@ Use the following default credentials to log in:
 
 ## Installation (Binary)
 
-Download the latest binary by running the following command:
+To install WaveKit using a standalone binary, follow these steps:
 
-```shell
-curl https://wavekit-release.s3.ap-southeast-1.amazonaws.com/download.sh | sh
-```
+1. Download and install the latest WaveKit binary:
 
-Then run the following command to start the WaveKit server:
+  ```shell
+  curl https://wavekit-release.s3.ap-southeast-1.amazonaws.com/download.sh | sh
+  ```
 
-```shell
-WK_PG_DSN=postgres://postgres:postgres@localhost:5432/postgres ./wavekit
-```
+2. Run the following command to start the WaveKit server:
+
+  ```shell
+  WK_PG_DSN=postgres://postgres:postgres@localhost:5432/postgres ./wavekit
+  ```
+
+  > [!NOTE]
+  > Ensure you have a PostgreSQL database running on your machine and set the WK_PG_DSN environment variable to your database connection string.
 
 ## Installation (Recommended for production)
 
@@ -97,7 +102,6 @@ services:
 volumes:
   db-data:
   wavekit-data:
-
 ```
 
 Start WaveKit by running the following command:
