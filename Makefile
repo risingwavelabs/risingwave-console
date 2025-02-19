@@ -11,10 +11,10 @@ OAPI_GEN_DIR=$(PROJECT_DIR)/internal/apigen
 OAPI_CODEGEN_FIBER_BIN=$(PROJECT_DIR)/bin/oapi-codegen-fiber
 
 install-oapi-codegen:
-	DIR=$(PROJECT_DIR)/bin VERSION=${OAPI_CODEGEN_VERSION} ./scripts/install-oapi-codegen.sh
+	@DIR=$(PROJECT_DIR)/bin VERSION=${OAPI_CODEGEN_VERSION} ./scripts/install-oapi-codegen.sh
 	
 install-oapi-codegen-fiber:
-	GOBIN=$(PROJECT_DIR)/bin go install github.com/cloudcarver/oapi-codegen-fiber@v0.5.1
+	@GOBIN=$(PROJECT_DIR)/bin go install github.com/cloudcarver/oapi-codegen-fiber@v0.5.1
 
 prune-spec:
 	@rm -f $(OAPI_GEN_DIR)/spec_gen.go
@@ -35,7 +35,7 @@ gen-frontend-client:
 WIRE_VERSION=v0.6.0
 
 install-wire:
-	DIR=$(PROJECT_DIR)/bin VERSION=${WIRE_VERSION} ./scripts/install-wire.sh
+	@DIR=$(PROJECT_DIR)/bin VERSION=${WIRE_VERSION} ./scripts/install-wire.sh
 
 WIRE_GEN=$(PROJECT_DIR)/bin/wire
 gen-wire: install-wire
@@ -50,7 +50,7 @@ QUERIER_DIR=$(PROJECT_DIR)/internal/model/querier
 SQLC_BIN=$(PROJECT_DIR)/bin/sqlc
 
 install-sqlc:
-	DIR=$(PROJECT_DIR)/bin VERSION=${SQLC_VERSION} ./scripts/install-sqlc.sh
+	@DIR=$(PROJECT_DIR)/bin VERSION=${SQLC_VERSION} ./scripts/install-sqlc.sh
 
 clean-querier:
 	@rm -f $(QUERIER_DIR)/*sql.gen.go
@@ -70,7 +70,7 @@ MOCKGEN_VERSION=1.6.0
 MOCKGEN_BIN=$(PROJECT_DIR)/bin/mockgen
 
 install-mockgen: 
-	DIR=$(PROJECT_DIR)/bin VERSION=${MOCKGEN_VERSION} ./scripts/install-mockgen.sh
+	@DIR=$(PROJECT_DIR)/bin VERSION=${MOCKGEN_VERSION} ./scripts/install-mockgen.sh
 
 gen-mock: install-mockgen
 	$(MOCKGEN_BIN) -source=internal/model/model.go -destination=internal/model/mock_gen.go -package=model
@@ -90,15 +90,19 @@ CONFTEXT_VERSION=v0.3.3
 CONFTEXT_BIN=$(PROJECT_DIR)/bin/conftext
 
 install-doc-tools:
-	GOBIN=$(PROJECT_DIR)/bin BIN=conftext VERSION=${CONFTEXT_VERSION} DIR=$(PROJECT_DIR)/bin REPO=github.com/cloudcarver/edc/cmd/conftext ./scripts/go-install.sh
+	@GOBIN=$(PROJECT_DIR)/bin BIN=conftext VERSION=${CONFTEXT_VERSION} DIR=$(PROJECT_DIR)/bin REPO=github.com/cloudcarver/edc/cmd/conftext ./scripts/go-install.sh
 
-doc: install-doc-tools
-	@cat README.tmpl.md | \
-		sed 's#{{README_YAML}}#$(shell $(CONFTEXT_BIN) -prefix wk -path internal/config -yaml | tr '\n' '@')#g' | tr '@' '\n' | \
-		sed 's#{{README_ENV}}#$(shell $(CONFTEXT_BIN) -prefix wk -path internal/config -env -markdown | tr '\n' '@')#g' | tr '@' '\n' | \
-		sed 's#{{README_DOCKER_COMPOSE}}#$(shell cat examples/docker-compose/docker-compose.yaml | tr '\n' '@')#g' | tr '@' '\n' | \
-		sed 's#{{README_INIT}}#$(shell cat init.yaml | tr '\n' '@')#g' | tr '@' '\n' \
-		> README.md
+doc-readme:
+	@awk -v cmds='cat examples/docker-compose/docker-compose.yaml|README_DOCKER_COMPOSE' \
+		-f scripts/template-subst.awk docs/templates/README.tmpl.md > README.md
+
+doc-config:
+	@awk -v cmds='$(CONFTEXT_BIN) -prefix wk -path internal/config -yaml|CONFIG_SAMPLE_YAML;\
+		$(CONFTEXT_BIN) -prefix wk -path internal/config -env -markdown|CONFIG_ENV;\
+		cat init.yaml|CONFIG_SAMPLE_INIT' \
+		-f scripts/template-subst.awk docs/templates/config.tmpl.md > docs/config.md
+
+doc: install-doc-tools doc-readme doc-config
 
 ###################################################
 ### Dev enviornment
@@ -138,7 +142,7 @@ build: build-web build-server build-docker
 push: docker-push
 
 ut:
-	COLOR=ALWAYS go test -race -covermode=atomic -coverprofile=coverage.out -tags ut ./... 
+	@COLOR=ALWAYS go test -race -covermode=atomic -coverprofile=coverage.out -tags ut ./... 
 	@go tool cover -html coverage.out -o coverage.html
 	@go tool cover -func coverage.out | fgrep total | awk '{print "Coverage:", $$3}'
 
