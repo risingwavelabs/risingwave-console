@@ -102,7 +102,11 @@ doc-config:
 		cat init.yaml|CONFIG_SAMPLE_INIT' \
 		-f scripts/template-subst.awk docs/templates/config.tmpl.md > docs/config.md
 
-doc: install-doc-tools doc-readme doc-config
+doc-contributing:
+	@awk -v cmds='cat CONTRIBUTING.md|CONTRIBUTING_MD' \
+		-f scripts/template-subst.awk docs/templates/CONTRIBUTING.tmpl.md > CONTRIBUTING.md
+
+doc: install-doc-tools doc-readme doc-config doc-contributing
 
 ###################################################
 ### Dev enviornment

@@ -69,7 +69,7 @@ When the server is running, open your browser and go to: **[http://localhost:802
 
 ## Contributing to WaveKit
 
-We welcome contributions to WaveKit! Please refer to our [CONTRIBUTING.md](docs/CONTRIBUTING.md) for more information on how to contribute to the project.
+We welcome contributions to WaveKit! Please refer to our [CONTRIBUTING.md](CONTRIBUTING.md) for more information on how to contribute to the project.
 
 
 ## WaveKit Editions
