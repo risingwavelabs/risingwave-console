@@ -27,11 +27,8 @@ type Pg struct {
 }
 
 type Jwt struct {
-	// The secret of the jwt
+	// The secret of the jwt. If not set, a random secret will be used.
 	Secret string `yaml:"secret"`
-
-	// Whether to use a random secret
-	RandomSecret bool `yaml:"randomsecret"`
 }
 
 type Root struct {
