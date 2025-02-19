@@ -11,6 +11,7 @@ jwt:
   secret: string
   randomsecret: true/false
 pg:
+  dsn: string
   host: string
   user: string
   password: string
@@ -33,6 +34,7 @@ You can override the YAML configuration settings by using environment variables.
 | `WK_PORT` | `integer` | The port of the wavekit server |
 | `WK_JWT_SECRET` | `string` | The secret of the jwt |
 | `WK_JWT_RANDOMSECRET` | `true/false` | Whether to use a random secret |
+| `WK_PG_DSN` | `string` | The DSN (Data Source Name) for postgres database connection. If specified, Host, Port, User, Password, and Db settings will be ignored. |
 | `WK_PG_HOST` | `string` | The host of the postgres database |
 | `WK_PG_USER` | `string` | The user of the postgres database |
 | `WK_PG_PASSWORD` | `string` | The password of the postgres database |

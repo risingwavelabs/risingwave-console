@@ -7,6 +7,9 @@ import (
 )
 
 type Pg struct {
+	// The DSN (Data Source Name) for postgres database connection. If specified, Host, Port, User, Password, and Db settings will be ignored.
+	DSN *string `yaml:"dsn,omitempty"`
+
 	// The host of the postgres database
 	Host string `yaml:"host"`
 
