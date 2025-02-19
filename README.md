@@ -1,41 +1,54 @@
-# Wavekit
+# WaveKit
 
-Wavekit is a self-hosted platform for managing RisingWave clusters.
+WaveKit is a simple on-prem tool designed to enhance observability for your RisingWave cluster, enabling faster issue detection, efficient troubleshooting, and improved performance.
 
-## Quick Start with Docker (for Testing)
+WaveKit supports all RisingWave deployment types, including Docker, Kubernetes, and RisingWave Cloud.
 
-The WaveKit server uses a PostgreSQL database to store essential cluster information, including connection details such as hostnames and ports of RisingWave clusters. 
+> [!NOTE]
+> _WaveKit uses a PostgreSQL database to store key cluster metadata, including connection details like hostnames and ports for RisingWave clusters. To ensure persistence, you’ll need to self-host a PostgreSQL database to prevent metadata loss._
 
-For testing purposes, we provide a `pgbundle` version - a Docker image that conveniently packages both PostgreSQL and the WaveKit server together. **Note:** While this bundled version simplifies testing, it is NOT suitable for production environments since it lacks support for multiple nodes and uses default PostgreSQL configurations.
+> [!NOTE]
+> _To use WaveKit, ensure your RisingWave cluster is already running and accessible._
+
+
+## Installation (Quick setup)
+
+This method installs WaveKit with a bundled PostgreSQL database for convenience. However, if you prefer to use your own self-hosted PostgreSQL database for data persistence, skip to the next section.  
+
+### **Starting the WaveKit Server**  
+
+You can start the WaveKit server in two ways:  
+
+#### **Option 1: Ephemeral Storage (No Persistence)**  
+Runs WaveKit with a bundled PostgreSQL database, but metadata is stored inside the container. If the container is removed, all metadata will be lost.  
 
 ```shell
-# 1. Start a RisingWave instance for testing
-docker run --rm -p 4566:4566 -p 5690:5690 -p 5691:5691 risingwavelabs/risingwave:v2.1.2  
-
-# 2. Start the WaveKit server on the host network 
 sudo docker run --net=host --name wavekit risingwavelabs/wavekit:v0.1.2-pgbundle
-
-# 3. Open your browser and navigate to http://localhost:8020. 
-#    The default username and password are "root" and "root".
 ```
 
-*Note: Rootless Docker may not be able to use the host network directly, which can prevent it from connecting to the RisingWave cluster exposed on the host network.*
-
-To persist data, use a volume:
+#### **Option 2: Persistent Storage (Recommended)**  
+Runs WaveKit with a bundled PostgreSQL database and stores metadata in a persistent Docker volume (`wavekit-data`), ensuring data persists across restarts.  
 
 ```shell
-docker run --net=host --name wavekit -v wavekit-data:/var/lib/postgresql risingwavelabs/wavekit:v0.1.2-pgbundle
-``` 
+sudo docker run --net=host --name wavekit -v wavekit-data:/var/lib/postgresql risingwavelabs/wavekit:v0.1.2-pgbundle
+```
 
-Using the `pgbundle` version in production is NOT recommended, as it integrates the Postgres process with default configurations into the image.
+### **Accessing WaveKit**  
 
-## Production Deployment
+Once the server is running, open your browser and go to:  
 
-For production environments, we strongly recommend deploying WaveKit with a dedicated PostgreSQL database for better reliability, scalability and maintainability. The following sections will guide you through setting up WaveKit in a production environment.
+- **[http://localhost:8020](http://localhost:8020)**  
 
-WaveKit uses PostgreSQL as its backend database. You need to deploy a PostgreSQL instance for WaveKit to function.
+Use the following default credentials to log in:  
+- **Username:** `root`  
+- **Password:** `root`  
 
-Here is a sample `docker-compose` file:
+
+## Installation (Recommended for production)
+
+The following section provides a step-by-step guide to setting up WaveKit with your self-hosted PostgreSQL database. This approach is recommended if you need persistent metadata with high availability.
+
+Sample `docker-compose` file:
 
 ```yaml
 version: "3.9"
@@ -105,71 +118,12 @@ services:
 volumes:
   db-data:
   wavekit-data:
-
 ```
 
-## Configuration
 
-The WaveKit server can be configured using a YAML file. Mount the `config.yaml` file to `/app/config.yaml` in the container.
+## WaveKit Editions
 
-```yaml
-init: string
-port: integer
-jwt:
-  secret: string
-  randomsecret: true/false
-pg:
-  host: string
-  user: string
-  password: string
-  db: string
-  port: integer
-root:
-  password: string
-nointernet: true/false
-risectldir: string
+WaveKit is available in two editions:  
 
-```
-
-Configuration can be overridden by environment variables:
-
-| Environment Variable | Expected Value | Description |
-|---------------------|----------------|-------------|
-| `WK_INIT` | `string` | The path of file to store the initialization data |
-| `WK_PORT` | `integer` | The port of the wavekit server |
-| `WK_JWT_SECRET` | `string` | The secret of the jwt |
-| `WK_JWT_RANDOMSECRET` | `true/false` | Whether to use a random secret |
-| `WK_PG_HOST` | `string` | The host of the postgres database |
-| `WK_PG_USER` | `string` | The user of the postgres database |
-| `WK_PG_PASSWORD` | `string` | The password of the postgres database |
-| `WK_PG_DB` | `string` | The database of the postgres database |
-| `WK_PG_PORT` | `integer` | The port of the postgres database |
-| `WK_ROOT_PASSWORD` | `string` | The password of the root user, if not set, the default password is "123456" |
-| `WK_NOINTERNET` | `true/false` | Whether to disable internet access |
-| `WK_RISECTLDIR` | `string` | The path of the directory to store the risectl files |
-
-
-## Initialization Data
-
-You can use an init file to initialize the WaveKit server.
-
-```yaml
-clusters:
-  - name: Default Local Cluster
-    version: v2.1.2
-    connections:
-      host: rw
-      sqlPort: 4566
-      metaPort: 5690
-      httpPort: 5691
-databases:
-  - name: rw
-    cluster: Default Local Cluster
-    username: root
-    database: dev
-
-```
-
-## High Availability
-
-The WaveKit server is stateless, allowing you to deploy multiple instances and use a load balancer to route requests to the WaveKit server. 
+- **WaveKit-Lite** – A lightweight, open-source edition that includes core functionalities. Licensed under Apache 2.0.  
+- **WaveKit-Pro** – A full-featured edition with advanced capabilities. A license key is required for access. To apply, contact us at [sales@risingwave-labs.com](mailto:sales@risingwave-labs.com) or [fill out this form](https://cloud.risingwave.com/auth/license_key/).
