@@ -63,10 +63,10 @@ func (m *Model) RunTransaction(ctx context.Context, f func(model ModelInterface)
 }
 
 func NewModel(cfg *config.Config) (ModelInterface, error) {
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?connect_timeout=%d", cfg.Pg.User, cfg.Pg.Password, cfg.Pg.Host, cfg.Pg.Port, cfg.Pg.Db, 15)
-	if cfg.Pg.DSN != nil {
-		dsn = *cfg.Pg.DSN
+	if cfg.Pg.DSN == nil {
+		return nil, errors.New("dsn is not set")
 	}
+	dsn := *cfg.Pg.DSN
 
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
