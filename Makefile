@@ -131,7 +131,11 @@ test:
 
 VERSION=v0.1.2
 
-release:
+
+build-web:
+	@cd web && pnpm run build
+
+release: build-web
 	@rm -rf upload
 	@CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Darwin/x86_64/wavekit cmd/main.go
 	@CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Darwin/arm64/wavekit cmd/main.go
@@ -141,9 +145,6 @@ release:
 	@cp scripts/download.sh upload/download.sh
 	@echo 'latest version: $(VERSION)' > upload/metadata.txt
 	@aws s3 cp --recursive upload/ s3://wavekit-release/	
-
-build-web:
-	cd web && pnpm run build
 
 build-server:
 	GOOS=linux GOARCH=amd64 go build -o ./bin/wavekit-server cmd/main.go
