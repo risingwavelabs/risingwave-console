@@ -16,7 +16,7 @@ WaveKit supports all RisingWave deployment types, including Docker, Kubernetes, 
 > _To use WaveKit, ensure your RisingWave cluster is already running and accessible._
 
 
-## Installation (Quick setup)
+## Installation (Quick setup with Docker)
 
 This method installs WaveKit with a bundled PostgreSQL database for convenience. However, if you prefer to use your own self-hosted PostgreSQL database for data persistence, skip to the next section.  
 
@@ -49,7 +49,7 @@ Use the following default credentials to log in:
 - **Password:** `root`  
 
 
-## Installation (Binary)
+## Installation (Quick setup with Binary)
 
 To install WaveKit using a standalone binary, follow these steps:
 
@@ -105,9 +105,6 @@ Start WaveKit by running the following command:
 ```shell
 docker compose up
 ```
-
-When the server is running, open your browser and go to: **[http://localhost:8020](http://localhost:8020)**  
-
 
 ## Customizing WaveKit Settings
 
