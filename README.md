@@ -110,15 +110,14 @@ docker compose up
 
 WaveKit offers flexible configuration options through either a configuration file or environment variables. For detailed information about available settings and configuration methods, please refer to our [configuration documentation](docs/config.md).
 
-
-## Contributing to WaveKit
-
-We welcome contributions to WaveKit! Please refer to our [CONTRIBUTING.md](CONTRIBUTING.md) for more information on how to contribute to the project.
-
-
 ## WaveKit Editions
 
 WaveKit is available in two editions:  
 
 - **WaveKit-Lite** – A lightweight, open-source edition that includes core functionalities. Licensed under Apache 2.0.  
 - **WaveKit-Pro** – A full-featured edition with advanced capabilities. A license key is required for access. To apply, contact us at [sales@risingwave-labs.com](mailto:sales@risingwave-labs.com) or [fill out this form](https://cloud.risingwave.com/auth/license_key/).
+
+
+## Contributing to WaveKit
+
+We welcome contributions to WaveKit! Please refer to our [CONTRIBUTING.md](CONTRIBUTING.md) for more information on how to contribute to the project.
