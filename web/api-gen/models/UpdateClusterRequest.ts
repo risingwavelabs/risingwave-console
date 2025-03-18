@@ -9,5 +9,9 @@ export type UpdateClusterRequest = {
     metaPort: number;
     httpPort: number;
     version: string;
+    /**
+     * Prometheus endpoint
+     */
+    prometheusEndpoint?: string;
 };
 

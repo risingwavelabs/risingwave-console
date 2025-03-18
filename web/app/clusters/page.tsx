@@ -18,7 +18,8 @@ function mapAPIClusterToUICluster(apiCluster: APICluster): UICluster {
     sqlPort: apiCluster.sqlPort,
     metaPort: apiCluster.metaPort,
     httpPort: apiCluster.httpPort,
-    version: apiCluster.version
+    version: apiCluster.version,
+    prometheusEndpoint: apiCluster.prometheusEndpoint
   }
 }
 
@@ -64,6 +65,7 @@ export default function ClustersPage() {
         metaPort: cluster.metaPort,
         httpPort: cluster.httpPort,
         version: cluster.version,
+        prometheusEndpoint: cluster.prometheusEndpoint || undefined
       })
       setClusters(prev => prev.map(c =>
         c.id === cluster.id ? mapAPIClusterToUICluster(updatedCluster) : c

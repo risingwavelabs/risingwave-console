@@ -27,16 +27,17 @@ type AutoDiagnosticsConfig struct {
 }
 
 type Cluster struct {
-	ID             int32
-	OrganizationID int32
-	Name           string
-	Host           string
-	SqlPort        int32
-	MetaPort       int32
-	HttpPort       int32
-	Version        string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID                 int32
+	OrganizationID     int32
+	Name               string
+	Host               string
+	SqlPort            int32
+	MetaPort           int32
+	HttpPort           int32
+	Version            string
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	PrometheusEndpoint *string
 }
 
 type ClusterDiagnostic struct {

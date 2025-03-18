@@ -19,6 +19,7 @@ export interface Cluster {
   metaPort: number
   httpPort: number
   version: string
+  prometheusEndpoint?: string
 }
 
 type ViewMode = "grid" | "list"
@@ -119,17 +120,24 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit, o
             <GripVertical className="h-5 w-5" />
           </div>
           <div className="flex-1 ml-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold">{cluster.name}</h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className={`w-2 h-2 rounded-full ${cluster.status === "running" ? "bg-green-500" :
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div>
+                  <h3 className="font-semibold text-lg">{cluster.name}</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className={`w-2 h-2 rounded-full ${cluster.status === "running" ? "bg-green-500" :
                       cluster.status === "stopped" ? "bg-yellow-500" :
                         "bg-red-500"
-                    }`} />
-                  <span className="text-sm text-muted-foreground capitalize">
-                    {cluster.status}
-                  </span>
+                      }`} />
+                    <span className="text-sm text-muted-foreground capitalize">
+                      {cluster.status}
+                    </span>
+                  </div>
+                </div>
+                <div className="h-10 w-px bg-border" /> {/* Vertical divider */}
+                <div className="flex flex-col">
+                  <span className="text-sm text-muted-foreground">Version</span>
+                  <span className="text-sm font-medium">{cluster.version}</span>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -141,7 +149,8 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit, o
                     sqlPort: cluster.sqlPort,
                     metaPort: cluster.metaPort,
                     httpPort: cluster.httpPort,
-                    version: cluster.version
+                    version: cluster.version,
+                    prometheusEndpoint: cluster.prometheusEndpoint
                   }}
                   trigger={<Button variant="outline" size="sm">Edit</Button>}
                   onSubmit={(data: ClusterFormData) => onEdit?.({
@@ -179,15 +188,61 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit, o
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-sm text-muted-foreground">
-              <div>
-                Host: <span className="text-foreground">{cluster.host}</span>
-                <div>Version: <span className="text-foreground">{cluster.version}</span></div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Host</div>
+                    <div className="font-medium">{cluster.host}</div>
+                  </div>
+                </div>
+                {cluster.prometheusEndpoint && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 8v8m-4-5v5M8 8v8m-4-8h18" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Prometheus</div>
+                      <div className="font-medium">{cluster.prometheusEndpoint}</div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div>
-                SQL Port: <span className="text-foreground">{cluster.sqlPort}</span>{" "}
-                Meta Port: <span className="text-foreground">{cluster.metaPort}</span>{" "}
-                HTTP Port: <span className="text-foreground">{cluster.httpPort}</span>
+
+              <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h8" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Ports</div>
+                    <div className="grid grid-cols-3 gap-2 font-medium">
+                      <div>
+                        <span className="text-xs text-muted-foreground">SQL</span>
+                        <div>{cluster.sqlPort}</div>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">Meta</span>
+                        <div>{cluster.metaPort}</div>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">HTTP</span>
+                        <div>{cluster.httpPort}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

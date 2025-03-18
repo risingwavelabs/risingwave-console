@@ -69,9 +69,12 @@ type Cluster struct {
 	MetaPort       int32     `json:"metaPort"`
 	Name           string    `json:"name"`
 	OrganizationID int32     `json:"organizationID"`
-	SqlPort        int32     `json:"sqlPort"`
-	UpdatedAt      time.Time `json:"updatedAt"`
-	Version        string    `json:"version"`
+
+	// PrometheusEndpoint Prometheus endpoint
+	PrometheusEndpoint *string   `json:"prometheusEndpoint,omitempty"`
+	SqlPort            int32     `json:"sqlPort"`
+	UpdatedAt          time.Time `json:"updatedAt"`
+	Version            string    `json:"version"`
 }
 
 // ClusterCreate defines model for ClusterCreate.
@@ -87,6 +90,9 @@ type ClusterCreate struct {
 
 	// Name Name of the cluster
 	Name string `json:"name"`
+
+	// PrometheusEndpoint Prometheus endpoint
+	PrometheusEndpoint *string `json:"prometheusEndpoint,omitempty"`
 
 	// SqlPort SQL connection port
 	SqlPort int32 `json:"sqlPort"`
@@ -343,8 +349,11 @@ type UpdateClusterRequest struct {
 	HttpPort int32  `json:"httpPort"`
 	MetaPort int32  `json:"metaPort"`
 	Name     string `json:"name"`
-	SqlPort  int32  `json:"sqlPort"`
-	Version  string `json:"version"`
+
+	// PrometheusEndpoint Prometheus endpoint
+	PrometheusEndpoint *string `json:"prometheusEndpoint,omitempty"`
+	SqlPort            int32   `json:"sqlPort"`
+	Version            string  `json:"version"`
 }
 
 // DeleteClusterParams defines parameters for DeleteCluster.

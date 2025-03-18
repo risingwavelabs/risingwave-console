@@ -51,7 +51,8 @@ const schema = yup.object().shape({
     .required("HTTP Port is required")
     .min(1, "Port must be greater than 0")
     .max(65535, "Port must be less than 65536"),
-  version: yup.string().required("Version is required")
+  version: yup.string().required("Version is required"),
+  prometheusEndpoint: yup.string()
 })
 
 export type ClusterFormData = yup.InferType<typeof schema>
@@ -98,7 +99,8 @@ export function ClusterDialog({
       sqlPort: 4566,
       metaPort: 5690,
       httpPort: 5691,
-      version: "latest"
+      version: "latest",
+      prometheusEndpoint: undefined
     }
   })
 
@@ -229,6 +231,18 @@ export function ClusterDialog({
               />
               {errors.httpPort && (
                 <p className="text-sm text-red-500">{errors.httpPort.message}</p>
+              )}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="prometheusEndpoint">Prometheus Endpoint</Label>
+              <Input
+                id="prometheusEndpoint"
+                placeholder="http://localhost:9090"
+                {...register("prometheusEndpoint")}
+                className={errors.prometheusEndpoint ? "border-red-500" : ""}
+              />
+              {errors.prometheusEndpoint && (
+                <p className="text-sm text-red-500">{errors.prometheusEndpoint.message}</p>
               )}
             </div>
             <div className="grid gap-2">

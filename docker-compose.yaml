@@ -40,6 +40,7 @@ services:
       - 4566:4566
       - 5690:5690
       - 5691:5691
+      - 1250:1250
     command: "standalone --meta-opts=\" \
                     --listen-addr 0.0.0.0:5690 \
                     --advertise-addr rw:5690 \
@@ -72,8 +73,35 @@ services:
                    --meta-address http://0.0.0.0:5690 \
                    --compactor-total-memory-bytes=1000000000\""
 
+  prometheus:
+    image: "prom/prometheus:latest"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.listen-address=0.0.0.0:9500"
+      - "--storage.tsdb.retention.time=30d"
+    ports:
+      - "9500:9500"
+    depends_on: [ ]
+    volumes:
+      - "prometheus-data:/prometheus"
+      - "./prometheus.yaml:/etc/prometheus/prometheus.yml"
+    environment: {}
+    container_name: prometheus
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - sh -c 'printf "GET /-/healthy HTTP/1.0\n\n" | nc localhost 9500; exit $$?;'
+      interval: 1s
+      timeout: 5s
+      retries: 5
+    restart: always
+
 volumes:
   db-data:
   go-data:
   go-build-data:
   wavekit-data:
+  prometheus-data:
