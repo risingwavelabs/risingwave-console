@@ -9,7 +9,7 @@ services:
     command:
     - go
     - run
-    - cmd/main.go
+    - cmd/wavekit/main.go
     environment:
       WK_PORT: 8020
       WK_PG_DSN: postgres://postgres:postgres@db:5432/postgres
