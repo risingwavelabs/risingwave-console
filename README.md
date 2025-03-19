@@ -62,7 +62,7 @@ To install WaveKit using a standalone binary, follow these steps:
 2. Run the following command to start the WaveKit server:
 
   ```shell
-  WK_PG_DSN=postgres://postgres:postgres@localhost:5432/postgres ./wavekit
+  WK_PG_DSN=postgres://postgres:postgres@localhost:5432/postgres WK_ROOT_PASSWORD=root ./wavekit
   ```
 
   > [!NOTE]
