@@ -72,7 +72,7 @@ func (p *PromManager) GetPrometheusConn(ctx context.Context, clusterID int32) (P
 }
 
 func (c *PrometheusConn) GetMaterializedViewThroughput(ctx context.Context) (prom_model.Matrix, error) {
-	rate := "5m"
+	rate := "1m"
 	query := fmt.Sprintf(`sum(rate(%s[%s])) by (table_id) * on(table_id) group_left(table_name) group(%s) by (table_id, table_name)`,
 		metricWithLabels("stream_mview_input_row_count", c.defaultLabels),
 		rate,

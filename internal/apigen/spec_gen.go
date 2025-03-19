@@ -207,9 +207,7 @@ type DiagnosticData struct {
 }
 
 // MetricMatrix defines model for MetricMatrix.
-type MetricMatrix struct {
-	Matrix []MetricSeries `json:"matrix"`
-}
+type MetricMatrix = []MetricSeries
 
 // MetricSeries defines model for MetricSeries.
 type MetricSeries struct {
@@ -218,10 +216,7 @@ type MetricSeries struct {
 }
 
 // MetricValue defines model for MetricValue.
-type MetricValue struct {
-	Timestamp time.Time `json:"timestamp"`
-	Value     float32   `json:"value"`
-}
+type MetricValue = []interface{}
 
 // QueryRequest defines model for QueryRequest.
 type QueryRequest struct {

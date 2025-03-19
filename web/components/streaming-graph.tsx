@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { ReactFlow, Background, Controls, Panel, MarkerType, Position, Handle, useNodesState, useEdgesState } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
 import '@xyflow/react/dist/style.css';
@@ -28,6 +28,7 @@ export interface RisingWaveNodeData extends Record<string, unknown> {
   };
   format?: string;
   dependencies?: number[]; // Array of node IDs that this node depends on
+  throughput?: number; // Added throughput property to track the node's throughput
 }
 
 interface StreamingGraphProps {
@@ -95,6 +96,29 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
     </span>
   ), [icon, data.name]);
 
+  // Format throughput value for display
+  const formattedThroughput = React.useMemo(() => {
+    // Check explicitly for undefined, not truthiness (to handle zero values)
+    if (data.throughput === undefined) {
+      return null;
+    }
+    // Special handling for zero
+    if (data.throughput === 0) {
+      return "0.00 rows/sec";
+    }
+
+    // Format to readable values (e.g., convert to K, M, B if large)
+    if (data.throughput >= 1_000_000_000) {
+      return `${(data.throughput / 1_000_000_000).toFixed(2)} B rows/sec`;
+    } else if (data.throughput >= 1_000_000) {
+      return `${(data.throughput / 1_000_000).toFixed(2)} M rows/sec`;
+    } else if (data.throughput >= 1_000) {
+      return `${(data.throughput / 1_000).toFixed(2)} K rows/sec`;
+    } else {
+      return `${data.throughput.toFixed(2)} rows/sec`;
+    }
+  }, [data.throughput, data.id, data.name]);
+
   return (
     <div className={`rounded-lg shadow-lg border min-w-[100px] drag-handle bg-background`}>
       <Handle
@@ -121,6 +145,20 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
         {data.connector && (
           <span className="ml-auto text-xs text-muted-foreground">({data.connector.type})</span>
         )}
+      </div>
+      {/* Add throughput display */}
+      <div className="px-4 py-1 text-xs border-b bg-opacity-50"
+        style={{ backgroundColor: `${backgroundColor}80` }}>
+        <div className="flex items-center gap-1">
+          <span className="font-semibold">Throughput:</span>
+          {(() => {
+            return formattedThroughput ? (
+              <span className="ml-1 font-mono">{formattedThroughput}</span>
+            ) : (
+              <span className="ml-1 text-muted-foreground italic">Not available</span>
+            );
+          })()}
+        </div>
       </div>
       {isExpanded && (
         <div className="p-2">
@@ -149,10 +187,22 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Custom comparison function for memo
-  return prevProps.data.id === nextProps.data.id &&
-    prevProps.data.name === nextProps.data.name &&
-    prevProps.data.type === nextProps.data.type;
+  // Custom comparison function for memo - make sure all relevant properties are compared
+  const prevData = prevProps.data;
+  const nextData = nextProps.data;
+
+  const areEqual =
+    prevData.id === nextData.id &&
+    prevData.name === nextData.name &&
+    prevData.type === nextData.type &&
+    prevData.throughput === nextData.throughput;
+
+  // Debug output for memoization
+  if (prevData.throughput !== nextData.throughput) {
+    console.debug(`Throughput changed for ${nextData.name}: ${prevData.throughput} -> ${nextData.throughput}`);
+  }
+
+  return areEqual;
 });
 
 TableNodeComponent.displayName = 'TableNodeComponent';
@@ -160,17 +210,61 @@ TableNodeComponent.displayName = 'TableNodeComponent';
 export function StreamingGraph({ clusterId, data = [], className = '', height = '100%' }: StreamingGraphProps) {
   const { theme = 'light' } = useTheme();
   const colors = COLORS[theme === 'dark' ? 'dark' : 'light'];
+  const [throughputData, setThroughputData] = useState<Record<string, number>>({});
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   async function getMaterializedViewThroughput() {
     if (clusterId) {
-      const throughput = await DefaultService.getMaterializedViewThroughput(clusterId);
-      console.log(throughput);
+      try {
+        const matrix = await DefaultService.getMaterializedViewThroughput(clusterId);
+
+        if (matrix && matrix.length > 0) {
+          // Process the throughput data for each materialized view
+          const newThroughputData: Record<string, number> = {};
+          matrix.forEach(series => {
+            // Extract the table_id from the metric to match with node id
+            const tableId = series.metric?.['table_id'];
+
+            if (tableId && series.values && series.values.length > 0) {
+              // Get the latest value
+              const latestValue = series.values[series.values.length - 1];
+              const throughputValue = Number(latestValue[1]);
+
+              // Make sure the tableId is a string to match with node.id.toString()
+              const tableIdStr = String(tableId);
+
+              // Store the throughput value even if it's zero
+              newThroughputData[tableIdStr] = throughputValue;
+            } else {
+              console.log(`Missing table_id or values in series:`, series);
+            }
+          });
+          setThroughputData(newThroughputData);
+        } else {
+          console.log(`No throughput data received from API`);
+        }
+      } catch (error) {
+        console.error('Error fetching materialized view throughput:', error);
+      }
     }
   }
 
   useEffect(() => {
-    getMaterializedViewThroughput()
-  }, []);
+    // Initial fetch
+    getMaterializedViewThroughput();
+
+    // Set up interval to fetch every 5 seconds
+    intervalRef.current = setInterval(() => {
+      getMaterializedViewThroughput();
+    }, 5000);
+
+    // Clean up interval on unmount
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [clusterId]);  // Only re-run if clusterId changes
 
   type NodeData = {
     data: RisingWaveNodeData;
@@ -226,13 +320,31 @@ export function StreamingGraph({ clusterId, data = [], className = '', height = 
   };
 
   React.useEffect(() => {
-    const generatedNodes = data.map((node) => ({
-      id: node.id.toString(),
-      position: { x: 0, y: 0 },
-      data: node,
-      type: 'tableNode',
-      dragHandle: '.drag-handle'
-    })) as NodeData[];
+    const generatedNodes = data.map((node) => {
+      // Add throughput data to materialized view nodes
+      let nodeWithThroughput = { ...node };
+      // Convert node.id to string for consistent comparison
+      const nodeIdStr = node.id.toString();
+      // Check if throughputData has the key, not if the value is truthy
+      if (nodeIdStr in throughputData) {
+        const throughputValue = Number(throughputData[nodeIdStr]);
+        // Ensure it's a valid number
+        if (!isNaN(throughputValue)) {
+          nodeWithThroughput.throughput = throughputValue;
+        } else {
+          console.log(`Invalid throughput value for node ${nodeIdStr}: ${throughputData[nodeIdStr]}`);
+        }
+      }
+
+
+      return {
+        id: node.id.toString(),
+        position: { x: 0, y: 0 },
+        data: nodeWithThroughput,
+        type: 'tableNode',
+        dragHandle: '.drag-handle'
+      };
+    }) as NodeData[];
 
     const generatedEdges = data.flatMap((node) => {
       if (!node.dependencies) return [];
@@ -262,7 +374,7 @@ export function StreamingGraph({ clusterId, data = [], className = '', height = 
 
     setNodes(layoutedNodes);
     setEdges(layoutedEdges);
-  }, [data, setNodes, setEdges]);
+  }, [data, throughputData, setNodes, setEdges]);
 
   const nodeTypes = React.useMemo(() => ({
     tableNode: TableNodeComponent

@@ -3,7 +3,4 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { MetricSeries } from './MetricSeries';
-export type MetricMatrix = {
-    matrix: Array<MetricSeries>;
-};
-
+export type MetricMatrix = Array<MetricSeries>;

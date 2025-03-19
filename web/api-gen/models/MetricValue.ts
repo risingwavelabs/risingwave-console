@@ -2,8 +2,4 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type MetricValue = {
-    timestamp: string;
-    value: number;
-};
-
+export type MetricValue = any[];
