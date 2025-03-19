@@ -63,7 +63,7 @@ const initService = () => {
         });
       } else {
         if (error.status && error.status >= 500) {
-          toast.error(error.response?.data);
+          toast.error(error.response?.data as string);
         }
         if (error.status === 403) {
           toast.error("You are not authorized to perform this action");

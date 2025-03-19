@@ -87,3 +87,10 @@ func TestTCPConnection(ctx context.Context, host string, port int32, timeout tim
 	defer conn.Close()
 	return nil
 }
+
+func TruncateString(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	return s[:max] + "..."
+}

@@ -27,5 +27,9 @@ export type ClusterCreate = {
      * Version of the cluster
      */
     version: string;
+    /**
+     * Prometheus endpoint
+     */
+    prometheusEndpoint?: string;
 };
 

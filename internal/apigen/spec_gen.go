@@ -69,9 +69,12 @@ type Cluster struct {
 	MetaPort       int32     `json:"metaPort"`
 	Name           string    `json:"name"`
 	OrganizationID int32     `json:"organizationID"`
-	SqlPort        int32     `json:"sqlPort"`
-	UpdatedAt      time.Time `json:"updatedAt"`
-	Version        string    `json:"version"`
+
+	// PrometheusEndpoint Prometheus endpoint
+	PrometheusEndpoint *string   `json:"prometheusEndpoint,omitempty"`
+	SqlPort            int32     `json:"sqlPort"`
+	UpdatedAt          time.Time `json:"updatedAt"`
+	Version            string    `json:"version"`
 }
 
 // ClusterCreate defines model for ClusterCreate.
@@ -87,6 +90,9 @@ type ClusterCreate struct {
 
 	// Name Name of the cluster
 	Name string `json:"name"`
+
+	// PrometheusEndpoint Prometheus endpoint
+	PrometheusEndpoint *string `json:"prometheusEndpoint,omitempty"`
 
 	// SqlPort SQL connection port
 	SqlPort int32 `json:"sqlPort"`
@@ -199,6 +205,18 @@ type DiagnosticData struct {
 	// CreatedAt When the diagnostic data was collected
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+// MetricMatrix defines model for MetricMatrix.
+type MetricMatrix = []MetricSeries
+
+// MetricSeries defines model for MetricSeries.
+type MetricSeries struct {
+	Metric map[string]interface{} `json:"metric"`
+	Values []MetricValue          `json:"values"`
+}
+
+// MetricValue defines model for MetricValue.
+type MetricValue = []interface{}
 
 // QueryRequest defines model for QueryRequest.
 type QueryRequest struct {
@@ -343,8 +361,11 @@ type UpdateClusterRequest struct {
 	HttpPort int32  `json:"httpPort"`
 	MetaPort int32  `json:"metaPort"`
 	Name     string `json:"name"`
-	SqlPort  int32  `json:"sqlPort"`
-	Version  string `json:"version"`
+
+	// PrometheusEndpoint Prometheus endpoint
+	PrometheusEndpoint *string `json:"prometheusEndpoint,omitempty"`
+	SqlPort            int32   `json:"sqlPort"`
+	Version            string  `json:"version"`
 }
 
 // DeleteClusterParams defines parameters for DeleteCluster.
@@ -594,6 +615,9 @@ type ClientInterface interface {
 	QueryDatabaseWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	QueryDatabase(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetMaterializedViewThroughput request
+	GetMaterializedViewThroughput(ctx context.Context, clusterID int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TestClusterConnectionWithBody request with any body
 	TestClusterConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1095,6 +1119,18 @@ func (c *Client) QueryDatabaseWithBody(ctx context.Context, iD int32, contentTyp
 
 func (c *Client) QueryDatabase(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewQueryDatabaseRequest(c.Server, iD, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetMaterializedViewThroughput(ctx context.Context, clusterID int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetMaterializedViewThroughputRequest(c.Server, clusterID)
 	if err != nil {
 		return nil, err
 	}
@@ -2348,6 +2384,40 @@ func NewQueryDatabaseRequestWithBody(server string, iD int32, contentType string
 	return req, nil
 }
 
+// NewGetMaterializedViewThroughputRequest generates requests for GetMaterializedViewThroughput
+func NewGetMaterializedViewThroughputRequest(server string, clusterID int32) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "clusterID", runtime.ParamLocationPath, clusterID)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/metrics/%s/materialized-view-throughput", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestClusterConnectionRequest calls the generic TestClusterConnection builder with application/json body
 func NewTestClusterConnectionRequest(server string, body TestClusterConnectionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -2543,6 +2613,9 @@ type ClientWithResponsesInterface interface {
 	QueryDatabaseWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
 
 	QueryDatabaseWithResponse(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
+
+	// GetMaterializedViewThroughputWithResponse request
+	GetMaterializedViewThroughputWithResponse(ctx context.Context, clusterID int32, reqEditors ...RequestEditorFn) (*GetMaterializedViewThroughputResponse, error)
 
 	// TestClusterConnectionWithBodyWithResponse request with any body
 	TestClusterConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TestClusterConnectionResponse, error)
@@ -3180,6 +3253,28 @@ func (r QueryDatabaseResponse) StatusCode() int {
 	return 0
 }
 
+type GetMaterializedViewThroughputResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *MetricMatrix
+}
+
+// Status returns HTTPResponse.Status
+func (r GetMaterializedViewThroughputResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetMaterializedViewThroughputResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TestClusterConnectionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3565,6 +3660,15 @@ func (c *ClientWithResponses) QueryDatabaseWithResponse(ctx context.Context, iD 
 		return nil, err
 	}
 	return ParseQueryDatabaseResponse(rsp)
+}
+
+// GetMaterializedViewThroughputWithResponse request returning *GetMaterializedViewThroughputResponse
+func (c *ClientWithResponses) GetMaterializedViewThroughputWithResponse(ctx context.Context, clusterID int32, reqEditors ...RequestEditorFn) (*GetMaterializedViewThroughputResponse, error) {
+	rsp, err := c.GetMaterializedViewThroughput(ctx, clusterID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetMaterializedViewThroughputResponse(rsp)
 }
 
 // TestClusterConnectionWithBodyWithResponse request with arbitrary body returning *TestClusterConnectionResponse
@@ -4258,6 +4362,32 @@ func ParseQueryDatabaseResponse(rsp *http.Response) (*QueryDatabaseResponse, err
 	return response, nil
 }
 
+// ParseGetMaterializedViewThroughputResponse parses an HTTP response from a GetMaterializedViewThroughputWithResponse call
+func ParseGetMaterializedViewThroughputResponse(rsp *http.Response) (*GetMaterializedViewThroughputResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetMaterializedViewThroughputResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest MetricMatrix
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseTestClusterConnectionResponse parses an HTTP response from a TestClusterConnectionWithResponse call
 func ParseTestClusterConnectionResponse(rsp *http.Response) (*TestClusterConnectionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -4373,6 +4503,9 @@ type ServerInterface interface {
 	// Query database
 	// (POST /databases/{ID}/query)
 	QueryDatabase(c *fiber.Ctx, iD int32) error
+	// Get materialized view throughput
+	// (GET /metrics/{clusterID}/materialized-view-throughput)
+	GetMaterializedViewThroughput(c *fiber.Ctx, clusterID int32) error
 	// Test cluster connection
 	// (POST /test-cluster-connection)
 	TestClusterConnection(c *fiber.Ctx) error
@@ -4906,6 +5039,24 @@ func (siw *ServerInterfaceWrapper) QueryDatabase(c *fiber.Ctx) error {
 	return siw.Handler.QueryDatabase(c, iD)
 }
 
+// GetMaterializedViewThroughput operation middleware
+func (siw *ServerInterfaceWrapper) GetMaterializedViewThroughput(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "clusterID" -------------
+	var clusterID int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clusterID", c.Params("clusterID"), &clusterID, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter clusterID: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.GetMaterializedViewThroughput(c, clusterID)
+}
+
 // TestClusterConnection operation middleware
 func (siw *ServerInterfaceWrapper) TestClusterConnection(c *fiber.Ctx) error {
 
@@ -4992,6 +5143,8 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	router.Post(options.BaseURL+"/databases/:ID/ddl-progress/:ddlID/cancel", wrapper.CancelDDLProgress)
 
 	router.Post(options.BaseURL+"/databases/:ID/query", wrapper.QueryDatabase)
+
+	router.Get(options.BaseURL+"/metrics/:clusterID/materialized-view-throughput", wrapper.GetMaterializedViewThroughput)
 
 	router.Post(options.BaseURL+"/test-cluster-connection", wrapper.TestClusterConnection)
 

@@ -21,6 +21,12 @@ type Root struct {
 	Password string `yaml:"password"`
 }
 
+type Prometheus struct {
+	// (Optional) The labels to be added to all queries.
+	// The format is "key1=value1,key2=value2".
+	DefaultLabels string `yaml:"default_labels,omitempty"`
+}
+
 type Config struct {
 	// (Optional) The path of file to store the initialization data, if not set, skip the initialization
 	Init string `yaml:"init,omitempty"`
@@ -42,6 +48,9 @@ type Config struct {
 
 	// (Optional) The path of the directory to store the risectl files, default is "$HOME/.risectl"
 	RisectlDir string `yaml:"risectldir,omitempty"`
+
+	// (Optional) The prometheus configuration
+	Prometheus Prometheus `yaml:"prometheus,omitempty"`
 }
 
 func NewConfig() (*Config, error) {

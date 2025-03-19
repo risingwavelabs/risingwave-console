@@ -6,9 +6,10 @@ INSERT INTO clusters (
     sql_port,
     meta_port,
     http_port,
-    version
+    version, 
+    prometheus_endpoint
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
+    $1, $2, $3, $4, $5, $6, $7, $8
 ) RETURNING *;
 
 -- name: InitCluster :one
@@ -19,9 +20,10 @@ INSERT INTO clusters (
     sql_port,
     meta_port,
     http_port,
-    version
+    version,
+    prometheus_endpoint
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
+    $1, $2, $3, $4, $5, $6, $7, $8
 ) ON CONFLICT (organization_id, name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
 RETURNING *;
 
@@ -43,6 +45,7 @@ SET
     meta_port = $6,
     http_port = $7,
     version = $8,
+    prometheus_endpoint = $9,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND organization_id = $2
 RETURNING *;

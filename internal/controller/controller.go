@@ -508,3 +508,11 @@ func (controller *Controller) GetClusterDiagnostic(c *fiber.Ctx, id int32, diagn
 	}
 	return c.Status(fiber.StatusOK).JSON(diagnostic)
 }
+
+func (controller *Controller) GetMaterializedViewThroughput(c *fiber.Ctx, clusterID int32) error {
+	throughput, err := controller.svc.GetMaterializedViewThroughput(c.Context(), clusterID)
+	if err != nil {
+		return err
+	}
+	return c.Status(fiber.StatusOK).JSON(throughput)
+}

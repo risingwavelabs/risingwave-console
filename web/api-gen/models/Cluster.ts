@@ -11,6 +11,10 @@ export type Cluster = {
     metaPort: number;
     httpPort: number;
     version: string;
+    /**
+     * Prometheus endpoint
+     */
+    prometheusEndpoint?: string;
     createdAt: string;
     updatedAt: string;
 };

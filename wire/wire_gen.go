@@ -11,6 +11,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
+	"github.com/risingwavelabs/wavekit/internal/conn/prom"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/controller"
 	"github.com/risingwavelabs/wavekit/internal/model"
@@ -37,7 +38,11 @@ func InitializeServer() (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface)
+	promManagerInterface, err := prom.NewPromManager(modelInterface, configConfig)
+	if err != nil {
+		return nil, err
+	}
+	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, promManagerInterface)
 	controllerController := controller.NewController(serviceInterface, authInterface)
 	initService := service.NewInitService(modelInterface, serviceInterface)
 	serverServer, err := server.NewServer(configConfig, controllerController, authInterface, initService)

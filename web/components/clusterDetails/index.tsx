@@ -44,6 +44,7 @@ interface BaseCluster {
   sqlPort: number
   metaPort: number
   httpPort: number
+  prometheusEndpoint?: string
   autoBackup?: {
     enabled: boolean
     interval: string
@@ -191,6 +192,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           sqlPort: cluster.sqlPort,
           metaPort: cluster.metaPort,
           httpPort: cluster.httpPort,
+          prometheusEndpoint: cluster.prometheusEndpoint,
           nodes: 1, // Set default or get from API if available
           snapshots: snapshots.map(s => ({
             id: s.ID,
@@ -474,6 +476,12 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                   <p className="text-sm text-muted-foreground">HTTP Port</p>
                   <p className="text-sm font-medium">{clusterData.httpPort}</p>
                 </div>
+                {clusterData.prometheusEndpoint && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Prometheus Endpoint</p>
+                    <p className="text-sm font-medium">{clusterData.prometheusEndpoint}</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

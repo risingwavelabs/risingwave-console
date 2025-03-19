@@ -1,11 +1,12 @@
 "use client";
 
-import React from 'react';
-import { ReactFlow, Background, Controls, Panel, MarkerType, Position, Handle, useNodesState, useEdgesState } from '@xyflow/react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { ReactFlow, Background, Controls, Panel, MarkerType, Position, Handle, useNodesState, useEdgesState, NodeChange, NodePositionChange, ReactFlowInstance } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
 import '@xyflow/react/dist/style.css';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { DefaultService } from "@/api-gen"
 
 // RisingWave Schema Types - Single Source of Truth
 export interface TableColumn {
@@ -27,9 +28,11 @@ export interface RisingWaveNodeData extends Record<string, unknown> {
   };
   format?: string;
   dependencies?: number[]; // Array of node IDs that this node depends on
+  throughput?: number; // Added throughput property to track the node's throughput
 }
 
 interface StreamingGraphProps {
+  clusterId?: number | null;
   data?: RisingWaveNodeData[];
   className?: string;
   height?: string | number;
@@ -93,6 +96,29 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
     </span>
   ), [icon, data.name]);
 
+  // Format throughput value for display
+  const formattedThroughput = React.useMemo(() => {
+    // Check explicitly for undefined, not truthiness (to handle zero values)
+    if (data.throughput === undefined) {
+      return null;
+    }
+    // Special handling for zero
+    if (data.throughput === 0) {
+      return "0.00 rows/sec";
+    }
+
+    // Format to readable values (e.g., convert to K, M, B if large)
+    if (data.throughput >= 1_000_000_000) {
+      return `${(data.throughput / 1_000_000_000).toFixed(2)} B rows/sec`;
+    } else if (data.throughput >= 1_000_000) {
+      return `${(data.throughput / 1_000_000).toFixed(2)} M rows/sec`;
+    } else if (data.throughput >= 1_000) {
+      return `${(data.throughput / 1_000).toFixed(2)} K rows/sec`;
+    } else {
+      return `${data.throughput.toFixed(2)} rows/sec`;
+    }
+  }, [data.throughput, data.id, data.name]);
+
   return (
     <div className={`rounded-lg shadow-lg border min-w-[100px] drag-handle bg-background`}>
       <Handle
@@ -119,6 +145,20 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
         {data.connector && (
           <span className="ml-auto text-xs text-muted-foreground">({data.connector.type})</span>
         )}
+      </div>
+      {/* Add throughput display */}
+      <div className="px-4 py-1 text-xs border-b bg-opacity-50"
+        style={{ backgroundColor: `${backgroundColor}80` }}>
+        <div className="flex items-center gap-1">
+          <span className="font-semibold">Throughput:</span>
+          {(() => {
+            return formattedThroughput ? (
+              <span className="ml-1 font-mono">{formattedThroughput}</span>
+            ) : (
+              <span className="ml-1 text-muted-foreground italic">Not available</span>
+            );
+          })()}
+        </div>
       </div>
       {isExpanded && (
         <div className="p-2">
@@ -147,17 +187,88 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Custom comparison function for memo
-  return prevProps.data.id === nextProps.data.id &&
-    prevProps.data.name === nextProps.data.name &&
-    prevProps.data.type === nextProps.data.type;
+  // Custom comparison function for memo - make sure all relevant properties are compared
+  const prevData = prevProps.data;
+  const nextData = nextProps.data;
+
+  const areEqual =
+    prevData.id === nextData.id &&
+    prevData.name === nextData.name &&
+    prevData.type === nextData.type &&
+    prevData.throughput === nextData.throughput;
+
+  // Debug output for memoization
+  if (prevData.throughput !== nextData.throughput) {
+    console.debug(`Throughput changed for ${nextData.name}: ${prevData.throughput} -> ${nextData.throughput}`);
+  }
+
+  return areEqual;
 });
 
 TableNodeComponent.displayName = 'TableNodeComponent';
 
-export function StreamingGraph({ data = [], className = '', height = '100%' }: StreamingGraphProps) {
+export function StreamingGraph({ clusterId, data = [], className = '', height = '100%' }: StreamingGraphProps) {
   const { theme = 'light' } = useTheme();
   const colors = COLORS[theme === 'dark' ? 'dark' : 'light'];
+  const [throughputData, setThroughputData] = useState<Record<string, number>>({});
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const initialLayoutRef = useRef<boolean>(false);
+  const nodePositionsRef = useRef<Record<string, { x: number, y: number }>>({});
+  const reactFlowInstance = useRef<any>(null);
+  const [shouldFitView, setShouldFitView] = useState(true);
+
+  async function getMaterializedViewThroughput() {
+    if (clusterId) {
+      try {
+        const matrix = await DefaultService.getMaterializedViewThroughput(clusterId);
+
+        if (matrix && matrix.length > 0) {
+          // Process the throughput data for each materialized view
+          const newThroughputData: Record<string, number> = {};
+          matrix.forEach(series => {
+            // Extract the table_id from the metric to match with node id
+            const tableId = series.metric?.['table_id'];
+
+            if (tableId && series.values && series.values.length > 0) {
+              // Get the latest value
+              const latestValue = series.values[series.values.length - 1];
+              const throughputValue = Number(latestValue[1]);
+
+              // Make sure the tableId is a string to match with node.id.toString()
+              const tableIdStr = String(tableId);
+
+              // Store the throughput value even if it's zero
+              newThroughputData[tableIdStr] = throughputValue;
+            } else {
+              console.log(`Missing table_id or values in series:`, series);
+            }
+          });
+          setThroughputData(newThroughputData);
+        } else {
+          console.log(`No throughput data received from API`);
+        }
+      } catch (error) {
+        console.error('Error fetching materialized view throughput:', error);
+      }
+    }
+  }
+
+  useEffect(() => {
+    // Initial fetch
+    getMaterializedViewThroughput();
+
+    // Set up interval to fetch every 5 seconds
+    intervalRef.current = setInterval(() => {
+      getMaterializedViewThroughput();
+    }, 5000);
+
+    // Clean up interval on unmount
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [clusterId]);  // Only re-run if clusterId changes
 
   type NodeData = {
     data: RisingWaveNodeData;
@@ -212,14 +323,36 @@ export function StreamingGraph({ data = [], className = '', height = '100%' }: S
     };
   };
 
-  React.useEffect(() => {
-    const generatedNodes = data.map((node) => ({
-      id: node.id.toString(),
-      position: { x: 0, y: 0 },
-      data: node,
-      type: 'tableNode',
-      dragHandle: '.drag-handle'
-    })) as NodeData[];
+  const handleNodesChange = useCallback((changes: any[]) => {
+    // Save positions of moved nodes
+    changes.forEach(change => {
+      // Only handle position changes
+      if (change.type === 'position') {
+        if (change.position) {
+          nodePositionsRef.current[change.id] = { 
+            x: change.position.x, 
+            y: change.position.y 
+          };
+        }
+      }
+    });
+    
+    onNodesChange(changes);
+  }, [onNodesChange]);
+
+  const resetLayout = useCallback(() => {
+    if (!data.length) return;
+    
+    // Create nodes with zero position
+    const generatedNodes = data.map((node) => {
+      return {
+        id: node.id.toString(),
+        position: { x: 0, y: 0 },
+        data: node,
+        type: 'tableNode',
+        dragHandle: '.drag-handle'
+      };
+    }) as NodeData[];
 
     const generatedEdges = data.flatMap((node) => {
       if (!node.dependencies) return [];
@@ -242,14 +375,115 @@ export function StreamingGraph({ data = [], className = '', height = '100%' }: S
       }));
     }) as EdgeData[];
 
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+    // Apply layout
+    const { nodes: layoutedNodes } = getLayoutedElements(
       generatedNodes,
       generatedEdges
     );
+    
+    // Update positions
+    layoutedNodes.forEach(node => {
+      nodePositionsRef.current[node.id] = { ...node.position };
+    });
+    
+    // Update nodes with new positions but preserve throughput data
+    setNodes(prevNodes => {
+      return prevNodes.map(prevNode => {
+        const matchingNode = layoutedNodes.find(n => n.id === prevNode.id);
+        if (matchingNode) {
+          return {
+            ...prevNode,
+            position: matchingNode.position
+          };
+        }
+        return prevNode;
+      });
+    });
 
-    setNodes(layoutedNodes);
-    setEdges(layoutedEdges);
-  }, [data, setNodes, setEdges]);
+    // Trigger a fit view
+    if (reactFlowInstance.current) {
+      setTimeout(() => {
+        reactFlowInstance.current?.fitView();
+      }, 50);
+    }
+  }, [data, getLayoutedElements, setNodes]);
+
+  React.useEffect(() => {
+    const generatedNodes = data.map((node) => {
+      let nodeWithThroughput = { ...node };
+      const nodeIdStr = node.id.toString();
+      if (nodeIdStr in throughputData) {
+        const throughputValue = Number(throughputData[nodeIdStr]);
+        if (!isNaN(throughputValue)) {
+          nodeWithThroughput.throughput = throughputValue;
+        } else {
+          console.log(`Invalid throughput value for node ${nodeIdStr}: ${throughputData[nodeIdStr]}`);
+        }
+      }
+
+      const position = nodePositionsRef.current[nodeIdStr] 
+        ? nodePositionsRef.current[nodeIdStr] 
+        : { x: 0, y: 0 };
+
+      return {
+        id: nodeIdStr,
+        position,
+        data: nodeWithThroughput,
+        type: 'tableNode',
+        dragHandle: '.drag-handle'
+      };
+    }) as NodeData[];
+
+    const generatedEdges = data.flatMap((node) => {
+      if (!node.dependencies) return [];
+
+      return node.dependencies.map((depId) => ({
+        id: `dep-${depId}-${node.id}`,
+        source: depId.toString(),
+        target: node.id.toString(),
+        sourceHandle: 'source',
+        targetHandle: 'target',
+        animated: node.type === 'materialized view',
+        style: {
+          stroke: node.type === 'materialized view' ? '#2196f3' : '#888',
+          strokeWidth: node.type === 'materialized view' ? 2 : 1
+        },
+        markerEnd: {
+          type: MarkerType.Arrow
+        },
+        type: 'default'
+      }));
+    }) as EdgeData[];
+
+    if (!initialLayoutRef.current) {
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+        generatedNodes,
+        generatedEdges
+      );
+      
+      layoutedNodes.forEach(node => {
+        nodePositionsRef.current[node.id] = { ...node.position };
+      });
+      
+      setNodes(layoutedNodes);
+      setEdges(layoutedEdges);
+      initialLayoutRef.current = true;
+    } else {
+      setNodes(prevNodes => {
+        return prevNodes.map(prevNode => {
+          const matchingNode = generatedNodes.find(n => n.id === prevNode.id);
+          if (matchingNode) {
+            return {
+              ...prevNode,
+              data: matchingNode.data
+            };
+          }
+          return prevNode;
+        });
+      });
+      setEdges(generatedEdges);
+    }
+  }, [data, throughputData, setNodes, setEdges]);
 
   const nodeTypes = React.useMemo(() => ({
     tableNode: TableNodeComponent
@@ -261,9 +495,16 @@ export function StreamingGraph({ data = [], className = '', height = '100%' }: S
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={onNodesChange}
+          onNodesChange={handleNodesChange}
           nodeTypes={nodeTypes}
-          fitView
+          fitView={shouldFitView}
+          onInit={(instance) => {
+            reactFlowInstance.current = instance;
+            // Only fitView on initial render
+            setTimeout(() => {
+              setShouldFitView(false);
+            }, 100);
+          }}
           defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
           minZoom={0.3}
           maxZoom={1.2}
@@ -323,6 +564,12 @@ export function StreamingGraph({ data = [], className = '', height = '100%' }: S
                 <div className="w-4 h-0 border-t-2 mr-2 border-[#2196f3]"></div>
                 Streaming Data Flow
               </div>
+              <button 
+                onClick={resetLayout}
+                className="mt-3 px-2 py-1 text-xs bg-muted rounded border hover:bg-accent transition-colors"
+              >
+                Reset Layout
+              </button>
             </div>
           </Panel>
         </ReactFlow>
