@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from 'react';
-import { ReactFlow, Background, Controls, Panel, MarkerType, Position, Handle, useNodesState, useEdgesState } from '@xyflow/react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { ReactFlow, Background, Controls, Panel, MarkerType, Position, Handle, useNodesState, useEdgesState, NodeChange, NodePositionChange, ReactFlowInstance } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
 import '@xyflow/react/dist/style.css';
 import { ChevronDown, ChevronRight } from 'lucide-react';
@@ -212,6 +212,10 @@ export function StreamingGraph({ clusterId, data = [], className = '', height = 
   const colors = COLORS[theme === 'dark' ? 'dark' : 'light'];
   const [throughputData, setThroughputData] = useState<Record<string, number>>({});
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const initialLayoutRef = useRef<boolean>(false);
+  const nodePositionsRef = useRef<Record<string, { x: number, y: number }>>({});
+  const reactFlowInstance = useRef<any>(null);
+  const [shouldFitView, setShouldFitView] = useState(true);
 
   async function getMaterializedViewThroughput() {
     if (clusterId) {
@@ -319,16 +323,97 @@ export function StreamingGraph({ clusterId, data = [], className = '', height = 
     };
   };
 
+  const handleNodesChange = useCallback((changes: any[]) => {
+    // Save positions of moved nodes
+    changes.forEach(change => {
+      // Only handle position changes
+      if (change.type === 'position') {
+        if (change.position) {
+          nodePositionsRef.current[change.id] = { 
+            x: change.position.x, 
+            y: change.position.y 
+          };
+        }
+      }
+    });
+    
+    onNodesChange(changes);
+  }, [onNodesChange]);
+
+  const resetLayout = useCallback(() => {
+    if (!data.length) return;
+    
+    // Create nodes with zero position
+    const generatedNodes = data.map((node) => {
+      return {
+        id: node.id.toString(),
+        position: { x: 0, y: 0 },
+        data: node,
+        type: 'tableNode',
+        dragHandle: '.drag-handle'
+      };
+    }) as NodeData[];
+
+    const generatedEdges = data.flatMap((node) => {
+      if (!node.dependencies) return [];
+
+      return node.dependencies.map((depId) => ({
+        id: `dep-${depId}-${node.id}`,
+        source: depId.toString(),
+        target: node.id.toString(),
+        sourceHandle: 'source',
+        targetHandle: 'target',
+        animated: node.type === 'materialized view',
+        style: {
+          stroke: node.type === 'materialized view' ? '#2196f3' : '#888',
+          strokeWidth: node.type === 'materialized view' ? 2 : 1
+        },
+        markerEnd: {
+          type: MarkerType.Arrow
+        },
+        type: 'default'
+      }));
+    }) as EdgeData[];
+
+    // Apply layout
+    const { nodes: layoutedNodes } = getLayoutedElements(
+      generatedNodes,
+      generatedEdges
+    );
+    
+    // Update positions
+    layoutedNodes.forEach(node => {
+      nodePositionsRef.current[node.id] = { ...node.position };
+    });
+    
+    // Update nodes with new positions but preserve throughput data
+    setNodes(prevNodes => {
+      return prevNodes.map(prevNode => {
+        const matchingNode = layoutedNodes.find(n => n.id === prevNode.id);
+        if (matchingNode) {
+          return {
+            ...prevNode,
+            position: matchingNode.position
+          };
+        }
+        return prevNode;
+      });
+    });
+
+    // Trigger a fit view
+    if (reactFlowInstance.current) {
+      setTimeout(() => {
+        reactFlowInstance.current?.fitView();
+      }, 50);
+    }
+  }, [data, getLayoutedElements, setNodes]);
+
   React.useEffect(() => {
     const generatedNodes = data.map((node) => {
-      // Add throughput data to materialized view nodes
       let nodeWithThroughput = { ...node };
-      // Convert node.id to string for consistent comparison
       const nodeIdStr = node.id.toString();
-      // Check if throughputData has the key, not if the value is truthy
       if (nodeIdStr in throughputData) {
         const throughputValue = Number(throughputData[nodeIdStr]);
-        // Ensure it's a valid number
         if (!isNaN(throughputValue)) {
           nodeWithThroughput.throughput = throughputValue;
         } else {
@@ -336,10 +421,13 @@ export function StreamingGraph({ clusterId, data = [], className = '', height = 
         }
       }
 
+      const position = nodePositionsRef.current[nodeIdStr] 
+        ? nodePositionsRef.current[nodeIdStr] 
+        : { x: 0, y: 0 };
 
       return {
-        id: node.id.toString(),
-        position: { x: 0, y: 0 },
+        id: nodeIdStr,
+        position,
         data: nodeWithThroughput,
         type: 'tableNode',
         dragHandle: '.drag-handle'
@@ -367,13 +455,34 @@ export function StreamingGraph({ clusterId, data = [], className = '', height = 
       }));
     }) as EdgeData[];
 
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-      generatedNodes,
-      generatedEdges
-    );
-
-    setNodes(layoutedNodes);
-    setEdges(layoutedEdges);
+    if (!initialLayoutRef.current) {
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+        generatedNodes,
+        generatedEdges
+      );
+      
+      layoutedNodes.forEach(node => {
+        nodePositionsRef.current[node.id] = { ...node.position };
+      });
+      
+      setNodes(layoutedNodes);
+      setEdges(layoutedEdges);
+      initialLayoutRef.current = true;
+    } else {
+      setNodes(prevNodes => {
+        return prevNodes.map(prevNode => {
+          const matchingNode = generatedNodes.find(n => n.id === prevNode.id);
+          if (matchingNode) {
+            return {
+              ...prevNode,
+              data: matchingNode.data
+            };
+          }
+          return prevNode;
+        });
+      });
+      setEdges(generatedEdges);
+    }
   }, [data, throughputData, setNodes, setEdges]);
 
   const nodeTypes = React.useMemo(() => ({
@@ -386,9 +495,16 @@ export function StreamingGraph({ clusterId, data = [], className = '', height = 
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={onNodesChange}
+          onNodesChange={handleNodesChange}
           nodeTypes={nodeTypes}
-          fitView
+          fitView={shouldFitView}
+          onInit={(instance) => {
+            reactFlowInstance.current = instance;
+            // Only fitView on initial render
+            setTimeout(() => {
+              setShouldFitView(false);
+            }, 100);
+          }}
           defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
           minZoom={0.3}
           maxZoom={1.2}
@@ -448,6 +564,12 @@ export function StreamingGraph({ clusterId, data = [], className = '', height = 
                 <div className="w-4 h-0 border-t-2 mr-2 border-[#2196f3]"></div>
                 Streaming Data Flow
               </div>
+              <button 
+                onClick={resetLayout}
+                className="mt-3 px-2 py-1 text-xs bg-muted rounded border hover:bg-accent transition-colors"
+              >
+                Reset Layout
+              </button>
             </div>
           </Panel>
         </ReactFlow>
