@@ -11,6 +11,7 @@ interface DatabaseInsightProps {
   height?: string;
   databaseSchema?: RisingWaveNodeData[];
   result?: { type: 'success' | 'error', message: string, rows?: Record<string, unknown>[] };
+  clusterId?: number | null;
   selectedDatabaseId?: string | null;
   onCancelProgress?: (ddlId: number) => void;
   executionHistory?: Array<{
@@ -30,6 +31,7 @@ export function DatabaseInsight({
   height = '30vh',
   databaseSchema = [],
   result,
+  clusterId,
   selectedDatabaseId,
   onCancelProgress,
   executionHistory = [],
@@ -84,6 +86,7 @@ export function DatabaseInsight({
         {activeTab === 'graph' && (
           <div className="h-full">
             <StreamingGraph
+              clusterId={clusterId}
               data={databaseSchema}
               height="100%"
               className="w-full h-full"

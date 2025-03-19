@@ -641,6 +641,28 @@ paths:
         "401":
           description: Invalid or expired refresh token
 
+  /metrics/{clusterID}/materialized-view-throughput:
+    get:
+      summary: Get materialized view throughput
+      description: Get the throughput of materialized views
+      operationId: getMaterializedViewThroughput
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: clusterID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Successfully retrieved materialized view throughput
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricMatrix"
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1207,3 +1229,34 @@ components:
         err:
           type: string
           description: Error message when try to run the risectl command
+
+    MetricMatrix:
+      type: object
+      required:
+        - matrix
+      properties:
+        matrix:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricSeries"
+
+    MetricSeries:
+      type: object
+      required: [metric, values]
+      properties:
+        metric:
+          type: object
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricValue"
+
+    MetricValue:
+      type: object
+      required: [timestamp, value]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number

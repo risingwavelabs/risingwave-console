@@ -1,11 +1,12 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ReactFlow, Background, Controls, Panel, MarkerType, Position, Handle, useNodesState, useEdgesState } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
 import '@xyflow/react/dist/style.css';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { DefaultService } from "@/api-gen"
 
 // RisingWave Schema Types - Single Source of Truth
 export interface TableColumn {
@@ -30,6 +31,7 @@ export interface RisingWaveNodeData extends Record<string, unknown> {
 }
 
 interface StreamingGraphProps {
+  clusterId?: number | null;
   data?: RisingWaveNodeData[];
   className?: string;
   height?: string | number;
@@ -155,9 +157,20 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
 
 TableNodeComponent.displayName = 'TableNodeComponent';
 
-export function StreamingGraph({ data = [], className = '', height = '100%' }: StreamingGraphProps) {
+export function StreamingGraph({ clusterId, data = [], className = '', height = '100%' }: StreamingGraphProps) {
   const { theme = 'light' } = useTheme();
   const colors = COLORS[theme === 'dark' ? 'dark' : 'light'];
+
+  async function getMaterializedViewThroughput() {
+    if (clusterId) {
+      const throughput = await DefaultService.getMaterializedViewThroughput(clusterId);
+      console.log(throughput);
+    }
+  }
+
+  useEffect(() => {
+    getMaterializedViewThroughput()
+  }, []);
 
   type NodeData = {
     data: RisingWaveNodeData;

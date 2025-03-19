@@ -11,6 +11,7 @@ import type { Database } from '../models/Database';
 import type { DatabaseConnectInfo } from '../models/DatabaseConnectInfo';
 import type { DDLProgress } from '../models/DDLProgress';
 import type { DiagnosticData } from '../models/DiagnosticData';
+import type { MetricMatrix } from '../models/MetricMatrix';
 import type { QueryRequest } from '../models/QueryRequest';
 import type { QueryResponse } from '../models/QueryResponse';
 import type { RefreshTokenRequest } from '../models/RefreshTokenRequest';
@@ -607,6 +608,24 @@ export class DefaultService {
             mediaType: 'application/json',
             errors: {
                 401: `Invalid or expired refresh token`,
+            },
+        });
+    }
+    /**
+     * Get materialized view throughput
+     * Get the throughput of materialized views
+     * @param clusterId
+     * @returns MetricMatrix Successfully retrieved materialized view throughput
+     * @throws ApiError
+     */
+    public static getMaterializedViewThroughput(
+        clusterId: number,
+    ): CancelablePromise<MetricMatrix> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/metrics/{clusterID}/materialized-view-throughput',
+            path: {
+                'clusterID': clusterId,
             },
         });
     }

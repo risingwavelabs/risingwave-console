@@ -9,9 +9,12 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
+	"github.com/risingwavelabs/wavekit/internal/conn/prom"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/utils"
+
+	prom_model "github.com/prometheus/common/model"
 )
 
 type (
@@ -127,6 +130,9 @@ type ServiceInterface interface {
 
 	// GetClusterAutoDiagnosticConfig gets the auto-diagnostic configuration for a cluster
 	GetClusterAutoDiagnosticConfig(ctx context.Context, id int32, orgID int32) (*apigen.AutoDiagnosticConfig, error)
+
+	// GetMaterializedViewThroughput gets the throughput of materialized views
+	GetMaterializedViewThroughput(ctx context.Context, clusterID int32) (prom_model.Matrix, error)
 }
 
 type Service struct {
@@ -134,12 +140,20 @@ type Service struct {
 	auth     auth.AuthInterface
 	sqlm     sql.SQLConnectionManegerInterface
 	risectlm meta.RisectlManagerInterface
+	promm    prom.PromManagerInterface
 
 	now                 func() time.Time
 	generateHashAndSalt func(password string) (string, string, error)
 }
 
-func NewService(cfg *config.Config, m model.ModelInterface, auth auth.AuthInterface, sqlm sql.SQLConnectionManegerInterface, risectlm meta.RisectlManagerInterface) ServiceInterface {
+func NewService(
+	cfg *config.Config,
+	m model.ModelInterface,
+	auth auth.AuthInterface,
+	sqlm sql.SQLConnectionManegerInterface,
+	risectlm meta.RisectlManagerInterface,
+	promm prom.PromManagerInterface,
+) ServiceInterface {
 	return &Service{
 		m:                   m,
 		now:                 time.Now,
@@ -147,5 +161,6 @@ func NewService(cfg *config.Config, m model.ModelInterface, auth auth.AuthInterf
 		auth:                auth,
 		sqlm:                sqlm,
 		risectlm:            risectlm,
+		promm:               promm,
 	}
 }

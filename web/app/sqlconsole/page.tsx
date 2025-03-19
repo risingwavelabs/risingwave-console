@@ -81,6 +81,7 @@ export default function SQLConsole() {
   const containerRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<SQLEditorHandle>(null)
   const [sidebarWidth, setSidebarWidth] = useState(256) // Default width of the sidebar
+  const [selectedClusterId, setSelectedClusterId] = useState<number | null>(null)
   const [selectedDatabaseId, setSelectedDatabaseId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const savedId = localStorage.getItem(SELECTED_DB_KEY)
@@ -104,6 +105,17 @@ export default function SQLConsole() {
       localStorage.removeItem(SELECTED_DB_KEY)
     }
   }, [])
+
+  const updateClusterId = async () => {
+    if (selectedDatabaseId) {
+      const dbDetails = await DefaultService.getDatabase(Number(selectedDatabaseId))
+      setSelectedClusterId(dbDetails.clusterID)
+    }
+  }
+
+  useEffect(() => {
+    updateClusterId()
+  }, [selectedDatabaseId])
 
   useEffect(() => {
     // Select first database if none is selected and databases are loaded
@@ -480,6 +492,7 @@ export default function SQLConsole() {
 
       <div className="flex-1 min-w-0">
         <SQLEditor
+          clusterId={selectedClusterId}
           ref={editorRef}
           width={editorWidth}
           onRunQuery={handleRunQuery}

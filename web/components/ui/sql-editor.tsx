@@ -24,6 +24,7 @@ interface EditorTab {
 
 interface SQLEditorProps {
   width: number
+  clusterId?: number | null;
   onRunQuery?: (query: string, backgroundDdl: boolean) => Promise<{ type: 'success' | 'error', message: string, rows?: Record<string, string>[], columns?: string[] }>
   databaseSchema?: RisingWaveNodeData[]
   selectedDatabaseId?: string | null
@@ -74,7 +75,7 @@ export interface SQLEditorHandle {
   handleRunQuery: (query: string) => void
 }
 
-export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, onRunQuery, databaseSchema, selectedDatabaseId, onCancelProgress }, ref) => {
+export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, clusterId, onRunQuery, databaseSchema, selectedDatabaseId, onCancelProgress }, ref) => {
   const { theme, systemTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [tabs, setTabs] = useState<EditorTab[]>(() => {
@@ -651,6 +652,7 @@ export const SQLEditor = forwardRef<SQLEditorHandle, SQLEditorProps>(({ width, o
           className="border-b bg-background/95 hidden"
         />
         <DatabaseInsight
+          clusterId={clusterId}
           width={`${width}px`}
           height={graphHeight}
           databaseSchema={databaseSchema}
