@@ -27,6 +27,7 @@ var log = logger.NewLogAgent("server")
 
 type Server struct {
 	app        *fiber.App
+	host       string
 	port       int
 	auth       auth.AuthInterface
 	controller *controller.Controller
@@ -45,8 +46,16 @@ func NewServer(cfg *config.Config, c *controller.Controller, auth auth.AuthInter
 		log.Infof("Using default port: %d", port)
 	}
 
+	var host = "localhost"
+	if cfg.Host != "" {
+		host = cfg.Host
+	} else {
+		log.Infof("Using default host: %s", host)
+	}
+
 	s := &Server{
 		app:        app,
+		host:       host,
 		port:       port,
 		auth:       auth,
 		controller: c,
@@ -83,6 +92,12 @@ func (s *Server) registerMiddleware() {
 		NotFoundFile: "404.html",
 		Index:        "index.html",
 	}))
+
+	s.app.Get("/config.js", func(c *fiber.Ctx) error {
+		endpoint := fmt.Sprintf("http://%s:%d/api/v1", s.host, s.port)
+		c.Set("Content-Type", "application/javascript")
+		return c.Status(fiber.StatusOK).SendString(fmt.Sprintf("window.APP_ENDPOINT = '%s';", endpoint))
+	})
 
 	s.app.Use(cors.New(cors.Config{}))
 	s.app.Use(requestid.New())

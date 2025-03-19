@@ -7,6 +7,7 @@ import { AppSidebar } from "@/components/ui/app-sidebar"
 import { usePathname } from "next/navigation"
 import { Toaster } from "react-hot-toast"
 import { initService } from "@/lib/init";
+import Script from "next/script";
 
 interface Props {
   children: React.ReactNode;
@@ -43,6 +44,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
+      <head>
+        <Script src="/config.js" strategy="beforeInteractive" />
+      </head>
       <body className="h-full w-full">
         <Toaster />
         <ThemeProvider
