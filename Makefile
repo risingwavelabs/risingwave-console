@@ -163,7 +163,7 @@ docker-push:
 	docker push ${DOCKER_REPO}:${IMG_TAG}-pgbundle
 	docker push ${DOCKER_REPO}:${IMG_TAG}
 
-ci: build-web build-server build-docker build-binary docker-push binary-push
+ci: doc build-web build-server build-docker build-binary docker-push binary-push
 
 push: docker-push
 
