@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { ReactFlow, Background, Controls, Panel, MarkerType, Position, Handle, useNodesState, useEdgesState, NodeChange, NodePositionChange, ReactFlowInstance } from '@xyflow/react';
+import { ReactFlow, Background, Controls, Panel, MarkerType, Position, Handle, useNodesState, useEdgesState, ReactFlowInstance, NodeChange } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
 import '@xyflow/react/dist/style.css';
 import { ChevronDown, ChevronRight } from 'lucide-react';
@@ -214,7 +214,7 @@ export function StreamingGraph({ clusterId, data = [], className = '', height = 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const initialLayoutRef = useRef<boolean>(false);
   const nodePositionsRef = useRef<Record<string, { x: number, y: number }>>({});
-  const reactFlowInstance = useRef<any>(null);
+  const reactFlowInstance = useRef<ReactFlowInstance<NodeData, EdgeData>>(null);
   const [shouldFitView, setShouldFitView] = useState(true);
 
   async function getMaterializedViewThroughput() {
@@ -323,7 +323,7 @@ export function StreamingGraph({ clusterId, data = [], className = '', height = 
     };
   };
 
-  const handleNodesChange = useCallback((changes: any[]) => {
+  const handleNodesChange = useCallback((changes: NodeChange<NodeData>[]) => {
     // Save positions of moved nodes
     changes.forEach(change => {
       // Only handle position changes
@@ -410,7 +410,7 @@ export function StreamingGraph({ clusterId, data = [], className = '', height = 
 
   React.useEffect(() => {
     const generatedNodes = data.map((node) => {
-      let nodeWithThroughput = { ...node };
+      const nodeWithThroughput = { ...node };
       const nodeIdStr = node.id.toString();
       if (nodeIdStr in throughputData) {
         const throughputValue = Number(throughputData[nodeIdStr]);

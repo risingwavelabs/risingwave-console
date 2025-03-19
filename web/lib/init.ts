@@ -4,7 +4,11 @@ import { OpenAPI } from "../api-gen";
 import { DefaultService } from "../api-gen";
 import toast from "react-hot-toast";
 
-const baseUrl = "http://localhost:8020/api/v1";
+let baseUrl = "http://localhost:8020/api/v1";
+if (typeof window !== "undefined") {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  baseUrl = (window as any).APP_ENDPOINT || "http://localhost:8020/api/v1";
+}
 
 const tokenKey = "token";
 const refreshTokenKey = "refresh_token";
@@ -21,7 +25,7 @@ const initService = () => {
 
     async function (error: AxiosError) {
       console.log(error);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+       
       const { status } = error;
       if (error.request?.responseURL?.includes("/auth/sign-in")) {
         return Promise.reject(error);
@@ -35,7 +39,7 @@ const initService = () => {
             localStorage.setItem(tokenKey, response.accessToken);
             localStorage.setItem(refreshTokenKey, response.refreshToken);
             OpenAPI.TOKEN = response.accessToken;
-            
+
             // Retry the original request with the new token
             const config = error.config;
             if (config) {
