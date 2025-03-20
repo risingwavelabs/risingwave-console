@@ -187,10 +187,10 @@ func main() {
 				Action: runDump,
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:     "out",
-						Aliases:  []string{"o"},
-						Usage:    "Output filename",
-						Required: true,
+						Name:    "out",
+						Aliases: []string{"o"},
+						Usage:   "Output filename",
+						Value:   "out.ndjson.gz",
 					},
 					&cli.StringFlag{
 						Name:     "endpoint",
@@ -201,7 +201,7 @@ func main() {
 					&cli.StringFlag{
 						Name:  "start",
 						Usage: "Start time (RFC3339 format)",
-						Value: time.Now().Add(-1 * time.Hour).Format(time.RFC3339),
+						Value: time.Time{}.Format(time.RFC3339),
 					},
 					&cli.StringFlag{
 						Name:  "end",
