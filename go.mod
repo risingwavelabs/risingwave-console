@@ -12,10 +12,11 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate/v4 v4.17.1
 	github.com/golang/mock v1.6.0
+	github.com/golang/snappy v1.0.0
 	github.com/google/go-github/v68 v68.0.0
 	github.com/google/wire v0.6.0
 	github.com/jackc/pgx/v5 v5.5.5
-	github.com/marcboeker/go-duckdb v1.8.5
+	github.com/marcboeker/go-duckdb/v2 v2.0.1
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.21.1
@@ -25,6 +26,7 @@ require (
 	github.com/urfave/cli/v2 v2.27.6
 	go.uber.org/zap v1.27.0
 	golang.org/x/mod v0.22.0
+	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -37,6 +39,12 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/duckdb/duckdb-go-bindings v0.1.10 // indirect
+	github.com/duckdb/duckdb-go-bindings/darwin-amd64 v0.1.5 // indirect
+	github.com/duckdb/duckdb-go-bindings/darwin-arm64 v0.1.5 // indirect
+	github.com/duckdb/duckdb-go-bindings/linux-amd64 v0.1.5 // indirect
+	github.com/duckdb/duckdb-go-bindings/linux-arm64 v0.1.5 // indirect
+	github.com/duckdb/duckdb-go-bindings/windows-amd64 v0.1.5 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
@@ -62,6 +70,8 @@ require (
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/marcboeker/go-duckdb/arrowmapping v0.0.3 // indirect
+	github.com/marcboeker/go-duckdb/mapping v0.0.3 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
@@ -98,6 +108,5 @@ require (
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.29.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
-	google.golang.org/protobuf v1.36.4 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
 )

@@ -111,6 +111,14 @@ doc-contributing:
 doc: install-doc-tools doc-config doc-contributing
 
 ###################################################
+### Promdump
+###################################################
+
+promdump-example:
+	curl -L https://raw.githubusercontent.com/risingwavelabs/risingwave/refs/heads/main/docker/dashboards/risingwave-dev-dashboard.json -o examples/promdump/dashboards/risingwave-dev-dashboard.json
+	docker compose -f examples/promdump/docker-compose-promdump.yaml up
+
+###################################################
 ### Dev enviornment
 ###################################################
 

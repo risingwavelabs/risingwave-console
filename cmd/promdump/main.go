@@ -3,29 +3,32 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
+	"github.com/golang/snappy"
 	"github.com/pkg/errors"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/protoadapt"
 
 	"database/sql"
 
-	_ "github.com/marcboeker/go-duckdb"
+	_ "github.com/marcboeker/go-duckdb/v2"
 	"github.com/risingwavelabs/wavekit/pkg/promdump"
 )
 
-const localStorePath = "metrics.parquet"
-
 // runDump implements the 'dump' command to dump Prometheus data to a file
 func runDump(c *cli.Context) error {
-	filename := c.String("filename")
-	if filename == "" {
-		return fmt.Errorf("filename is required")
+	outFilename := c.String("out")
+	if outFilename == "" {
+		return fmt.Errorf("out is required")
 	}
 
 	endpoint := c.String("endpoint")
@@ -49,7 +52,7 @@ func runDump(c *cli.Context) error {
 		return errors.Wrap(err, "failed to parse end time")
 	}
 
-	fmt.Printf("Dumping Prometheus data from %s to file %s\n", endpoint, filename)
+	fmt.Printf("Dumping Prometheus data from %s to file %s\n", endpoint, outFilename)
 	fmt.Printf("Time range: %s to %s with step %s\n", start.Format(time.RFC3339), end.Format(time.RFC3339), step)
 
 	// Create dump options
@@ -61,21 +64,36 @@ func runDump(c *cli.Context) error {
 		QueryInterval: queryInterval,
 	}
 
+	// mkdir -p
+	outDir := filepath.Dir(outFilename)
+	if err := os.MkdirAll(outDir, 0755); err != nil {
+		return errors.Wrap(err, "failed to create output directory")
+	}
+
 	// Execute the dump
-	err = promdump.DumpPromToFile(context.Background(), opt, filename)
+	err = promdump.DumpPromToFile(context.Background(), opt, outFilename)
 	if err != nil {
 		return errors.Wrap(err, "failed to dump prometheus data")
 	}
 
-	fmt.Printf("Successfully dumped prometheus data to %s\n", filename)
+	fmt.Printf("Successfully dumped prometheus data to %s\n", outFilename)
 	return nil
 }
 
 // runServe implements the 'serve' command to serve a prometheus dump file
 func runServe(c *cli.Context) error {
-	filename := c.String("filename")
-	if filename == "" {
+	inputFilename := c.String("filename")
+	if inputFilename == "" {
 		return fmt.Errorf("filename is required")
+	}
+
+	outDir := c.String("out")
+	if outDir == "" {
+		outDir = fmt.Sprintf("%s/.promdump", os.Getenv("HOME"))
+	}
+
+	if err := os.MkdirAll(outDir, 0755); err != nil {
+		return errors.Wrap(err, "failed to create output directory")
 	}
 
 	port := c.Int("port")
@@ -87,28 +105,60 @@ func runServe(c *cli.Context) error {
 
 	// Set up the HTTP server
 	addr := fmt.Sprintf("%s:%d", address, port)
-	fmt.Printf("Serving Prometheus data from file %s on %s\n", filename, addr)
 
-	db, err := sql.Open("duckdb", "promfile.db")
+	db, err := sql.Open("duckdb", "")
 	if err != nil {
 		return errors.Wrap(err, "failed to open duckdb")
 	}
 	defer db.Close()
 
+	store := &Store{
+		db:             db,
+		inputFilename:  inputFilename,
+		outputFilename: filepath.Join(outDir, "metrics.parquet"),
+	}
+
+	if err := store.init(context.Background(), c.Bool("rebuild")); err != nil {
+		return errors.Wrap(err, "failed to init store")
+	}
+
 	// Handler for remote_read API
 	http.HandleFunc("/api/v1/read", func(w http.ResponseWriter, r *http.Request) {
-		// TODO: Implement actual handling of remote_read requests using promdump.DecompressPromdumpFile
-		fmt.Println("Received remote_read request")
+		compressed, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-		// This is just a placeholder that will need to be implemented
-		// You would need to:
-		// 1. Decompress the file using promdump.DecompressPromdumpFile
-		// 2. Parse the requested time range from the request
-		// 3. Find matching series in the decompressed data
-		// 4. Format and return the response
+		reqProtobuf, err := snappy.Decode(nil, compressed)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		// resolve json
+		var req prompb.ReadRequest
+		if err := proto.Unmarshal(reqProtobuf, protoadapt.MessageV2Of(&req)); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"success","data":[]}`))
+		data, err := store.remoteRead(r.Context(), req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		resProtobuf, err := proto.Marshal(protoadapt.MessageV2Of(data))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/x-protobuf")
+		w.Header().Set("Content-Encoding", "snappy")
+		if _, err := w.Write(snappy.Encode(nil, resProtobuf)); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	// Basic health check
@@ -118,6 +168,7 @@ func runServe(c *cli.Context) error {
 	})
 
 	// Start the HTTP server
+	fmt.Printf("Serving Prometheus data from file %s on %s\n", inputFilename, addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		return errors.Wrap(err, "server error")
 	}
@@ -128,16 +179,16 @@ func runServe(c *cli.Context) error {
 func main() {
 	app := &cli.App{
 		Name:  "promfile",
-		Usage: "Dump Prometheus data to a file, and serve the file as a Prometheus remote_read endpoint",
+		Usage: "Dump Prometheus data to a *.ndjson.gz file, and serve the file as a Prometheus remote_read endpoint",
 		Commands: []*cli.Command{
 			{
 				Name:   "dump",
-				Usage:  "Dump Prometheus data to a file",
+				Usage:  "Dump Prometheus data to a *.ndjson.gz file",
 				Action: runDump,
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:     "filename",
-						Aliases:  []string{"f"},
+						Name:     "out",
+						Aliases:  []string{"o"},
 						Usage:    "Output filename",
 						Required: true,
 					},
@@ -174,11 +225,22 @@ func main() {
 				Usage:  "Serve a Prometheus dump file as a remote_read endpoint",
 				Action: runServe,
 				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:    "rebuild",
+						Aliases: []string{"r"},
+						Usage:   "Rebuild the store, otherwise it will use the existing store",
+					},
 					&cli.StringFlag{
 						Name:     "filename",
 						Aliases:  []string{"f"},
 						Usage:    "Input filename (compressed Prometheus dump)",
 						Required: true,
+					},
+					&cli.StringFlag{
+						Name:    "out",
+						Aliases: []string{"o"},
+						Usage:   "Output directory",
+						Value:   "",
 					},
 					&cli.IntFlag{
 						Name:    "port",
@@ -188,7 +250,7 @@ func main() {
 					},
 					&cli.StringFlag{
 						Name:    "host",
-						Aliases: []string{"h"},
+						Aliases: []string{"H"},
 						Usage:   "Host to bind to",
 						Value:   "0.0.0.0",
 					},
@@ -208,20 +270,21 @@ type Store struct {
 	outputFilename string
 }
 
-func (s *Store) init(ctx context.Context) error {
-	absPath, err := filepath.Abs(s.inputFilename)
-	if err != nil {
-		return fmt.Errorf("failed to get absolute path: %w", err)
+func (s *Store) init(ctx context.Context, rebuild bool) error {
+	fmt.Println("initializing store", s.outputFilename)
+	if _, err := os.Stat(s.outputFilename); !rebuild && err == nil {
+		return nil
 	}
-	if _, err = s.db.ExecContext(ctx, fmt.Sprintf(
+
+	if _, err := s.db.ExecContext(ctx, fmt.Sprintf(
 		`COPY (
 			SELECT 
 				metric, 
-				value[1]::DOUBLE AS timestamp, 
+				(value[1]::DOUBLE * 1000)::BIGINT AS timestamp, 
 				value[2]::VARCHAR AS val 
 			FROM read_json_auto('%s'), LATERAL UNNEST(values) AS t(value)
 		) TO '%s' (FORMAT 'parquet');`,
-		absPath,
+		s.inputFilename,
 		s.outputFilename,
 	)); err != nil {
 		return fmt.Errorf("failed to convert %s to parquet file %s: %v", s.inputFilename, s.outputFilename, err)
@@ -231,27 +294,96 @@ func (s *Store) init(ctx context.Context) error {
 
 func (s *Store) remoteRead(ctx context.Context, querys prompb.ReadRequest) (*prompb.ReadResponse, error) {
 	//query
-	query := querys.Queries[0]
-	startTime := query.StartTimestampMs
-	endTime := query.EndTimestampMs
-	matchers := query.Matchers
+	var res = prompb.ReadResponse{}
+	for _, query := range querys.Queries {
+		startTime := query.StartTimestampMs
+		endTime := query.EndTimestampMs
+		matchers := query.Matchers
 
-	stmt := fmt.Sprintf(
-		`SELECT * FROM '%s' WHERE %d <= timestamp AND timestamp <= %d`,
-		localStorePath,
-		startTime,
-		endTime,
-	)
+		stmt := fmt.Sprintf(
+			`
+			SELECT 
+				metric, 
+				JSON_GROUP_ARRAY(json_data) AS time_series
+			FROM (
+				SELECT 
+					metric, 
+					JSON('{ "timestamp": ' || timestamp || ', "value": ' || val || ' }') AS json_data
+				FROM read_parquet('%s') WHERE %d <= timestamp AND timestamp <= %d`,
+			s.outputFilename,
+			startTime,
+			endTime,
+		)
 
-	for _, matcher := range matchers {
-		stmt += fmt.Sprintf(" AND metric['%s'] = '%s'", matcher.Name, matcher.Value)
+		for _, matcher := range matchers {
+			switch matcher.Type {
+			case prompb.LabelMatcher_EQ:
+				stmt += fmt.Sprintf(" AND metric['%s'] = '%s'", matcher.Name, matcher.Value)
+			case prompb.LabelMatcher_NEQ:
+				stmt += fmt.Sprintf(" AND metric['%s'] != '%s'", matcher.Name, matcher.Value)
+			case prompb.LabelMatcher_RE:
+				stmt += fmt.Sprintf(" AND regexp_matches(metric['%s'], '%s')", matcher.Name, matcher.Value)
+			case prompb.LabelMatcher_NRE:
+				stmt += fmt.Sprintf(" AND NOT regexp_matches(metric['%s'], '%s')", matcher.Name, matcher.Value)
+			}
+		}
+
+		stmt += "\nORDER BY metric, timestamp) sorted_data\nGROUP BY metric"
+
+		fmt.Println(stmt)
+
+		rows, err := s.db.QueryContext(ctx, stmt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query: %v", err)
+		}
+		defer rows.Close()
+
+		timeSeries := []*prompb.TimeSeries{}
+
+		for rows.Next() {
+			var (
+				metric     map[any]any
+				rawSamples []any
+			)
+
+			if err := rows.Scan(&metric, &rawSamples); err != nil {
+				return nil, fmt.Errorf("failed to scan row: %v", err)
+			}
+
+			labels := []prompb.Label{}
+			for k, v := range metric {
+				labels = append(labels, prompb.Label{
+					Name:  k.(string),
+					Value: v.(string),
+				})
+			}
+
+			samples := []prompb.Sample{}
+			for _, sample := range rawSamples {
+				sampleMap := sample.(map[string]any)
+				timestamp := int64(sampleMap["timestamp"].(float64))
+				value := sampleMap["value"].(string)
+				floatValue, err := strconv.ParseFloat(value, 64)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse value: %v", err)
+				}
+
+				samples = append(samples, prompb.Sample{
+					Timestamp: timestamp,
+					Value:     floatValue,
+				})
+			}
+
+			timeSeries = append(timeSeries, &prompb.TimeSeries{
+				Labels:  labels,
+				Samples: samples,
+			})
+		}
+
+		res.Results = append(res.Results, &prompb.QueryResult{
+			Timeseries: timeSeries,
+		})
 	}
 
-	rows, err := s.db.QueryContext(ctx, stmt)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query: %v", err)
-	}
-	defer rows.Close()
-
-	return nil, nil
+	return &res, nil
 }
