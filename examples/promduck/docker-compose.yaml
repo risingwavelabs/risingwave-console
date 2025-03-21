@@ -8,8 +8,6 @@ services:
     - -r
     working_dir: /app
     volumes:
-      - go-data:/go/pkg/mod
-      - go-build-data:/root/.cache/go-build
       - ./out.ndjson.gz:/app/out.ndjson.gz
 
   prometheus:
