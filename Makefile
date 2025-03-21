@@ -114,9 +114,14 @@ doc: install-doc-tools doc-config doc-contributing
 ### Promdump
 ###################################################
 
-promdump-example:
-	curl -L https://raw.githubusercontent.com/risingwavelabs/risingwave/refs/heads/main/docker/dashboards/risingwave-dev-dashboard.json -o examples/promdump/dashboards/risingwave-dev-dashboard.json
-	docker compose -f examples/promdump/docker-compose-promdump.yaml up
+upload-promdump:
+	CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build -o upload/prodump/Darwin/x86_64/promdump cmd/promdump/main.go
+	CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build -o upload/prodump/Darwin/arm64/promdump cmd/promdump/main.go
+	CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -o upload/prodump/Linux/x86_64/promdump cmd/promdump/main.go
+	CGO_ENABLED=0 GOOS=linux   GOARCH=386   go build -o upload/prodump/Linux/i386/promdump cmd/promdump/main.go
+	CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build -o upload/promdump/Linux/arm64/promdump cmd/promdump/main.go
+	cp scripts/download-promdump.sh upload/promdump/download.sh
+	aws s3 cp --recursive upload/promdump/ s3://wavekit-release/promdump/
 
 ###################################################
 ### Dev enviornment
