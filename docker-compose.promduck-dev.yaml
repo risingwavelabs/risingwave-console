@@ -1,3 +1,5 @@
+# This is a docker compose file for local development of promduck.
+# The promduck server is built and run in the dev container, which is defined in `docker/Dockerfile.dev`.
 services:
   promduck:
     build: 

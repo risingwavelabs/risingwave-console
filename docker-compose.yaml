@@ -1,4 +1,4 @@
-# This is a docker compose file for local development.
+# This is a docker compose file for local development of wavekit.
 # The wavekit server is built and run in the dev container, which is defined in `docker/Dockerfile.dev`.
 services:
   dev:
