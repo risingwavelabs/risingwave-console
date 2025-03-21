@@ -3,3 +3,4 @@ coverage.out
 coverage.html
 upload/*
 *.parquet
+*.ndjson.gz

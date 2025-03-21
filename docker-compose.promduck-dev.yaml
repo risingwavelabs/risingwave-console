@@ -1,0 +1,63 @@
+services:
+  promduck:
+    build: 
+      dockerfile: ./docker/Dockerfile.dev
+    ports:
+      - "8020:8020"
+    command:
+    - go
+    - run
+    - cmd/promduck/main.go
+    - serve
+    - -f
+    - test.ndjson.gz
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - go-data:/go/pkg/mod
+      - go-build-data:/root/.cache/go-build
+      - ./test.ndjson.gz:/app/test.ndjson.gz
+
+  prometheus:
+    image: "prom/prometheus:latest"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.listen-address=0.0.0.0:9500"
+      - "--storage.tsdb.retention.time=30d"
+    ports:
+      - "9500:9500"
+    volumes:
+      - "./examples/promdump/prometheus.yaml:/etc/prometheus/prometheus.yml"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - sh -c 'printf "GET /-/healthy HTTP/1.0\n\n" | nc localhost 9500; exit $$?;'
+      interval: 1s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  grafana:
+    image: "grafana/grafana-oss:latest"
+    ports:
+      - "3001:3001"
+    volumes:
+      - "./examples/promdump/grafana.ini:/etc/grafana/grafana.ini"
+      - "./examples/promdump/grafana-risedev-datasource.yml:/etc/grafana/provisioning/datasources/grafana-risedev-datasource.yml"
+      - "./examples/promdump/grafana-risedev-dashboard.yml:/etc/grafana/provisioning/dashboards/grafana-risedev-dashboard.yml"
+      - "./examples/promdump/dashboards:/dashboards"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - bash -c 'printf \"GET / HTTP/1.1\n\n\" > /dev/tcp/127.0.0.1/3001; exit $$?;'
+      interval: 1s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+volumes:
+  go-data:
+  go-build-data:

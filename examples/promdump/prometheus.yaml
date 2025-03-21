@@ -3,5 +3,5 @@ global:
   evaluation_interval: 15s
 
 remote_read:
-  - url: "http://dev:39090/api/v1/read"
+  - url: "http://promduck:39090/api/v1/read"
     read_recent: true

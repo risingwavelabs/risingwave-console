@@ -2,7 +2,6 @@ package promdump
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -17,10 +16,4 @@ func TestDump(t *testing.T) {
 		Step:     5 * time.Second,
 	}, "test/test.ndjson.gz", nil)
 	require.NoError(t, err)
-}
-
-func TestDecompressPromdumpFile(t *testing.T) {
-	raw, err := DecompressPromdumpFile(context.Background(), "test.json.gz", "test", "", 64*1024*1024)
-	require.NoError(t, err)
-	fmt.Println(raw)
 }

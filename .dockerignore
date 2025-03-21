@@ -1,0 +1,4 @@
+web/*
+bin/*
+.tmp
+docs/
