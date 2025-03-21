@@ -117,7 +117,7 @@ doc: install-doc-tools doc-config doc-contributing
 upload-promdump:
 	CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build -o upload/promdump/Darwin/x86_64/promdump cmd/promdump/main.go
 	CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build -o upload/promdump/Darwin/arm64/promdump cmd/promdump/main.go
-	CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -o upload/prodump/Linux/x86_64/promdump cmd/promdump/main.go
+	CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -o upload/promdump/Linux/x86_64/promdump cmd/promdump/main.go
 	CGO_ENABLED=0 GOOS=linux   GOARCH=386   go build -o upload/promdump/Linux/i386/promdump cmd/promdump/main.go
 	CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build -o upload/promdump/Linux/arm64/promdump cmd/promdump/main.go
 	cp scripts/download-promdump.sh upload/promdump/download.sh
