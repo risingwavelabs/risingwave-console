@@ -2,4 +2,5 @@ bin/*
 coverage.out
 coverage.html
 upload/*
-wavekit
+*.parquet
+*.ndjson.gz

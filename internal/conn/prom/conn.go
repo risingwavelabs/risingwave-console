@@ -15,6 +15,8 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/model"
 )
 
+var ErrPrometheusEndpointNotFound = errors.New("prometheus endpoint not found")
+
 // PrometheusConn is an API wrapper for prometheus,
 // the connection is only established when the query is made.
 type PromConn interface {
@@ -58,7 +60,7 @@ func (p *PromManager) GetPrometheusConn(ctx context.Context, clusterID int32) (P
 	}
 
 	if cluster.PrometheusEndpoint == nil {
-		return nil, errors.New("prometheus endpoint not found")
+		return nil, ErrPrometheusEndpointNotFound
 	}
 
 	client, err := api.NewClient(api.Config{

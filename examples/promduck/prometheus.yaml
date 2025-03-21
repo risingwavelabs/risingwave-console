@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+remote_read:
+  - url: "http://promduck:39090/api/v1/read"
+    read_recent: true

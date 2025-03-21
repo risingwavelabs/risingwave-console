@@ -94,3 +94,26 @@ func TruncateString(s string, max int) string {
 	}
 	return s[:max] + "..."
 }
+
+// renderProgressBar generates a string representation of a progress bar
+// based on the given progress percentage (0.0 to 1.0)
+func RenderProgressBar(progress float64) string {
+	barWidth := 40
+	completedWidth := int(float64(barWidth) * progress)
+
+	// Build the progress bar string
+	progressBar := "["
+	for i := 0; i < barWidth; i++ {
+		if i < completedWidth {
+			progressBar += "="
+		} else if i == completedWidth && progress < 1.0 {
+			progressBar += ">"
+		} else {
+			progressBar += " "
+		}
+	}
+	progressBar += "]"
+
+	// Return the combined progress string with percentage
+	return fmt.Sprintf("%s %.2f%%", progressBar, progress*100)
+}

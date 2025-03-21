@@ -1,4 +1,4 @@
-# This is a docker compose file for local development.
+# This is a docker compose file for local development of wavekit.
 # The wavekit server is built and run in the dev container, which is defined in `docker/Dockerfile.dev`.
 services:
   dev:
@@ -9,7 +9,7 @@ services:
     command:
     - go
     - run
-    - cmd/main.go
+    - cmd/wavekit/main.go
     environment:
       WK_PORT: 8020
       WK_PG_DSN: postgres://postgres:postgres@db:5432/postgres

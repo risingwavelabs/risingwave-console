@@ -111,6 +111,14 @@ doc-contributing:
 doc: install-doc-tools doc-config doc-contributing
 
 ###################################################
+### Promdump
+###################################################
+
+promdump-example:
+	curl -L https://raw.githubusercontent.com/risingwavelabs/risingwave/refs/heads/main/docker/dashboards/risingwave-dev-dashboard.json -o examples/promdump/dashboards/risingwave-dev-dashboard.json
+	docker compose -f examples/promdump/docker-compose-promdump.yaml up
+
+###################################################
 ### Dev enviornment
 ###################################################
 
@@ -138,11 +146,11 @@ build-web:
 
 build-binary:
 	@rm -rf upload
-	@CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Darwin/x86_64/wavekit cmd/main.go
-	@CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Darwin/arm64/wavekit cmd/main.go
-	@CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/x86_64/wavekit cmd/main.go
-	@CGO_ENABLED=0 GOOS=linux   GOARCH=386   go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/i386/wavekit cmd/main.go
-	@CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/arm64/wavekit cmd/main.go
+	@CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Darwin/x86_64/wavekit cmd/wavekit/main.go
+	@CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Darwin/arm64/wavekit cmd/wavekit/main.go
+	@CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/x86_64/wavekit cmd/wavekit/main.go
+	@CGO_ENABLED=0 GOOS=linux   GOARCH=386   go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/i386/wavekit cmd/wavekit/main.go
+	@CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/arm64/wavekit cmd/wavekit/main.go
 
 binary-push:
 	@cp scripts/download.sh upload/download.sh
@@ -150,7 +158,7 @@ binary-push:
 	@aws s3 cp --recursive upload/ s3://wavekit-release/	
 
 build-server:
-	GOOS=linux GOARCH=amd64 go build -o ./bin/wavekit-server cmd/main.go
+	GOOS=linux GOARCH=amd64 go build -o ./bin/wavekit-server cmd/wavekit/main.go
 
 IMG_TAG=$(VERSION)
 DOCKER_REPO=risingwavelabs/wavekit
