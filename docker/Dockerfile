@@ -3,6 +3,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y ca-certificates
 
-COPY ./bin/wavekit-server /app/wavekit-server
+ARG TARGETARCH
+COPY ./bin/wavekit-server-${TARGETARCH} /app/wavekit-server
 
 CMD ["./wavekit-server"]

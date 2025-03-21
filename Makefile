@@ -139,7 +139,7 @@ test:
 ### Build
 ###################################################
 
-VERSION=v0.1.3
+VERSION=v0.2.0
 
 build-web:
 	@cd web && pnpm run build
@@ -158,18 +158,15 @@ binary-push:
 	@aws s3 cp --recursive upload/ s3://wavekit-release/	
 
 build-server:
-	GOOS=linux GOARCH=amd64 go build -o ./bin/wavekit-server cmd/wavekit/main.go
+	GOOS=linux GOARCH=amd64 go build -o ./bin/wavekit-server-amd64 cmd/wavekit/main.go
+	GOOS=linux GOARCH=arm64 go build -o ./bin/wavekit-server-arm64 cmd/wavekit/main.go
 
 IMG_TAG=$(VERSION)
 DOCKER_REPO=risingwavelabs/wavekit
 
-build-docker:
-	docker build -f docker/Dockerfile.pgbundle -t ${DOCKER_REPO}:${IMG_TAG}-pgbundle .
-	docker build -f docker/Dockerfile -t ${DOCKER_REPO}:${IMG_TAG} .
-
-docker-push:
-	docker push ${DOCKER_REPO}:${IMG_TAG}-pgbundle
-	docker push ${DOCKER_REPO}:${IMG_TAG}
+push-docker: build-server
+	docker buildx build --platform linux/amd64,linux/arm64 -f docker/Dockerfile.pgbundle -t ${DOCKER_REPO}:${IMG_TAG}-pgbundle --push .
+	docker buildx build --platform linux/amd64,linux/arm64 -f docker/Dockerfile -t ${DOCKER_REPO}:${IMG_TAG} --push .
 
 ci: doc build-web build-server build-docker build-binary docker-push binary-push
 

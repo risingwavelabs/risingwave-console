@@ -10,7 +10,8 @@ RUN echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/12/main/pg_hba.conf
 
 RUN apt-get update && apt-get install -y ca-certificates
 
-COPY ./bin/wavekit-server /app/wavekit-server
+ARG TARGETARCH
+COPY ./bin/wavekit-server-${TARGETARCH} /app/wavekit-server
 COPY ./docker/config.bundle.yaml /app/config.yaml
 
 # Create startup script
