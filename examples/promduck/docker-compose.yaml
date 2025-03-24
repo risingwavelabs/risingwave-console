@@ -1,6 +1,6 @@
 services:
   promduck:
-    image: cloudcarver/promduck:latest
+    image: cloudcarver/promduck:v0.2.0
     command:
     - serve
     - -f
