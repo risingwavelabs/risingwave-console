@@ -326,6 +326,21 @@ func (mr *MockModelInterfaceMockRecorder) GetDatabaseConnectionByID(ctx, id inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatabaseConnectionByID", reflect.TypeOf((*MockModelInterface)(nil).GetDatabaseConnectionByID), ctx, id)
 }
 
+// GetMetricsStore mocks base method.
+func (m *MockModelInterface) GetMetricsStore(ctx context.Context, id int32) (*querier.MetricsStore, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMetricsStore", ctx, id)
+	ret0, _ := ret[0].(*querier.MetricsStore)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMetricsStore indicates an expected call of GetMetricsStore.
+func (mr *MockModelInterfaceMockRecorder) GetMetricsStore(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricsStore", reflect.TypeOf((*MockModelInterface)(nil).GetMetricsStore), ctx, id)
+}
+
 // GetOrgCluster mocks base method.
 func (m *MockModelInterface) GetOrgCluster(ctx context.Context, arg querier.GetOrgClusterParams) (*querier.Cluster, error) {
 	m.ctrl.T.Helper()

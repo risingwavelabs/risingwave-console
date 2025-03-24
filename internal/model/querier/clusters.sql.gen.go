@@ -18,21 +18,21 @@ INSERT INTO clusters (
     meta_port,
     http_port,
     version, 
-    prometheus_endpoint
+    metrics_store_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, prometheus_endpoint
+) RETURNING id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, metrics_store_id
 `
 
 type CreateClusterParams struct {
-	OrganizationID     int32
-	Name               string
-	Host               string
-	SqlPort            int32
-	MetaPort           int32
-	HttpPort           int32
-	Version            string
-	PrometheusEndpoint *string
+	OrganizationID int32
+	Name           string
+	Host           string
+	SqlPort        int32
+	MetaPort       int32
+	HttpPort       int32
+	Version        string
+	MetricsStoreID *int32
 }
 
 func (q *Queries) CreateCluster(ctx context.Context, arg CreateClusterParams) (*Cluster, error) {
@@ -44,7 +44,7 @@ func (q *Queries) CreateCluster(ctx context.Context, arg CreateClusterParams) (*
 		arg.MetaPort,
 		arg.HttpPort,
 		arg.Version,
-		arg.PrometheusEndpoint,
+		arg.MetricsStoreID,
 	)
 	var i Cluster
 	err := row.Scan(
@@ -58,7 +58,7 @@ func (q *Queries) CreateCluster(ctx context.Context, arg CreateClusterParams) (*
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.PrometheusEndpoint,
+		&i.MetricsStoreID,
 	)
 	return &i, err
 }
@@ -79,7 +79,7 @@ func (q *Queries) DeleteOrgCluster(ctx context.Context, arg DeleteOrgClusterPara
 }
 
 const getClusterByID = `-- name: GetClusterByID :one
-SELECT id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, prometheus_endpoint FROM clusters
+SELECT id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, metrics_store_id FROM clusters
 WHERE id = $1
 `
 
@@ -97,13 +97,13 @@ func (q *Queries) GetClusterByID(ctx context.Context, id int32) (*Cluster, error
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.PrometheusEndpoint,
+		&i.MetricsStoreID,
 	)
 	return &i, err
 }
 
 const getOrgCluster = `-- name: GetOrgCluster :one
-SELECT id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, prometheus_endpoint FROM clusters
+SELECT id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, metrics_store_id FROM clusters
 WHERE id = $1 AND organization_id = $2
 `
 
@@ -126,7 +126,7 @@ func (q *Queries) GetOrgCluster(ctx context.Context, arg GetOrgClusterParams) (*
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.PrometheusEndpoint,
+		&i.MetricsStoreID,
 	)
 	return &i, err
 }
@@ -140,22 +140,22 @@ INSERT INTO clusters (
     meta_port,
     http_port,
     version,
-    prometheus_endpoint
+    metrics_store_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8
 ) ON CONFLICT (organization_id, name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
-RETURNING id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, prometheus_endpoint
+RETURNING id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, metrics_store_id
 `
 
 type InitClusterParams struct {
-	OrganizationID     int32
-	Name               string
-	Host               string
-	SqlPort            int32
-	MetaPort           int32
-	HttpPort           int32
-	Version            string
-	PrometheusEndpoint *string
+	OrganizationID int32
+	Name           string
+	Host           string
+	SqlPort        int32
+	MetaPort       int32
+	HttpPort       int32
+	Version        string
+	MetricsStoreID *int32
 }
 
 func (q *Queries) InitCluster(ctx context.Context, arg InitClusterParams) (*Cluster, error) {
@@ -167,7 +167,7 @@ func (q *Queries) InitCluster(ctx context.Context, arg InitClusterParams) (*Clus
 		arg.MetaPort,
 		arg.HttpPort,
 		arg.Version,
-		arg.PrometheusEndpoint,
+		arg.MetricsStoreID,
 	)
 	var i Cluster
 	err := row.Scan(
@@ -181,13 +181,13 @@ func (q *Queries) InitCluster(ctx context.Context, arg InitClusterParams) (*Clus
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.PrometheusEndpoint,
+		&i.MetricsStoreID,
 	)
 	return &i, err
 }
 
 const listOrgClusters = `-- name: ListOrgClusters :many
-SELECT id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, prometheus_endpoint FROM clusters
+SELECT id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, metrics_store_id FROM clusters
 WHERE organization_id = $1
 ORDER BY name
 `
@@ -212,7 +212,7 @@ func (q *Queries) ListOrgClusters(ctx context.Context, organizationID int32) ([]
 			&i.Version,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.PrometheusEndpoint,
+			&i.MetricsStoreID,
 		); err != nil {
 			return nil, err
 		}
@@ -233,22 +233,22 @@ SET
     meta_port = $6,
     http_port = $7,
     version = $8,
-    prometheus_endpoint = $9,
+    metrics_store_id = $9,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND organization_id = $2
-RETURNING id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, prometheus_endpoint
+RETURNING id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, metrics_store_id
 `
 
 type UpdateOrgClusterParams struct {
-	ID                 int32
-	OrganizationID     int32
-	Name               string
-	Host               string
-	SqlPort            int32
-	MetaPort           int32
-	HttpPort           int32
-	Version            string
-	PrometheusEndpoint *string
+	ID             int32
+	OrganizationID int32
+	Name           string
+	Host           string
+	SqlPort        int32
+	MetaPort       int32
+	HttpPort       int32
+	Version        string
+	MetricsStoreID *int32
 }
 
 func (q *Queries) UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterParams) (*Cluster, error) {
@@ -261,7 +261,7 @@ func (q *Queries) UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterPara
 		arg.MetaPort,
 		arg.HttpPort,
 		arg.Version,
-		arg.PrometheusEndpoint,
+		arg.MetricsStoreID,
 	)
 	var i Cluster
 	err := row.Scan(
@@ -275,7 +275,7 @@ func (q *Queries) UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterPara
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.PrometheusEndpoint,
+		&i.MetricsStoreID,
 	)
 	return &i, err
 }

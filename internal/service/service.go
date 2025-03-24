@@ -9,7 +9,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
-	"github.com/risingwavelabs/wavekit/internal/conn/prom"
+	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/utils"
@@ -136,11 +136,11 @@ type ServiceInterface interface {
 }
 
 type Service struct {
-	m        model.ModelInterface
-	auth     auth.AuthInterface
-	sqlm     sql.SQLConnectionManegerInterface
-	risectlm meta.RisectlManagerInterface
-	promm    prom.PromManagerInterface
+	m                  model.ModelInterface
+	auth               auth.AuthInterface
+	sqlm               sql.SQLConnectionManegerInterface
+	risectlm           meta.RisectlManagerInterface
+	metricsConnManager *metricsstore.MetricsManager
 
 	now                 func() time.Time
 	generateHashAndSalt func(password string) (string, string, error)
@@ -152,7 +152,7 @@ func NewService(
 	auth auth.AuthInterface,
 	sqlm sql.SQLConnectionManegerInterface,
 	risectlm meta.RisectlManagerInterface,
-	promm prom.PromManagerInterface,
+	metricsConnManager *metricsstore.MetricsManager,
 ) ServiceInterface {
 	return &Service{
 		m:                   m,
@@ -161,6 +161,6 @@ func NewService(
 		auth:                auth,
 		sqlm:                sqlm,
 		risectlm:            risectlm,
-		promm:               promm,
+		metricsConnManager:  metricsConnManager,
 	}
 }

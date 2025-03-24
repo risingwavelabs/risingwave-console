@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Service) GetMaterializedViewThroughput(ctx context.Context, clusterID int32) (prom_model.Matrix, error) {
-	conn, err := s.promm.GetPrometheusConn(ctx, clusterID)
+	conn, err := s.metricsConnManager.GetMetricsConn(ctx, clusterID)
 	if err != nil {
 		return nil, err
 	}

@@ -12,9 +12,9 @@ export type Cluster = {
     httpPort: number;
     version: string;
     /**
-     * Prometheus endpoint
+     * ID of the metrics store this cluster belongs to
      */
-    prometheusEndpoint?: string;
+    metricsStoreID?: number;
     createdAt: string;
     updatedAt: string;
 };

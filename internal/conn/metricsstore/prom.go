@@ -1,4 +1,4 @@
-package prom
+package metricsstore
 
 import (
 	"context"
@@ -10,67 +10,27 @@ import (
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	prom_model "github.com/prometheus/common/model"
-
-	"github.com/risingwavelabs/wavekit/internal/config"
-	"github.com/risingwavelabs/wavekit/internal/model"
 )
 
 var ErrPrometheusEndpointNotFound = errors.New("prometheus endpoint not found")
-
-// PrometheusConn is an API wrapper for prometheus,
-// the connection is only established when the query is made.
-type PromConn interface {
-	GetMaterializedViewThroughput(ctx context.Context) (prom_model.Matrix, error)
-}
-
-type PromManagerInterface interface {
-	GetPrometheusConn(ctx context.Context, clusterID int32) (PromConn, error)
-}
-
-type PromManager struct {
-	m             model.ModelInterface
-	defaultLabels map[string]string
-}
-
-func NewPromManager(m model.ModelInterface, cfg *config.Config) (PromManagerInterface, error) {
-	defaultLabels := make(map[string]string)
-
-	for _, label := range strings.Split(cfg.Prometheus.DefaultLabels, ",") {
-		parts := strings.Split(label, "=")
-		if len(parts) == 2 {
-			defaultLabels[parts[0]] = parts[1]
-		}
-	}
-
-	return &PromManager{
-		m:             m,
-		defaultLabels: defaultLabels,
-	}, nil
-}
 
 type PrometheusConn struct {
 	v1api         v1.API
 	defaultLabels map[string]string
 }
 
-func (p *PromManager) GetPrometheusConn(ctx context.Context, clusterID int32) (PromConn, error) {
-	cluster, err := p.m.GetClusterByID(ctx, clusterID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get cluster")
-	}
-
-	if cluster.PrometheusEndpoint == nil {
-		return nil, ErrPrometheusEndpointNotFound
-	}
-
+func NewPrometheusConn(endpoint string, defaultLabels map[string]string) (*PrometheusConn, error) {
 	client, err := api.NewClient(api.Config{
-		Address: *cluster.PrometheusEndpoint,
+		Address: endpoint,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create prometheus client")
 	}
-	v1api := v1.NewAPI(client)
-	return &PrometheusConn{v1api: v1api, defaultLabels: p.defaultLabels}, nil
+
+	return &PrometheusConn{
+		v1api:         v1.NewAPI(client),
+		defaultLabels: defaultLabels,
+	}, nil
 }
 
 func (c *PrometheusConn) GetMaterializedViewThroughput(ctx context.Context) (prom_model.Matrix, error) {

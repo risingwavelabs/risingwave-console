@@ -29,6 +29,7 @@ type Querier interface {
 	GetClusterByID(ctx context.Context, id int32) (*Cluster, error)
 	GetClusterDiagnostic(ctx context.Context, id int32) (*ClusterDiagnostic, error)
 	GetDatabaseConnectionByID(ctx context.Context, id int32) (*DatabaseConnection, error)
+	GetMetricsStore(ctx context.Context, id int32) (*MetricsStore, error)
 	GetOrgCluster(ctx context.Context, arg GetOrgClusterParams) (*Cluster, error)
 	GetOrgDatabaseByID(ctx context.Context, arg GetOrgDatabaseByIDParams) (*DatabaseConnection, error)
 	GetOrgDatabaseConnection(ctx context.Context, arg GetOrgDatabaseConnectionParams) (*DatabaseConnection, error)
