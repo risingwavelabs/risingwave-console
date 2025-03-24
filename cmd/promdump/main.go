@@ -43,8 +43,8 @@ func main() {
 			},
 			&cli.DurationFlag{
 				Name:  "step",
-				Usage: "Query step interval",
-				Value: time.Minute,
+				Usage: "Format: 1s, 1m, 1h, 1d, default is 1s.",
+				Value: time.Second,
 			},
 			&cli.StringFlag{
 				Name: "query",
