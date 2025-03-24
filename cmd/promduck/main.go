@@ -114,40 +114,8 @@ func runServe(c *cli.Context) error {
 
 	// Handler for remote_read API
 	http.HandleFunc("/api/v1/read", func(w http.ResponseWriter, r *http.Request) {
-		compressed, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		reqProtobuf, err := snappy.Decode(nil, compressed)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		// resolve json
-		var req prompb.ReadRequest
-		if err := proto.Unmarshal(reqProtobuf, protoadapt.MessageV2Of(&req)); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		data, err := store.remoteRead(r.Context(), req)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		resProtobuf, err := proto.Marshal(protoadapt.MessageV2Of(data))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/x-protobuf")
-		w.Header().Set("Content-Encoding", "snappy")
-		if _, err := w.Write(snappy.Encode(nil, resProtobuf)); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+		if err := store.handleRemoteRead(w, r); err != nil {
+			log.Default().Println("failed to handle remote read", err.Error())
 		}
 	})
 
@@ -172,6 +140,45 @@ type Store struct {
 	outputFilename string
 }
 
+func (s *Store) handleRemoteRead(w http.ResponseWriter, r *http.Request) error {
+	compressed, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	reqProtobuf, err := snappy.Decode(nil, compressed)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
+	// resolve json
+	var req prompb.ReadRequest
+	if err := proto.Unmarshal(reqProtobuf, protoadapt.MessageV2Of(&req)); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
+
+	data, err := s.remoteRead(r.Context(), req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+	resProtobuf, err := proto.Marshal(protoadapt.MessageV2Of(data))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/x-protobuf")
+	w.Header().Set("Content-Encoding", "snappy")
+	if _, err := w.Write(snappy.Encode(nil, resProtobuf)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+	return nil
+}
+
 func (s *Store) init(ctx context.Context, rebuild bool) error {
 	fmt.Println("Initializing store...", s.outputFilename)
 	if _, err := os.Stat(s.outputFilename); !rebuild && err == nil {
@@ -185,7 +192,11 @@ func (s *Store) init(ctx context.Context, rebuild bool) error {
 				metric, 
 				(value[1]::DOUBLE * 1000)::BIGINT AS timestamp, 
 				value[2]::VARCHAR AS val 
-			FROM read_json_auto('%s'), LATERAL UNNEST(values) AS t(value)
+			FROM read_json(
+				'%s',
+				format='auto',
+				map_inference_threshold=0
+			), LATERAL UNNEST(values) AS t(value)
 		) TO '%s' (FORMAT 'parquet');`,
 		s.inputFilename,
 		s.outputFilename,
