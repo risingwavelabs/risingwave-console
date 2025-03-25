@@ -7,10 +7,53 @@ package querier
 
 import (
 	"context"
+
+	"github.com/risingwavelabs/wavekit/internal/apigen"
 )
 
+const createMetricsStore = `-- name: CreateMetricsStore :one
+INSERT INTO metrics_stores (name, spec, organization_id)
+VALUES ($1, $2, $3)
+RETURNING id, name, spec, organization_id, created_at, updated_at
+`
+
+type CreateMetricsStoreParams struct {
+	Name           string
+	Spec           apigen.MetricsStoreSpec
+	OrganizationID int32
+}
+
+func (q *Queries) CreateMetricsStore(ctx context.Context, arg CreateMetricsStoreParams) (*MetricsStore, error) {
+	row := q.db.QueryRow(ctx, createMetricsStore, arg.Name, arg.Spec, arg.OrganizationID)
+	var i MetricsStore
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Spec,
+		&i.OrganizationID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const deleteMetricsStore = `-- name: DeleteMetricsStore :exec
+DELETE FROM metrics_stores
+WHERE id = $1 AND organization_id = $2
+`
+
+type DeleteMetricsStoreParams struct {
+	ID             int32
+	OrganizationID int32
+}
+
+func (q *Queries) DeleteMetricsStore(ctx context.Context, arg DeleteMetricsStoreParams) error {
+	_, err := q.db.Exec(ctx, deleteMetricsStore, arg.ID, arg.OrganizationID)
+	return err
+}
+
 const getMetricsStore = `-- name: GetMetricsStore :one
-SELECT ms.id, ms.name, ms.spec, ms.created_at, ms.updated_at
+SELECT ms.id, ms.name, ms.spec, ms.organization_id, ms.created_at, ms.updated_at
 FROM metrics_stores ms
     JOIN clusters c ON c.metrics_store_id = ms.id
 WHERE c.id = $1
@@ -23,6 +66,98 @@ func (q *Queries) GetMetricsStore(ctx context.Context, id int32) (*MetricsStore,
 		&i.ID,
 		&i.Name,
 		&i.Spec,
+		&i.OrganizationID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const getMetricsStoreByIDAndOrgID = `-- name: GetMetricsStoreByIDAndOrgID :one
+SELECT id, name, spec, organization_id, created_at, updated_at FROM metrics_stores
+WHERE id = $1 AND organization_id = $2
+`
+
+type GetMetricsStoreByIDAndOrgIDParams struct {
+	ID             int32
+	OrganizationID int32
+}
+
+func (q *Queries) GetMetricsStoreByIDAndOrgID(ctx context.Context, arg GetMetricsStoreByIDAndOrgIDParams) (*MetricsStore, error) {
+	row := q.db.QueryRow(ctx, getMetricsStoreByIDAndOrgID, arg.ID, arg.OrganizationID)
+	var i MetricsStore
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Spec,
+		&i.OrganizationID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const listMetricsStoresByOrgID = `-- name: ListMetricsStoresByOrgID :many
+SELECT id, name, spec, organization_id, created_at, updated_at FROM metrics_stores
+WHERE organization_id = $1
+`
+
+func (q *Queries) ListMetricsStoresByOrgID(ctx context.Context, organizationID int32) ([]*MetricsStore, error) {
+	rows, err := q.db.Query(ctx, listMetricsStoresByOrgID, organizationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*MetricsStore
+	for rows.Next() {
+		var i MetricsStore
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Spec,
+			&i.OrganizationID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateMetricsStore = `-- name: UpdateMetricsStore :one
+UPDATE metrics_stores
+SET name = $2, 
+    spec = $3,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND organization_id = $4
+RETURNING id, name, spec, organization_id, created_at, updated_at
+`
+
+type UpdateMetricsStoreParams struct {
+	ID             int32
+	Name           string
+	Spec           apigen.MetricsStoreSpec
+	OrganizationID int32
+}
+
+func (q *Queries) UpdateMetricsStore(ctx context.Context, arg UpdateMetricsStoreParams) (*MetricsStore, error) {
+	row := q.db.QueryRow(ctx, updateMetricsStore,
+		arg.ID,
+		arg.Name,
+		arg.Spec,
+		arg.OrganizationID,
+	)
+	var i MetricsStore
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Spec,
+		&i.OrganizationID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

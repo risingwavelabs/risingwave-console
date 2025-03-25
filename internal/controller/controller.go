@@ -3,6 +3,7 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
@@ -522,21 +523,94 @@ func (controller *Controller) GetMaterializedViewThroughput(c *fiber.Ctx, cluste
 }
 
 func (controller *Controller) CreateMetricsStore(c *fiber.Ctx) error {
-	return nil
+	var req apigen.MetricsStoreCreate
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	ms, err := controller.svc.CreateMetricsStore(c.Context(), req, user.OrganizationID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(ms)
 }
 
 func (controller *Controller) DeleteMetricsStore(c *fiber.Ctx, id int32, params apigen.DeleteMetricsStoreParams) error {
-	return nil
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	if !params.Force {
+		clusters, err := controller.svc.ListClustersByMetricsStoreID(c.Context(), id)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+		}
+		var names []string
+		for _, cluster := range clusters {
+			names = append(names, cluster.Name)
+		}
+		if len(names) > 0 {
+			return c.Status(fiber.StatusConflict).SendString(fmt.Sprintf("Metrics store is in use by clusters: %s", strings.Join(names, ", ")))
+		}
+	}
+
+	if err := controller.svc.DeleteMetricsStore(c.Context(), id, user.OrganizationID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 func (controller *Controller) GetMetricsStore(c *fiber.Ctx, id int32) error {
-	return nil
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	ms, err := controller.svc.GetMetricsStore(c.Context(), id, user.OrganizationID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(ms)
 }
 
 func (controller *Controller) ListMetricsStores(c *fiber.Ctx) error {
-	return nil
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	msList, err := controller.svc.ListMetricsStores(c.Context(), user.OrganizationID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(msList)
 }
 
 func (controller *Controller) UpdateMetricsStore(c *fiber.Ctx, id int32) error {
-	return nil
+	user, err := auth.GetUser(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	var req apigen.MetricsStoreCreate
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+
+	ms, err := controller.svc.UpdateMetricsStore(c.Context(), id, req, user.OrganizationID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(ms)
 }

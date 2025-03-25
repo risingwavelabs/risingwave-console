@@ -698,7 +698,7 @@ paths:
             format: int32
         - name: force
           in: query
-          required: false
+          required: true
           description: force delete the metrics store even if it is in use
           schema:
             type: boolean

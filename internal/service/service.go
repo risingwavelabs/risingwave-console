@@ -133,6 +133,24 @@ type ServiceInterface interface {
 
 	// GetMaterializedViewThroughput gets the throughput of materialized views
 	GetMaterializedViewThroughput(ctx context.Context, clusterID int32) (prom_model.Matrix, error)
+
+	// CreateMetricsStore creates a new metrics store
+	CreateMetricsStore(context.Context, apigen.MetricsStoreCreate, int32) (*apigen.MetricsStore, error)
+
+	// DeleteMetricsStore deletes a metrics store
+	DeleteMetricsStore(ctx context.Context, id int32, organizationID int32) error
+
+	// GetMetricsStore gets a metrics store by ID
+	GetMetricsStore(ctx context.Context, id int32, organizationID int32) (*apigen.MetricsStore, error)
+
+	// UpdateMetricsStore updates a metrics store
+	UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreCreate, organizationID int32) (*apigen.MetricsStore, error)
+
+	// ListClustersByMetricsStoreID lists all clusters by metrics store ID
+	ListMetricsStores(ctx context.Context, organizationID int32) ([]*apigen.MetricsStore, error)
+
+	// ListClustersByMetricsStoreID lists all clusters by metrics store ID
+	ListClustersByMetricsStoreID(ctx context.Context, id int32) ([]*apigen.Cluster, error)
 }
 
 type Service struct {

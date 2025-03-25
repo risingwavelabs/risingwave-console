@@ -186,6 +186,44 @@ func (q *Queries) InitCluster(ctx context.Context, arg InitClusterParams) (*Clus
 	return &i, err
 }
 
+const listClustersByMetricsStoreID = `-- name: ListClustersByMetricsStoreID :many
+SELECT id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, metrics_store_id FROM clusters
+WHERE metrics_store_id = $1
+ORDER BY name
+`
+
+func (q *Queries) ListClustersByMetricsStoreID(ctx context.Context, metricsStoreID *int32) ([]*Cluster, error) {
+	rows, err := q.db.Query(ctx, listClustersByMetricsStoreID, metricsStoreID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Cluster
+	for rows.Next() {
+		var i Cluster
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrganizationID,
+			&i.Name,
+			&i.Host,
+			&i.SqlPort,
+			&i.MetaPort,
+			&i.HttpPort,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.MetricsStoreID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listOrgClusters = `-- name: ListOrgClusters :many
 SELECT id, organization_id, name, host, sql_port, meta_port, http_port, version, created_at, updated_at, metrics_store_id FROM clusters
 WHERE organization_id = $1

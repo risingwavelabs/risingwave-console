@@ -57,3 +57,8 @@ WHERE id = $1 AND organization_id = $2;
 -- name: GetClusterByID :one
 SELECT * FROM clusters
 WHERE id = $1;
+
+-- name: ListClustersByMetricsStoreID :many
+SELECT * FROM clusters
+WHERE metrics_store_id = $1
+ORDER BY name;

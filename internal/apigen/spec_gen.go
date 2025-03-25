@@ -421,7 +421,7 @@ type ListClusterDiagnosticsParams struct {
 // DeleteMetricsStoreParams defines parameters for DeleteMetricsStore.
 type DeleteMetricsStoreParams struct {
 	// Force force delete the metrics store even if it is in use
-	Force *bool `form:"force,omitempty" json:"force,omitempty"`
+	Force bool `form:"force" json:"force"`
 }
 
 // RefreshTokenJSONRequestBody defines body for RefreshToken for application/json ContentType.
@@ -2625,20 +2625,16 @@ func NewDeleteMetricsStoreRequest(server string, iD int32, params *DeleteMetrics
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.Force != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "force", runtime.ParamLocationQuery, *params.Force); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "force", runtime.ParamLocationQuery, params.Force); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
 				}
 			}
-
 		}
 
 		queryURL.RawQuery = queryValues.Encode()
@@ -5741,9 +5737,17 @@ func (siw *ServerInterfaceWrapper) DeleteMetricsStore(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
 	}
 
-	// ------------- Optional query parameter "force" -------------
+	// ------------- Required query parameter "force" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "force", query, &params.Force)
+	if paramValue := c.Query("force"); paramValue != "" {
+
+	} else {
+		err = fmt.Errorf("Query argument force is required, but not found")
+		c.Status(fiber.StatusBadRequest).JSON(err)
+		return err
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "force", query, &params.Force)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter force: %w", err).Error())
 	}
