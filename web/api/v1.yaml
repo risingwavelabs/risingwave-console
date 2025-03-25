@@ -640,7 +640,120 @@ paths:
                 $ref: "#/components/schemas/Credentials"
         "401":
           description: Invalid or expired refresh token
+          
+  /metrics-stores/{ID}:
+    get:
+      summary: Get a metrics store
+      description: Get a metrics store by ID
+      operationId: getMetricsStore
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Successfully retrieved metrics store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsStore"
+    put:
+      summary: Update a metrics store
+      description: Update a metrics store
+      operationId: updateMetricsStore
+      parameters:
+        - name: ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MetricsStore"
+      responses:
+        "200":
+          description: Successfully updated metrics store
+    
+    delete:
+      summary: Delete a metrics store
+      description: Delete a metrics store
+      operationId: deleteMetricsStore
+      parameters:
+        - name: ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: force
+          in: query
+          required: true
+          description: force delete the metrics store even if it is in use
+          schema:
+            type: boolean
+            default: false
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Successfully deleted metrics store
 
+  /metrics-stores:
+    post:
+      summary: Create a new metrics store
+      description: Create a new metrics store
+      operationId: createMetricsStore
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MetricsStoreCreate"
+      responses:
+        "201":
+          description: Successfully created metrics store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsStore"
+    get:
+      summary: Get all metrics stores
+      description: Get all metrics stores
+      operationId: listMetricsStores
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved metrics stores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MetricsStore"
+
+  # /metrics-stores/{ID}/dump:
+  #   get:
+  #     summary: Dump metrics store
+  #     description: Dump metrics store
+  #     operationId: dumpMetricsStore
+  #     security:
+  #       - BearerAuth: []
+
+      
   /metrics/{clusterID}/materialized-view-throughput:
     get:
       summary: Get materialized view throughput
@@ -846,9 +959,10 @@ components:
         version:
           type: string
           description: Version of the cluster
-        prometheusEndpoint:
-          type: string
-          description: Prometheus endpoint
+        metricsStoreID:
+          type: integer
+          format: int32
+          description: ID of the metrics store this cluster belongs to
 
     Cluster:
       type: object
@@ -885,9 +999,10 @@ components:
           format: int32
         version:
           type: string
-        prometheusEndpoint:
-          type: string
-          description: Prometheus endpoint
+        metricsStoreID:
+          type: integer
+          format: int32
+          description: ID of the metrics store this cluster belongs to
         createdAt:
           type: string
           format: date-time
@@ -920,9 +1035,10 @@ components:
           format: int32
         version:
           type: string
-        prometheusEndpoint:
-          type: string
-          description: Prometheus endpoint
+        metricsStoreID:
+          type: integer
+          format: int32
+          description: ID of the metrics store this cluster belongs to
 
     SnapshotCreate:
       type: object
@@ -1247,5 +1363,98 @@ components:
           items:
             $ref: "#/components/schemas/MetricValue"
 
+    MetricsStore:
+      type: object
+      required: [ID, name, createdAt]
+      properties:
+        ID:
+          type: integer
+          format: int32
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        spec:
+          $ref: "#/components/schemas/MetricsStoreSpec"
+        defaultLabels:
+          $ref: "#/components/schemas/MetricsStoreLabelMatcherList"
+
+    MetricsStoreCreate:
+      type: object
+      required: [name, spec]
+      properties:
+        name:
+          type: string
+        spec:
+          $ref: "#/components/schemas/MetricsStoreSpec"
+        defaultLabels:
+          $ref: "#/components/schemas/MetricsStoreLabelMatcherList"
+
+    MetricsStoreSpec:
+      type: object
+      properties:
+        prometheus:
+          $ref: "#/components/schemas/MetricsStorePrometheus"
+        victoriametrics:
+          $ref: "#/components/schemas/MetricsStoreVictoriaMetrics"
+
+    MetricsStorePrometheus:
+      type: object
+      required: [endpoint]
+      properties:
+        endpoint:
+          type: string
+
+    MetricsStoreVictoriaMetrics:
+      type: object
+      required: [endpoint]
+      properties:
+        endpoint:
+          type: string
+
     MetricValue:
       type: array
+
+    MetricsStoreDownloadReq:
+      type: object
+      required: []
+      properties:
+        step:
+          type: string
+          description: Step of the metrics store, e.g. 1h, 1d, 1w, 1m, 1s
+        start:
+          type: string
+          format: date-time
+          description: Start time of the metrics store
+        end:
+          type: string
+          format: date-time
+          description: End time of the metrics store
+        queryRatio:
+          type: number
+          description: |
+             (0, 1], if OOM, reduce the memory usage in Prometheus instance by this ratio (default: 1)
+        query:
+          type: string
+          description: |
+            query to get the metrics, e.g. `{namespace="wavekit"}`
+
+    MetricsStoreLabelMatcherList:
+      type: array
+      items:
+        $ref: "#/components/schemas/MetricsStoreLabelMatcher"
+
+    MetricsStoreLabelMatcher:
+      type: object
+      required: [op, key, value]
+      properties:
+        op:
+          type: string
+          enum: ["EQ", "NEQ", "RE", "NRE"]
+        key:
+          type: string
+          description: Label key
+        value:
+          type: string
+          description: Label value

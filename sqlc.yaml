@@ -16,6 +16,7 @@ sql:
         output_copyfrom_file_name: "copyfrom_gen.go"
         emit_interface: true
         emit_result_struct_pointers: true
+        emit_pointers_for_null_types: true
         overrides:
         - db_type: "int"
           go_type:
@@ -59,4 +60,18 @@ sql:
 
         - db_type: "uuid"
           go_type: "github.com/google/uuid.NullUUID"
+          nullable: true
+
+        - column: "metrics_stores.spec"
+          go_type: 
+            import: "github.com/risingwavelabs/wavekit/internal/apigen"
+            type: "MetricsStoreSpec"
+            pointer: true
+          nullable: true
+
+        - column: "metrics_stores.default_labels"
+          go_type:
+            import: "github.com/risingwavelabs/wavekit/internal/apigen"
+            type: "MetricsStoreLabelMatcherList"
+            pointer: true
           nullable: true

@@ -19,7 +19,7 @@ function mapAPIClusterToUICluster(apiCluster: APICluster): UICluster {
     metaPort: apiCluster.metaPort,
     httpPort: apiCluster.httpPort,
     version: apiCluster.version,
-    prometheusEndpoint: apiCluster.prometheusEndpoint
+    metricsStoreID: apiCluster.metricsStoreID
   }
 }
 
@@ -47,7 +47,15 @@ export default function ClustersPage() {
 
   const handleCreateCluster = async (data: ClusterFormData) => {
     try {
-      const newCluster = await DefaultService.createCluster(data)
+      const newCluster = await DefaultService.createCluster({
+        name: data.name,
+        host: data.host,
+        sqlPort: data.sqlPort,
+        metaPort: data.metaPort,
+        httpPort: data.httpPort,
+        version: data.version,
+        metricsStoreID: data.metricsStoreID === null ? undefined : data.metricsStoreID
+      })
       setClusters(prev => [...prev, mapAPIClusterToUICluster(newCluster)])
       toast.success("Cluster created successfully")
     } catch (error) {
@@ -65,7 +73,7 @@ export default function ClustersPage() {
         metaPort: cluster.metaPort,
         httpPort: cluster.httpPort,
         version: cluster.version,
-        prometheusEndpoint: cluster.prometheusEndpoint || undefined
+        metricsStoreID: cluster.metricsStoreID === null ? undefined : cluster.metricsStoreID
       })
       setClusters(prev => prev.map(c =>
         c.id === cluster.id ? mapAPIClusterToUICluster(updatedCluster) : c

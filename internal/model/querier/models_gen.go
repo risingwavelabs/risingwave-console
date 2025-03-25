@@ -6,6 +6,9 @@ package querier
 
 import (
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/risingwavelabs/wavekit/internal/apigen"
 )
 
 type AutoBackupConfig struct {
@@ -27,17 +30,17 @@ type AutoDiagnosticsConfig struct {
 }
 
 type Cluster struct {
-	ID                 int32
-	OrganizationID     int32
-	Name               string
-	Host               string
-	SqlPort            int32
-	MetaPort           int32
-	HttpPort           int32
-	Version            string
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	PrometheusEndpoint *string
+	ID             int32
+	OrganizationID int32
+	Name           string
+	Host           string
+	SqlPort        int32
+	MetaPort       int32
+	HttpPort       int32
+	Version        string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	MetricsStoreID *int32
 }
 
 type ClusterDiagnostic struct {
@@ -66,6 +69,16 @@ type DatabaseConnection struct {
 	Database       string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+}
+
+type MetricsStore struct {
+	ID             int32
+	Name           string
+	Spec           *apigen.MetricsStoreSpec
+	OrganizationID int32
+	DefaultLabels  *apigen.MetricsStoreLabelMatcherList
+	CreatedAt      pgtype.Timestamp
+	UpdatedAt      pgtype.Timestamp
 }
 
 type OrgSetting struct {

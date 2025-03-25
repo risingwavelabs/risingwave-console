@@ -32,6 +32,7 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import { Loader2, HelpCircle } from "lucide-react"
 import { DefaultService } from "@/api-gen"
 import { toast } from "react-hot-toast"
+import { MetricsStore } from "@/api-gen/models/MetricsStore"
 
 const schema = yup.object().shape({
   name: yup.string().required("Name is required"),
@@ -52,7 +53,7 @@ const schema = yup.object().shape({
     .min(1, "Port must be greater than 0")
     .max(65535, "Port must be less than 65536"),
   version: yup.string().required("Version is required"),
-  prometheusEndpoint: yup.string()
+  metricsStoreID: yup.number().nullable().transform(value => (isNaN(value) ? null : value))
 })
 
 export type ClusterFormData = yup.InferType<typeof schema>
@@ -79,6 +80,9 @@ export function ClusterDialog({
   const [testSuccess, setTestSuccess] = useState(false)
   const [testMessage, setTestMessage] = useState<string>("")
   const [versions, setVersions] = useState<string[]>([])
+  const [metricsStores, setMetricsStores] = useState<MetricsStore[]>([])
+  const [loadingMetricsStores, setLoadingMetricsStores] = useState(false)
+  const [metricsStoresError, setMetricsStoresError] = useState<string | null>(null)
 
   const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : open
@@ -100,7 +104,7 @@ export function ClusterDialog({
       metaPort: 5690,
       httpPort: 5691,
       version: "latest",
-      prometheusEndpoint: undefined
+      metricsStoreID: null
     }
   })
 
@@ -114,6 +118,24 @@ export function ClusterDialog({
       }
     }
     void fetchVersions()
+  }, [])
+
+  useEffect(() => {
+    const fetchMetricsStores = async () => {
+      setLoadingMetricsStores(true)
+      setMetricsStoresError(null)
+      try {
+        const data = await DefaultService.listMetricsStores()
+        console.log("Fetched metrics stores:", data)
+        setMetricsStores(data)
+      } catch (error) {
+        console.error("Error loading metrics stores:", error)
+        setMetricsStoresError("Failed to load metrics stores")
+      } finally {
+        setLoadingMetricsStores(false)
+      }
+    }
+    void fetchMetricsStores()
   }, [])
 
   // Watch all form fields to hide success message on change
@@ -234,15 +256,50 @@ export function ClusterDialog({
               )}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="prometheusEndpoint">Prometheus Endpoint</Label>
-              <Input
-                id="prometheusEndpoint"
-                placeholder="http://localhost:9090"
-                {...register("prometheusEndpoint")}
-                className={errors.prometheusEndpoint ? "border-red-500" : ""}
-              />
-              {errors.prometheusEndpoint && (
-                <p className="text-sm text-red-500">{errors.prometheusEndpoint.message}</p>
+              <Label htmlFor="metricsStoreID">Metrics Store</Label>
+              {loadingMetricsStores ? (
+                <div className="flex items-center gap-2 h-10 px-3 border rounded-md">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm text-muted-foreground">Loading metrics stores...</span>
+                </div>
+              ) : metricsStoresError ? (
+                <div className="text-sm text-red-500 p-2 border border-red-200 bg-red-50 rounded-md">
+                  {metricsStoresError}
+                </div>
+              ) : (
+                <Controller
+                  name="metricsStoreID"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value?.toString() || "none"}
+                      onValueChange={(value) => field.onChange(value === "none" ? null : parseInt(value))}
+                    >
+                      <SelectTrigger className={errors.metricsStoreID ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Select a metrics store" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[200px]">
+                        <SelectItem value="none">
+                          None
+                        </SelectItem>
+                        {metricsStores.length === 0 ? (
+                          <SelectItem value="no-stores" disabled>
+                            No metrics stores available
+                          </SelectItem>
+                        ) : (
+                          metricsStores.map((store) => (
+                            <SelectItem key={store.ID} value={store.ID.toString()}>
+                              {store.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              )}
+              {errors.metricsStoreID && (
+                <p className="text-sm text-red-500">{errors.metricsStoreID.message}</p>
               )}
             </div>
             <div className="grid gap-2">

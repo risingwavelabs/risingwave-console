@@ -10,6 +10,7 @@ import {
 import {
   Server,
   // Settings,
+  BarChart,
   Code,
   Moon,
   Sun,
@@ -49,11 +50,11 @@ const mainMenuItems = [
     href: "/sqlconsole",
     icon: Code,
   },
-  // {
-  //   title: "Settings",
-  //   href: "/settings",
-  //   icon: Settings,
-  // },
+  {
+    title: "Metrics Store",
+    href: "/metricsstore",
+    icon: BarChart,
+  },
 ]
 
 export function AppSidebar() {

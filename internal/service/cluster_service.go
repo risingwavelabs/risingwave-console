@@ -47,14 +47,14 @@ func (s *Service) ListClusterVersions(ctx context.Context) ([]string, error) {
 
 func (s *Service) CreateCluster(ctx context.Context, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error) {
 	cluster, err := s.m.CreateCluster(ctx, querier.CreateClusterParams{
-		OrganizationID:     orgID,
-		Name:               params.Name,
-		Host:               params.Host,
-		SqlPort:            params.SqlPort,
-		MetaPort:           params.MetaPort,
-		HttpPort:           params.HttpPort,
-		Version:            params.Version,
-		PrometheusEndpoint: params.PrometheusEndpoint,
+		OrganizationID: orgID,
+		Name:           params.Name,
+		Host:           params.Host,
+		SqlPort:        params.SqlPort,
+		MetaPort:       params.MetaPort,
+		HttpPort:       params.HttpPort,
+		Version:        params.Version,
+		MetricsStoreID: params.MetricsStoreID,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create cluster")
@@ -96,15 +96,15 @@ func (s *Service) ListClusters(ctx context.Context, orgID int32) ([]*apigen.Clus
 
 func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error) {
 	cluster, err := s.m.UpdateOrgCluster(ctx, querier.UpdateOrgClusterParams{
-		ID:                 id,
-		OrganizationID:     orgID,
-		Name:               params.Name,
-		Host:               params.Host,
-		Version:            params.Version,
-		SqlPort:            int32(params.SqlPort),
-		MetaPort:           int32(params.MetaPort),
-		HttpPort:           int32(params.HttpPort),
-		PrometheusEndpoint: params.PrometheusEndpoint,
+		ID:             id,
+		OrganizationID: orgID,
+		Name:           params.Name,
+		Host:           params.Host,
+		Version:        params.Version,
+		SqlPort:        int32(params.SqlPort),
+		MetaPort:       int32(params.MetaPort),
+		HttpPort:       int32(params.HttpPort),
+		MetricsStoreID: params.MetricsStoreID,
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {

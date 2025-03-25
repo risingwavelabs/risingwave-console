@@ -6,8 +6,14 @@ clusters:
       sqlPort: 4566
       metaPort: 5690
       httpPort: 5691
+    metricsStore: Default
 databases:
   - name: rw
     cluster: Default Local Cluster
     username: root
     database: dev
+metricsStores:
+  - name: Default
+    spec:
+      prometheus:
+        endpoint: http://prometheus:9500

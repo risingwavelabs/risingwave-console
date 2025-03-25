@@ -9,7 +9,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
-	"github.com/risingwavelabs/wavekit/internal/conn/prom"
+	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/utils"
@@ -133,14 +133,32 @@ type ServiceInterface interface {
 
 	// GetMaterializedViewThroughput gets the throughput of materialized views
 	GetMaterializedViewThroughput(ctx context.Context, clusterID int32) (prom_model.Matrix, error)
+
+	// CreateMetricsStore creates a new metrics store
+	CreateMetricsStore(context.Context, apigen.MetricsStoreCreate, int32) (*apigen.MetricsStore, error)
+
+	// DeleteMetricsStore deletes a metrics store
+	DeleteMetricsStore(ctx context.Context, id int32, organizationID int32, force bool) error
+
+	// GetMetricsStore gets a metrics store by ID
+	GetMetricsStore(ctx context.Context, id int32, organizationID int32) (*apigen.MetricsStore, error)
+
+	// UpdateMetricsStore updates a metrics store
+	UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreCreate, organizationID int32) (*apigen.MetricsStore, error)
+
+	// ListClustersByMetricsStoreID lists all clusters by metrics store ID
+	ListMetricsStores(ctx context.Context, organizationID int32) ([]*apigen.MetricsStore, error)
+
+	// ListClustersByMetricsStoreID lists all clusters by metrics store ID
+	ListClustersByMetricsStoreID(ctx context.Context, id int32) ([]*apigen.Cluster, error)
 }
 
 type Service struct {
-	m        model.ModelInterface
-	auth     auth.AuthInterface
-	sqlm     sql.SQLConnectionManegerInterface
-	risectlm meta.RisectlManagerInterface
-	promm    prom.PromManagerInterface
+	m                  model.ModelInterface
+	auth               auth.AuthInterface
+	sqlm               sql.SQLConnectionManegerInterface
+	risectlm           meta.RisectlManagerInterface
+	metricsConnManager *metricsstore.MetricsManager
 
 	now                 func() time.Time
 	generateHashAndSalt func(password string) (string, string, error)
@@ -152,7 +170,7 @@ func NewService(
 	auth auth.AuthInterface,
 	sqlm sql.SQLConnectionManegerInterface,
 	risectlm meta.RisectlManagerInterface,
-	promm prom.PromManagerInterface,
+	metricsConnManager *metricsstore.MetricsManager,
 ) ServiceInterface {
 	return &Service{
 		m:                   m,
@@ -161,6 +179,6 @@ func NewService(
 		auth:                auth,
 		sqlm:                sqlm,
 		risectlm:            risectlm,
-		promm:               promm,
+		metricsConnManager:  metricsConnManager,
 	}
 }

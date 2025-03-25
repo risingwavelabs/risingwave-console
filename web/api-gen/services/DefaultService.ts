@@ -12,6 +12,8 @@ import type { DatabaseConnectInfo } from '../models/DatabaseConnectInfo';
 import type { DDLProgress } from '../models/DDLProgress';
 import type { DiagnosticData } from '../models/DiagnosticData';
 import type { MetricMatrix } from '../models/MetricMatrix';
+import type { MetricsStore } from '../models/MetricsStore';
+import type { MetricsStoreCreate } from '../models/MetricsStoreCreate';
 import type { QueryRequest } from '../models/QueryRequest';
 import type { QueryResponse } from '../models/QueryResponse';
 import type { RefreshTokenRequest } from '../models/RefreshTokenRequest';
@@ -609,6 +611,98 @@ export class DefaultService {
             errors: {
                 401: `Invalid or expired refresh token`,
             },
+        });
+    }
+    /**
+     * Get a metrics store
+     * Get a metrics store by ID
+     * @param id
+     * @returns MetricsStore Successfully retrieved metrics store
+     * @throws ApiError
+     */
+    public static getMetricsStore(
+        id: number,
+    ): CancelablePromise<MetricsStore> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/metrics-stores/{ID}',
+            path: {
+                'ID': id,
+            },
+        });
+    }
+    /**
+     * Update a metrics store
+     * Update a metrics store
+     * @param id
+     * @param requestBody
+     * @returns any Successfully updated metrics store
+     * @throws ApiError
+     */
+    public static updateMetricsStore(
+        id: number,
+        requestBody: MetricsStore,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/metrics-stores/{ID}',
+            path: {
+                'ID': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Delete a metrics store
+     * Delete a metrics store
+     * @param id
+     * @param force force delete the metrics store even if it is in use
+     * @returns void
+     * @throws ApiError
+     */
+    public static deleteMetricsStore(
+        id: number,
+        force: boolean = false,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/metrics-stores/{ID}',
+            path: {
+                'ID': id,
+            },
+            query: {
+                'force': force,
+            },
+        });
+    }
+    /**
+     * Create a new metrics store
+     * Create a new metrics store
+     * @param requestBody
+     * @returns MetricsStore Successfully created metrics store
+     * @throws ApiError
+     */
+    public static createMetricsStore(
+        requestBody: MetricsStoreCreate,
+    ): CancelablePromise<MetricsStore> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/metrics-stores',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Get all metrics stores
+     * Get all metrics stores
+     * @returns MetricsStore Successfully retrieved metrics stores
+     * @throws ApiError
+     */
+    public static listMetricsStores(): CancelablePromise<Array<MetricsStore>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/metrics-stores',
         });
     }
     /**

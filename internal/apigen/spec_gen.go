@@ -27,6 +27,14 @@ const (
 	Bearer CredentialsTokenType = "Bearer"
 )
 
+// Defines values for MetricsStoreLabelMatcherOp.
+const (
+	EQ  MetricsStoreLabelMatcherOp = "EQ"
+	NEQ MetricsStoreLabelMatcherOp = "NEQ"
+	NRE MetricsStoreLabelMatcherOp = "NRE"
+	RE  MetricsStoreLabelMatcherOp = "RE"
+)
+
 // Defines values for RelationType.
 const (
 	MaterializedView RelationType = "materializedView"
@@ -62,19 +70,19 @@ type AutoDiagnosticConfig struct {
 
 // Cluster defines model for Cluster.
 type Cluster struct {
-	ID             int32     `json:"ID"`
-	CreatedAt      time.Time `json:"createdAt"`
-	Host           string    `json:"host"`
-	HttpPort       int32     `json:"httpPort"`
-	MetaPort       int32     `json:"metaPort"`
+	ID        int32     `json:"ID"`
+	CreatedAt time.Time `json:"createdAt"`
+	Host      string    `json:"host"`
+	HttpPort  int32     `json:"httpPort"`
+	MetaPort  int32     `json:"metaPort"`
+
+	// MetricsStoreID ID of the metrics store this cluster belongs to
+	MetricsStoreID *int32    `json:"metricsStoreID,omitempty"`
 	Name           string    `json:"name"`
 	OrganizationID int32     `json:"organizationID"`
-
-	// PrometheusEndpoint Prometheus endpoint
-	PrometheusEndpoint *string   `json:"prometheusEndpoint,omitempty"`
-	SqlPort            int32     `json:"sqlPort"`
-	UpdatedAt          time.Time `json:"updatedAt"`
-	Version            string    `json:"version"`
+	SqlPort        int32     `json:"sqlPort"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+	Version        string    `json:"version"`
 }
 
 // ClusterCreate defines model for ClusterCreate.
@@ -88,11 +96,11 @@ type ClusterCreate struct {
 	// MetaPort Metadata node port
 	MetaPort int32 `json:"metaPort"`
 
+	// MetricsStoreID ID of the metrics store this cluster belongs to
+	MetricsStoreID *int32 `json:"metricsStoreID,omitempty"`
+
 	// Name Name of the cluster
 	Name string `json:"name"`
-
-	// PrometheusEndpoint Prometheus endpoint
-	PrometheusEndpoint *string `json:"prometheusEndpoint,omitempty"`
 
 	// SqlPort SQL connection port
 	SqlPort int32 `json:"sqlPort"`
@@ -217,6 +225,54 @@ type MetricSeries struct {
 
 // MetricValue defines model for MetricValue.
 type MetricValue = []interface{}
+
+// MetricsStore defines model for MetricsStore.
+type MetricsStore struct {
+	ID            int32                         `json:"ID"`
+	CreatedAt     time.Time                     `json:"createdAt"`
+	DefaultLabels *MetricsStoreLabelMatcherList `json:"defaultLabels,omitempty"`
+	Name          string                        `json:"name"`
+	Spec          *MetricsStoreSpec             `json:"spec,omitempty"`
+}
+
+// MetricsStoreCreate defines model for MetricsStoreCreate.
+type MetricsStoreCreate struct {
+	DefaultLabels *MetricsStoreLabelMatcherList `json:"defaultLabels,omitempty"`
+	Name          string                        `json:"name"`
+	Spec          MetricsStoreSpec              `json:"spec"`
+}
+
+// MetricsStoreLabelMatcher defines model for MetricsStoreLabelMatcher.
+type MetricsStoreLabelMatcher struct {
+	// Key Label key
+	Key string                     `json:"key"`
+	Op  MetricsStoreLabelMatcherOp `json:"op"`
+
+	// Value Label value
+	Value string `json:"value"`
+}
+
+// MetricsStoreLabelMatcherOp defines model for MetricsStoreLabelMatcher.Op.
+type MetricsStoreLabelMatcherOp string
+
+// MetricsStoreLabelMatcherList defines model for MetricsStoreLabelMatcherList.
+type MetricsStoreLabelMatcherList = []MetricsStoreLabelMatcher
+
+// MetricsStorePrometheus defines model for MetricsStorePrometheus.
+type MetricsStorePrometheus struct {
+	Endpoint string `json:"endpoint"`
+}
+
+// MetricsStoreSpec defines model for MetricsStoreSpec.
+type MetricsStoreSpec struct {
+	Prometheus      *MetricsStorePrometheus      `json:"prometheus,omitempty"`
+	Victoriametrics *MetricsStoreVictoriaMetrics `json:"victoriametrics,omitempty"`
+}
+
+// MetricsStoreVictoriaMetrics defines model for MetricsStoreVictoriaMetrics.
+type MetricsStoreVictoriaMetrics struct {
+	Endpoint string `json:"endpoint"`
+}
 
 // QueryRequest defines model for QueryRequest.
 type QueryRequest struct {
@@ -360,12 +416,12 @@ type UpdateClusterRequest struct {
 	Host     string `json:"host"`
 	HttpPort int32  `json:"httpPort"`
 	MetaPort int32  `json:"metaPort"`
-	Name     string `json:"name"`
 
-	// PrometheusEndpoint Prometheus endpoint
-	PrometheusEndpoint *string `json:"prometheusEndpoint,omitempty"`
-	SqlPort            int32   `json:"sqlPort"`
-	Version            string  `json:"version"`
+	// MetricsStoreID ID of the metrics store this cluster belongs to
+	MetricsStoreID *int32 `json:"metricsStoreID,omitempty"`
+	Name           string `json:"name"`
+	SqlPort        int32  `json:"sqlPort"`
+	Version        string `json:"version"`
 }
 
 // DeleteClusterParams defines parameters for DeleteCluster.
@@ -386,6 +442,12 @@ type ListClusterDiagnosticsParams struct {
 
 	// PerPage Number of items per page
 	PerPage *int `form:"perPage,omitempty" json:"perPage,omitempty"`
+}
+
+// DeleteMetricsStoreParams defines parameters for DeleteMetricsStore.
+type DeleteMetricsStoreParams struct {
+	// Force force delete the metrics store even if it is in use
+	Force bool `form:"force" json:"force"`
 }
 
 // RefreshTokenJSONRequestBody defines body for RefreshToken for application/json ContentType.
@@ -426,6 +488,12 @@ type UpdateDatabaseJSONRequestBody = DatabaseConnectInfo
 
 // QueryDatabaseJSONRequestBody defines body for QueryDatabase for application/json ContentType.
 type QueryDatabaseJSONRequestBody = QueryRequest
+
+// CreateMetricsStoreJSONRequestBody defines body for CreateMetricsStore for application/json ContentType.
+type CreateMetricsStoreJSONRequestBody = MetricsStoreCreate
+
+// UpdateMetricsStoreJSONRequestBody defines body for UpdateMetricsStore for application/json ContentType.
+type UpdateMetricsStoreJSONRequestBody = MetricsStore
 
 // TestClusterConnectionJSONRequestBody defines body for TestClusterConnection for application/json ContentType.
 type TestClusterConnectionJSONRequestBody = TestClusterConnectionPayload
@@ -615,6 +683,25 @@ type ClientInterface interface {
 	QueryDatabaseWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	QueryDatabase(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListMetricsStores request
+	ListMetricsStores(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateMetricsStoreWithBody request with any body
+	CreateMetricsStoreWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateMetricsStore(ctx context.Context, body CreateMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteMetricsStore request
+	DeleteMetricsStore(ctx context.Context, iD int32, params *DeleteMetricsStoreParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetMetricsStore request
+	GetMetricsStore(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateMetricsStoreWithBody request with any body
+	UpdateMetricsStoreWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateMetricsStore(ctx context.Context, iD int32, body UpdateMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetMaterializedViewThroughput request
 	GetMaterializedViewThroughput(ctx context.Context, clusterID int32, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1119,6 +1206,90 @@ func (c *Client) QueryDatabaseWithBody(ctx context.Context, iD int32, contentTyp
 
 func (c *Client) QueryDatabase(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewQueryDatabaseRequest(c.Server, iD, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListMetricsStores(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListMetricsStoresRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateMetricsStoreWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateMetricsStoreRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateMetricsStore(ctx context.Context, body CreateMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateMetricsStoreRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteMetricsStore(ctx context.Context, iD int32, params *DeleteMetricsStoreParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteMetricsStoreRequest(c.Server, iD, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetMetricsStore(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetMetricsStoreRequest(c.Server, iD)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateMetricsStoreWithBody(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateMetricsStoreRequestWithBody(c.Server, iD, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateMetricsStore(ctx context.Context, iD int32, body UpdateMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateMetricsStoreRequest(c.Server, iD, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2384,6 +2555,206 @@ func NewQueryDatabaseRequestWithBody(server string, iD int32, contentType string
 	return req, nil
 }
 
+// NewListMetricsStoresRequest generates requests for ListMetricsStores
+func NewListMetricsStoresRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/metrics-stores")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateMetricsStoreRequest calls the generic CreateMetricsStore builder with application/json body
+func NewCreateMetricsStoreRequest(server string, body CreateMetricsStoreJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateMetricsStoreRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateMetricsStoreRequestWithBody generates requests for CreateMetricsStore with any type of body
+func NewCreateMetricsStoreRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/metrics-stores")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteMetricsStoreRequest generates requests for DeleteMetricsStore
+func NewDeleteMetricsStoreRequest(server string, iD int32, params *DeleteMetricsStoreParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/metrics-stores/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "force", runtime.ParamLocationQuery, params.Force); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetMetricsStoreRequest generates requests for GetMetricsStore
+func NewGetMetricsStoreRequest(server string, iD int32) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/metrics-stores/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateMetricsStoreRequest calls the generic UpdateMetricsStore builder with application/json body
+func NewUpdateMetricsStoreRequest(server string, iD int32, body UpdateMetricsStoreJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateMetricsStoreRequestWithBody(server, iD, "application/json", bodyReader)
+}
+
+// NewUpdateMetricsStoreRequestWithBody generates requests for UpdateMetricsStore with any type of body
+func NewUpdateMetricsStoreRequestWithBody(server string, iD int32, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "ID", runtime.ParamLocationPath, iD)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/metrics-stores/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetMaterializedViewThroughputRequest generates requests for GetMaterializedViewThroughput
 func NewGetMaterializedViewThroughputRequest(server string, clusterID int32) (*http.Request, error) {
 	var err error
@@ -2613,6 +2984,25 @@ type ClientWithResponsesInterface interface {
 	QueryDatabaseWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
 
 	QueryDatabaseWithResponse(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
+
+	// ListMetricsStoresWithResponse request
+	ListMetricsStoresWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMetricsStoresResponse, error)
+
+	// CreateMetricsStoreWithBodyWithResponse request with any body
+	CreateMetricsStoreWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateMetricsStoreResponse, error)
+
+	CreateMetricsStoreWithResponse(ctx context.Context, body CreateMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateMetricsStoreResponse, error)
+
+	// DeleteMetricsStoreWithResponse request
+	DeleteMetricsStoreWithResponse(ctx context.Context, iD int32, params *DeleteMetricsStoreParams, reqEditors ...RequestEditorFn) (*DeleteMetricsStoreResponse, error)
+
+	// GetMetricsStoreWithResponse request
+	GetMetricsStoreWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetMetricsStoreResponse, error)
+
+	// UpdateMetricsStoreWithBodyWithResponse request with any body
+	UpdateMetricsStoreWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateMetricsStoreResponse, error)
+
+	UpdateMetricsStoreWithResponse(ctx context.Context, iD int32, body UpdateMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateMetricsStoreResponse, error)
 
 	// GetMaterializedViewThroughputWithResponse request
 	GetMaterializedViewThroughputWithResponse(ctx context.Context, clusterID int32, reqEditors ...RequestEditorFn) (*GetMaterializedViewThroughputResponse, error)
@@ -3253,6 +3643,114 @@ func (r QueryDatabaseResponse) StatusCode() int {
 	return 0
 }
 
+type ListMetricsStoresResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]MetricsStore
+}
+
+// Status returns HTTPResponse.Status
+func (r ListMetricsStoresResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListMetricsStoresResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateMetricsStoreResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *MetricsStore
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateMetricsStoreResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateMetricsStoreResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteMetricsStoreResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteMetricsStoreResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteMetricsStoreResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetMetricsStoreResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *MetricsStore
+}
+
+// Status returns HTTPResponse.Status
+func (r GetMetricsStoreResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetMetricsStoreResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateMetricsStoreResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateMetricsStoreResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateMetricsStoreResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetMaterializedViewThroughputResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3660,6 +4158,67 @@ func (c *ClientWithResponses) QueryDatabaseWithResponse(ctx context.Context, iD 
 		return nil, err
 	}
 	return ParseQueryDatabaseResponse(rsp)
+}
+
+// ListMetricsStoresWithResponse request returning *ListMetricsStoresResponse
+func (c *ClientWithResponses) ListMetricsStoresWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMetricsStoresResponse, error) {
+	rsp, err := c.ListMetricsStores(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListMetricsStoresResponse(rsp)
+}
+
+// CreateMetricsStoreWithBodyWithResponse request with arbitrary body returning *CreateMetricsStoreResponse
+func (c *ClientWithResponses) CreateMetricsStoreWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateMetricsStoreResponse, error) {
+	rsp, err := c.CreateMetricsStoreWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateMetricsStoreResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateMetricsStoreWithResponse(ctx context.Context, body CreateMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateMetricsStoreResponse, error) {
+	rsp, err := c.CreateMetricsStore(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateMetricsStoreResponse(rsp)
+}
+
+// DeleteMetricsStoreWithResponse request returning *DeleteMetricsStoreResponse
+func (c *ClientWithResponses) DeleteMetricsStoreWithResponse(ctx context.Context, iD int32, params *DeleteMetricsStoreParams, reqEditors ...RequestEditorFn) (*DeleteMetricsStoreResponse, error) {
+	rsp, err := c.DeleteMetricsStore(ctx, iD, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteMetricsStoreResponse(rsp)
+}
+
+// GetMetricsStoreWithResponse request returning *GetMetricsStoreResponse
+func (c *ClientWithResponses) GetMetricsStoreWithResponse(ctx context.Context, iD int32, reqEditors ...RequestEditorFn) (*GetMetricsStoreResponse, error) {
+	rsp, err := c.GetMetricsStore(ctx, iD, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetMetricsStoreResponse(rsp)
+}
+
+// UpdateMetricsStoreWithBodyWithResponse request with arbitrary body returning *UpdateMetricsStoreResponse
+func (c *ClientWithResponses) UpdateMetricsStoreWithBodyWithResponse(ctx context.Context, iD int32, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateMetricsStoreResponse, error) {
+	rsp, err := c.UpdateMetricsStoreWithBody(ctx, iD, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateMetricsStoreResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateMetricsStoreWithResponse(ctx context.Context, iD int32, body UpdateMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateMetricsStoreResponse, error) {
+	rsp, err := c.UpdateMetricsStore(ctx, iD, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateMetricsStoreResponse(rsp)
 }
 
 // GetMaterializedViewThroughputWithResponse request returning *GetMaterializedViewThroughputResponse
@@ -4362,6 +4921,116 @@ func ParseQueryDatabaseResponse(rsp *http.Response) (*QueryDatabaseResponse, err
 	return response, nil
 }
 
+// ParseListMetricsStoresResponse parses an HTTP response from a ListMetricsStoresWithResponse call
+func ParseListMetricsStoresResponse(rsp *http.Response) (*ListMetricsStoresResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListMetricsStoresResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []MetricsStore
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateMetricsStoreResponse parses an HTTP response from a CreateMetricsStoreWithResponse call
+func ParseCreateMetricsStoreResponse(rsp *http.Response) (*CreateMetricsStoreResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateMetricsStoreResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest MetricsStore
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteMetricsStoreResponse parses an HTTP response from a DeleteMetricsStoreWithResponse call
+func ParseDeleteMetricsStoreResponse(rsp *http.Response) (*DeleteMetricsStoreResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteMetricsStoreResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetMetricsStoreResponse parses an HTTP response from a GetMetricsStoreWithResponse call
+func ParseGetMetricsStoreResponse(rsp *http.Response) (*GetMetricsStoreResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetMetricsStoreResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest MetricsStore
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateMetricsStoreResponse parses an HTTP response from a UpdateMetricsStoreWithResponse call
+func ParseUpdateMetricsStoreResponse(rsp *http.Response) (*UpdateMetricsStoreResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateMetricsStoreResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseGetMaterializedViewThroughputResponse parses an HTTP response from a GetMaterializedViewThroughputWithResponse call
 func ParseGetMaterializedViewThroughputResponse(rsp *http.Response) (*GetMaterializedViewThroughputResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -4503,6 +5172,21 @@ type ServerInterface interface {
 	// Query database
 	// (POST /databases/{ID}/query)
 	QueryDatabase(c *fiber.Ctx, iD int32) error
+	// Get all metrics stores
+	// (GET /metrics-stores)
+	ListMetricsStores(c *fiber.Ctx) error
+	// Create a new metrics store
+	// (POST /metrics-stores)
+	CreateMetricsStore(c *fiber.Ctx) error
+	// Delete a metrics store
+	// (DELETE /metrics-stores/{ID})
+	DeleteMetricsStore(c *fiber.Ctx, iD int32, params DeleteMetricsStoreParams) error
+	// Get a metrics store
+	// (GET /metrics-stores/{ID})
+	GetMetricsStore(c *fiber.Ctx, iD int32) error
+	// Update a metrics store
+	// (PUT /metrics-stores/{ID})
+	UpdateMetricsStore(c *fiber.Ctx, iD int32) error
 	// Get materialized view throughput
 	// (GET /metrics/{clusterID}/materialized-view-throughput)
 	GetMaterializedViewThroughput(c *fiber.Ctx, clusterID int32) error
@@ -5039,6 +5723,100 @@ func (siw *ServerInterfaceWrapper) QueryDatabase(c *fiber.Ctx) error {
 	return siw.Handler.QueryDatabase(c, iD)
 }
 
+// ListMetricsStores operation middleware
+func (siw *ServerInterfaceWrapper) ListMetricsStores(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.ListMetricsStores(c)
+}
+
+// CreateMetricsStore operation middleware
+func (siw *ServerInterfaceWrapper) CreateMetricsStore(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CreateMetricsStore(c)
+}
+
+// DeleteMetricsStore operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMetricsStore(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "ID" -------------
+	var iD int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteMetricsStoreParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Required query parameter "force" -------------
+
+	if paramValue := c.Query("force"); paramValue != "" {
+
+	} else {
+		err = fmt.Errorf("Query argument force is required, but not found")
+		c.Status(fiber.StatusBadRequest).JSON(err)
+		return err
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "force", query, &params.Force)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter force: %w", err).Error())
+	}
+
+	return siw.Handler.DeleteMetricsStore(c, iD, params)
+}
+
+// GetMetricsStore operation middleware
+func (siw *ServerInterfaceWrapper) GetMetricsStore(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "ID" -------------
+	var iD int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.GetMetricsStore(c, iD)
+}
+
+// UpdateMetricsStore operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMetricsStore(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "ID" -------------
+	var iD int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ID", c.Params("ID"), &iD, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.UpdateMetricsStore(c, iD)
+}
+
 // GetMaterializedViewThroughput operation middleware
 func (siw *ServerInterfaceWrapper) GetMaterializedViewThroughput(c *fiber.Ctx) error {
 
@@ -5143,6 +5921,16 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	router.Post(options.BaseURL+"/databases/:ID/ddl-progress/:ddlID/cancel", wrapper.CancelDDLProgress)
 
 	router.Post(options.BaseURL+"/databases/:ID/query", wrapper.QueryDatabase)
+
+	router.Get(options.BaseURL+"/metrics-stores", wrapper.ListMetricsStores)
+
+	router.Post(options.BaseURL+"/metrics-stores", wrapper.CreateMetricsStore)
+
+	router.Delete(options.BaseURL+"/metrics-stores/:ID", wrapper.DeleteMetricsStore)
+
+	router.Get(options.BaseURL+"/metrics-stores/:ID", wrapper.GetMetricsStore)
+
+	router.Put(options.BaseURL+"/metrics-stores/:ID", wrapper.UpdateMetricsStore)
 
 	router.Get(options.BaseURL+"/metrics/:clusterID/materialized-view-throughput", wrapper.GetMaterializedViewThroughput)
 

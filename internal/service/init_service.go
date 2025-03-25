@@ -6,9 +6,11 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
+	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
+	"github.com/risingwavelabs/wavekit/internal/utils"
 	"gopkg.in/yaml.v3"
 )
 
@@ -25,9 +27,10 @@ type ClusterConnections struct {
 }
 
 type Cluster struct {
-	Name        string              `yaml:"name" validate:"required"`
-	Version     string              `yaml:"version" validate:"required"`
-	Connections *ClusterConnections `yaml:"connections" validate:"required"`
+	Name         string              `yaml:"name" validate:"required"`
+	Version      string              `yaml:"version" validate:"required"`
+	Connections  *ClusterConnections `yaml:"connections" validate:"required"`
+	MetricsStore string              `yaml:"metricsStore" validate:"required"`
 }
 
 type Database struct {
@@ -44,9 +47,10 @@ type Query struct {
 }
 
 type InitConfig struct {
-	Clusters  []Cluster  `yaml:"clusters"`
-	Databases []Database `yaml:"databases"`
-	Queries   []Query    `yaml:"queries"`
+	Clusters      []Cluster             `yaml:"clusters"`
+	Databases     []Database            `yaml:"databases"`
+	Queries       []Query               `yaml:"queries"`
+	MetricsStores []apigen.MetricsStore `yaml:"metricsStores"`
 }
 
 func NewInitService(m model.ModelInterface, s ServiceInterface) *InitService {
@@ -99,11 +103,26 @@ func (s *InitService) Init(ctx context.Context, cfg *config.Config) error {
 func (s *InitService) initDatabase(ctx context.Context, cfg *InitConfig, orgID int32) error {
 	if err := s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
 		clusterNameToID := make(map[string]int32)
+		metricsStoreNameToID := make(map[string]int32)
+
+		for _, metricsStore := range cfg.MetricsStores {
+			ms, err := s.m.CreateMetricsStore(ctx, querier.CreateMetricsStoreParams{
+				OrganizationID: orgID,
+				Name:           metricsStore.Name,
+				Spec:           metricsStore.Spec,
+				DefaultLabels:  metricsStore.DefaultLabels,
+			})
+			if err != nil {
+				return errors.Wrapf(err, "failed to create metrics store: %s", metricsStore.Name)
+			}
+			metricsStoreNameToID[metricsStore.Name] = ms.ID
+		}
 
 		for _, cluster := range cfg.Clusters {
 			if cluster.Connections == nil {
 				return errors.New("cluster connections is required")
 			}
+			msid, ok := metricsStoreNameToID[cluster.MetricsStore]
 			cluster, err := s.m.InitCluster(ctx, querier.InitClusterParams{
 				OrganizationID: orgID,
 				Name:           cluster.Name,
@@ -112,6 +131,7 @@ func (s *InitService) initDatabase(ctx context.Context, cfg *InitConfig, orgID i
 				MetaPort:       cluster.Connections.MetaPort,
 				HttpPort:       cluster.Connections.HttpPort,
 				Version:        cluster.Version,
+				MetricsStoreID: utils.IfElse(ok, &msid, nil),
 			})
 			if err != nil {
 				return errors.Wrapf(err, "failed to create cluster: %s", cluster.Name)
