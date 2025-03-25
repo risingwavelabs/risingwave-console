@@ -5,7 +5,7 @@ CREATE TABLE metrics_stores (
     name            TEXT NOT NULL,
     spec            JSONB NOT NULL,
     organization_id INTEGER NOT NULL REFERENCES organizations(id),
-    default_labels  JSONB NOT NULL DEFAULT '{}',
+    default_labels  JSONB,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

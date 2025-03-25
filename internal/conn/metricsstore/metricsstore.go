@@ -36,7 +36,7 @@ func (m *MetricsManager) GetMetricsConn(ctx context.Context, clusterID int32) (M
 	}
 	selectors := ""
 	if metricsStore.DefaultLabels != nil {
-		for i, label := range metricsStore.DefaultLabels {
+		for i, label := range *metricsStore.DefaultLabels {
 			if i > 0 {
 				selectors += ","
 			}

@@ -237,9 +237,9 @@ type MetricsStore struct {
 
 // MetricsStoreCreate defines model for MetricsStoreCreate.
 type MetricsStoreCreate struct {
-	DefaultLabels MetricsStoreLabelMatcherList `json:"defaultLabels"`
-	Name          string                       `json:"name"`
-	Spec          MetricsStoreSpec             `json:"spec"`
+	DefaultLabels *MetricsStoreLabelMatcherList `json:"defaultLabels,omitempty"`
+	Name          string                        `json:"name"`
+	Spec          MetricsStoreSpec              `json:"spec"`
 }
 
 // MetricsStoreLabelMatcher defines model for MetricsStoreLabelMatcher.

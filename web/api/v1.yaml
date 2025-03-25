@@ -1382,7 +1382,7 @@ components:
 
     MetricsStoreCreate:
       type: object
-      required: [name, spec, defaultLabels]
+      required: [name, spec]
       properties:
         name:
           type: string

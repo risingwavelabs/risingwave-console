@@ -66,8 +66,12 @@ sql:
           go_type: 
             import: "github.com/risingwavelabs/wavekit/internal/apigen"
             type: "MetricsStoreSpec"
+            pointer: true
+          nullable: true
 
         - column: "metrics_stores.default_labels"
           go_type:
             import: "github.com/risingwavelabs/wavekit/internal/apigen"
             type: "MetricsStoreLabelMatcherList"
+            pointer: true
+          nullable: true

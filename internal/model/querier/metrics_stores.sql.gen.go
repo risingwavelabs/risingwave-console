@@ -19,9 +19,9 @@ RETURNING id, name, spec, organization_id, default_labels, created_at, updated_a
 
 type CreateMetricsStoreParams struct {
 	Name           string
-	Spec           apigen.MetricsStoreSpec
+	Spec           *apigen.MetricsStoreSpec
 	OrganizationID int32
-	DefaultLabels  apigen.MetricsStoreLabelMatcherList
+	DefaultLabels  *apigen.MetricsStoreLabelMatcherList
 }
 
 func (q *Queries) CreateMetricsStore(ctx context.Context, arg CreateMetricsStoreParams) (*MetricsStore, error) {
@@ -152,8 +152,8 @@ RETURNING id, name, spec, organization_id, default_labels, created_at, updated_a
 type UpdateMetricsStoreParams struct {
 	ID             int32
 	Name           string
-	Spec           apigen.MetricsStoreSpec
-	DefaultLabels  apigen.MetricsStoreLabelMatcherList
+	Spec           *apigen.MetricsStoreSpec
+	DefaultLabels  *apigen.MetricsStoreLabelMatcherList
 	OrganizationID int32
 }
 

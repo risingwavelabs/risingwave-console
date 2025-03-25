@@ -74,9 +74,9 @@ type DatabaseConnection struct {
 type MetricsStore struct {
 	ID             int32
 	Name           string
-	Spec           apigen.MetricsStoreSpec
+	Spec           *apigen.MetricsStoreSpec
 	OrganizationID int32
-	DefaultLabels  apigen.MetricsStoreLabelMatcherList
+	DefaultLabels  *apigen.MetricsStoreLabelMatcherList
 	CreatedAt      pgtype.Timestamp
 	UpdatedAt      pgtype.Timestamp
 }

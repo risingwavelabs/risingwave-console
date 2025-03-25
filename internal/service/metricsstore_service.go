@@ -19,9 +19,9 @@ func metricsStoreToAPI(ms *querier.MetricsStore) *apigen.MetricsStore {
 	return &apigen.MetricsStore{
 		ID:            ms.ID,
 		Name:          ms.Name,
-		Spec:          &ms.Spec,
+		Spec:          ms.Spec,
 		CreatedAt:     ms.CreatedAt.Time,
-		DefaultLabels: &ms.DefaultLabels,
+		DefaultLabels: ms.DefaultLabels,
 	}
 }
 
@@ -29,7 +29,7 @@ func metricsStoreToAPI(ms *querier.MetricsStore) *apigen.MetricsStore {
 func (s *Service) CreateMetricsStore(ctx context.Context, req apigen.MetricsStoreCreate, organizationID int32) (*apigen.MetricsStore, error) {
 	params := querier.CreateMetricsStoreParams{
 		Name:           req.Name,
-		Spec:           req.Spec,
+		Spec:           &req.Spec,
 		OrganizationID: organizationID,
 		DefaultLabels:  req.DefaultLabels,
 	}
@@ -120,7 +120,7 @@ func (s *Service) UpdateMetricsStore(ctx context.Context, id int32, req apigen.M
 	params := querier.UpdateMetricsStoreParams{
 		ID:             id,
 		Name:           req.Name,
-		Spec:           req.Spec,
+		Spec:           &req.Spec,
 		OrganizationID: organizationID,
 		DefaultLabels:  req.DefaultLabels,
 	}
