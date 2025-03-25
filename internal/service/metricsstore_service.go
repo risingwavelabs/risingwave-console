@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/risingwavelabs/wavekit/internal/apigen"
+	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
 )
 
@@ -54,14 +55,33 @@ func (s *Service) ListClustersByMetricsStoreID(ctx context.Context, id int32) ([
 	return apiClusters, nil
 }
 
-func (s *Service) DeleteMetricsStore(ctx context.Context, id int32, organizationID int32) error {
-	if err := s.m.DeleteMetricsStore(ctx, querier.DeleteMetricsStoreParams{
-		ID:             id,
-		OrganizationID: organizationID,
-	}); err != nil {
-		if err == sql.ErrNoRows {
-			return ErrMetricsStoreNotFound
+func (s *Service) DeleteMetricsStore(ctx context.Context, id int32, organizationID int32, force bool) error {
+	if err := s.m.RunTransaction(ctx, func(model model.ModelInterface) error {
+		if force {
+			clusters, err := s.m.ListClustersByMetricsStoreID(ctx, &id)
+			if err != nil {
+				return fmt.Errorf("failed to list clusters by metrics store: %w", err)
+			}
+			for _, cluster := range clusters {
+				if err := model.RemoveClusterMetricsStoreID(ctx, querier.RemoveClusterMetricsStoreIDParams{
+					ID:             cluster.ID,
+					OrganizationID: organizationID,
+				}); err != nil {
+					return fmt.Errorf("failed to remove cluster metrics store id: %w", err)
+				}
+			}
 		}
+		if err := s.m.DeleteMetricsStore(ctx, querier.DeleteMetricsStoreParams{
+			ID:             id,
+			OrganizationID: organizationID,
+		}); err != nil {
+			if err == sql.ErrNoRows {
+				return ErrMetricsStoreNotFound
+			}
+			return fmt.Errorf("failed to delete metrics store: %w", err)
+		}
+		return nil
+	}); err != nil {
 		return fmt.Errorf("failed to delete metrics store: %w", err)
 	}
 	return nil

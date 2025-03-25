@@ -561,7 +561,7 @@ func (controller *Controller) DeleteMetricsStore(c *fiber.Ctx, id int32, params 
 		}
 	}
 
-	if err := controller.svc.DeleteMetricsStore(c.Context(), id, user.OrganizationID); err != nil {
+	if err := controller.svc.DeleteMetricsStore(c.Context(), id, user.OrganizationID, params.Force); err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 

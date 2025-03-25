@@ -262,6 +262,22 @@ func (q *Queries) ListOrgClusters(ctx context.Context, organizationID int32) ([]
 	return items, nil
 }
 
+const removeClusterMetricsStoreID = `-- name: RemoveClusterMetricsStoreID :exec
+UPDATE clusters
+SET metrics_store_id = NULL
+WHERE id = $1 AND organization_id = $2
+`
+
+type RemoveClusterMetricsStoreIDParams struct {
+	ID             int32
+	OrganizationID int32
+}
+
+func (q *Queries) RemoveClusterMetricsStoreID(ctx context.Context, arg RemoveClusterMetricsStoreIDParams) error {
+	_, err := q.db.Exec(ctx, removeClusterMetricsStoreID, arg.ID, arg.OrganizationID)
+	return err
+}
+
 const updateOrgCluster = `-- name: UpdateOrgCluster :one
 UPDATE clusters
 SET

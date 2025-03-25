@@ -138,7 +138,7 @@ type ServiceInterface interface {
 	CreateMetricsStore(context.Context, apigen.MetricsStoreCreate, int32) (*apigen.MetricsStore, error)
 
 	// DeleteMetricsStore deletes a metrics store
-	DeleteMetricsStore(ctx context.Context, id int32, organizationID int32) error
+	DeleteMetricsStore(ctx context.Context, id int32, organizationID int32, force bool) error
 
 	// GetMetricsStore gets a metrics store by ID
 	GetMetricsStore(ctx context.Context, id int32, organizationID int32) (*apigen.MetricsStore, error)

@@ -49,6 +49,7 @@ type Querier interface {
 	ListOrgClusters(ctx context.Context, organizationID int32) ([]*Cluster, error)
 	ListOrgDatabaseConnections(ctx context.Context, organizationID int32) ([]*DatabaseConnection, error)
 	ListOrganizations(ctx context.Context) ([]*Organization, error)
+	RemoveClusterMetricsStoreID(ctx context.Context, arg RemoveClusterMetricsStoreIDParams) error
 	UpdateMetricsStore(ctx context.Context, arg UpdateMetricsStoreParams) (*MetricsStore, error)
 	UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterParams) (*Cluster, error)
 	UpdateOrgDatabaseConnection(ctx context.Context, arg UpdateOrgDatabaseConnectionParams) (*DatabaseConnection, error)

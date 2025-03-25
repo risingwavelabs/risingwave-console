@@ -639,6 +639,20 @@ func (mr *MockModelInterfaceMockRecorder) ListOrganizations(ctx interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockModelInterface)(nil).ListOrganizations), ctx)
 }
 
+// RemoveClusterMetricsStoreID mocks base method.
+func (m *MockModelInterface) RemoveClusterMetricsStoreID(ctx context.Context, arg querier.RemoveClusterMetricsStoreIDParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveClusterMetricsStoreID", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveClusterMetricsStoreID indicates an expected call of RemoveClusterMetricsStoreID.
+func (mr *MockModelInterfaceMockRecorder) RemoveClusterMetricsStoreID(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveClusterMetricsStoreID", reflect.TypeOf((*MockModelInterface)(nil).RemoveClusterMetricsStoreID), ctx, arg)
+}
+
 // RunTransaction mocks base method.
 func (m *MockModelInterface) RunTransaction(ctx context.Context, f func(ModelInterface) error) error {
 	m.ctrl.T.Helper()

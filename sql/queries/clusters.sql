@@ -62,3 +62,9 @@ WHERE id = $1;
 SELECT * FROM clusters
 WHERE metrics_store_id = $1
 ORDER BY name;
+
+
+-- name: RemoveClusterMetricsStoreID :exec
+UPDATE clusters
+SET metrics_store_id = NULL
+WHERE id = $1 AND organization_id = $2;
