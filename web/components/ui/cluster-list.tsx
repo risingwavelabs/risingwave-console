@@ -9,6 +9,8 @@ import { Button } from "./button"
 import { Card, CardContent } from "./card"
 import { ClusterDialog, ClusterFormData } from "./new-cluster-dialog"
 import { ConfirmationPopup } from "./confirmation-popup"
+import { DefaultService } from "@/api-gen"
+import { MetricsStore } from "@/api-gen/models/MetricsStore"
 
 export interface Cluster {
   id: number
@@ -19,7 +21,7 @@ export interface Cluster {
   metaPort: number
   httpPort: number
   version: string
-  prometheusEndpoint?: string
+  metricsStoreID?: number | null
 }
 
 type ViewMode = "grid" | "list"
@@ -53,6 +55,31 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit, o
   const ref = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [metricsStoreName, setMetricsStoreName] = useState<string | null>(null)
+  const [loadingStore, setLoadingStore] = useState(false)
+  const [storeError, setStoreError] = useState(false)
+
+  useEffect(() => {
+    const fetchMetricsStoreName = async () => {
+      if (cluster.metricsStoreID) {
+        setLoadingStore(true)
+        setStoreError(false)
+        try {
+          const store = await DefaultService.getMetricsStore(cluster.metricsStoreID)
+          setMetricsStoreName(store.name)
+        } catch (error) {
+          console.error("Error fetching metrics store:", error)
+          setStoreError(true)
+        } finally {
+          setLoadingStore(false)
+        }
+      } else {
+        setMetricsStoreName(null)
+      }
+    }
+    
+    void fetchMetricsStoreName()
+  }, [cluster.metricsStoreID])
 
   const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: string | symbol | null }>({
     accept: ItemTypes.CLUSTER,
@@ -150,7 +177,7 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit, o
                     metaPort: cluster.metaPort,
                     httpPort: cluster.httpPort,
                     version: cluster.version,
-                    prometheusEndpoint: cluster.prometheusEndpoint
+                    metricsStoreID: cluster.metricsStoreID
                   }}
                   trigger={<Button variant="outline" size="sm">Edit</Button>}
                   onSubmit={(data: ClusterFormData) => onEdit?.({
@@ -202,16 +229,28 @@ function DraggableClusterItem({ cluster, index, moveCluster, viewMode, onEdit, o
                     <div className="font-medium">{cluster.host}</div>
                   </div>
                 </div>
-                {cluster.prometheusEndpoint && (
+                {cluster.metricsStoreID && (
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 8v8m-4-5v5M8 8v8m-4-8h18" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
                     <div>
-                      <div className="text-sm text-muted-foreground">Prometheus</div>
-                      <div className="font-medium">{cluster.prometheusEndpoint}</div>
+                      <div className="text-sm text-muted-foreground">Metrics Store</div>
+                      {loadingStore ? (
+                        <div className="flex items-center gap-1">
+                          <svg className="animate-spin h-3 w-3 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span className="text-xs">Loading...</span>
+                        </div>
+                      ) : storeError ? (
+                        <div className="text-xs text-red-500">Error loading store</div>
+                      ) : (
+                        <div className="font-medium">{metricsStoreName || "Unknown"}</div>
+                      )}
                     </div>
                   </div>
                 )}
