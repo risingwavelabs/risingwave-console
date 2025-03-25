@@ -112,10 +112,10 @@ export function DefaultLabelsEditor({
                   <SelectValue placeholder="=" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={MetricsStoreLabelMatcher.op.EQ}>= (equals)</SelectItem>
-                  <SelectItem value={MetricsStoreLabelMatcher.op.NEQ}>!= (not equals)</SelectItem>
-                  <SelectItem value={MetricsStoreLabelMatcher.op.RE}>=~ (regex match)</SelectItem>
-                  <SelectItem value={MetricsStoreLabelMatcher.op.NRE}>!~ (regex not match)</SelectItem>
+                  <SelectItem value={MetricsStoreLabelMatcher.op.EQ}>=</SelectItem>
+                  <SelectItem value={MetricsStoreLabelMatcher.op.NEQ}>!=</SelectItem>
+                  <SelectItem value={MetricsStoreLabelMatcher.op.RE}>=~</SelectItem>
+                  <SelectItem value={MetricsStoreLabelMatcher.op.NRE}>!~</SelectItem>
                 </SelectContent>
               </Select>
             </div>
