@@ -27,6 +27,14 @@ const (
 	Bearer CredentialsTokenType = "Bearer"
 )
 
+// Defines values for MetricsStoreLabelMatcherOp.
+const (
+	EQ  MetricsStoreLabelMatcherOp = "EQ"
+	NEQ MetricsStoreLabelMatcherOp = "NEQ"
+	NRE MetricsStoreLabelMatcherOp = "NRE"
+	RE  MetricsStoreLabelMatcherOp = "RE"
+)
+
 // Defines values for RelationType.
 const (
 	MaterializedView RelationType = "materializedView"
@@ -220,17 +228,35 @@ type MetricValue = []interface{}
 
 // MetricsStore defines model for MetricsStore.
 type MetricsStore struct {
-	ID        int32             `json:"ID"`
-	CreatedAt time.Time         `json:"createdAt"`
-	Name      string            `json:"name"`
-	Spec      *MetricsStoreSpec `json:"spec,omitempty"`
+	ID            int32                         `json:"ID"`
+	CreatedAt     time.Time                     `json:"createdAt"`
+	DefaultLabels *MetricsStoreLabelMatcherList `json:"defaultLabels,omitempty"`
+	Name          string                        `json:"name"`
+	Spec          *MetricsStoreSpec             `json:"spec,omitempty"`
 }
 
 // MetricsStoreCreate defines model for MetricsStoreCreate.
 type MetricsStoreCreate struct {
-	Name string           `json:"name"`
-	Spec MetricsStoreSpec `json:"spec"`
+	DefaultLabels MetricsStoreLabelMatcherList `json:"defaultLabels"`
+	Name          string                       `json:"name"`
+	Spec          MetricsStoreSpec             `json:"spec"`
 }
+
+// MetricsStoreLabelMatcher defines model for MetricsStoreLabelMatcher.
+type MetricsStoreLabelMatcher struct {
+	// Key Label key
+	Key string                     `json:"key"`
+	Op  MetricsStoreLabelMatcherOp `json:"op"`
+
+	// Value Label value
+	Value string `json:"value"`
+}
+
+// MetricsStoreLabelMatcherOp defines model for MetricsStoreLabelMatcher.Op.
+type MetricsStoreLabelMatcherOp string
+
+// MetricsStoreLabelMatcherList defines model for MetricsStoreLabelMatcherList.
+type MetricsStoreLabelMatcherList = []MetricsStoreLabelMatcher
 
 // MetricsStorePrometheus defines model for MetricsStorePrometheus.
 type MetricsStorePrometheus struct {

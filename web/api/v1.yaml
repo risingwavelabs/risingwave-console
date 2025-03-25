@@ -744,6 +744,15 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MetricsStore"
+
+  # /metrics-stores/{ID}/dump:
+  #   get:
+  #     summary: Dump metrics store
+  #     description: Dump metrics store
+  #     operationId: dumpMetricsStore
+  #     security:
+  #       - BearerAuth: []
+
       
   /metrics/{clusterID}/materialized-view-throughput:
     get:
@@ -1368,15 +1377,19 @@ components:
           format: date-time
         spec:
           $ref: "#/components/schemas/MetricsStoreSpec"
+        defaultLabels:
+          $ref: "#/components/schemas/MetricsStoreLabelMatcherList"
 
     MetricsStoreCreate:
       type: object
-      required: [name, spec]
+      required: [name, spec, defaultLabels]
       properties:
         name:
           type: string
         spec:
           $ref: "#/components/schemas/MetricsStoreSpec"
+        defaultLabels:
+          $ref: "#/components/schemas/MetricsStoreLabelMatcherList"
 
     MetricsStoreSpec:
       type: object
@@ -1402,3 +1415,46 @@ components:
 
     MetricValue:
       type: array
+
+    MetricsStoreDownloadReq:
+      type: object
+      required: []
+      properties:
+        step:
+          type: string
+          description: Step of the metrics store, e.g. 1h, 1d, 1w, 1m, 1s
+        start:
+          type: string
+          format: date-time
+          description: Start time of the metrics store
+        end:
+          type: string
+          format: date-time
+          description: End time of the metrics store
+        queryRatio:
+          type: number
+          description: |
+             (0, 1], if OOM, reduce the memory usage in Prometheus instance by this ratio (default: 1)
+        query:
+          type: string
+          description: |
+            query to get the metrics, e.g. `{namespace="wavekit"}`
+
+    MetricsStoreLabelMatcherList:
+      type: array
+      items:
+        $ref: "#/components/schemas/MetricsStoreLabelMatcher"
+
+    MetricsStoreLabelMatcher:
+      type: object
+      required: [op, key, value]
+      properties:
+        op:
+          type: string
+          enum: ["EQ", "NEQ", "RE", "NRE"]
+        key:
+          type: string
+          description: Label key
+        value:
+          type: string
+          description: Label value

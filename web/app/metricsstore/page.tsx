@@ -47,10 +47,14 @@ export default function MetricsStorePage() {
   const openEditDialog = (store: MetricsStore) => {
     setCurrentMetricsStore(store)
     
+    console.log("Original store:", store);
+    console.log("Default labels from store:", store.defaultLabels);
+    
     const formData: DynamicFormData = {
       name: store.name,
       type: "",
-      fields: {}
+      fields: {},
+      defaultLabels: store.defaultLabels || []
     }
     
     if (store.spec?.prometheus) {
@@ -64,6 +68,8 @@ export default function MetricsStorePage() {
         victoriametrics: store.spec.victoriametrics
       };
     }
+    
+    console.log("Prepared form data:", formData);
     
     setEditFormData(formData)
     setEditDialogOpen(true)
@@ -92,9 +98,16 @@ export default function MetricsStorePage() {
         spec.victoriametrics = formData.fields.victoriametrics;
       }
 
+      // Ensure defaultLabels is an array even if empty
+      const defaultLabels = Array.isArray(formData.defaultLabels) ? formData.defaultLabels : [];
+      
+      console.log("Create formData", formData);
+      console.log("Create defaultLabels", defaultLabels);
+
       const createPayload: MetricsStoreCreate = {
         name: formData.name,
-        spec: spec
+        spec: spec,
+        defaultLabels: defaultLabels
       }
 
       const newStore = await DefaultService.createMetricsStore(createPayload)
@@ -116,6 +129,12 @@ export default function MetricsStorePage() {
     
     if (!currentMetricsStore) return
     
+    // Ensure defaultLabels is an array even if empty
+    const defaultLabels = Array.isArray(formData.defaultLabels) ? formData.defaultLabels : [];
+    
+    console.log("Edit formData", formData);
+    console.log("Edit defaultLabels", defaultLabels);
+    
     try {
       const spec: MetricsStoreSpec = {};
       
@@ -129,7 +148,8 @@ export default function MetricsStorePage() {
       const updatedStore: MetricsStore = {
         ...currentMetricsStore,
         name: formData.name,
-        spec: spec
+        spec: spec,
+        defaultLabels: defaultLabels
       }
 
       await DefaultService.updateMetricsStore(currentMetricsStore.ID, updatedStore)
@@ -176,6 +196,45 @@ export default function MetricsStorePage() {
     return ""
   }
 
+  const renderDefaultLabels = (store: MetricsStore): React.ReactNode => {
+    if (!store.defaultLabels || store.defaultLabels.length === 0) {
+      return <span className="text-muted-foreground text-xs">None</span>
+    }
+
+    // Only show up to 3 labels to save space
+    const visibleLabels = store.defaultLabels.slice(0, 3)
+    const extraCount = store.defaultLabels.length - 3
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {visibleLabels.map((label, index) => (
+          <span 
+            key={index} 
+            className="inline-flex items-center rounded-full border border-gray-200 px-2 py-0.5 text-xs"
+            title={`${label.key} ${getOperatorDisplay(label.op)} ${label.value}`}
+          >
+            {label.key} {getOperatorDisplay(label.op)} {label.value}
+          </span>
+        ))}
+        {extraCount > 0 && (
+          <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs">
+            +{extraCount} more
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  const getOperatorDisplay = (op: string): string => {
+    switch (op) {
+      case "EQ": return "="
+      case "NEQ": return "!="
+      case "RE": return "=~"
+      case "NRE": return "!~"
+      default: return op
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-8">
@@ -213,6 +272,7 @@ export default function MetricsStorePage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Endpoint</TableHead>
+                <TableHead>Default Labels</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="w-[100px] text-right">Actions</TableHead>
               </TableRow>
@@ -224,6 +284,9 @@ export default function MetricsStorePage() {
                   <TableCell>{renderStoreType(store)}</TableCell>
                   <TableCell className="max-w-[300px] truncate" title={renderEndpoint(store)}>
                     {renderEndpoint(store)}
+                  </TableCell>
+                  <TableCell>
+                    {renderDefaultLabels(store)}
                   </TableCell>
                   <TableCell>{new Date(store.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">

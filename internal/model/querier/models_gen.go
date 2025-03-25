@@ -76,6 +76,7 @@ type MetricsStore struct {
 	Name           string
 	Spec           apigen.MetricsStoreSpec
 	OrganizationID int32
+	DefaultLabels  apigen.MetricsStoreLabelMatcherList
 	CreatedAt      pgtype.Timestamp
 	UpdatedAt      pgtype.Timestamp
 }

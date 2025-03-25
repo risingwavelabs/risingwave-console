@@ -16,10 +16,11 @@ var (
 
 func metricsStoreToAPI(ms *querier.MetricsStore) *apigen.MetricsStore {
 	return &apigen.MetricsStore{
-		ID:        ms.ID,
-		Name:      ms.Name,
-		Spec:      &ms.Spec,
-		CreatedAt: ms.CreatedAt.Time,
+		ID:            ms.ID,
+		Name:          ms.Name,
+		Spec:          &ms.Spec,
+		CreatedAt:     ms.CreatedAt.Time,
+		DefaultLabels: &ms.DefaultLabels,
 	}
 }
 
@@ -29,6 +30,7 @@ func (s *Service) CreateMetricsStore(ctx context.Context, req apigen.MetricsStor
 		Name:           req.Name,
 		Spec:           req.Spec,
 		OrganizationID: organizationID,
+		DefaultLabels:  req.DefaultLabels,
 	}
 
 	ms, err := s.m.CreateMetricsStore(ctx, params)
@@ -95,22 +97,12 @@ func (s *Service) ListMetricsStores(ctx context.Context, organizationID int32) (
 }
 
 func (s *Service) UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreCreate, organizationID int32) (*apigen.MetricsStore, error) {
-	_, err := s.m.GetMetricsStoreByIDAndOrgID(ctx, querier.GetMetricsStoreByIDAndOrgIDParams{
-		ID:             id,
-		OrganizationID: organizationID,
-	})
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, ErrMetricsStoreNotFound
-		}
-		return nil, fmt.Errorf("failed to get metrics store: %w", err)
-	}
-
 	params := querier.UpdateMetricsStoreParams{
 		ID:             id,
 		Name:           req.Name,
 		Spec:           req.Spec,
 		OrganizationID: organizationID,
+		DefaultLabels:  req.DefaultLabels,
 	}
 
 	ms, err := s.m.UpdateMetricsStore(ctx, params)

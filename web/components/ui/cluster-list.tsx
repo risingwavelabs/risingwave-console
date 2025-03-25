@@ -10,7 +10,6 @@ import { Card, CardContent } from "./card"
 import { ClusterDialog, ClusterFormData } from "./new-cluster-dialog"
 import { ConfirmationPopup } from "./confirmation-popup"
 import { DefaultService } from "@/api-gen"
-import { MetricsStore } from "@/api-gen/models/MetricsStore"
 
 export interface Cluster {
   id: number

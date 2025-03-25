@@ -12,6 +12,7 @@ import {
   DynamicFormData,
   MetricsStoreType
 } from './metricsstoreform-hook';
+import { DefaultLabelsEditor } from './default-labels-editor';
 
 interface MetricsStoreFormProps {
   initialData?: DynamicFormData;
@@ -26,10 +27,22 @@ export function MetricsStoreForm({
   onCancel, 
   isEdit = false 
 }: MetricsStoreFormProps) {
-  const { formData, setName, setType, setField, resetForm } = useMetricsStoreForm(initialData);
+  const { 
+    formData, 
+    setName, 
+    setType, 
+    setField, 
+    addDefaultLabel, 
+    removeDefaultLabel, 
+    resetForm 
+  } = useMetricsStoreForm(initialData);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Debug log
+    console.log("Submitting form:", JSON.stringify(formData, null, 2));
+    console.log("Default labels:", formData.defaultLabels);
     
     // Validate form
     if (!formData.name || !formData.type) {
@@ -98,7 +111,7 @@ export function MetricsStoreForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid w-full items-center gap-1.5">
         <Label htmlFor="name">Name</Label>
         <Input
@@ -130,6 +143,14 @@ export function MetricsStoreForm({
       </div>
 
       {renderTypeFields()}
+
+      <div className="border-t pt-4">
+        <DefaultLabelsEditor
+          labels={formData.defaultLabels}
+          onAdd={addDefaultLabel}
+          onRemove={removeDefaultLabel}
+        />
+      </div>
 
       <DialogFooter>
         <Button type="button" variant="secondary" onClick={handleCancel}>

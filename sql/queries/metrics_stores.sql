@@ -9,16 +9,17 @@ SELECT * FROM metrics_stores
 WHERE organization_id = $1;
 
 -- name: CreateMetricsStore :one
-INSERT INTO metrics_stores (name, spec, organization_id)
-VALUES ($1, $2, $3)
+INSERT INTO metrics_stores (name, spec, organization_id, default_labels)
+VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: UpdateMetricsStore :one
 UPDATE metrics_stores
 SET name = $2, 
     spec = $3,
+    default_labels = $4,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND organization_id = $4
+WHERE id = $1 AND organization_id = $5
 RETURNING *;
 
 -- name: DeleteMetricsStore :exec
