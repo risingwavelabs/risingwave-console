@@ -5,109 +5,12 @@ import { ApiError, DefaultService } from "@/api-gen"
 import { MetricsStore } from "@/api-gen/models/MetricsStore"
 import { MetricsStoreCreate } from "@/api-gen/models/MetricsStoreCreate"
 import { MetricsStoreSpec } from "@/api-gen/models/MetricsStoreSpec"
-import { MetricsStorePrometheus } from "@/api-gen/models/MetricsStorePrometheus"
-import { MetricsStoreVictoriaMetrics } from "@/api-gen/models/MetricsStoreVictoriaMetrics"
 import toast from "react-hot-toast"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-
-type FormData = {
-  name: string;
-  type: "prometheus" | "victoriametrics" | "";
-  endpoint: string;
-}
-
-const initialFormState: FormData = {
-  name: "",
-  type: "",
-  endpoint: ""
-}
-
-// Separate form component that manages its own state
-function MetricsStoreForm({ 
-  initialData = initialFormState, 
-  onSubmit 
-}: { 
-  initialData?: FormData; 
-  onSubmit: (data: FormData) => void; 
-}) {
-  const [formData, setFormData] = useState<FormData>(initialData);
-
-  // Reset form if initialData changes (when editing a different metrics store)
-  useEffect(() => {
-    setFormData(initialData);
-  }, [initialData]);
-
-  const handleChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = () => {
-    if (!formData.name || !formData.type || !formData.endpoint) {
-      toast.error("Please fill all required fields");
-      return;
-    }
-    onSubmit(formData);
-  };
-
-  return (
-    <>
-      <div className="grid gap-4 py-4">
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="name" className="text-right">Name</Label>
-          <Input 
-            id="name" 
-            value={formData.name} 
-            onChange={(e) => handleChange('name', e.target.value)} 
-            className="col-span-3" 
-          />
-        </div>
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="type" className="text-right">Type</Label>
-          <Select
-            value={formData.type}
-            onValueChange={(value: "prometheus" | "victoriametrics") => 
-              handleChange('type', value)
-            }
-          >
-            <SelectTrigger className="col-span-3">
-              <SelectValue placeholder="Select type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="prometheus">Prometheus</SelectItem>
-              <SelectItem value="victoriametrics">Victoria Metrics</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {formData.type && (
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="endpoint" className="text-right">Endpoint</Label>
-            <Input 
-              id="endpoint" 
-              value={formData.endpoint} 
-              onChange={(e) => handleChange('endpoint', e.target.value)} 
-              className="col-span-3" 
-              placeholder={`${formData.type} endpoint URL`}
-            />
-          </div>
-        )}
-      </div>
-      <DialogFooter>
-        <Button variant="outline" type="button" onClick={() => onSubmit(initialFormState)}>
-          Cancel
-        </Button>
-        <Button type="button" onClick={handleSubmit}>
-          {initialData === initialFormState ? 'Create' : 'Save Changes'}
-        </Button>
-      </DialogFooter>
-    </>
-  );
-}
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DynamicFormData, STORE_TYPE, initialFormState } from "./metricsstoreform-hook"
+import { MetricsStoreForm } from "./metricsstore-form"
 
 export default function MetricsStorePage() {
   const [metricsStores, setMetricsStores] = useState<MetricsStore[]>([])
@@ -119,7 +22,7 @@ export default function MetricsStorePage() {
   const [forceDelete, setForceDelete] = useState(false)
   
   // Form initial data for editing
-  const [editFormData, setEditFormData] = useState<FormData>(initialFormState)
+  const [editFormData, setEditFormData] = useState<DynamicFormData>(initialFormState)
 
   useEffect(() => {
     fetchMetricsStores()
@@ -144,18 +47,22 @@ export default function MetricsStorePage() {
   const openEditDialog = (store: MetricsStore) => {
     setCurrentMetricsStore(store)
     
-    const formData: FormData = {
+    const formData: DynamicFormData = {
       name: store.name,
       type: "",
-      endpoint: ""
+      fields: {}
     }
     
     if (store.spec?.prometheus) {
-      formData.type = "prometheus"
-      formData.endpoint = store.spec.prometheus.endpoint
+      formData.type = STORE_TYPE.PROMETHEUS;
+      formData.fields = {
+        prometheus: store.spec.prometheus
+      };
     } else if (store.spec?.victoriametrics) {
-      formData.type = "victoriametrics"
-      formData.endpoint = store.spec.victoriametrics.endpoint
+      formData.type = STORE_TYPE.VICTORIA_METRICS;
+      formData.fields = {
+        victoriametrics: store.spec.victoriametrics
+      };
     }
     
     setEditFormData(formData)
@@ -168,7 +75,7 @@ export default function MetricsStorePage() {
     setDeleteConfirmOpen(true)
   }
 
-  const handleCreateSubmit = async (formData: FormData) => {
+  const handleCreateSubmit = async (formData: DynamicFormData) => {
     // If formData equals initialFormState, we know the Cancel button was clicked
     if (formData === initialFormState) {
       setCreateDialogOpen(false)
@@ -176,12 +83,13 @@ export default function MetricsStorePage() {
     }
     
     try {
-      const spec: MetricsStoreSpec = {}
+      const spec: MetricsStoreSpec = {};
       
-      if (formData.type === "prometheus") {
-        spec.prometheus = { endpoint: formData.endpoint }
-      } else if (formData.type === "victoriametrics") {
-        spec.victoriametrics = { endpoint: formData.endpoint }
+      // Use the fields directly from the form data
+      if (formData.type === STORE_TYPE.PROMETHEUS && formData.fields.prometheus) {
+        spec.prometheus = formData.fields.prometheus;
+      } else if (formData.type === STORE_TYPE.VICTORIA_METRICS && formData.fields.victoriametrics) {
+        spec.victoriametrics = formData.fields.victoriametrics;
       }
 
       const createPayload: MetricsStoreCreate = {
@@ -199,7 +107,7 @@ export default function MetricsStorePage() {
     }
   }
 
-  const handleEditSubmit = async (formData: FormData) => {
+  const handleEditSubmit = async (formData: DynamicFormData) => {
     // If formData equals initialFormState, we know the Cancel button was clicked
     if (formData === initialFormState) {
       setEditDialogOpen(false)
@@ -209,12 +117,13 @@ export default function MetricsStorePage() {
     if (!currentMetricsStore) return
     
     try {
-      const spec: MetricsStoreSpec = {}
+      const spec: MetricsStoreSpec = {};
       
-      if (formData.type === "prometheus") {
-        spec.prometheus = { endpoint: formData.endpoint }
-      } else if (formData.type === "victoriametrics") {
-        spec.victoriametrics = { endpoint: formData.endpoint }
+      // Use the fields directly from the form data
+      if (formData.type === STORE_TYPE.PROMETHEUS && formData.fields.prometheus) {
+        spec.prometheus = formData.fields.prometheus;
+      } else if (formData.type === STORE_TYPE.VICTORIA_METRICS && formData.fields.victoriametrics) {
+        spec.victoriametrics = formData.fields.victoriametrics;
       }
 
       const updatedStore: MetricsStore = {
@@ -351,7 +260,10 @@ export default function MetricsStorePage() {
               Add a new metrics store to monitor your clusters.
             </DialogDescription>
           </DialogHeader>
-          <MetricsStoreForm onSubmit={handleCreateSubmit} />
+          <MetricsStoreForm 
+            onSubmit={handleCreateSubmit} 
+            onCancel={() => setCreateDialogOpen(false)} 
+          />
         </DialogContent>
       </Dialog>
 
@@ -364,7 +276,12 @@ export default function MetricsStorePage() {
               Make changes to your metrics store.
             </DialogDescription>
           </DialogHeader>
-          <MetricsStoreForm initialData={editFormData} onSubmit={handleEditSubmit} />
+          <MetricsStoreForm 
+            initialData={editFormData} 
+            onSubmit={handleEditSubmit} 
+            onCancel={() => setEditDialogOpen(false)}
+            isEdit={true}
+          />
         </DialogContent>
       </Dialog>
 
@@ -394,4 +311,4 @@ export default function MetricsStorePage() {
       </Dialog>
     </div>
   )
-}
+} 
