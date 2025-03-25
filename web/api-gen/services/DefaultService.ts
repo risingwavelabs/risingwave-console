@@ -699,7 +699,7 @@ export class DefaultService {
      * @returns MetricsStore Successfully retrieved metrics stores
      * @throws ApiError
      */
-    public static getMetricsStores(): CancelablePromise<Array<MetricsStore>> {
+    public static listMetricsStores(): CancelablePromise<Array<MetricsStore>> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/metrics-stores',

@@ -520,3 +520,23 @@ func (controller *Controller) GetMaterializedViewThroughput(c *fiber.Ctx, cluste
 	}
 	return c.Status(fiber.StatusOK).JSON(throughput)
 }
+
+func (controller *Controller) CreateMetricsStore(c *fiber.Ctx) error {
+	return nil
+}
+
+func (controller *Controller) DeleteMetricsStore(c *fiber.Ctx, id int32, params apigen.DeleteMetricsStoreParams) error {
+	return nil
+}
+
+func (controller *Controller) GetMetricsStore(c *fiber.Ctx, id int32) error {
+	return nil
+}
+
+func (controller *Controller) ListMetricsStores(c *fiber.Ctx) error {
+	return nil
+}
+
+func (controller *Controller) UpdateMetricsStore(c *fiber.Ctx, id int32) error {
+	return nil
+}

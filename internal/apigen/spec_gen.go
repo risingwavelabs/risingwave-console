@@ -658,8 +658,8 @@ type ClientInterface interface {
 
 	QueryDatabase(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetMetricsStores request
-	GetMetricsStores(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListMetricsStores request
+	ListMetricsStores(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateMetricsStoreWithBody request with any body
 	CreateMetricsStoreWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1190,8 +1190,8 @@ func (c *Client) QueryDatabase(ctx context.Context, iD int32, body QueryDatabase
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetMetricsStores(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetMetricsStoresRequest(c.Server)
+func (c *Client) ListMetricsStores(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListMetricsStoresRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -2529,8 +2529,8 @@ func NewQueryDatabaseRequestWithBody(server string, iD int32, contentType string
 	return req, nil
 }
 
-// NewGetMetricsStoresRequest generates requests for GetMetricsStores
-func NewGetMetricsStoresRequest(server string) (*http.Request, error) {
+// NewListMetricsStoresRequest generates requests for ListMetricsStores
+func NewListMetricsStoresRequest(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -2963,8 +2963,8 @@ type ClientWithResponsesInterface interface {
 
 	QueryDatabaseWithResponse(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
 
-	// GetMetricsStoresWithResponse request
-	GetMetricsStoresWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetMetricsStoresResponse, error)
+	// ListMetricsStoresWithResponse request
+	ListMetricsStoresWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMetricsStoresResponse, error)
 
 	// CreateMetricsStoreWithBodyWithResponse request with any body
 	CreateMetricsStoreWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateMetricsStoreResponse, error)
@@ -3621,14 +3621,14 @@ func (r QueryDatabaseResponse) StatusCode() int {
 	return 0
 }
 
-type GetMetricsStoresResponse struct {
+type ListMetricsStoresResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]MetricsStore
 }
 
 // Status returns HTTPResponse.Status
-func (r GetMetricsStoresResponse) Status() string {
+func (r ListMetricsStoresResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3636,7 +3636,7 @@ func (r GetMetricsStoresResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetMetricsStoresResponse) StatusCode() int {
+func (r ListMetricsStoresResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4138,13 +4138,13 @@ func (c *ClientWithResponses) QueryDatabaseWithResponse(ctx context.Context, iD 
 	return ParseQueryDatabaseResponse(rsp)
 }
 
-// GetMetricsStoresWithResponse request returning *GetMetricsStoresResponse
-func (c *ClientWithResponses) GetMetricsStoresWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetMetricsStoresResponse, error) {
-	rsp, err := c.GetMetricsStores(ctx, reqEditors...)
+// ListMetricsStoresWithResponse request returning *ListMetricsStoresResponse
+func (c *ClientWithResponses) ListMetricsStoresWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMetricsStoresResponse, error) {
+	rsp, err := c.ListMetricsStores(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetMetricsStoresResponse(rsp)
+	return ParseListMetricsStoresResponse(rsp)
 }
 
 // CreateMetricsStoreWithBodyWithResponse request with arbitrary body returning *CreateMetricsStoreResponse
@@ -4899,15 +4899,15 @@ func ParseQueryDatabaseResponse(rsp *http.Response) (*QueryDatabaseResponse, err
 	return response, nil
 }
 
-// ParseGetMetricsStoresResponse parses an HTTP response from a GetMetricsStoresWithResponse call
-func ParseGetMetricsStoresResponse(rsp *http.Response) (*GetMetricsStoresResponse, error) {
+// ParseListMetricsStoresResponse parses an HTTP response from a ListMetricsStoresWithResponse call
+func ParseListMetricsStoresResponse(rsp *http.Response) (*ListMetricsStoresResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetMetricsStoresResponse{
+	response := &ListMetricsStoresResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -5152,7 +5152,7 @@ type ServerInterface interface {
 	QueryDatabase(c *fiber.Ctx, iD int32) error
 	// Get all metrics stores
 	// (GET /metrics-stores)
-	GetMetricsStores(c *fiber.Ctx) error
+	ListMetricsStores(c *fiber.Ctx) error
 	// Create a new metrics store
 	// (POST /metrics-stores)
 	CreateMetricsStore(c *fiber.Ctx) error
@@ -5701,12 +5701,12 @@ func (siw *ServerInterfaceWrapper) QueryDatabase(c *fiber.Ctx) error {
 	return siw.Handler.QueryDatabase(c, iD)
 }
 
-// GetMetricsStores operation middleware
-func (siw *ServerInterfaceWrapper) GetMetricsStores(c *fiber.Ctx) error {
+// ListMetricsStores operation middleware
+func (siw *ServerInterfaceWrapper) ListMetricsStores(c *fiber.Ctx) error {
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.GetMetricsStores(c)
+	return siw.Handler.ListMetricsStores(c)
 }
 
 // CreateMetricsStore operation middleware
@@ -5892,7 +5892,7 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Post(options.BaseURL+"/databases/:ID/query", wrapper.QueryDatabase)
 
-	router.Get(options.BaseURL+"/metrics-stores", wrapper.GetMetricsStores)
+	router.Get(options.BaseURL+"/metrics-stores", wrapper.ListMetricsStores)
 
 	router.Post(options.BaseURL+"/metrics-stores", wrapper.CreateMetricsStore)
 

@@ -732,7 +732,7 @@ paths:
     get:
       summary: Get all metrics stores
       description: Get all metrics stores
-      operationId: getMetricsStores
+      operationId: listMetricsStores
       security:
         - BearerAuth: []
       responses:
