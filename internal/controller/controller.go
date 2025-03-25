@@ -514,7 +514,7 @@ func (controller *Controller) GetClusterDiagnostic(c *fiber.Ctx, id int32, diagn
 func (controller *Controller) GetMaterializedViewThroughput(c *fiber.Ctx, clusterID int32) error {
 	throughput, err := controller.svc.GetMaterializedViewThroughput(c.Context(), clusterID)
 	if err != nil {
-		if errors.Is(err, metricsstore.ErrNoMetricsStoreFound) {
+		if errors.Is(err, metricsstore.ErrMetricsStoreNotSupported) {
 			return c.Status(fiber.StatusNotFound).SendString(err.Error())
 		}
 		return err

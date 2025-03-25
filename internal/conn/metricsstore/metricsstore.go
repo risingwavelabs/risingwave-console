@@ -2,15 +2,16 @@ package metricsstore
 
 import (
 	"context"
-	"strings"
+	"fmt"
 
 	"github.com/pkg/errors"
 	prom_model "github.com/prometheus/common/model"
+	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/model"
 )
 
-var ErrNoMetricsStoreFound = errors.New("no metrics store found")
+var ErrMetricsStoreNotSupported = errors.New("Metrics store not supported")
 
 // PrometheusConn is an API wrapper for prometheus,
 // the connection is only established when the query is made.
@@ -19,23 +20,12 @@ type MetricsConn interface {
 }
 
 type MetricsManager struct {
-	model         model.ModelInterface
-	defaultLabels map[string]string
+	model model.ModelInterface
 }
 
 func NewMetricsManager(m model.ModelInterface, cfg *config.Config) (*MetricsManager, error) {
-	defaultLabels := make(map[string]string)
-
-	for _, label := range strings.Split(cfg.Prometheus.DefaultLabels, ",") {
-		parts := strings.Split(label, "=")
-		if len(parts) == 2 {
-			defaultLabels[parts[0]] = parts[1]
-		}
-	}
-
 	return &MetricsManager{
-		model:         m,
-		defaultLabels: defaultLabels,
+		model: m,
 	}, nil
 }
 
@@ -44,9 +34,29 @@ func (m *MetricsManager) GetMetricsConn(ctx context.Context, clusterID int32) (M
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get cluster")
 	}
+	selectors := ""
+	if metricsStore.DefaultLabels != nil {
+		for i, label := range metricsStore.DefaultLabels {
+			if i > 0 {
+				selectors += ","
+			}
+			var op string
+			switch label.Op {
+			case apigen.EQ:
+				op = "="
+			case apigen.NEQ:
+				op = "!="
+			case apigen.RE:
+				op = "=~"
+			case apigen.NRE:
+				op = "!~"
+			}
+			selectors += fmt.Sprintf("%s%s\"%s\"", label.Key, op, label.Value)
+		}
+	}
 	if metricsStore.Spec.Prometheus != nil {
-		return NewPrometheusConn(metricsStore.Spec.Prometheus.Endpoint, m.defaultLabels)
+		return NewPrometheusConn(metricsStore.Spec.Prometheus.Endpoint, selectors)
 	}
 
-	return nil, ErrNoMetricsStoreFound
+	return nil, ErrMetricsStoreNotSupported
 }
