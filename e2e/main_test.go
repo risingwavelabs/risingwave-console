@@ -13,7 +13,7 @@ import (
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
-	"github.com/risingwavelabs/wavekit/internal/apps/server"
+	"github.com/risingwavelabs/wavekit/internal/server"
 	"github.com/risingwavelabs/wavekit/wire"
 )
 

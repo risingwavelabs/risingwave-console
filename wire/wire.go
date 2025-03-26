@@ -5,7 +5,6 @@ package wire
 
 import (
 	"github.com/google/wire"
-	"github.com/risingwavelabs/wavekit/internal/apps/server"
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
@@ -13,6 +12,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/controller"
 	"github.com/risingwavelabs/wavekit/internal/model"
+	"github.com/risingwavelabs/wavekit/internal/server"
 	"github.com/risingwavelabs/wavekit/internal/service"
 )
 

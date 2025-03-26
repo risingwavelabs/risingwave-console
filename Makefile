@@ -59,7 +59,7 @@ install-sqlc:
 	@DIR=$(PROJECT_DIR)/bin VERSION=${SQLC_VERSION} ./scripts/install-sqlc.sh
 
 clean-querier:
-	@rm -f $(QUERIER_DIR)/*sql.gen.go
+	@rm -f $(QUERIER_DIR)/*.sql.gen.go || true
 	@rm -f $(QUERIER_DIR)/copyfrom_gen.go   
 	@rm -f $(QUERIER_DIR)/db_gen.go
 	@rm -f $(QUERIER_DIR)/models_gen.go

@@ -745,15 +745,40 @@ paths:
                 items:
                   $ref: "#/components/schemas/MetricsStore"
 
-  # /metrics-stores/{ID}/dump:
-  #   get:
-  #     summary: Dump metrics store
-  #     description: Dump metrics store
-  #     operationId: dumpMetricsStore
-  #     security:
-  #       - BearerAuth: []
+  /tasks:
+    get:
+      summary: Get all tasks
+      description: Get all tasks
+      operationId: listTasks
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+  
+  /events:
+    get:
+      summary: Get all events
+      description: Get all events
+      operationId: listEvents
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successfully retrieved events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
 
-      
   /metrics/{clusterID}/materialized-view-throughput:
     get:
       summary: Get materialized view throughput
@@ -1458,3 +1483,97 @@ components:
         value:
           type: string
           description: Label value
+
+    Task:
+      type: object
+      required: [ID, spec, status, remaining]
+      properties:
+        ID:
+          type: integer
+          format: int32
+        workerName:
+          type: string
+        spec:
+          $ref: "#/components/schemas/TaskSpec"
+        status:
+          type: string
+          enum: ["pending", "running", "completed", "failed", "paused", "cancelled"]
+        remaining:
+          type: integer
+          format: int32
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TaskSpec:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: ["auto-backup", "auto-diagnostic"]
+        autoBackup:
+          $ref: "#/components/schemas/TaskSpecAutoBackup"
+        autoDiagnostic:
+          $ref: "#/components/schemas/TaskSpecAutoDiagnostic"
+
+    TaskSpecAutoBackup:
+      type: object
+      required: [clusterID, cronExpression, keepLast]
+      properties:
+        clusterID:
+          type: integer
+          format: int32
+        cronExpression:
+          type: string
+        keepLast:
+          type: integer
+          format: int32
+
+    TaskSpecAutoDiagnostic:
+      type: object
+      required: [clusterID, cronExpression, retentionDuration]
+      properties:
+        clusterID:
+          type: integer
+          format: int32
+        cronExpression:
+          type: string
+        retentionDuration:
+          type: string
+
+    Event:
+      type: object
+      required: [ID, spec, createdAt]
+      properties:
+        ID:
+          type: integer
+          format: int32
+        spec:
+          $ref: "#/components/schemas/EventSpec"
+        createdAt:
+          type: string
+          format: date-time
+
+    EventSpec:
+      type: object
+      required: [type, clusterID]
+      properties:
+        type:
+          type: string
+          enum: ["TaskError"]
+        taskError:
+          $ref: "#/components/schemas/EventTaskError"
+
+    EventTaskError:
+      type: object
+      required: [taskID, error]
+      properties:
+        taskID:
+          type: integer
+          format: int32
+        error:
+          type: string

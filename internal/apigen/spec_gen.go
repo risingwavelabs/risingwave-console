@@ -27,6 +27,11 @@ const (
 	Bearer CredentialsTokenType = "Bearer"
 )
 
+// Defines values for EventSpecType.
+const (
+	TaskError EventSpecType = "TaskError"
+)
+
 // Defines values for MetricsStoreLabelMatcherOp.
 const (
 	EQ  MetricsStoreLabelMatcherOp = "EQ"
@@ -42,6 +47,22 @@ const (
 	Source           RelationType = "source"
 	SystemTable      RelationType = "system table"
 	Table            RelationType = "table"
+)
+
+// Defines values for TaskStatus.
+const (
+	Cancelled TaskStatus = "cancelled"
+	Completed TaskStatus = "completed"
+	Failed    TaskStatus = "failed"
+	Paused    TaskStatus = "paused"
+	Pending   TaskStatus = "pending"
+	Running   TaskStatus = "running"
+)
+
+// Defines values for TaskSpecType.
+const (
+	AutoBackup     TaskSpecType = "auto-backup"
+	AutoDiagnostic TaskSpecType = "auto-diagnostic"
 )
 
 // AutoBackupConfig defines model for AutoBackupConfig.
@@ -214,6 +235,28 @@ type DiagnosticData struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+// Event defines model for Event.
+type Event struct {
+	ID        int32     `json:"ID"`
+	CreatedAt time.Time `json:"createdAt"`
+	Spec      EventSpec `json:"spec"`
+}
+
+// EventSpec defines model for EventSpec.
+type EventSpec struct {
+	TaskError *EventTaskError `json:"taskError,omitempty"`
+	Type      EventSpecType   `json:"type"`
+}
+
+// EventSpecType defines model for EventSpec.Type.
+type EventSpecType string
+
+// EventTaskError defines model for EventTaskError.
+type EventTaskError struct {
+	Error  string `json:"error"`
+	TaskID int32  `json:"taskID"`
+}
+
 // MetricMatrix defines model for MetricMatrix.
 type MetricMatrix = []MetricSeries
 
@@ -375,6 +418,44 @@ type Snapshot struct {
 type SnapshotCreate struct {
 	// Name Name of the snapshot
 	Name string `json:"name"`
+}
+
+// Task defines model for Task.
+type Task struct {
+	ID         int32      `json:"ID"`
+	CreatedAt  *time.Time `json:"createdAt,omitempty"`
+	Remaining  int32      `json:"remaining"`
+	Spec       TaskSpec   `json:"spec"`
+	Status     TaskStatus `json:"status"`
+	UpdatedAt  *time.Time `json:"updatedAt,omitempty"`
+	WorkerName *string    `json:"workerName,omitempty"`
+}
+
+// TaskStatus defines model for Task.Status.
+type TaskStatus string
+
+// TaskSpec defines model for TaskSpec.
+type TaskSpec struct {
+	AutoBackup     *TaskSpecAutoBackup     `json:"autoBackup,omitempty"`
+	AutoDiagnostic *TaskSpecAutoDiagnostic `json:"autoDiagnostic,omitempty"`
+	Type           TaskSpecType            `json:"type"`
+}
+
+// TaskSpecType defines model for TaskSpec.Type.
+type TaskSpecType string
+
+// TaskSpecAutoBackup defines model for TaskSpecAutoBackup.
+type TaskSpecAutoBackup struct {
+	ClusterID      int32  `json:"clusterID"`
+	CronExpression string `json:"cronExpression"`
+	KeepLast       int32  `json:"keepLast"`
+}
+
+// TaskSpecAutoDiagnostic defines model for TaskSpecAutoDiagnostic.
+type TaskSpecAutoDiagnostic struct {
+	ClusterID         int32  `json:"clusterID"`
+	CronExpression    string `json:"cronExpression"`
+	RetentionDuration string `json:"retentionDuration"`
 }
 
 // TestClusterConnectionPayload defines model for TestClusterConnectionPayload.
@@ -684,6 +765,9 @@ type ClientInterface interface {
 
 	QueryDatabase(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListEvents request
+	ListEvents(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListMetricsStores request
 	ListMetricsStores(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -705,6 +789,9 @@ type ClientInterface interface {
 
 	// GetMaterializedViewThroughput request
 	GetMaterializedViewThroughput(ctx context.Context, clusterID int32, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListTasks request
+	ListTasks(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TestClusterConnectionWithBody request with any body
 	TestClusterConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1216,6 +1303,18 @@ func (c *Client) QueryDatabase(ctx context.Context, iD int32, body QueryDatabase
 	return c.Client.Do(req)
 }
 
+func (c *Client) ListEvents(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListEventsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListMetricsStores(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListMetricsStoresRequest(c.Server)
 	if err != nil {
@@ -1302,6 +1401,18 @@ func (c *Client) UpdateMetricsStore(ctx context.Context, iD int32, body UpdateMe
 
 func (c *Client) GetMaterializedViewThroughput(ctx context.Context, clusterID int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMaterializedViewThroughputRequest(c.Server, clusterID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListTasks(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListTasksRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -2555,6 +2666,33 @@ func NewQueryDatabaseRequestWithBody(server string, iD int32, contentType string
 	return req, nil
 }
 
+// NewListEventsRequest generates requests for ListEvents
+func NewListEventsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/events")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListMetricsStoresRequest generates requests for ListMetricsStores
 func NewListMetricsStoresRequest(server string) (*http.Request, error) {
 	var err error
@@ -2789,6 +2927,33 @@ func NewGetMaterializedViewThroughputRequest(server string, clusterID int32) (*h
 	return req, nil
 }
 
+// NewListTasksRequest generates requests for ListTasks
+func NewListTasksRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/tasks")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestClusterConnectionRequest calls the generic TestClusterConnection builder with application/json body
 func NewTestClusterConnectionRequest(server string, body TestClusterConnectionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -2985,6 +3150,9 @@ type ClientWithResponsesInterface interface {
 
 	QueryDatabaseWithResponse(ctx context.Context, iD int32, body QueryDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDatabaseResponse, error)
 
+	// ListEventsWithResponse request
+	ListEventsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListEventsResponse, error)
+
 	// ListMetricsStoresWithResponse request
 	ListMetricsStoresWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMetricsStoresResponse, error)
 
@@ -3006,6 +3174,9 @@ type ClientWithResponsesInterface interface {
 
 	// GetMaterializedViewThroughputWithResponse request
 	GetMaterializedViewThroughputWithResponse(ctx context.Context, clusterID int32, reqEditors ...RequestEditorFn) (*GetMaterializedViewThroughputResponse, error)
+
+	// ListTasksWithResponse request
+	ListTasksWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListTasksResponse, error)
 
 	// TestClusterConnectionWithBodyWithResponse request with any body
 	TestClusterConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TestClusterConnectionResponse, error)
@@ -3643,6 +3814,28 @@ func (r QueryDatabaseResponse) StatusCode() int {
 	return 0
 }
 
+type ListEventsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]Event
+}
+
+// Status returns HTTPResponse.Status
+func (r ListEventsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListMetricsStoresResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3767,6 +3960,28 @@ func (r GetMaterializedViewThroughputResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetMaterializedViewThroughputResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListTasksResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]Task
+}
+
+// Status returns HTTPResponse.Status
+func (r ListTasksResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListTasksResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4160,6 +4375,15 @@ func (c *ClientWithResponses) QueryDatabaseWithResponse(ctx context.Context, iD 
 	return ParseQueryDatabaseResponse(rsp)
 }
 
+// ListEventsWithResponse request returning *ListEventsResponse
+func (c *ClientWithResponses) ListEventsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListEventsResponse, error) {
+	rsp, err := c.ListEvents(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListEventsResponse(rsp)
+}
+
 // ListMetricsStoresWithResponse request returning *ListMetricsStoresResponse
 func (c *ClientWithResponses) ListMetricsStoresWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMetricsStoresResponse, error) {
 	rsp, err := c.ListMetricsStores(ctx, reqEditors...)
@@ -4228,6 +4452,15 @@ func (c *ClientWithResponses) GetMaterializedViewThroughputWithResponse(ctx cont
 		return nil, err
 	}
 	return ParseGetMaterializedViewThroughputResponse(rsp)
+}
+
+// ListTasksWithResponse request returning *ListTasksResponse
+func (c *ClientWithResponses) ListTasksWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListTasksResponse, error) {
+	rsp, err := c.ListTasks(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListTasksResponse(rsp)
 }
 
 // TestClusterConnectionWithBodyWithResponse request with arbitrary body returning *TestClusterConnectionResponse
@@ -4921,6 +5154,32 @@ func ParseQueryDatabaseResponse(rsp *http.Response) (*QueryDatabaseResponse, err
 	return response, nil
 }
 
+// ParseListEventsResponse parses an HTTP response from a ListEventsWithResponse call
+func ParseListEventsResponse(rsp *http.Response) (*ListEventsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListEventsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Event
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListMetricsStoresResponse parses an HTTP response from a ListMetricsStoresWithResponse call
 func ParseListMetricsStoresResponse(rsp *http.Response) (*ListMetricsStoresResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -5057,6 +5316,32 @@ func ParseGetMaterializedViewThroughputResponse(rsp *http.Response) (*GetMateria
 	return response, nil
 }
 
+// ParseListTasksResponse parses an HTTP response from a ListTasksWithResponse call
+func ParseListTasksResponse(rsp *http.Response) (*ListTasksResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListTasksResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Task
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseTestClusterConnectionResponse parses an HTTP response from a TestClusterConnectionWithResponse call
 func ParseTestClusterConnectionResponse(rsp *http.Response) (*TestClusterConnectionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -5172,6 +5457,9 @@ type ServerInterface interface {
 	// Query database
 	// (POST /databases/{ID}/query)
 	QueryDatabase(c *fiber.Ctx, iD int32) error
+	// Get all events
+	// (GET /events)
+	ListEvents(c *fiber.Ctx) error
 	// Get all metrics stores
 	// (GET /metrics-stores)
 	ListMetricsStores(c *fiber.Ctx) error
@@ -5190,6 +5478,9 @@ type ServerInterface interface {
 	// Get materialized view throughput
 	// (GET /metrics/{clusterID}/materialized-view-throughput)
 	GetMaterializedViewThroughput(c *fiber.Ctx, clusterID int32) error
+	// Get all tasks
+	// (GET /tasks)
+	ListTasks(c *fiber.Ctx) error
 	// Test cluster connection
 	// (POST /test-cluster-connection)
 	TestClusterConnection(c *fiber.Ctx) error
@@ -5723,6 +6014,14 @@ func (siw *ServerInterfaceWrapper) QueryDatabase(c *fiber.Ctx) error {
 	return siw.Handler.QueryDatabase(c, iD)
 }
 
+// ListEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListEvents(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.ListEvents(c)
+}
+
 // ListMetricsStores operation middleware
 func (siw *ServerInterfaceWrapper) ListMetricsStores(c *fiber.Ctx) error {
 
@@ -5835,6 +6134,14 @@ func (siw *ServerInterfaceWrapper) GetMaterializedViewThroughput(c *fiber.Ctx) e
 	return siw.Handler.GetMaterializedViewThroughput(c, clusterID)
 }
 
+// ListTasks operation middleware
+func (siw *ServerInterfaceWrapper) ListTasks(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.ListTasks(c)
+}
+
 // TestClusterConnection operation middleware
 func (siw *ServerInterfaceWrapper) TestClusterConnection(c *fiber.Ctx) error {
 
@@ -5922,6 +6229,8 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Post(options.BaseURL+"/databases/:ID/query", wrapper.QueryDatabase)
 
+	router.Get(options.BaseURL+"/events", wrapper.ListEvents)
+
 	router.Get(options.BaseURL+"/metrics-stores", wrapper.ListMetricsStores)
 
 	router.Post(options.BaseURL+"/metrics-stores", wrapper.CreateMetricsStore)
@@ -5933,6 +6242,8 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	router.Put(options.BaseURL+"/metrics-stores/:ID", wrapper.UpdateMetricsStore)
 
 	router.Get(options.BaseURL+"/metrics/:clusterID/materialized-view-throughput", wrapper.GetMaterializedViewThroughput)
+
+	router.Get(options.BaseURL+"/tasks", wrapper.ListTasks)
 
 	router.Post(options.BaseURL+"/test-cluster-connection", wrapper.TestClusterConnection)
 

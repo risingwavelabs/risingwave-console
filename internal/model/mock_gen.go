@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	apigen "github.com/risingwavelabs/wavekit/internal/apigen"
 	querier "github.com/risingwavelabs/wavekit/internal/model/querier"
 )
 
@@ -136,6 +137,21 @@ func (m *MockModelInterface) CreateOrganizationOwner(ctx context.Context, arg qu
 func (mr *MockModelInterfaceMockRecorder) CreateOrganizationOwner(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganizationOwner", reflect.TypeOf((*MockModelInterface)(nil).CreateOrganizationOwner), ctx, arg)
+}
+
+// CreateTask mocks base method.
+func (m *MockModelInterface) CreateTask(ctx context.Context, arg querier.CreateTaskParams) (*querier.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateTask", ctx, arg)
+	ret0, _ := ret[0].(*querier.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateTask indicates an expected call of CreateTask.
+func (mr *MockModelInterfaceMockRecorder) CreateTask(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTask", reflect.TypeOf((*MockModelInterface)(nil).CreateTask), ctx, arg)
 }
 
 // CreateUser mocks base method.
@@ -534,6 +550,21 @@ func (mr *MockModelInterfaceMockRecorder) InitDatabaseConnection(ctx, arg interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).InitDatabaseConnection), ctx, arg)
 }
 
+// InsertEvent mocks base method.
+func (m *MockModelInterface) InsertEvent(ctx context.Context, spec apigen.EventSpec) (*querier.Event, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertEvent", ctx, spec)
+	ret0, _ := ret[0].(*querier.Event)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InsertEvent indicates an expected call of InsertEvent.
+func (mr *MockModelInterfaceMockRecorder) InsertEvent(ctx, spec interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertEvent", reflect.TypeOf((*MockModelInterface)(nil).InsertEvent), ctx, spec)
+}
+
 // ListClusterDiagnostics mocks base method.
 func (m *MockModelInterface) ListClusterDiagnostics(ctx context.Context, clusterID int32) ([]*querier.ListClusterDiagnosticsRow, error) {
 	m.ctrl.T.Helper()
@@ -639,6 +670,36 @@ func (mr *MockModelInterfaceMockRecorder) ListOrganizations(ctx interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockModelInterface)(nil).ListOrganizations), ctx)
 }
 
+// LockTask mocks base method.
+func (m *MockModelInterface) LockTask(ctx context.Context, arg querier.LockTaskParams) (*querier.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LockTask", ctx, arg)
+	ret0, _ := ret[0].(*querier.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LockTask indicates an expected call of LockTask.
+func (mr *MockModelInterfaceMockRecorder) LockTask(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LockTask", reflect.TypeOf((*MockModelInterface)(nil).LockTask), ctx, arg)
+}
+
+// PullTask mocks base method.
+func (m *MockModelInterface) PullTask(ctx context.Context, workerName *string) (*querier.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PullTask", ctx, workerName)
+	ret0, _ := ret[0].(*querier.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PullTask indicates an expected call of PullTask.
+func (mr *MockModelInterfaceMockRecorder) PullTask(ctx, workerName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullTask", reflect.TypeOf((*MockModelInterface)(nil).PullTask), ctx, workerName)
+}
+
 // RemoveClusterMetricsStoreID mocks base method.
 func (m *MockModelInterface) RemoveClusterMetricsStoreID(ctx context.Context, arg querier.RemoveClusterMetricsStoreIDParams) error {
 	m.ctrl.T.Helper()
@@ -665,6 +726,20 @@ func (m *MockModelInterface) RunTransaction(ctx context.Context, f func(ModelInt
 func (mr *MockModelInterfaceMockRecorder) RunTransaction(ctx, f interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunTransaction", reflect.TypeOf((*MockModelInterface)(nil).RunTransaction), ctx, f)
+}
+
+// SendWorkerHeartbeat mocks base method.
+func (m *MockModelInterface) SendWorkerHeartbeat(ctx context.Context, arg querier.SendWorkerHeartbeatParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SendWorkerHeartbeat", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SendWorkerHeartbeat indicates an expected call of SendWorkerHeartbeat.
+func (mr *MockModelInterfaceMockRecorder) SendWorkerHeartbeat(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendWorkerHeartbeat", reflect.TypeOf((*MockModelInterface)(nil).SendWorkerHeartbeat), ctx, arg)
 }
 
 // UpdateMetricsStore mocks base method.
@@ -725,6 +800,36 @@ func (m *MockModelInterface) UpdateOrganization(ctx context.Context, arg querier
 func (mr *MockModelInterfaceMockRecorder) UpdateOrganization(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrganization", reflect.TypeOf((*MockModelInterface)(nil).UpdateOrganization), ctx, arg)
+}
+
+// UpdateTaskMetadata mocks base method.
+func (m *MockModelInterface) UpdateTaskMetadata(ctx context.Context, arg querier.UpdateTaskMetadataParams) (*querier.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTaskMetadata", ctx, arg)
+	ret0, _ := ret[0].(*querier.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateTaskMetadata indicates an expected call of UpdateTaskMetadata.
+func (mr *MockModelInterfaceMockRecorder) UpdateTaskMetadata(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTaskMetadata", reflect.TypeOf((*MockModelInterface)(nil).UpdateTaskMetadata), ctx, arg)
+}
+
+// UpdateTaskSpec mocks base method.
+func (m *MockModelInterface) UpdateTaskSpec(ctx context.Context, arg querier.UpdateTaskSpecParams) (*querier.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTaskSpec", ctx, arg)
+	ret0, _ := ret[0].(*querier.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateTaskSpec indicates an expected call of UpdateTaskSpec.
+func (mr *MockModelInterfaceMockRecorder) UpdateTaskSpec(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTaskSpec", reflect.TypeOf((*MockModelInterface)(nil).UpdateTaskSpec), ctx, arg)
 }
 
 // UpsertAutoBackupConfig mocks base method.
