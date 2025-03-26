@@ -19,11 +19,27 @@ ORDER BY created_at ASC
 FOR UPDATE SKIP LOCKED
 LIMIT 1;
 
+-- name: SubtractRemaining :one
+UPDATE tasks
+SET 
+    remaining = remaining - 1,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING *;
+
 -- name: LockTask :one
 UPDATE tasks
 SET 
     status = 'running',
     worker_name = $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateTaskStatus :one
+UPDATE tasks
+SET 
+    status = $2,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING *;

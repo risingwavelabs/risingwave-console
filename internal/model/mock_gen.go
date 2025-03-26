@@ -742,6 +742,21 @@ func (mr *MockModelInterfaceMockRecorder) SendWorkerHeartbeat(ctx, arg interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendWorkerHeartbeat", reflect.TypeOf((*MockModelInterface)(nil).SendWorkerHeartbeat), ctx, arg)
 }
 
+// SubtractRemaining mocks base method.
+func (m *MockModelInterface) SubtractRemaining(ctx context.Context, id int32) (*querier.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SubtractRemaining", ctx, id)
+	ret0, _ := ret[0].(*querier.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SubtractRemaining indicates an expected call of SubtractRemaining.
+func (mr *MockModelInterfaceMockRecorder) SubtractRemaining(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubtractRemaining", reflect.TypeOf((*MockModelInterface)(nil).SubtractRemaining), ctx, id)
+}
+
 // UpdateMetricsStore mocks base method.
 func (m *MockModelInterface) UpdateMetricsStore(ctx context.Context, arg querier.UpdateMetricsStoreParams) (*querier.MetricsStore, error) {
 	m.ctrl.T.Helper()
@@ -830,6 +845,21 @@ func (m *MockModelInterface) UpdateTaskSpec(ctx context.Context, arg querier.Upd
 func (mr *MockModelInterfaceMockRecorder) UpdateTaskSpec(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTaskSpec", reflect.TypeOf((*MockModelInterface)(nil).UpdateTaskSpec), ctx, arg)
+}
+
+// UpdateTaskStatus mocks base method.
+func (m *MockModelInterface) UpdateTaskStatus(ctx context.Context, arg querier.UpdateTaskStatusParams) (*querier.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTaskStatus", ctx, arg)
+	ret0, _ := ret[0].(*querier.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateTaskStatus indicates an expected call of UpdateTaskStatus.
+func (mr *MockModelInterfaceMockRecorder) UpdateTaskStatus(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTaskStatus", reflect.TypeOf((*MockModelInterface)(nil).UpdateTaskStatus), ctx, arg)
 }
 
 // UpsertAutoBackupConfig mocks base method.

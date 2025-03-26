@@ -144,6 +144,32 @@ func (q *Queries) SendWorkerHeartbeat(ctx context.Context, arg SendWorkerHeartbe
 	return err
 }
 
+const subtractRemaining = `-- name: SubtractRemaining :one
+UPDATE tasks
+SET 
+    remaining = remaining - 1,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING id, worker_name, spec, status, timeout, remaining, started_at, created_at, updated_at
+`
+
+func (q *Queries) SubtractRemaining(ctx context.Context, id int32) (*Task, error) {
+	row := q.db.QueryRow(ctx, subtractRemaining, id)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.WorkerName,
+		&i.Spec,
+		&i.Status,
+		&i.Timeout,
+		&i.Remaining,
+		&i.StartedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const updateTaskMetadata = `-- name: UpdateTaskMetadata :one
 UPDATE tasks
 SET 
@@ -198,6 +224,37 @@ type UpdateTaskSpecParams struct {
 
 func (q *Queries) UpdateTaskSpec(ctx context.Context, arg UpdateTaskSpecParams) (*Task, error) {
 	row := q.db.QueryRow(ctx, updateTaskSpec, arg.ID, arg.Spec)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.WorkerName,
+		&i.Spec,
+		&i.Status,
+		&i.Timeout,
+		&i.Remaining,
+		&i.StartedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const updateTaskStatus = `-- name: UpdateTaskStatus :one
+UPDATE tasks
+SET 
+    status = $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING id, worker_name, spec, status, timeout, remaining, started_at, created_at, updated_at
+`
+
+type UpdateTaskStatusParams struct {
+	ID     int32
+	Status string
+}
+
+func (q *Queries) UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) (*Task, error) {
+	row := q.db.QueryRow(ctx, updateTaskStatus, arg.ID, arg.Status)
 	var i Task
 	err := row.Scan(
 		&i.ID,

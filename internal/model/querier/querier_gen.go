@@ -57,12 +57,14 @@ type Querier interface {
 	PullTask(ctx context.Context, workerName *string) (*Task, error)
 	RemoveClusterMetricsStoreID(ctx context.Context, arg RemoveClusterMetricsStoreIDParams) error
 	SendWorkerHeartbeat(ctx context.Context, arg SendWorkerHeartbeatParams) error
+	SubtractRemaining(ctx context.Context, id int32) (*Task, error)
 	UpdateMetricsStore(ctx context.Context, arg UpdateMetricsStoreParams) (*MetricsStore, error)
 	UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterParams) (*Cluster, error)
 	UpdateOrgDatabaseConnection(ctx context.Context, arg UpdateOrgDatabaseConnectionParams) (*DatabaseConnection, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (*Organization, error)
 	UpdateTaskMetadata(ctx context.Context, arg UpdateTaskMetadataParams) (*Task, error)
 	UpdateTaskSpec(ctx context.Context, arg UpdateTaskSpecParams) (*Task, error)
+	UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) (*Task, error)
 	UpsertAutoBackupConfig(ctx context.Context, arg UpsertAutoBackupConfigParams) error
 	UpsertAutoDiagnosticsConfig(ctx context.Context, arg UpsertAutoDiagnosticsConfigParams) error
 	UpsertRefreshToken(ctx context.Context, arg UpsertRefreshTokenParams) error
