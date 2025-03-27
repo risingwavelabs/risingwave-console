@@ -1486,21 +1486,19 @@ components:
 
     Task:
       type: object
-      required: [ID, spec, status, remaining]
+      required: [ID, spec, status, createdAt, updatedAt]
       properties:
         ID:
           type: integer
           format: int32
-        workerName:
-          type: string
         spec:
           $ref: "#/components/schemas/TaskSpec"
         status:
           type: string
-          enum: ["pending", "running", "completed", "failed", "paused", "cancelled"]
-        remaining:
-          type: integer
-          format: int32
+          enum: ["pending", "completed", "failed", "paused"]
+        startedAt:
+          type: string
+          format: date-time
         createdAt:
           type: string
           format: date-time
@@ -1522,28 +1520,19 @@ components:
 
     TaskSpecAutoBackup:
       type: object
-      required: [clusterID, cronExpression, keepLast]
+      required: [clusterID]
       properties:
         clusterID:
-          type: integer
-          format: int32
-        cronExpression:
-          type: string
-        keepLast:
           type: integer
           format: int32
 
     TaskSpecAutoDiagnostic:
       type: object
-      required: [clusterID, cronExpression, retentionDuration]
+      required: [clusterID]
       properties:
         clusterID:
           type: integer
           format: int32
-        cronExpression:
-          type: string
-        retentionDuration:
-          type: string
 
     Event:
       type: object
@@ -1560,7 +1549,7 @@ components:
 
     EventSpec:
       type: object
-      required: [type, clusterID]
+      required: [type]
       properties:
         type:
           type: string

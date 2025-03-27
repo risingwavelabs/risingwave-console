@@ -18,11 +18,12 @@ type AutoBackupConfig struct {
 	KeepLast       int32
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	NextTaskID     int32
 }
 
 type AutoBackupTask struct {
-	ClusterID int32
-	TaskID    int32
+	ClusterID  int32
+	NextTaskID int32
 }
 
 type AutoDiagnosticsConfig struct {
@@ -32,11 +33,12 @@ type AutoDiagnosticsConfig struct {
 	RetentionDuration *string
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
+	NextTaskID        int32
 }
 
 type AutoDiagnosticsTask struct {
-	ClusterID int32
-	TaskID    int32
+	ClusterID  int32
+	NextTaskID int32
 }
 
 type Cluster struct {
@@ -84,7 +86,7 @@ type DatabaseConnection struct {
 type Event struct {
 	ID        int32
 	Spec      apigen.EventSpec
-	CreatedAt pgtype.Timestamp
+	CreatedAt time.Time
 }
 
 type MetricsStore struct {
@@ -109,6 +111,7 @@ type Organization struct {
 	Name      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	Timezone  string
 }
 
 type OrganizationOwner struct {
@@ -127,15 +130,13 @@ type RefreshToken struct {
 }
 
 type Task struct {
-	ID         int32
-	WorkerName *string
-	Spec       apigen.TaskSpec
-	Status     string
-	Timeout    pgtype.Interval
-	Remaining  *int32
-	StartedAt  pgtype.Timestamp
-	CreatedAt  pgtype.Timestamp
-	UpdatedAt  pgtype.Timestamp
+	ID        int32
+	Spec      apigen.TaskSpec
+	Status    string
+	Timeout   pgtype.Interval
+	StartedAt *time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type User struct {
@@ -146,9 +147,4 @@ type User struct {
 	OrganizationID int32
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
-}
-
-type Worker struct {
-	WorkerName    *string
-	LastHeartbeat pgtype.Timestamp
 }

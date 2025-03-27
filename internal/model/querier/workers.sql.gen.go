@@ -7,41 +7,31 @@ package querier
 
 import (
 	"context"
+	"time"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 )
 
 const createTask = `-- name: CreateTask :one
-INSERT INTO tasks (worker_name, spec, status, remaining, started_at)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, worker_name, spec, status, timeout, remaining, started_at, created_at, updated_at
+INSERT INTO tasks (spec, status, started_at)
+VALUES ($1, $2, $3)
+RETURNING id, spec, status, timeout, started_at, created_at, updated_at
 `
 
 type CreateTaskParams struct {
-	WorkerName *string
-	Spec       apigen.TaskSpec
-	Status     string
-	Remaining  *int32
-	StartedAt  pgtype.Timestamp
+	Spec      apigen.TaskSpec
+	Status    string
+	StartedAt *time.Time
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (*Task, error) {
-	row := q.db.QueryRow(ctx, createTask,
-		arg.WorkerName,
-		arg.Spec,
-		arg.Status,
-		arg.Remaining,
-		arg.StartedAt,
-	)
+	row := q.db.QueryRow(ctx, createTask, arg.Spec, arg.Status, arg.StartedAt)
 	var i Task
 	err := row.Scan(
 		&i.ID,
-		&i.WorkerName,
 		&i.Spec,
 		&i.Status,
 		&i.Timeout,
-		&i.Remaining,
 		&i.StartedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -62,47 +52,10 @@ func (q *Queries) InsertEvent(ctx context.Context, spec apigen.EventSpec) (*Even
 	return &i, err
 }
 
-const lockTask = `-- name: LockTask :one
-UPDATE tasks
-SET 
-    status = 'running',
-    worker_name = $2,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
-RETURNING id, worker_name, spec, status, timeout, remaining, started_at, created_at, updated_at
-`
-
-type LockTaskParams struct {
-	ID         int32
-	WorkerName *string
-}
-
-func (q *Queries) LockTask(ctx context.Context, arg LockTaskParams) (*Task, error) {
-	row := q.db.QueryRow(ctx, lockTask, arg.ID, arg.WorkerName)
-	var i Task
-	err := row.Scan(
-		&i.ID,
-		&i.WorkerName,
-		&i.Spec,
-		&i.Status,
-		&i.Timeout,
-		&i.Remaining,
-		&i.StartedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return &i, err
-}
-
 const pullTask = `-- name: PullTask :one
-SELECT id, worker_name, spec, status, timeout, remaining, started_at, created_at, updated_at FROM tasks
+SELECT id, spec, status, timeout, started_at, created_at, updated_at FROM tasks
 WHERE 
-    (remaning IS NULL OR remaning > 0)
-    AND (
-        (worker_name IS NULL AND status = 'pending')
-        OR
-        (worker_name = $1 AND (status = 'running' OR status = 'pending'))
-    )
+    status = 'pending'
     AND (
         started_at IS NULL OR started_at < NOW()
     )
@@ -111,16 +64,14 @@ FOR UPDATE SKIP LOCKED
 LIMIT 1
 `
 
-func (q *Queries) PullTask(ctx context.Context, workerName *string) (*Task, error) {
-	row := q.db.QueryRow(ctx, pullTask, workerName)
+func (q *Queries) PullTask(ctx context.Context) (*Task, error) {
+	row := q.db.QueryRow(ctx, pullTask)
 	var i Task
 	err := row.Scan(
 		&i.ID,
-		&i.WorkerName,
 		&i.Spec,
 		&i.Status,
 		&i.Timeout,
-		&i.Remaining,
 		&i.StartedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -128,93 +79,10 @@ func (q *Queries) PullTask(ctx context.Context, workerName *string) (*Task, erro
 	return &i, err
 }
 
-const sendWorkerHeartbeat = `-- name: SendWorkerHeartbeat :exec
-INSERT INTO workers (worker_name, last_heartbeat)
-VALUES ($1, $2)
-ON CONFLICT (worker_name) DO UPDATE SET last_heartbeat = $2
-`
-
-type SendWorkerHeartbeatParams struct {
-	WorkerName    *string
-	LastHeartbeat pgtype.Timestamp
-}
-
-func (q *Queries) SendWorkerHeartbeat(ctx context.Context, arg SendWorkerHeartbeatParams) error {
-	_, err := q.db.Exec(ctx, sendWorkerHeartbeat, arg.WorkerName, arg.LastHeartbeat)
-	return err
-}
-
-const subtractRemaining = `-- name: SubtractRemaining :one
-UPDATE tasks
-SET 
-    remaining = remaining - 1,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
-RETURNING id, worker_name, spec, status, timeout, remaining, started_at, created_at, updated_at
-`
-
-func (q *Queries) SubtractRemaining(ctx context.Context, id int32) (*Task, error) {
-	row := q.db.QueryRow(ctx, subtractRemaining, id)
-	var i Task
-	err := row.Scan(
-		&i.ID,
-		&i.WorkerName,
-		&i.Spec,
-		&i.Status,
-		&i.Timeout,
-		&i.Remaining,
-		&i.StartedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return &i, err
-}
-
-const updateTaskMetadata = `-- name: UpdateTaskMetadata :one
-UPDATE tasks
-SET 
-    status = $2, 
-    remaining = $3, 
-    started_at = $4,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
-RETURNING id, worker_name, spec, status, timeout, remaining, started_at, created_at, updated_at
-`
-
-type UpdateTaskMetadataParams struct {
-	ID        int32
-	Status    string
-	Remaining *int32
-	StartedAt pgtype.Timestamp
-}
-
-func (q *Queries) UpdateTaskMetadata(ctx context.Context, arg UpdateTaskMetadataParams) (*Task, error) {
-	row := q.db.QueryRow(ctx, updateTaskMetadata,
-		arg.ID,
-		arg.Status,
-		arg.Remaining,
-		arg.StartedAt,
-	)
-	var i Task
-	err := row.Scan(
-		&i.ID,
-		&i.WorkerName,
-		&i.Spec,
-		&i.Status,
-		&i.Timeout,
-		&i.Remaining,
-		&i.StartedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return &i, err
-}
-
-const updateTaskSpec = `-- name: UpdateTaskSpec :one
+const updateTaskSpec = `-- name: UpdateTaskSpec :exec
 UPDATE tasks
 SET spec = $2, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, worker_name, spec, status, timeout, remaining, started_at, created_at, updated_at
 `
 
 type UpdateTaskSpecParams struct {
@@ -222,30 +90,17 @@ type UpdateTaskSpecParams struct {
 	Spec apigen.TaskSpec
 }
 
-func (q *Queries) UpdateTaskSpec(ctx context.Context, arg UpdateTaskSpecParams) (*Task, error) {
-	row := q.db.QueryRow(ctx, updateTaskSpec, arg.ID, arg.Spec)
-	var i Task
-	err := row.Scan(
-		&i.ID,
-		&i.WorkerName,
-		&i.Spec,
-		&i.Status,
-		&i.Timeout,
-		&i.Remaining,
-		&i.StartedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return &i, err
+func (q *Queries) UpdateTaskSpec(ctx context.Context, arg UpdateTaskSpecParams) error {
+	_, err := q.db.Exec(ctx, updateTaskSpec, arg.ID, arg.Spec)
+	return err
 }
 
-const updateTaskStatus = `-- name: UpdateTaskStatus :one
+const updateTaskStatus = `-- name: UpdateTaskStatus :exec
 UPDATE tasks
 SET 
     status = $2,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, worker_name, spec, status, timeout, remaining, started_at, created_at, updated_at
 `
 
 type UpdateTaskStatusParams struct {
@@ -253,19 +108,7 @@ type UpdateTaskStatusParams struct {
 	Status string
 }
 
-func (q *Queries) UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) (*Task, error) {
-	row := q.db.QueryRow(ctx, updateTaskStatus, arg.ID, arg.Status)
-	var i Task
-	err := row.Scan(
-		&i.ID,
-		&i.WorkerName,
-		&i.Spec,
-		&i.Status,
-		&i.Timeout,
-		&i.Remaining,
-		&i.StartedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return &i, err
+func (q *Queries) UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) error {
+	_, err := q.db.Exec(ctx, updateTaskStatus, arg.ID, arg.Status)
+	return err
 }

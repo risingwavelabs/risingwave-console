@@ -10,7 +10,7 @@ import (
 )
 
 const getAutoBackupConfig = `-- name: GetAutoBackupConfig :one
-SELECT cluster_id, enabled, cron_expression, keep_last, created_at, updated_at FROM auto_backup_configs
+SELECT cluster_id, enabled, cron_expression, keep_last, created_at, updated_at, next_task_id FROM auto_backup_configs
 WHERE cluster_id = $1
 `
 
@@ -24,12 +24,13 @@ func (q *Queries) GetAutoBackupConfig(ctx context.Context, clusterID int32) (*Au
 		&i.KeepLast,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.NextTaskID,
 	)
 	return &i, err
 }
 
 const getAutoDiagnosticsConfig = `-- name: GetAutoDiagnosticsConfig :one
-SELECT cluster_id, enabled, cron_expression, retention_duration, created_at, updated_at FROM auto_diagnostics_configs
+SELECT cluster_id, enabled, cron_expression, retention_duration, created_at, updated_at, next_task_id FROM auto_diagnostics_configs
 WHERE cluster_id = $1
 `
 
@@ -43,6 +44,7 @@ func (q *Queries) GetAutoDiagnosticsConfig(ctx context.Context, clusterID int32)
 		&i.RetentionDuration,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.NextTaskID,
 	)
 	return &i, err
 }

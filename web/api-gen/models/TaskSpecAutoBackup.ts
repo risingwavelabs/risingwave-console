@@ -4,7 +4,5 @@
 /* eslint-disable */
 export type TaskSpecAutoBackup = {
     clusterID: number;
-    cronExpression: string;
-    keepLast: number;
 };
 

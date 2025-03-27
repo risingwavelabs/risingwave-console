@@ -72,7 +72,7 @@ gen-querier: install-sqlc clean-querier
 ### mock 
 ###################################################
 
-MOCKGEN_VERSION=1.6.0
+MOCKGEN_VERSION=0.5.0
 MOCKGEN_BIN=$(PROJECT_DIR)/bin/mockgen
 
 install-mockgen: 
@@ -80,6 +80,7 @@ install-mockgen:
 
 gen-mock: install-mockgen
 	$(MOCKGEN_BIN) -source=internal/model/model.go -destination=internal/model/mock_gen.go -package=model
+	$(MOCKGEN_BIN) -source=internal/worker/executor.go -destination=internal/worker/executor_mock_gen.go -package=worker
 
 ###################################################
 ### Common

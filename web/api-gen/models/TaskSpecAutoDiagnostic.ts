@@ -4,7 +4,5 @@
 /* eslint-disable */
 export type TaskSpecAutoDiagnostic = {
     clusterID: number;
-    cronExpression: string;
-    retentionDuration: string;
 };
 

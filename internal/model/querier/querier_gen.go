@@ -41,6 +41,7 @@ type Querier interface {
 	GetOrgDatabaseConnection(ctx context.Context, arg GetOrgDatabaseConnectionParams) (*DatabaseConnection, error)
 	GetOrganization(ctx context.Context, id int32) (*Organization, error)
 	GetRefreshToken(ctx context.Context, arg GetRefreshTokenParams) (*RefreshToken, error)
+	GetTimeZone(ctx context.Context, id int32) (string, error)
 	GetUser(ctx context.Context, id int32) (*User, error)
 	GetUserByName(ctx context.Context, name string) (*User, error)
 	InitCluster(ctx context.Context, arg InitClusterParams) (*Cluster, error)
@@ -53,18 +54,15 @@ type Querier interface {
 	ListOrgClusters(ctx context.Context, organizationID int32) ([]*Cluster, error)
 	ListOrgDatabaseConnections(ctx context.Context, organizationID int32) ([]*DatabaseConnection, error)
 	ListOrganizations(ctx context.Context) ([]*Organization, error)
-	LockTask(ctx context.Context, arg LockTaskParams) (*Task, error)
-	PullTask(ctx context.Context, workerName *string) (*Task, error)
+	PullTask(ctx context.Context) (*Task, error)
 	RemoveClusterMetricsStoreID(ctx context.Context, arg RemoveClusterMetricsStoreIDParams) error
-	SendWorkerHeartbeat(ctx context.Context, arg SendWorkerHeartbeatParams) error
-	SubtractRemaining(ctx context.Context, id int32) (*Task, error)
+	SetTimeZone(ctx context.Context, arg SetTimeZoneParams) error
 	UpdateMetricsStore(ctx context.Context, arg UpdateMetricsStoreParams) (*MetricsStore, error)
 	UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterParams) (*Cluster, error)
 	UpdateOrgDatabaseConnection(ctx context.Context, arg UpdateOrgDatabaseConnectionParams) (*DatabaseConnection, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (*Organization, error)
-	UpdateTaskMetadata(ctx context.Context, arg UpdateTaskMetadataParams) (*Task, error)
-	UpdateTaskSpec(ctx context.Context, arg UpdateTaskSpecParams) (*Task, error)
-	UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) (*Task, error)
+	UpdateTaskSpec(ctx context.Context, arg UpdateTaskSpecParams) error
+	UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) error
 	UpsertAutoBackupConfig(ctx context.Context, arg UpsertAutoBackupConfigParams) error
 	UpsertAutoDiagnosticsConfig(ctx context.Context, arg UpsertAutoDiagnosticsConfigParams) error
 	UpsertRefreshToken(ctx context.Context, arg UpsertRefreshTokenParams) error

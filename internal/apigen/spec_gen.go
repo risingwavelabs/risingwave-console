@@ -51,12 +51,10 @@ const (
 
 // Defines values for TaskStatus.
 const (
-	Cancelled TaskStatus = "cancelled"
 	Completed TaskStatus = "completed"
 	Failed    TaskStatus = "failed"
 	Paused    TaskStatus = "paused"
 	Pending   TaskStatus = "pending"
-	Running   TaskStatus = "running"
 )
 
 // Defines values for TaskSpecType.
@@ -422,13 +420,12 @@ type SnapshotCreate struct {
 
 // Task defines model for Task.
 type Task struct {
-	ID         int32      `json:"ID"`
-	CreatedAt  *time.Time `json:"createdAt,omitempty"`
-	Remaining  int32      `json:"remaining"`
-	Spec       TaskSpec   `json:"spec"`
-	Status     TaskStatus `json:"status"`
-	UpdatedAt  *time.Time `json:"updatedAt,omitempty"`
-	WorkerName *string    `json:"workerName,omitempty"`
+	ID        int32      `json:"ID"`
+	CreatedAt time.Time  `json:"createdAt"`
+	Spec      TaskSpec   `json:"spec"`
+	StartedAt *time.Time `json:"startedAt,omitempty"`
+	Status    TaskStatus `json:"status"`
+	UpdatedAt time.Time  `json:"updatedAt"`
 }
 
 // TaskStatus defines model for Task.Status.
@@ -446,16 +443,12 @@ type TaskSpecType string
 
 // TaskSpecAutoBackup defines model for TaskSpecAutoBackup.
 type TaskSpecAutoBackup struct {
-	ClusterID      int32  `json:"clusterID"`
-	CronExpression string `json:"cronExpression"`
-	KeepLast       int32  `json:"keepLast"`
+	ClusterID int32 `json:"clusterID"`
 }
 
 // TaskSpecAutoDiagnostic defines model for TaskSpecAutoDiagnostic.
 type TaskSpecAutoDiagnostic struct {
-	ClusterID         int32  `json:"clusterID"`
-	CronExpression    string `json:"cronExpression"`
-	RetentionDuration string `json:"retentionDuration"`
+	ClusterID int32 `json:"clusterID"`
 }
 
 // TestClusterConnectionPayload defines model for TestClusterConnectionPayload.
