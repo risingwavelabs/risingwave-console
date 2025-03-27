@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/risingwavelabs/wavekit/internal/apigen"
+	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
 	"go.uber.org/mock/gomock"
@@ -50,7 +51,7 @@ func TestRunTask(t *testing.T) {
 
 			worker := &Worker{
 				model: mockModel,
-				getExecutor: func(m model.ModelInterface) ExecutorInterface {
+				getExecutor: func(m model.ModelInterface, risectlm *meta.RisectlManager) ExecutorInterface {
 					return mockExecutor
 				},
 			}

@@ -11,7 +11,6 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/golang-migrate/migrate/v4 v4.17.1
-	github.com/golang/mock v1.6.0
 	github.com/golang/snappy v1.0.0
 	github.com/google/go-github/v68 v68.0.0
 	github.com/google/wire v0.6.0

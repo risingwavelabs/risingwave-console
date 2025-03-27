@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
+	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 	"github.com/risingwavelabs/wavekit/internal/logger"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
@@ -18,12 +19,15 @@ var log = logger.NewLogAgent("worker")
 type Worker struct {
 	model       model.ModelInterface
 	getExecutor executorGetter
+
+	risectlm *meta.RisectlManager
 }
 
-func NewWorker(globalCtx context.Context, model model.ModelInterface) (*Worker, error) {
+func NewWorker(globalCtx context.Context, model model.ModelInterface, risectlm *meta.RisectlManager) (*Worker, error) {
 	w := &Worker{
 		model:       model,
 		getExecutor: newExecutor,
+		risectlm:    risectlm,
 	}
 
 	go func() {
@@ -54,7 +58,7 @@ func taskToAPI(task *querier.Task) *apigen.Task {
 }
 
 func (w *Worker) executeTask(ctx context.Context, model model.ModelInterface, task *apigen.Task) error {
-	executor := w.getExecutor(model)
+	executor := w.getExecutor(model, w.risectlm)
 
 	switch task.Spec.Type {
 	case apigen.AutoBackup:

@@ -16,7 +16,7 @@ func (s *Service) getRisectlConn(ctx context.Context, id int32) (meta.RisectlCon
 		return nil, errors.Wrapf(err, "failed to get cluster")
 	}
 
-	return s.risectlm.NewConn(ctx, cluster.Version, fmt.Sprintf("http://%s:%d", cluster.Host, cluster.MetaPort))
+	return s.risectlm.NewConn(ctx, cluster.Version, cluster.Host, cluster.MetaPort)
 }
 
 func (s *Service) getMetaHttpConn(ctx context.Context, id int32) (http.MetaHttpConn, error) {

@@ -145,6 +145,20 @@ func (mr *MockModelInterfaceMockRecorder) CreateOrganizationOwner(ctx, arg any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganizationOwner", reflect.TypeOf((*MockModelInterface)(nil).CreateOrganizationOwner), ctx, arg)
 }
 
+// CreateSnapshot mocks base method.
+func (m *MockModelInterface) CreateSnapshot(ctx context.Context, arg querier.CreateSnapshotParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSnapshot", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateSnapshot indicates an expected call of CreateSnapshot.
+func (mr *MockModelInterfaceMockRecorder) CreateSnapshot(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSnapshot", reflect.TypeOf((*MockModelInterface)(nil).CreateSnapshot), ctx, arg)
+}
+
 // CreateTask mocks base method.
 func (m *MockModelInterface) CreateTask(ctx context.Context, arg querier.CreateTaskParams) (*querier.Task, error) {
 	m.ctrl.T.Helper()
@@ -271,6 +285,20 @@ func (m *MockModelInterface) DeleteRefreshToken(ctx context.Context, arg querier
 func (mr *MockModelInterfaceMockRecorder) DeleteRefreshToken(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRefreshToken", reflect.TypeOf((*MockModelInterface)(nil).DeleteRefreshToken), ctx, arg)
+}
+
+// DeleteSnapshot mocks base method.
+func (m *MockModelInterface) DeleteSnapshot(ctx context.Context, arg querier.DeleteSnapshotParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSnapshot", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSnapshot indicates an expected call of DeleteSnapshot.
+func (mr *MockModelInterfaceMockRecorder) DeleteSnapshot(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSnapshot", reflect.TypeOf((*MockModelInterface)(nil).DeleteSnapshot), ctx, arg)
 }
 
 // DeleteUserByName mocks base method.
@@ -689,6 +717,21 @@ func (m *MockModelInterface) ListOrganizations(ctx context.Context) ([]*querier.
 func (mr *MockModelInterfaceMockRecorder) ListOrganizations(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockModelInterface)(nil).ListOrganizations), ctx)
+}
+
+// ListSnapshots mocks base method.
+func (m *MockModelInterface) ListSnapshots(ctx context.Context, clusterID int32) ([]*querier.Snapshot, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSnapshots", ctx, clusterID)
+	ret0, _ := ret[0].([]*querier.Snapshot)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSnapshots indicates an expected call of ListSnapshots.
+func (mr *MockModelInterfaceMockRecorder) ListSnapshots(ctx, clusterID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSnapshots", reflect.TypeOf((*MockModelInterface)(nil).ListSnapshots), ctx, clusterID)
 }
 
 // PullTask mocks base method.

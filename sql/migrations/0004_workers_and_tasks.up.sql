@@ -30,6 +30,14 @@ CREATE TABLE auto_diagnostics_tasks (
     UNIQUE (cluster_id)
 );
 
+CREATE TABLE snapshots (
+    cluster_id  INTEGER NOT NULL REFERENCES clusters(id),
+    snapshot_id BIGINT  NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (cluster_id, snapshot_id)
+);
+
 ALTER TABLE auto_backup_configs 
     ADD COLUMN next_task_id INTEGER NOT NULL REFERENCES tasks(id);
 

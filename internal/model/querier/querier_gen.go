@@ -18,6 +18,7 @@ type Querier interface {
 	CreateMetricsStore(ctx context.Context, arg CreateMetricsStoreParams) (*MetricsStore, error)
 	CreateOrganization(ctx context.Context, name string) (*Organization, error)
 	CreateOrganizationOwner(ctx context.Context, arg CreateOrganizationOwnerParams) error
+	CreateSnapshot(ctx context.Context, arg CreateSnapshotParams) error
 	CreateTask(ctx context.Context, arg CreateTaskParams) (*Task, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	DeleteAllOrgDatabaseConnectionsByClusterID(ctx context.Context, arg DeleteAllOrgDatabaseConnectionsByClusterIDParams) error
@@ -27,6 +28,7 @@ type Querier interface {
 	DeleteOrgDatabaseConnection(ctx context.Context, arg DeleteOrgDatabaseConnectionParams) error
 	DeleteOrganization(ctx context.Context, id int32) error
 	DeleteRefreshToken(ctx context.Context, arg DeleteRefreshTokenParams) error
+	DeleteSnapshot(ctx context.Context, arg DeleteSnapshotParams) error
 	DeleteUserByName(ctx context.Context, name string) error
 	GetAllOrgDatabseConnectionsByClusterID(ctx context.Context, arg GetAllOrgDatabseConnectionsByClusterIDParams) ([]*DatabaseConnection, error)
 	GetAutoBackupConfig(ctx context.Context, clusterID int32) (*AutoBackupConfig, error)
@@ -54,6 +56,7 @@ type Querier interface {
 	ListOrgClusters(ctx context.Context, organizationID int32) ([]*Cluster, error)
 	ListOrgDatabaseConnections(ctx context.Context, organizationID int32) ([]*DatabaseConnection, error)
 	ListOrganizations(ctx context.Context) ([]*Organization, error)
+	ListSnapshots(ctx context.Context, clusterID int32) ([]*Snapshot, error)
 	PullTask(ctx context.Context) (*Task, error)
 	RemoveClusterMetricsStoreID(ctx context.Context, arg RemoveClusterMetricsStoreIDParams) error
 	SetTimeZone(ctx context.Context, arg SetTimeZoneParams) error

@@ -129,6 +129,12 @@ type RefreshToken struct {
 	UpdatedAt time.Time
 }
 
+type Snapshot struct {
+	ClusterID  int32
+	SnapshotID int64
+	CreatedAt  time.Time
+}
+
 type Task struct {
 	ID        int32
 	Spec      apigen.TaskSpec
