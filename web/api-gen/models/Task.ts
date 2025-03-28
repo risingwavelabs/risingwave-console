@@ -2,9 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { TaskAttributes } from './TaskAttributes';
 import type { TaskSpec } from './TaskSpec';
 export type Task = {
     ID: number;
+    attributes: TaskAttributes;
     spec: TaskSpec;
     status: Task.status;
     startedAt?: string;

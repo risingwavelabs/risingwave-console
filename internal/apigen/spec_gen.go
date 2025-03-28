@@ -420,16 +420,36 @@ type SnapshotCreate struct {
 
 // Task defines model for Task.
 type Task struct {
-	ID        int32      `json:"ID"`
-	CreatedAt time.Time  `json:"createdAt"`
-	Spec      TaskSpec   `json:"spec"`
-	StartedAt *time.Time `json:"startedAt,omitempty"`
-	Status    TaskStatus `json:"status"`
-	UpdatedAt time.Time  `json:"updatedAt"`
+	ID         int32          `json:"ID"`
+	Attributes TaskAttributes `json:"attributes"`
+	CreatedAt  time.Time      `json:"createdAt"`
+	Spec       TaskSpec       `json:"spec"`
+	StartedAt  *time.Time     `json:"startedAt,omitempty"`
+	Status     TaskStatus     `json:"status"`
+	UpdatedAt  time.Time      `json:"updatedAt"`
 }
 
 // TaskStatus defines model for Task.Status.
 type TaskStatus string
+
+// TaskAttributes defines model for TaskAttributes.
+type TaskAttributes struct {
+	Cronjob *TaskCronjob `json:"cronjob,omitempty"`
+
+	// OrgID If the task is created by a user, this field will be the organization ID of the user
+	OrgID     *int32         `json:"orgID,omitempty"`
+	Scheduled *TaskScheduled `json:"scheduled,omitempty"`
+}
+
+// TaskCronjob defines model for TaskCronjob.
+type TaskCronjob struct {
+	CronExpression string `json:"cronExpression"`
+}
+
+// TaskScheduled defines model for TaskScheduled.
+type TaskScheduled struct {
+	ScheduledTo time.Time `json:"scheduledTo"`
+}
 
 // TaskSpec defines model for TaskSpec.
 type TaskSpec struct {

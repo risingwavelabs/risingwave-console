@@ -17,8 +17,10 @@ import (
 var log = logger.NewLogAgent("worker")
 
 type Worker struct {
-	model       model.ModelInterface
+	model model.ModelInterface
+
 	getExecutor executorGetter
+	getHandler  LifeCycleHandlerGetter
 
 	risectlm *meta.RisectlManager
 }
@@ -27,6 +29,7 @@ func NewWorker(globalCtx context.Context, model model.ModelInterface, risectlm *
 	w := &Worker{
 		model:       model,
 		getExecutor: newExecutor,
+		getHandler:  newTaskLifeCycleHandler,
 		risectlm:    risectlm,
 	}
 
@@ -46,8 +49,8 @@ func NewWorker(globalCtx context.Context, model model.ModelInterface, risectlm *
 	return w, nil
 }
 
-func taskToAPI(task *querier.Task) *apigen.Task {
-	return &apigen.Task{
+func taskToAPI(task *querier.Task) apigen.Task {
+	return apigen.Task{
 		ID:        task.ID,
 		CreatedAt: task.CreatedAt,
 		Spec:      task.Spec,
@@ -57,7 +60,7 @@ func taskToAPI(task *querier.Task) *apigen.Task {
 	}
 }
 
-func (w *Worker) executeTask(ctx context.Context, model model.ModelInterface, task *apigen.Task) error {
+func (w *Worker) executeTask(ctx context.Context, model model.ModelInterface, task apigen.Task) error {
 	executor := w.getExecutor(model, w.risectlm)
 
 	switch task.Spec.Type {
@@ -86,42 +89,34 @@ func (w *Worker) runTask(ctx context.Context) error {
 
 		log.Info("executing task", zap.Int32("task_id", task.ID), zap.Any("task", task))
 
-		if err := w.executeTask(ctx, txm, task); err != nil {
+		// life cycle handler
+		lh, err := w.getHandler(txm)
+		if err != nil {
+			return errors.Wrap(err, "failed to create attribute handler")
+		}
+
+		// handle attributes
+		if err := lh.HandleAttributes(ctx, task); err != nil {
+			return errors.Wrap(err, "failed to handle attributes")
+		}
+
+		// run task
+		err = w.executeTask(ctx, txm, task)
+		if err != nil { // handle failed
 			log.Error("error executing task", zap.Int32("task_id", task.ID), zap.Error(err))
-
-			if err := txm.UpdateTaskStatus(ctx, querier.UpdateTaskStatusParams{
-				ID:     task.ID,
-				Status: string(apigen.Failed),
-			}); err != nil {
-				return errors.Wrap(err, "update task status")
+			if err := lh.HandleFailed(ctx, task, err); err != nil {
+				return errors.Wrap(err, "failed to handle failed task")
 			}
-
-			if _, err := txm.InsertEvent(ctx, apigen.EventSpec{
-				Type: apigen.TaskError,
-				TaskError: &apigen.EventTaskError{
-					TaskID: task.ID,
-					Error:  err.Error(),
-				},
-			}); err != nil {
-				return errors.Wrap(err, "insert task error event")
+		} else { // handle completed
+			if err := lh.HandleCompleted(ctx, task); err != nil {
+				log.Error("error handling completed task", zap.Int32("task_id", task.ID), zap.Error(err))
+				return errors.Wrap(err, "failed to handle completed task")
 			}
-
-			return nil
+			log.Info("task completed", zap.Int32("task_id", task.ID))
 		}
-
-		if err := txm.UpdateTaskStatus(ctx, querier.UpdateTaskStatusParams{
-			ID:     task.ID,
-			Status: string(apigen.Completed),
-		}); err != nil {
-			return errors.Wrap(err, "update task status")
-		}
-
-		log.Info("task completed", zap.Int32("task_id", task.ID))
-
 		return nil
 	}); err != nil {
 		return err
 	}
-
 	return nil
 }

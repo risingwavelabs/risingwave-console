@@ -85,3 +85,8 @@ sql:
           go_type:
             import: "github.com/risingwavelabs/wavekit/internal/apigen"
             type: "EventSpec"
+
+        - column: "tasks.attributes"
+          go_type:
+            import: "github.com/risingwavelabs/wavekit/internal/apigen"
+            type: "TaskAttributes"

@@ -865,6 +865,20 @@ func (mr *MockModelInterfaceMockRecorder) UpdateTaskSpec(ctx, arg any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTaskSpec", reflect.TypeOf((*MockModelInterface)(nil).UpdateTaskSpec), ctx, arg)
 }
 
+// UpdateTaskStartedAt mocks base method.
+func (m *MockModelInterface) UpdateTaskStartedAt(ctx context.Context, arg querier.UpdateTaskStartedAtParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTaskStartedAt", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateTaskStartedAt indicates an expected call of UpdateTaskStartedAt.
+func (mr *MockModelInterfaceMockRecorder) UpdateTaskStartedAt(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTaskStartedAt", reflect.TypeOf((*MockModelInterface)(nil).UpdateTaskStartedAt), ctx, arg)
+}
+
 // UpdateTaskStatus mocks base method.
 func (m *MockModelInterface) UpdateTaskStatus(ctx context.Context, arg querier.UpdateTaskStatusParams) error {
 	m.ctrl.T.Helper()

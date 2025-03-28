@@ -13,22 +13,29 @@ import (
 )
 
 const createTask = `-- name: CreateTask :one
-INSERT INTO tasks (spec, status, started_at)
-VALUES ($1, $2, $3)
-RETURNING id, spec, status, timeout, started_at, created_at, updated_at
+INSERT INTO tasks (attributes, spec, status, started_at)
+VALUES ($1, $2, $3, $4)
+RETURNING id, attributes, spec, status, timeout, started_at, created_at, updated_at
 `
 
 type CreateTaskParams struct {
-	Spec      apigen.TaskSpec
-	Status    string
-	StartedAt *time.Time
+	Attributes apigen.TaskAttributes
+	Spec       apigen.TaskSpec
+	Status     string
+	StartedAt  *time.Time
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (*Task, error) {
-	row := q.db.QueryRow(ctx, createTask, arg.Spec, arg.Status, arg.StartedAt)
+	row := q.db.QueryRow(ctx, createTask,
+		arg.Attributes,
+		arg.Spec,
+		arg.Status,
+		arg.StartedAt,
+	)
 	var i Task
 	err := row.Scan(
 		&i.ID,
+		&i.Attributes,
 		&i.Spec,
 		&i.Status,
 		&i.Timeout,
@@ -53,7 +60,7 @@ func (q *Queries) InsertEvent(ctx context.Context, spec apigen.EventSpec) (*Even
 }
 
 const pullTask = `-- name: PullTask :one
-SELECT id, spec, status, timeout, started_at, created_at, updated_at FROM tasks
+SELECT id, attributes, spec, status, timeout, started_at, created_at, updated_at FROM tasks
 WHERE 
     status = 'pending'
     AND (
@@ -69,6 +76,7 @@ func (q *Queries) PullTask(ctx context.Context) (*Task, error) {
 	var i Task
 	err := row.Scan(
 		&i.ID,
+		&i.Attributes,
 		&i.Spec,
 		&i.Status,
 		&i.Timeout,
@@ -92,6 +100,22 @@ type UpdateTaskSpecParams struct {
 
 func (q *Queries) UpdateTaskSpec(ctx context.Context, arg UpdateTaskSpecParams) error {
 	_, err := q.db.Exec(ctx, updateTaskSpec, arg.ID, arg.Spec)
+	return err
+}
+
+const updateTaskStartedAt = `-- name: UpdateTaskStartedAt :exec
+UPDATE tasks
+SET started_at = $2, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+`
+
+type UpdateTaskStartedAtParams struct {
+	ID        int32
+	StartedAt *time.Time
+}
+
+func (q *Queries) UpdateTaskStartedAt(ctx context.Context, arg UpdateTaskStartedAtParams) error {
+	_, err := q.db.Exec(ctx, updateTaskStartedAt, arg.ID, arg.StartedAt)
 	return err
 }
 

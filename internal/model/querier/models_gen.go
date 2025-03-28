@@ -136,13 +136,14 @@ type Snapshot struct {
 }
 
 type Task struct {
-	ID        int32
-	Spec      apigen.TaskSpec
-	Status    string
-	Timeout   pgtype.Interval
-	StartedAt *time.Time
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID         int32
+	Attributes apigen.TaskAttributes
+	Spec       apigen.TaskSpec
+	Status     string
+	Timeout    pgtype.Interval
+	StartedAt  *time.Time
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 type User struct {

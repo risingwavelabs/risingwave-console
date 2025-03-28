@@ -21,9 +21,14 @@ UPDATE tasks
 SET spec = $2, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1;
 
+-- name: UpdateTaskStartedAt :exec
+UPDATE tasks
+SET started_at = $2, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1;
+
 -- name: CreateTask :one
-INSERT INTO tasks (spec, status, started_at)
-VALUES ($1, $2, $3)
+INSERT INTO tasks (attributes, spec, status, started_at)
+VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: InsertEvent :one

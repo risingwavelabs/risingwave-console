@@ -2,6 +2,7 @@ BEGIN;
 
 CREATE TABLE tasks (
     id          SERIAL PRIMARY KEY,
+    attributes  JSONB NOT NULL,
     spec        JSONB NOT NULL,
     status      VARCHAR(255) NOT NULL,
     timeout     INTERVAL NOT NULL,
