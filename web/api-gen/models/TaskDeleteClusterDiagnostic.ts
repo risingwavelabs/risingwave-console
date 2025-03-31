@@ -2,11 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type TaskSpecAutoBackup = {
+export type TaskDeleteClusterDiagnostic = {
     clusterID: number;
-    /**
-     * Retention duration of the backup data, e.g. 1d, 1w, 1m, 1y
-     */
-    retentionDuration: string;
+    diagnosticID: number;
 };
 

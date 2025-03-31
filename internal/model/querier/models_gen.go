@@ -12,13 +12,11 @@ import (
 )
 
 type AutoBackupConfig struct {
-	ClusterID      int32
-	Enabled        bool
-	CronExpression string
-	KeepLast       int32
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	NextTaskID     int32
+	ClusterID int32
+	Enabled   bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	TaskID    int32
 }
 
 type AutoBackupTask struct {
@@ -27,13 +25,11 @@ type AutoBackupTask struct {
 }
 
 type AutoDiagnosticsConfig struct {
-	ClusterID         int32
-	Enabled           bool
-	CronExpression    string
-	RetentionDuration *string
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
-	NextTaskID        int32
+	ClusterID int32
+	Enabled   bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	TaskID    int32
 }
 
 type AutoDiagnosticsTask struct {

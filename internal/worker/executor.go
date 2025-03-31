@@ -11,7 +11,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
-	"github.com/robfig/cron/v3"
+	"github.com/risingwavelabs/wavekit/internal/utils"
 	"go.uber.org/zap"
 )
 
@@ -34,36 +34,21 @@ func newExecutor(model model.ModelInterface, risectlm *meta.RisectlManager) Exec
 	}
 }
 
+func (e *Executor) createTask(ctx context.Context, orgID *int32, spec apigen.TaskSpec, startedAt *time.Time) (*querier.Task, error) {
+	return e.model.CreateTask(ctx, querier.CreateTaskParams{
+		Attributes: apigen.TaskAttributes{
+			OrgID: orgID,
+		},
+		Spec:      spec,
+		StartedAt: startedAt,
+		Status:    string(apigen.Pending),
+	})
+}
+
 func (e *Executor) ExecuteAutoBackup(ctx context.Context, spec apigen.TaskSpecAutoBackup) error {
 	cluster, err := e.model.GetClusterByID(ctx, spec.ClusterID)
 	if err != nil {
 		return errors.Wrap(err, "failed to get cluster")
-	}
-	tz, err := e.model.GetTimeZone(ctx, cluster.OrganizationID)
-	if err != nil {
-		return errors.Wrap(err, "failed to get timezone")
-	}
-	config, err := e.model.GetAutoBackupConfig(ctx, cluster.ID)
-	if err != nil {
-		return errors.Wrap(err, "failed to get auto backup config")
-	}
-
-	// schedule the next task
-	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-	cron, err := parser.Parse(fmt.Sprintf("TZ=%s %s", tz, config.CronExpression))
-	if err != nil {
-		return errors.Wrapf(err, "failed to parse cron expression: %s", config.CronExpression)
-	}
-	next := cron.Next(time.Now())
-	if _, err := e.model.CreateTask(ctx, querier.CreateTaskParams{
-		Spec: apigen.TaskSpec{
-			Type:       apigen.AutoBackup,
-			AutoBackup: &spec,
-		},
-		Status:    string(apigen.Pending),
-		StartedAt: &next,
-	}); err != nil {
-		return errors.Wrap(err, "failed to create task")
 	}
 
 	// run meta backup
@@ -75,6 +60,11 @@ func (e *Executor) ExecuteAutoBackup(ctx context.Context, spec apigen.TaskSpecAu
 	if err != nil {
 		return errors.Wrap(err, "failed to get meta backup")
 	}
+	log.Info(
+		"auto backup task created",
+		zap.String("cluster_id", fmt.Sprintf("%d", cluster.ID)),
+		zap.String("snapshot_id", fmt.Sprintf("%d", snapshotID)),
+	)
 
 	// record the snapshot ID
 	if err := e.model.CreateSnapshot(ctx, querier.CreateSnapshotParams{
@@ -84,23 +74,30 @@ func (e *Executor) ExecuteAutoBackup(ctx context.Context, spec apigen.TaskSpecAu
 		return errors.Wrap(err, "failed to create snapshot")
 	}
 
-	// clean up old snapshots
-	snapshots, err := e.model.ListSnapshots(ctx, cluster.ID)
+	// create a task to delete the snapshot after the retention duration
+	retentionDuration, err := time.ParseDuration(spec.RetentionDuration)
 	if err != nil {
-		return errors.Wrap(err, "failed to list snapshots")
+		return errors.Wrap(err, "failed to parse retention duration")
 	}
-	for _, snapshot := range snapshots[config.KeepLast:] {
-		log.Info("deleting snapshot", zap.Int64("snapshot_id", snapshot.SnapshotID), zap.Time("created_at", snapshot.CreatedAt))
-		if err := conn.DeleteSnapshot(ctx, snapshot.SnapshotID); err != nil {
-			return errors.Wrap(err, "failed to delete snapshot")
-		}
-		if err := e.model.DeleteSnapshot(ctx, querier.DeleteSnapshotParams{
+	task, err := e.createTask(ctx, &cluster.OrganizationID, apigen.TaskSpec{
+		Type: apigen.DeleteSnapshot,
+		DeleteSnapshot: &apigen.TaskSpecDeleteSnapshot{
 			ClusterID:  cluster.ID,
-			SnapshotID: snapshot.SnapshotID,
-		}); err != nil {
-			return errors.Wrap(err, "failed to delete snapshot")
-		}
+			SnapshotID: snapshotID,
+		},
+	}, utils.Ptr(time.Now().Add(retentionDuration)))
+	if err != nil {
+		return errors.Wrap(err, "failed to create task")
 	}
+
+	log.Info(
+		"auto delete snapshot task created",
+		zap.Int32("task_id", task.ID),
+		zap.String("cluster_id", fmt.Sprintf("%d", cluster.ID)),
+		zap.String("snapshot_id", fmt.Sprintf("%d", snapshotID)),
+		zap.String("retention_duration", spec.RetentionDuration),
+	)
+
 	return nil
 }
 
@@ -109,32 +106,6 @@ func (e *Executor) ExecuteAutoDiagnostic(ctx context.Context, spec apigen.TaskSp
 	if err != nil {
 		return errors.Wrap(err, "failed to get cluster")
 	}
-	tz, err := e.model.GetTimeZone(ctx, cluster.OrganizationID)
-	if err != nil {
-		return errors.Wrap(err, "failed to get timezone")
-	}
-	config, err := e.model.GetAutoDiagnosticsConfig(ctx, spec.ClusterID)
-	if err != nil {
-		return errors.Wrap(err, "failed to get auto diagnostics config")
-	}
-
-	// schedule the next task
-	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-	cron, err := parser.Parse(fmt.Sprintf("TZ=%s %s", tz, config.CronExpression))
-	if err != nil {
-		return errors.Wrapf(err, "failed to parse cron expression: %s", config.CronExpression)
-	}
-	next := cron.Next(time.Now())
-	if _, err := e.model.CreateTask(ctx, querier.CreateTaskParams{
-		Spec: apigen.TaskSpec{
-			Type:           apigen.AutoDiagnostic,
-			AutoDiagnostic: &spec,
-		},
-		Status:    string(apigen.Pending),
-		StartedAt: &next,
-	}); err != nil {
-		return errors.Wrap(err, "failed to create task")
-	}
 
 	// run diagnostics
 	conn := http.NewMetaHttpConnection(fmt.Sprintf("http://%s:%d", cluster.Host, cluster.HttpPort))
@@ -142,11 +113,41 @@ func (e *Executor) ExecuteAutoDiagnostic(ctx context.Context, spec apigen.TaskSp
 	if err != nil {
 		return errors.Wrap(err, "failed to get diagnose")
 	}
-	if _, err := e.model.CreateClusterDiagnostic(ctx, querier.CreateClusterDiagnosticParams{
+	diag, err := e.model.CreateClusterDiagnostic(ctx, querier.CreateClusterDiagnosticParams{
 		ClusterID: cluster.ID,
 		Content:   content,
-	}); err != nil {
+	})
+	if err != nil {
 		return errors.Wrap(err, "failed to create cluster diagnostic")
 	}
+	log.Info(
+		"cluster diagnostic created",
+		zap.String("cluster_id", fmt.Sprintf("%d", cluster.ID)),
+		zap.String("diagnostic_id", fmt.Sprintf("%d", diag.ID)),
+	)
+
+	// create a task to delete the cluster diagnostic after the retention duration
+	retentionDuration, err := time.ParseDuration(spec.RetentionDuration)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse retention duration")
+	}
+	task, err := e.createTask(ctx, &cluster.OrganizationID, apigen.TaskSpec{
+		Type: apigen.DeleteClusterDiagnostic,
+		DeleteClusterDiagnostic: &apigen.TaskDeleteClusterDiagnostic{
+			ClusterID:    cluster.ID,
+			DiagnosticID: diag.ID,
+		},
+	}, utils.Ptr(time.Now().Add(retentionDuration)))
+	if err != nil {
+		return errors.Wrap(err, "failed to create task")
+	}
+	log.Info(
+		"auto delete cluster diagnostic task created",
+		zap.Int32("task_id", task.ID),
+		zap.String("cluster_id", fmt.Sprintf("%d", cluster.ID)),
+		zap.String("diagnostic_id", fmt.Sprintf("%d", diag.ID)),
+		zap.String("retention_duration", spec.RetentionDuration),
+	)
+
 	return nil
 }

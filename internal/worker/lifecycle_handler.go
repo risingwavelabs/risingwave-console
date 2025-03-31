@@ -54,11 +54,12 @@ func (a *TaskLifeCycleHandler) HandleFailed(ctx context.Context, task apigen.Tas
 		return errors.Wrap(err, "insert task error event")
 	}
 
-	// update task status
-	if task.Attributes.Cronjob != nil { // cronjob should be run again anyway
+	// cronjob should be run again anyway, no need to update status
+	if task.Attributes.Cronjob != nil {
 		return nil
 	}
 
+	// update task status
 	if err := a.txm.UpdateTaskStatus(ctx, querier.UpdateTaskStatusParams{
 		ID:     task.ID,
 		Status: string(apigen.Failed),

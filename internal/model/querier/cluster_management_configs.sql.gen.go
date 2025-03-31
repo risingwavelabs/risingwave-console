@@ -10,7 +10,7 @@ import (
 )
 
 const getAutoBackupConfig = `-- name: GetAutoBackupConfig :one
-SELECT cluster_id, enabled, cron_expression, keep_last, created_at, updated_at, next_task_id FROM auto_backup_configs
+SELECT cluster_id, enabled, created_at, updated_at, task_id FROM auto_backup_configs
 WHERE cluster_id = $1
 `
 
@@ -20,17 +20,15 @@ func (q *Queries) GetAutoBackupConfig(ctx context.Context, clusterID int32) (*Au
 	err := row.Scan(
 		&i.ClusterID,
 		&i.Enabled,
-		&i.CronExpression,
-		&i.KeepLast,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.NextTaskID,
+		&i.TaskID,
 	)
 	return &i, err
 }
 
 const getAutoDiagnosticsConfig = `-- name: GetAutoDiagnosticsConfig :one
-SELECT cluster_id, enabled, cron_expression, retention_duration, created_at, updated_at, next_task_id FROM auto_diagnostics_configs
+SELECT cluster_id, enabled, created_at, updated_at, task_id FROM auto_diagnostics_configs
 WHERE cluster_id = $1
 `
 
@@ -40,57 +38,9 @@ func (q *Queries) GetAutoDiagnosticsConfig(ctx context.Context, clusterID int32)
 	err := row.Scan(
 		&i.ClusterID,
 		&i.Enabled,
-		&i.CronExpression,
-		&i.RetentionDuration,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.NextTaskID,
+		&i.TaskID,
 	)
 	return &i, err
-}
-
-const upsertAutoBackupConfig = `-- name: UpsertAutoBackupConfig :exec
-INSERT INTO auto_backup_configs (cluster_id, enabled, cron_expression, keep_last)
-VALUES ($1, $2, $3, $4)
-ON CONFLICT (cluster_id) DO UPDATE SET enabled = $2, cron_expression = $3, keep_last = $4
-`
-
-type UpsertAutoBackupConfigParams struct {
-	ClusterID      int32
-	Enabled        bool
-	CronExpression string
-	KeepLast       int32
-}
-
-func (q *Queries) UpsertAutoBackupConfig(ctx context.Context, arg UpsertAutoBackupConfigParams) error {
-	_, err := q.db.Exec(ctx, upsertAutoBackupConfig,
-		arg.ClusterID,
-		arg.Enabled,
-		arg.CronExpression,
-		arg.KeepLast,
-	)
-	return err
-}
-
-const upsertAutoDiagnosticsConfig = `-- name: UpsertAutoDiagnosticsConfig :exec
-INSERT INTO auto_diagnostics_configs (cluster_id, enabled, cron_expression, retention_duration)
-VALUES ($1, $2, $3, $4)
-ON CONFLICT (cluster_id) DO UPDATE SET enabled = $2, cron_expression = $3, retention_duration = $4
-`
-
-type UpsertAutoDiagnosticsConfigParams struct {
-	ClusterID         int32
-	Enabled           bool
-	CronExpression    string
-	RetentionDuration *string
-}
-
-func (q *Queries) UpsertAutoDiagnosticsConfig(ctx context.Context, arg UpsertAutoDiagnosticsConfigParams) error {
-	_, err := q.db.Exec(ctx, upsertAutoDiagnosticsConfig,
-		arg.ClusterID,
-		arg.Enabled,
-		arg.CronExpression,
-		arg.RetentionDuration,
-	)
-	return err
 }

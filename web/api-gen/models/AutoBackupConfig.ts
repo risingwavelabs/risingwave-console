@@ -12,8 +12,8 @@ export type AutoBackupConfig = {
      */
     cronExpression: string;
     /**
-     * Number of automatic snapshots to retain
+     * How long to retain automatic snapshots (e.g., '1d', '7d', '14d', '30d', '90d')
      */
-    keepLast: number;
+    retentionDuration: string;
 };
 

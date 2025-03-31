@@ -40,10 +40,14 @@ CREATE TABLE snapshots (
 );
 
 ALTER TABLE auto_backup_configs 
-    ADD COLUMN next_task_id INTEGER NOT NULL REFERENCES tasks(id);
+    ADD COLUMN task_id INTEGER NOT NULL REFERENCES tasks(id),
+    DROP COLUMN cron_expression,
+    DROP COLUMN keep_last;
 
 ALTER TABLE auto_diagnostics_configs 
-    ADD COLUMN next_task_id INTEGER NOT NULL REFERENCES tasks(id);
+    ADD COLUMN task_id INTEGER NOT NULL REFERENCES tasks(id),
+    DROP COLUMN cron_expression,
+    DROP COLUMN retention_duration;
 
 ALTER TABLE organizations
     ADD COLUMN timezone VARCHAR(255) NOT NULL DEFAULT 'UTC';

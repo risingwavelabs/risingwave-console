@@ -1103,7 +1103,7 @@ components:
       required:
         - enabled
         - cronExpression
-        - keepLast
+        - retentionDuration
       properties:
         enabled:
           type: boolean
@@ -1111,17 +1111,17 @@ components:
         cronExpression:
           type: string
           description: Cron expression for automatic snapshots (e.g., '0 0 * * *')
-        keepLast:
-          type: integer
-          format: int32
-          description: Number of automatic snapshots to retain
-          minimum: 1
+        retentionDuration:
+          type: string
+          description: How long to retain automatic snapshots (e.g., '1d', '7d', '14d', '30d', '90d')
+
 
     AutoDiagnosticConfig:
       type: object
       required:
         - enabled
         - cronExpression
+        - retentionDuration
       properties:
         enabled:
           type: boolean
@@ -1541,27 +1541,59 @@ components:
       properties:
         type:
           type: string
-          enum: ["auto-backup", "auto-diagnostic"]
+          enum: ["auto-backup", "auto-diagnostic", "delete-snapshot", "delete-cluster-diagnostic"]
         autoBackup:
           $ref: "#/components/schemas/TaskSpecAutoBackup"
         autoDiagnostic:
           $ref: "#/components/schemas/TaskSpecAutoDiagnostic"
+        deleteSnapshot:
+          $ref: "#/components/schemas/TaskSpecDeleteSnapshot"
+        deleteClusterDiagnostic:
+          $ref: "#/components/schemas/TaskDeleteClusterDiagnostic"
+
+    TaskSpecDeleteSnapshot:
+      type: object
+      required: [clusterID, snapshotID]
+      properties:
+        clusterID:
+          type: integer
+          format: int32
+        snapshotID:
+          type: integer
+          format: int64
+    
+    TaskDeleteClusterDiagnostic:
+      type: object
+      required: [clusterID, diagnosticID]
+      properties:
+        clusterID:
+          type: integer
+          format: int32
+        diagnosticID:
+          type: integer
+          format: int32
 
     TaskSpecAutoBackup:
       type: object
-      required: [clusterID]
+      required: [clusterID, retentionDuration]
       properties:
         clusterID:
           type: integer
           format: int32
+        retentionDuration:
+          type: string
+          description: Retention duration of the backup data, e.g. 1d, 1w, 1m, 1y
 
     TaskSpecAutoDiagnostic:
       type: object
-      required: [clusterID]
+      required: [clusterID, retentionDuration]
       properties:
         clusterID:
           type: integer
           format: int32
+        retentionDuration:
+          type: string
+          description: Retention duration of the diagnostic data, e.g. 1d, 1w, 1m, 1y
 
     Event:
       type: object

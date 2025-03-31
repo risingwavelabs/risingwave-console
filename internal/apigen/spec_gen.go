@@ -59,8 +59,10 @@ const (
 
 // Defines values for TaskSpecType.
 const (
-	AutoBackup     TaskSpecType = "auto-backup"
-	AutoDiagnostic TaskSpecType = "auto-diagnostic"
+	AutoBackup              TaskSpecType = "auto-backup"
+	AutoDiagnostic          TaskSpecType = "auto-diagnostic"
+	DeleteClusterDiagnostic TaskSpecType = "delete-cluster-diagnostic"
+	DeleteSnapshot          TaskSpecType = "delete-snapshot"
 )
 
 // AutoBackupConfig defines model for AutoBackupConfig.
@@ -71,8 +73,8 @@ type AutoBackupConfig struct {
 	// Enabled Whether automatic snapshots are enabled
 	Enabled bool `json:"enabled"`
 
-	// KeepLast Number of automatic snapshots to retain
-	KeepLast int32 `json:"keepLast"`
+	// RetentionDuration How long to retain automatic snapshots (e.g., '1d', '7d', '14d', '30d', '90d')
+	RetentionDuration string `json:"retentionDuration"`
 }
 
 // AutoDiagnosticConfig defines model for AutoDiagnosticConfig.
@@ -84,7 +86,7 @@ type AutoDiagnosticConfig struct {
 	Enabled bool `json:"enabled"`
 
 	// RetentionDuration How long to retain diagnostic data (e.g., '1d', '7d', '14d', '30d', '90d')
-	RetentionDuration *string `json:"retentionDuration,omitempty"`
+	RetentionDuration string `json:"retentionDuration"`
 }
 
 // Cluster defines model for Cluster.
@@ -446,6 +448,12 @@ type TaskCronjob struct {
 	CronExpression string `json:"cronExpression"`
 }
 
+// TaskDeleteClusterDiagnostic defines model for TaskDeleteClusterDiagnostic.
+type TaskDeleteClusterDiagnostic struct {
+	ClusterID    int32 `json:"clusterID"`
+	DiagnosticID int32 `json:"diagnosticID"`
+}
+
 // TaskScheduled defines model for TaskScheduled.
 type TaskScheduled struct {
 	ScheduledTo time.Time `json:"scheduledTo"`
@@ -453,9 +461,11 @@ type TaskScheduled struct {
 
 // TaskSpec defines model for TaskSpec.
 type TaskSpec struct {
-	AutoBackup     *TaskSpecAutoBackup     `json:"autoBackup,omitempty"`
-	AutoDiagnostic *TaskSpecAutoDiagnostic `json:"autoDiagnostic,omitempty"`
-	Type           TaskSpecType            `json:"type"`
+	AutoBackup              *TaskSpecAutoBackup          `json:"autoBackup,omitempty"`
+	AutoDiagnostic          *TaskSpecAutoDiagnostic      `json:"autoDiagnostic,omitempty"`
+	DeleteClusterDiagnostic *TaskDeleteClusterDiagnostic `json:"deleteClusterDiagnostic,omitempty"`
+	DeleteSnapshot          *TaskSpecDeleteSnapshot      `json:"deleteSnapshot,omitempty"`
+	Type                    TaskSpecType                 `json:"type"`
 }
 
 // TaskSpecType defines model for TaskSpec.Type.
@@ -464,11 +474,23 @@ type TaskSpecType string
 // TaskSpecAutoBackup defines model for TaskSpecAutoBackup.
 type TaskSpecAutoBackup struct {
 	ClusterID int32 `json:"clusterID"`
+
+	// RetentionDuration Retention duration of the backup data, e.g. 1d, 1w, 1m, 1y
+	RetentionDuration string `json:"retentionDuration"`
 }
 
 // TaskSpecAutoDiagnostic defines model for TaskSpecAutoDiagnostic.
 type TaskSpecAutoDiagnostic struct {
 	ClusterID int32 `json:"clusterID"`
+
+	// RetentionDuration Retention duration of the diagnostic data, e.g. 1d, 1w, 1m, 1y
+	RetentionDuration string `json:"retentionDuration"`
+}
+
+// TaskSpecDeleteSnapshot defines model for TaskSpecDeleteSnapshot.
+type TaskSpecDeleteSnapshot struct {
+	ClusterID  int32 `json:"clusterID"`
+	SnapshotID int64 `json:"snapshotID"`
 }
 
 // TestClusterConnectionPayload defines model for TestClusterConnectionPayload.

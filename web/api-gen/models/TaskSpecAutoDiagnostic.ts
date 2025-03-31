@@ -4,5 +4,9 @@
 /* eslint-disable */
 export type TaskSpecAutoDiagnostic = {
     clusterID: number;
+    /**
+     * Retention duration of the diagnostic data, e.g. 1d, 1w, 1m, 1y
+     */
+    retentionDuration: string;
 };
 

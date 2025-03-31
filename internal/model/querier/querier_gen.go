@@ -43,6 +43,7 @@ type Querier interface {
 	GetOrgDatabaseConnection(ctx context.Context, arg GetOrgDatabaseConnectionParams) (*DatabaseConnection, error)
 	GetOrganization(ctx context.Context, id int32) (*Organization, error)
 	GetRefreshToken(ctx context.Context, arg GetRefreshTokenParams) (*RefreshToken, error)
+	GetTaskByID(ctx context.Context, id int32) (*Task, error)
 	GetTimeZone(ctx context.Context, id int32) (string, error)
 	GetUser(ctx context.Context, id int32) (*User, error)
 	GetUserByName(ctx context.Context, name string) (*User, error)
@@ -64,11 +65,9 @@ type Querier interface {
 	UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterParams) (*Cluster, error)
 	UpdateOrgDatabaseConnection(ctx context.Context, arg UpdateOrgDatabaseConnectionParams) (*DatabaseConnection, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (*Organization, error)
-	UpdateTaskSpec(ctx context.Context, arg UpdateTaskSpecParams) error
+	UpdateTask(ctx context.Context, arg UpdateTaskParams) error
 	UpdateTaskStartedAt(ctx context.Context, arg UpdateTaskStartedAtParams) error
 	UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) error
-	UpsertAutoBackupConfig(ctx context.Context, arg UpsertAutoBackupConfigParams) error
-	UpsertAutoDiagnosticsConfig(ctx context.Context, arg UpsertAutoDiagnosticsConfigParams) error
 	UpsertRefreshToken(ctx context.Context, arg UpsertRefreshTokenParams) error
 }
 

@@ -510,6 +510,21 @@ func (mr *MockModelInterfaceMockRecorder) GetRefreshToken(ctx, arg any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRefreshToken", reflect.TypeOf((*MockModelInterface)(nil).GetRefreshToken), ctx, arg)
 }
 
+// GetTaskByID mocks base method.
+func (m *MockModelInterface) GetTaskByID(ctx context.Context, id int32) (*querier.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTaskByID", ctx, id)
+	ret0, _ := ret[0].(*querier.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTaskByID indicates an expected call of GetTaskByID.
+func (mr *MockModelInterfaceMockRecorder) GetTaskByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTaskByID", reflect.TypeOf((*MockModelInterface)(nil).GetTaskByID), ctx, id)
+}
+
 // GetTimeZone mocks base method.
 func (m *MockModelInterface) GetTimeZone(ctx context.Context, id int32) (string, error) {
 	m.ctrl.T.Helper()
@@ -851,18 +866,18 @@ func (mr *MockModelInterfaceMockRecorder) UpdateOrganization(ctx, arg any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrganization", reflect.TypeOf((*MockModelInterface)(nil).UpdateOrganization), ctx, arg)
 }
 
-// UpdateTaskSpec mocks base method.
-func (m *MockModelInterface) UpdateTaskSpec(ctx context.Context, arg querier.UpdateTaskSpecParams) error {
+// UpdateTask mocks base method.
+func (m *MockModelInterface) UpdateTask(ctx context.Context, arg querier.UpdateTaskParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateTaskSpec", ctx, arg)
+	ret := m.ctrl.Call(m, "UpdateTask", ctx, arg)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateTaskSpec indicates an expected call of UpdateTaskSpec.
-func (mr *MockModelInterfaceMockRecorder) UpdateTaskSpec(ctx, arg any) *gomock.Call {
+// UpdateTask indicates an expected call of UpdateTask.
+func (mr *MockModelInterfaceMockRecorder) UpdateTask(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTaskSpec", reflect.TypeOf((*MockModelInterface)(nil).UpdateTaskSpec), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTask", reflect.TypeOf((*MockModelInterface)(nil).UpdateTask), ctx, arg)
 }
 
 // UpdateTaskStartedAt mocks base method.
@@ -891,34 +906,6 @@ func (m *MockModelInterface) UpdateTaskStatus(ctx context.Context, arg querier.U
 func (mr *MockModelInterfaceMockRecorder) UpdateTaskStatus(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTaskStatus", reflect.TypeOf((*MockModelInterface)(nil).UpdateTaskStatus), ctx, arg)
-}
-
-// UpsertAutoBackupConfig mocks base method.
-func (m *MockModelInterface) UpsertAutoBackupConfig(ctx context.Context, arg querier.UpsertAutoBackupConfigParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertAutoBackupConfig", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpsertAutoBackupConfig indicates an expected call of UpsertAutoBackupConfig.
-func (mr *MockModelInterfaceMockRecorder) UpsertAutoBackupConfig(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertAutoBackupConfig", reflect.TypeOf((*MockModelInterface)(nil).UpsertAutoBackupConfig), ctx, arg)
-}
-
-// UpsertAutoDiagnosticsConfig mocks base method.
-func (m *MockModelInterface) UpsertAutoDiagnosticsConfig(ctx context.Context, arg querier.UpsertAutoDiagnosticsConfigParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertAutoDiagnosticsConfig", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpsertAutoDiagnosticsConfig indicates an expected call of UpsertAutoDiagnosticsConfig.
-func (mr *MockModelInterfaceMockRecorder) UpsertAutoDiagnosticsConfig(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertAutoDiagnosticsConfig", reflect.TypeOf((*MockModelInterface)(nil).UpsertAutoDiagnosticsConfig), ctx, arg)
 }
 
 // UpsertRefreshToken mocks base method.

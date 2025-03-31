@@ -16,9 +16,9 @@ SET
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1;
 
--- name: UpdateTaskSpec :exec
+-- name: UpdateTask :exec
 UPDATE tasks
-SET spec = $2, updated_at = CURRENT_TIMESTAMP
+SET attributes = $2, spec = $3, started_at = $4, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1;
 
 -- name: UpdateTaskStartedAt :exec
@@ -35,3 +35,7 @@ RETURNING *;
 INSERT INTO events (spec)
 VALUES ($1)
 RETURNING *;
+
+-- name: GetTaskByID :one
+SELECT * FROM tasks
+WHERE id = $1;
