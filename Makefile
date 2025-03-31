@@ -82,6 +82,7 @@ gen-mock: install-mockgen
 	$(MOCKGEN_BIN) -source=internal/model/model.go -destination=internal/model/mock_gen.go -package=model
 	$(MOCKGEN_BIN) -source=internal/worker/executor.go -destination=internal/worker/mock/executor_mock_gen.go -package=mock
 	$(MOCKGEN_BIN) -source=internal/worker/lifecycle_handler.go -destination=internal/worker/mock/lifecycle_handler_mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/service/service.go -destination=internal/service/service_mock_gen.go -package=service
 
 ###################################################
 ### Common

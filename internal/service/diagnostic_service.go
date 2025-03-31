@@ -2,13 +2,11 @@ package service
 
 import (
 	"context"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
-	"github.com/robfig/cron/v3"
 )
 
 func (s *Service) CreateClusterDiagnostic(ctx context.Context, id int32, orgID int32) (*apigen.DiagnosticData, error) {
@@ -100,19 +98,6 @@ func (s *Service) UpdateClusterAutoDiagnosticConfig(ctx context.Context, id int3
 		return errors.Wrapf(err, "failed to get cluster")
 	}
 
-	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-	cron, err := parser.Parse(params.CronExpression)
-	if err != nil {
-		return errors.Wrapf(err, "failed to parse cron expression")
-	}
-	nextTime := cron.Next(time.Now())
-
-	taskAttributes := apigen.TaskAttributes{
-		OrgID: &orgID,
-		Cronjob: &apigen.TaskCronjob{
-			CronExpression: params.CronExpression,
-		},
-	}
 	taskSpec := apigen.TaskSpec{
 		Type: apigen.AutoDiagnostic,
 		AutoDiagnostic: &apigen.TaskSpecAutoDiagnostic{
@@ -124,26 +109,16 @@ func (s *Service) UpdateClusterAutoDiagnosticConfig(ctx context.Context, id int3
 	c, err := s.m.GetAutoDiagnosticsConfig(ctx, cluster.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			_, err := s.m.CreateTask(ctx, querier.CreateTaskParams{
-				Attributes: taskAttributes,
-				Spec:       taskSpec,
-				StartedAt:  &nextTime,
-			})
-			if err != nil {
-				return errors.Wrapf(err, "failed to create task")
+			if err := s.Self().CreateCronJob(ctx, &orgID, params.CronExpression, taskSpec); err != nil {
+				return errors.Wrapf(err, "failed to create cron job")
 			}
 			return nil
 		}
 		return errors.Wrapf(err, "failed to get auto diagnostics config")
 	}
 
-	if err := s.m.UpdateTask(ctx, querier.UpdateTaskParams{
-		ID:         c.TaskID,
-		Attributes: taskAttributes,
-		Spec:       taskSpec,
-		StartedAt:  &nextTime,
-	}); err != nil {
-		return errors.Wrapf(err, "failed to update task")
+	if err := s.Self().UpdateCronJob(ctx, c.TaskID, &orgID, params.CronExpression, taskSpec); err != nil {
+		return errors.Wrapf(err, "failed to update cron job")
 	}
 
 	return nil

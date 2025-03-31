@@ -151,6 +151,15 @@ type ServiceInterface interface {
 
 	// ListClustersByMetricsStoreID lists all clusters by metrics store ID
 	ListClustersByMetricsStoreID(ctx context.Context, id int32) ([]*apigen.Cluster, error)
+
+	// CreateCronJob creates a new cron job
+	CreateCronJob(ctx context.Context, orgID *int32, cronExpression string, specType apigen.TaskSpec) error
+
+	// UpdateCronJob updates a cron job
+	UpdateCronJob(ctx context.Context, taskID int32, orgID *int32, cronExpression string, specType apigen.TaskSpec) error
+
+	// Self returns the service itself, for testing purposes
+	Self() ServiceInterface
 }
 
 type Service struct {
@@ -162,6 +171,7 @@ type Service struct {
 
 	now                 func() time.Time
 	generateHashAndSalt func(password string) (string, string, error)
+	self                ServiceInterface
 }
 
 func NewService(
@@ -172,7 +182,7 @@ func NewService(
 	risectlm meta.RisectlManagerInterface,
 	metricsConnManager *metricsstore.MetricsManager,
 ) ServiceInterface {
-	return &Service{
+	s := &Service{
 		m:                   m,
 		now:                 time.Now,
 		generateHashAndSalt: utils.GenerateHashAndSalt,
@@ -181,4 +191,10 @@ func NewService(
 		risectlm:            risectlm,
 		metricsConnManager:  metricsConnManager,
 	}
+	s.self = s
+	return s
+}
+
+func (s *Service) Self() ServiceInterface {
+	return s.self
 }
