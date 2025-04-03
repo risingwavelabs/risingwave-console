@@ -45,6 +45,13 @@ services:
       retries: 5
     restart: always
 
+  vm:
+    image: victoriametrics/victoria-metrics
+    ports:
+      - 8428:8428
+    volumes:
+      - vmdata:/victoria-metrics-data
+
   grafana:
     image: "grafana/grafana-oss:latest"
     ports:
@@ -66,3 +73,4 @@ services:
 volumes:
   go-data:
   go-build-data:
+  vmdata:
