@@ -1515,6 +1515,9 @@ components:
           type: integer
           format: int32
           description: If the task is created by a user, this field will be the organization ID of the user
+        timeout:
+          type: string
+          description: Timeout of the task, e.g. 1h, 1d, 1w, 1m
         cronjob:
           $ref: "#/components/schemas/TaskCronjob"
         scheduled:

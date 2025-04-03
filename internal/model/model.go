@@ -34,6 +34,7 @@ type Model struct {
 	beginTx       func(ctx context.Context) (pgx.Tx, error)
 	p             *pgxpool.Pool
 	inTransaction bool
+	now           func() time.Time
 }
 
 func (m *Model) InTransaction() bool {
@@ -129,5 +130,5 @@ func NewModel(cfg *config.Config) (ModelInterface, error) {
 		}
 	}
 
-	return &Model{Querier: querier.New(p), beginTx: p.Begin, p: p}, nil
+	return &Model{Querier: querier.New(p), beginTx: p.Begin, p: p, now: time.Now}, nil
 }

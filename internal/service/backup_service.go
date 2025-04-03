@@ -7,8 +7,12 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
+	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
+	"github.com/risingwavelabs/wavekit/internal/utils"
 )
+
+const defaultBackupTaskTimeout = "30m"
 
 func (s *Service) CreateClusterSnapshot(ctx context.Context, id int32, name string, orgID int32) (*apigen.Snapshot, error) {
 	conn, err := s.getRisectlConn(ctx, id)
@@ -89,18 +93,53 @@ func (s *Service) UpdateClusterAutoBackupConfig(ctx context.Context, id int32, p
 	c, err := s.m.GetAutoBackupConfig(ctx, cluster.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			if err := s.Self().CreateCronJob(ctx, &orgID, params.CronExpression, taskSpec); err != nil {
-				return errors.Wrapf(err, "failed to create cron job")
+			// No existing auto backup config, create a new one and a new cron job
+			if err := s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
+				mc := s.modelctx(txm)
+				taskID, err := mc.CreateCronJob(ctx, utils.Ptr(defaultBackupTaskTimeout), &orgID, params.CronExpression, taskSpec)
+				if err != nil {
+					return errors.Wrapf(err, "failed to create cron job")
+				}
+				if err := txm.CreateAutoBackupConfig(ctx, querier.CreateAutoBackupConfigParams{
+					ClusterID: cluster.ID,
+					TaskID:    taskID,
+					Enabled:   true,
+				}); err != nil {
+					return errors.Wrapf(err, "failed to create auto backup config")
+				}
+				return nil
+			}); err != nil {
+				return errors.Wrapf(err, "failed to create new cluster auto backup config")
 			}
 			return nil
 		}
 		return errors.Wrapf(err, "failed to get auto backup config")
 	}
 
-	if err := s.Self().UpdateCronJob(ctx, c.TaskID, &orgID, params.CronExpression, taskSpec); err != nil {
-		return errors.Wrapf(err, "failed to update cron job")
+	if err := s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
+		mc := s.modelctx(txm)
+		if !params.Enabled {
+			if err := mc.PauseCronJob(ctx, c.TaskID); err != nil {
+				return errors.Wrapf(err, "failed to pause cron job")
+			}
+		} else {
+			if err := mc.ResumeCronJob(ctx, c.TaskID); err != nil {
+				return errors.Wrapf(err, "failed to resume cron job")
+			}
+		}
+		if err := txm.UpdateAutoBackupConfig(ctx, querier.UpdateAutoBackupConfigParams{
+			ClusterID: cluster.ID,
+			Enabled:   params.Enabled,
+		}); err != nil {
+			return errors.Wrapf(err, "failed to update auto backup config")
+		}
+		if err := mc.UpdateCronJob(ctx, c.TaskID, utils.Ptr(defaultBackupTaskTimeout), &orgID, params.CronExpression, taskSpec); err != nil {
+			return errors.Wrapf(err, "failed to update cron job")
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrapf(err, "failed to update cluster auto backup config")
 	}
-
 	return nil
 }
 

@@ -10,4 +10,4 @@ fi
 
 echo "installing $VERSION for $DIR/oapi-codegen"
 
-GOBIN=$DIR go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@$VERSION
+GOBIN=$DIR go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@$VERSION

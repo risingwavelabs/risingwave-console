@@ -9,6 +9,38 @@ import (
 	"context"
 )
 
+const createAutoBackupConfig = `-- name: CreateAutoBackupConfig :exec
+INSERT INTO auto_backup_configs (cluster_id, task_id, enabled)
+VALUES ($1, $2, $3)
+`
+
+type CreateAutoBackupConfigParams struct {
+	ClusterID int32
+	TaskID    int32
+	Enabled   bool
+}
+
+func (q *Queries) CreateAutoBackupConfig(ctx context.Context, arg CreateAutoBackupConfigParams) error {
+	_, err := q.db.Exec(ctx, createAutoBackupConfig, arg.ClusterID, arg.TaskID, arg.Enabled)
+	return err
+}
+
+const createAutoDiagnosticsConfig = `-- name: CreateAutoDiagnosticsConfig :exec
+INSERT INTO auto_diagnostics_configs (cluster_id, task_id, enabled)
+VALUES ($1, $2, $3)
+`
+
+type CreateAutoDiagnosticsConfigParams struct {
+	ClusterID int32
+	TaskID    int32
+	Enabled   bool
+}
+
+func (q *Queries) CreateAutoDiagnosticsConfig(ctx context.Context, arg CreateAutoDiagnosticsConfigParams) error {
+	_, err := q.db.Exec(ctx, createAutoDiagnosticsConfig, arg.ClusterID, arg.TaskID, arg.Enabled)
+	return err
+}
+
 const getAutoBackupConfig = `-- name: GetAutoBackupConfig :one
 SELECT cluster_id, enabled, created_at, updated_at, task_id FROM auto_backup_configs
 WHERE cluster_id = $1
@@ -43,4 +75,36 @@ func (q *Queries) GetAutoDiagnosticsConfig(ctx context.Context, clusterID int32)
 		&i.TaskID,
 	)
 	return &i, err
+}
+
+const updateAutoBackupConfig = `-- name: UpdateAutoBackupConfig :exec
+UPDATE auto_backup_configs
+SET enabled = $2
+WHERE cluster_id = $1
+`
+
+type UpdateAutoBackupConfigParams struct {
+	ClusterID int32
+	Enabled   bool
+}
+
+func (q *Queries) UpdateAutoBackupConfig(ctx context.Context, arg UpdateAutoBackupConfigParams) error {
+	_, err := q.db.Exec(ctx, updateAutoBackupConfig, arg.ClusterID, arg.Enabled)
+	return err
+}
+
+const updateAutoDiagnosticsConfig = `-- name: UpdateAutoDiagnosticsConfig :exec
+UPDATE auto_diagnostics_configs
+SET enabled = $2
+WHERE cluster_id = $1
+`
+
+type UpdateAutoDiagnosticsConfigParams struct {
+	ClusterID int32
+	Enabled   bool
+}
+
+func (q *Queries) UpdateAutoDiagnosticsConfig(ctx context.Context, arg UpdateAutoDiagnosticsConfigParams) error {
+	_, err := q.db.Exec(ctx, updateAutoDiagnosticsConfig, arg.ClusterID, arg.Enabled)
+	return err
 }

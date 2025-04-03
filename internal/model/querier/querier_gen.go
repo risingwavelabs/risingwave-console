@@ -11,6 +11,8 @@ import (
 )
 
 type Querier interface {
+	CreateAutoBackupConfig(ctx context.Context, arg CreateAutoBackupConfigParams) error
+	CreateAutoDiagnosticsConfig(ctx context.Context, arg CreateAutoDiagnosticsConfigParams) error
 	CreateCluster(ctx context.Context, arg CreateClusterParams) (*Cluster, error)
 	CreateClusterDiagnostic(ctx context.Context, arg CreateClusterDiagnosticParams) (*ClusterDiagnostic, error)
 	CreateClusterSnapshot(ctx context.Context, arg CreateClusterSnapshotParams) error
@@ -61,6 +63,8 @@ type Querier interface {
 	PullTask(ctx context.Context) (*Task, error)
 	RemoveClusterMetricsStoreID(ctx context.Context, arg RemoveClusterMetricsStoreIDParams) error
 	SetTimeZone(ctx context.Context, arg SetTimeZoneParams) error
+	UpdateAutoBackupConfig(ctx context.Context, arg UpdateAutoBackupConfigParams) error
+	UpdateAutoDiagnosticsConfig(ctx context.Context, arg UpdateAutoDiagnosticsConfigParams) error
 	UpdateMetricsStore(ctx context.Context, arg UpdateMetricsStoreParams) (*MetricsStore, error)
 	UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterParams) (*Cluster, error)
 	UpdateOrgDatabaseConnection(ctx context.Context, arg UpdateOrgDatabaseConnectionParams) (*DatabaseConnection, error)

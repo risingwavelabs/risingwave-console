@@ -15,7 +15,7 @@ import (
 const createTask = `-- name: CreateTask :one
 INSERT INTO tasks (attributes, spec, status, started_at)
 VALUES ($1, $2, $3, $4)
-RETURNING id, attributes, spec, status, timeout, started_at, created_at, updated_at
+RETURNING id, attributes, spec, status, started_at, created_at, updated_at
 `
 
 type CreateTaskParams struct {
@@ -38,7 +38,6 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (*Task, 
 		&i.Attributes,
 		&i.Spec,
 		&i.Status,
-		&i.Timeout,
 		&i.StartedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -47,7 +46,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (*Task, 
 }
 
 const getTaskByID = `-- name: GetTaskByID :one
-SELECT id, attributes, spec, status, timeout, started_at, created_at, updated_at FROM tasks
+SELECT id, attributes, spec, status, started_at, created_at, updated_at FROM tasks
 WHERE id = $1
 `
 
@@ -59,7 +58,6 @@ func (q *Queries) GetTaskByID(ctx context.Context, id int32) (*Task, error) {
 		&i.Attributes,
 		&i.Spec,
 		&i.Status,
-		&i.Timeout,
 		&i.StartedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -81,7 +79,7 @@ func (q *Queries) InsertEvent(ctx context.Context, spec apigen.EventSpec) (*Even
 }
 
 const pullTask = `-- name: PullTask :one
-SELECT id, attributes, spec, status, timeout, started_at, created_at, updated_at FROM tasks
+SELECT id, attributes, spec, status, started_at, created_at, updated_at FROM tasks
 WHERE 
     status = 'pending'
     AND (
@@ -100,7 +98,6 @@ func (q *Queries) PullTask(ctx context.Context) (*Task, error) {
 		&i.Attributes,
 		&i.Spec,
 		&i.Status,
-		&i.Timeout,
 		&i.StartedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,

@@ -42,6 +42,34 @@ func (m *MockModelInterface) EXPECT() *MockModelInterfaceMockRecorder {
 	return m.recorder
 }
 
+// CreateAutoBackupConfig mocks base method.
+func (m *MockModelInterface) CreateAutoBackupConfig(ctx context.Context, arg querier.CreateAutoBackupConfigParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAutoBackupConfig", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateAutoBackupConfig indicates an expected call of CreateAutoBackupConfig.
+func (mr *MockModelInterfaceMockRecorder) CreateAutoBackupConfig(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAutoBackupConfig", reflect.TypeOf((*MockModelInterface)(nil).CreateAutoBackupConfig), ctx, arg)
+}
+
+// CreateAutoDiagnosticsConfig mocks base method.
+func (m *MockModelInterface) CreateAutoDiagnosticsConfig(ctx context.Context, arg querier.CreateAutoDiagnosticsConfigParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAutoDiagnosticsConfig", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateAutoDiagnosticsConfig indicates an expected call of CreateAutoDiagnosticsConfig.
+func (mr *MockModelInterfaceMockRecorder) CreateAutoDiagnosticsConfig(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAutoDiagnosticsConfig", reflect.TypeOf((*MockModelInterface)(nil).CreateAutoDiagnosticsConfig), ctx, arg)
+}
+
 // CreateCluster mocks base method.
 func (m *MockModelInterface) CreateCluster(ctx context.Context, arg querier.CreateClusterParams) (*querier.Cluster, error) {
 	m.ctrl.T.Helper()
@@ -804,6 +832,34 @@ func (m *MockModelInterface) SetTimeZone(ctx context.Context, arg querier.SetTim
 func (mr *MockModelInterfaceMockRecorder) SetTimeZone(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTimeZone", reflect.TypeOf((*MockModelInterface)(nil).SetTimeZone), ctx, arg)
+}
+
+// UpdateAutoBackupConfig mocks base method.
+func (m *MockModelInterface) UpdateAutoBackupConfig(ctx context.Context, arg querier.UpdateAutoBackupConfigParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAutoBackupConfig", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateAutoBackupConfig indicates an expected call of UpdateAutoBackupConfig.
+func (mr *MockModelInterfaceMockRecorder) UpdateAutoBackupConfig(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAutoBackupConfig", reflect.TypeOf((*MockModelInterface)(nil).UpdateAutoBackupConfig), ctx, arg)
+}
+
+// UpdateAutoDiagnosticsConfig mocks base method.
+func (m *MockModelInterface) UpdateAutoDiagnosticsConfig(ctx context.Context, arg querier.UpdateAutoDiagnosticsConfigParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAutoDiagnosticsConfig", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateAutoDiagnosticsConfig indicates an expected call of UpdateAutoDiagnosticsConfig.
+func (mr *MockModelInterfaceMockRecorder) UpdateAutoDiagnosticsConfig(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAutoDiagnosticsConfig", reflect.TypeOf((*MockModelInterface)(nil).UpdateAutoDiagnosticsConfig), ctx, arg)
 }
 
 // UpdateMetricsStore mocks base method.

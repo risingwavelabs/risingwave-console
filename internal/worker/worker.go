@@ -16,6 +16,8 @@ import (
 
 var log = logger.NewLogAgent("worker")
 
+const maxTaskTimeout = 1 * time.Hour
+
 type Worker struct {
 	model model.ModelInterface
 
@@ -79,13 +81,26 @@ func (w *Worker) executeTask(ctx context.Context, model model.ModelInterface, ta
 	}
 }
 
-func (w *Worker) runTask(ctx context.Context) error {
-	if err := w.model.RunTransaction(ctx, func(txm model.ModelInterface) error {
-		qtask, err := txm.PullTask(ctx)
+func (w *Worker) runTask(parentCtx context.Context) error {
+	if err := w.model.RunTransaction(parentCtx, func(txm model.ModelInterface) error {
+		qtask, err := txm.PullTask(parentCtx)
 		if err != nil {
 			return err
 		}
 		task := taskToAPI(qtask)
+
+		timeout := maxTaskTimeout
+		if task.Attributes.Timeout != nil {
+			timeout, err = time.ParseDuration(*task.Attributes.Timeout)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse timeout")
+			}
+		}
+		if timeout > maxTaskTimeout {
+			timeout = maxTaskTimeout
+		}
+		ctx, cancel := context.WithTimeout(parentCtx, timeout)
+		defer cancel()
 
 		log.Info("executing task", zap.Int32("task_id", task.ID), zap.Any("task", task))
 

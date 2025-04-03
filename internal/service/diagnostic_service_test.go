@@ -8,6 +8,9 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
+	"github.com/risingwavelabs/wavekit/internal/modelctx"
+	mock_modelctx "github.com/risingwavelabs/wavekit/internal/modelctx/mock"
+	"github.com/risingwavelabs/wavekit/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -33,30 +36,52 @@ func TestUpdateClusterAutoDiagnosticConfig(t *testing.T) {
 		}
 	)
 
-	type getAutoBackupConfigRtn struct {
-		err error
-		cfg *querier.AutoDiagnosticsConfig
+	type testCase struct {
+		name    string
+		err     error
+		cfg     *querier.AutoDiagnosticsConfig
+		enabled bool
 	}
 
-	testCases := []getAutoBackupConfigRtn{
+	testCases := []testCase{
 		{
-			err: nil,
+			name: "existing auto diagnostics config",
+			err:  nil,
 			cfg: &querier.AutoDiagnosticsConfig{
 				TaskID: taskID,
 			},
 		},
 		{
-			err: pgx.ErrNoRows,
-			cfg: nil,
+			name: "no existing auto diagnostics config",
+			err:  pgx.ErrNoRows,
+			cfg:  nil,
+		},
+		{
+			name: "resume auto diagnostics config",
+			err:  nil,
+			cfg: &querier.AutoDiagnosticsConfig{
+				TaskID: taskID,
+			},
+			enabled: true,
+		},
+		{
+			name: "pause auto diagnostics config",
+			err:  nil,
+			cfg: &querier.AutoDiagnosticsConfig{
+				TaskID: taskID,
+			},
+			enabled: false,
 		},
 	}
 
 	for _, tc := range testCases {
-		self := NewMockServiceInterface(ctrl)
 		mockModel := model.NewExtendedMockModelInterface(ctrl)
+		mockModelctx := mock_modelctx.NewMockModelContextInterface(ctrl)
 		service := &Service{
-			self: self,
-			m:    mockModel,
+			m: mockModel,
+			modelctx: func(model model.ModelInterface) modelctx.ModelContextInterface {
+				return mockModelctx
+			},
 		}
 
 		mockModel.EXPECT().GetOrgCluster(ctx, querier.GetOrgClusterParams{
@@ -68,15 +93,29 @@ func TestUpdateClusterAutoDiagnosticConfig(t *testing.T) {
 
 		mockModel.EXPECT().GetAutoDiagnosticsConfig(ctx, clusterID).Return(tc.cfg, tc.err)
 
-		if tc.err == nil {
-			self.EXPECT().UpdateCronJob(ctx, taskID, &orgID, cronExpression, taskSpec).Return(nil)
-		} else {
-			self.EXPECT().CreateCronJob(ctx, &orgID, cronExpression, taskSpec).Return(nil)
+		if tc.err == nil { // UPDATE
+			if tc.enabled {
+				mockModelctx.EXPECT().ResumeCronJob(ctx, taskID).Return(nil)
+			} else {
+				mockModelctx.EXPECT().PauseCronJob(ctx, taskID).Return(nil)
+			}
+			mockModelctx.EXPECT().UpdateCronJob(ctx, taskID, utils.Ptr(defaultDiagnosticTaskTimeout), &orgID, cronExpression, taskSpec).Return(nil)
+			mockModel.EXPECT().UpdateAutoDiagnosticsConfig(ctx, querier.UpdateAutoDiagnosticsConfigParams{
+				ClusterID: clusterID,
+				Enabled:   tc.enabled,
+			}).Return(nil)
+		} else { // CREATE
+			mockModelctx.EXPECT().CreateCronJob(ctx, utils.Ptr(defaultDiagnosticTaskTimeout), &orgID, cronExpression, taskSpec).Return(taskID, nil)
+			mockModel.EXPECT().CreateAutoDiagnosticsConfig(ctx, querier.CreateAutoDiagnosticsConfigParams{
+				ClusterID: clusterID,
+				TaskID:    taskID,
+				Enabled:   true,
+			}).Return(nil)
 		}
-
 		err := service.UpdateClusterAutoDiagnosticConfig(ctx, clusterID, apigen.AutoDiagnosticConfig{
 			CronExpression:    cronExpression,
 			RetentionDuration: retentionDuration,
+			Enabled:           tc.enabled,
 		}, orgID)
 		assert.NoError(t, err)
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/model"
+	"github.com/risingwavelabs/wavekit/internal/modelctx"
 	"github.com/risingwavelabs/wavekit/internal/utils"
 
 	prom_model "github.com/prometheus/common/model"
@@ -151,15 +152,6 @@ type ServiceInterface interface {
 
 	// ListClustersByMetricsStoreID lists all clusters by metrics store ID
 	ListClustersByMetricsStoreID(ctx context.Context, id int32) ([]*apigen.Cluster, error)
-
-	// CreateCronJob creates a new cron job
-	CreateCronJob(ctx context.Context, orgID *int32, cronExpression string, specType apigen.TaskSpec) error
-
-	// UpdateCronJob updates a cron job
-	UpdateCronJob(ctx context.Context, taskID int32, orgID *int32, cronExpression string, specType apigen.TaskSpec) error
-
-	// Self returns the service itself, for testing purposes
-	Self() ServiceInterface
 }
 
 type Service struct {
@@ -171,7 +163,7 @@ type Service struct {
 
 	now                 func() time.Time
 	generateHashAndSalt func(password string) (string, string, error)
-	self                ServiceInterface
+	modelctx            func(model model.ModelInterface) modelctx.ModelContextInterface
 }
 
 func NewService(
@@ -190,11 +182,9 @@ func NewService(
 		sqlm:                sqlm,
 		risectlm:            risectlm,
 		metricsConnManager:  metricsConnManager,
+		modelctx: func(model model.ModelInterface) modelctx.ModelContextInterface {
+			return modelctx.NewModelctx(model, time.Now)
+		},
 	}
-	s.self = s
 	return s
-}
-
-func (s *Service) Self() ServiceInterface {
-	return s.self
 }

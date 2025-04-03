@@ -136,7 +136,6 @@ type Task struct {
 	Attributes apigen.TaskAttributes
 	Spec       apigen.TaskSpec
 	Status     string
-	Timeout    pgtype.Interval
 	StartedAt  *time.Time
 	CreatedAt  time.Time
 	UpdatedAt  time.Time

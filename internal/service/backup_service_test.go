@@ -8,6 +8,9 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
+	"github.com/risingwavelabs/wavekit/internal/modelctx"
+	mock_modelctx "github.com/risingwavelabs/wavekit/internal/modelctx/mock"
+	"github.com/risingwavelabs/wavekit/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -33,51 +36,89 @@ func TestUpdateClusterAutoBackupConfig(t *testing.T) {
 		}
 	)
 
-	type getAutoBackupConfigRtn struct {
-		err error
-		cfg *querier.AutoBackupConfig
+	type testCase struct {
+		name    string
+		err     error
+		cfg     *querier.AutoBackupConfig
+		enabled bool
 	}
 
-	testCases := []getAutoBackupConfigRtn{
+	testCases := []testCase{
 		{
-			err: nil,
+			name: "existing auto backup config",
+			err:  nil,
 			cfg: &querier.AutoBackupConfig{
 				TaskID: taskID,
 			},
 		},
 		{
-			err: pgx.ErrNoRows,
-			cfg: nil,
+			name: "no existing auto backup config",
+			err:  pgx.ErrNoRows,
+			cfg:  nil,
+		},
+		{
+			name: "resume auto backup config",
+			err:  nil,
+			cfg: &querier.AutoBackupConfig{
+				TaskID: taskID,
+			},
+			enabled: true,
+		},
+		{
+			name: "pause auto backup config",
+			err:  nil,
+			cfg: &querier.AutoBackupConfig{
+				TaskID: taskID,
+			},
+			enabled: false,
 		},
 	}
-
 	for _, tc := range testCases {
-		self := NewMockServiceInterface(ctrl)
-		mockModel := model.NewExtendedMockModelInterface(ctrl)
-		service := &Service{
-			self: self,
-			m:    mockModel,
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			mockModel := model.NewExtendedMockModelInterface(ctrl)
+			mockModelctx := mock_modelctx.NewMockModelContextInterface(ctrl)
+			service := &Service{
+				m: mockModel,
+				modelctx: func(model model.ModelInterface) modelctx.ModelContextInterface {
+					return mockModelctx
+				},
+			}
 
-		mockModel.EXPECT().GetOrgCluster(ctx, querier.GetOrgClusterParams{
-			ID:             clusterID,
-			OrganizationID: orgID,
-		}).Return(&querier.Cluster{
-			ID: clusterID,
-		}, nil)
+			mockModel.EXPECT().GetOrgCluster(ctx, querier.GetOrgClusterParams{
+				ID:             clusterID,
+				OrganizationID: orgID,
+			}).Return(&querier.Cluster{
+				ID: clusterID,
+			}, nil)
 
-		mockModel.EXPECT().GetAutoBackupConfig(ctx, clusterID).Return(tc.cfg, tc.err)
+			mockModel.EXPECT().GetAutoBackupConfig(ctx, clusterID).Return(tc.cfg, tc.err)
 
-		if tc.err == nil {
-			self.EXPECT().UpdateCronJob(ctx, taskID, &orgID, cronExpression, taskSpec).Return(nil)
-		} else {
-			self.EXPECT().CreateCronJob(ctx, &orgID, cronExpression, taskSpec).Return(nil)
-		}
+			if tc.err == nil { // UPDATE
+				if tc.enabled {
+					mockModelctx.EXPECT().ResumeCronJob(ctx, taskID).Return(nil)
+				} else {
+					mockModelctx.EXPECT().PauseCronJob(ctx, taskID).Return(nil)
+				}
+				mockModelctx.EXPECT().UpdateCronJob(ctx, taskID, utils.Ptr(defaultBackupTaskTimeout), &orgID, cronExpression, taskSpec).Return(nil)
+				mockModel.EXPECT().UpdateAutoBackupConfig(ctx, querier.UpdateAutoBackupConfigParams{
+					ClusterID: clusterID,
+					Enabled:   tc.enabled,
+				}).Return(nil)
+			} else { // CREATEs
+				mockModelctx.EXPECT().CreateCronJob(ctx, utils.Ptr(defaultBackupTaskTimeout), &orgID, cronExpression, taskSpec).Return(taskID, nil)
+				mockModel.EXPECT().CreateAutoBackupConfig(ctx, querier.CreateAutoBackupConfigParams{
+					ClusterID: clusterID,
+					TaskID:    taskID,
+					Enabled:   true,
+				}).Return(nil)
+			}
 
-		err := service.UpdateClusterAutoBackupConfig(ctx, clusterID, apigen.AutoBackupConfig{
-			CronExpression:    cronExpression,
-			RetentionDuration: retentionDuration,
-		}, orgID)
-		assert.NoError(t, err)
+			err := service.UpdateClusterAutoBackupConfig(ctx, clusterID, apigen.AutoBackupConfig{
+				CronExpression:    cronExpression,
+				RetentionDuration: retentionDuration,
+				Enabled:           tc.enabled,
+			}, orgID)
+			assert.NoError(t, err)
+		})
 	}
 }

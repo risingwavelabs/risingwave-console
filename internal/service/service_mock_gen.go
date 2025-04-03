@@ -101,20 +101,6 @@ func (mr *MockServiceInterfaceMockRecorder) CreateClusterSnapshot(ctx, id, name,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateClusterSnapshot", reflect.TypeOf((*MockServiceInterface)(nil).CreateClusterSnapshot), ctx, id, name, orgID)
 }
 
-// CreateCronJob mocks base method.
-func (m *MockServiceInterface) CreateCronJob(ctx context.Context, orgID *int32, cronExpression string, specType apigen.TaskSpec) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateCronJob", ctx, orgID, cronExpression, specType)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateCronJob indicates an expected call of CreateCronJob.
-func (mr *MockServiceInterfaceMockRecorder) CreateCronJob(ctx, orgID, cronExpression, specType any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCronJob", reflect.TypeOf((*MockServiceInterface)(nil).CreateCronJob), ctx, orgID, cronExpression, specType)
-}
-
 // CreateDatabase mocks base method.
 func (m *MockServiceInterface) CreateDatabase(ctx context.Context, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error) {
 	m.ctrl.T.Helper()
@@ -486,20 +472,6 @@ func (mr *MockServiceInterfaceMockRecorder) RunRisectlCommand(ctx, id, params, o
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunRisectlCommand", reflect.TypeOf((*MockServiceInterface)(nil).RunRisectlCommand), ctx, id, params, orgID)
 }
 
-// Self mocks base method.
-func (m *MockServiceInterface) Self() ServiceInterface {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Self")
-	ret0, _ := ret[0].(ServiceInterface)
-	return ret0
-}
-
-// Self indicates an expected call of Self.
-func (mr *MockServiceInterfaceMockRecorder) Self() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Self", reflect.TypeOf((*MockServiceInterface)(nil).Self))
-}
-
 // SignIn mocks base method.
 func (m *MockServiceInterface) SignIn(ctx context.Context, params apigen.SignInRequest) (*apigen.Credentials, error) {
 	m.ctrl.T.Helper()
@@ -586,20 +558,6 @@ func (m *MockServiceInterface) UpdateClusterAutoDiagnosticConfig(ctx context.Con
 func (mr *MockServiceInterfaceMockRecorder) UpdateClusterAutoDiagnosticConfig(ctx, id, params, orgID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClusterAutoDiagnosticConfig", reflect.TypeOf((*MockServiceInterface)(nil).UpdateClusterAutoDiagnosticConfig), ctx, id, params, orgID)
-}
-
-// UpdateCronJob mocks base method.
-func (m *MockServiceInterface) UpdateCronJob(ctx context.Context, taskID int32, orgID *int32, cronExpression string, specType apigen.TaskSpec) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateCronJob", ctx, taskID, orgID, cronExpression, specType)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateCronJob indicates an expected call of UpdateCronJob.
-func (mr *MockServiceInterfaceMockRecorder) UpdateCronJob(ctx, taskID, orgID, cronExpression, specType any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCronJob", reflect.TypeOf((*MockServiceInterface)(nil).UpdateCronJob), ctx, taskID, orgID, cronExpression, specType)
 }
 
 // UpdateDatabase mocks base method.

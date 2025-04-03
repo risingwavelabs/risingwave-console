@@ -5,7 +5,6 @@ CREATE TABLE tasks (
     attributes  JSONB NOT NULL,
     spec        JSONB NOT NULL,
     status      VARCHAR(255) NOT NULL,
-    timeout     INTERVAL NOT NULL,
     started_at  TIMESTAMPTZ,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
