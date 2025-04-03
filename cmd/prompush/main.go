@@ -13,6 +13,7 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit/internal/utils"
@@ -155,7 +156,7 @@ func runPush(c *cli.Context) error {
 		return fmt.Errorf("error reading file: %w", err)
 	}
 
-	return pw.Flush()
+	return pw.Flush(c.Context)
 }
 
 type PushWorker struct {
@@ -180,10 +181,9 @@ func NewPushWorker(ctx context.Context, vmEndpoint string, batchSize int) *PushW
 				return
 			case line := <-w.c:
 				if w.cnt == batchSize {
-					if err := w.Flush(); err != nil {
+					if err := w.Flush(ctx); err != nil {
 						log.Printf("failed to flush: %s", err)
 					}
-					w.ResetBuf()
 				}
 				w.Append(line)
 			}
@@ -198,22 +198,30 @@ func (w *PushWorker) Append(line []byte) {
 	w.cnt++
 }
 
-func (w *PushWorker) ResetBuf() {
-	w.buf.Reset()
-	w.cnt = 0
-}
-
 func (w *PushWorker) Push(line []byte) {
 	w.c <- line
 }
 
-func (w *PushWorker) Flush() error {
+func (w *PushWorker) Flush(ctx context.Context) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if w.buf.Len() == 0 {
 		return nil
 	}
-	resp, err := http.Post(w.vmEndpoint+"/api/v1/import", "application/jsonl", &w.buf)
+
+	// Create a copy of the buffer data to avoid modification during HTTP transfer
+	data := make([]byte, w.buf.Len())
+	copy(data, w.buf.Bytes())
+
+	// Use http.Client directly instead of http.Post to keep mutex locked during transmission
+	req, err := http.NewRequestWithContext(ctx, "POST", w.vmEndpoint+"/api/v1/import", bytes.NewReader(data))
+	if err != nil {
+		return errors.Wrap(err, "failed to create request")
+	}
+	req.Header.Set("Content-Type", "application/jsonl")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "failed to push metrics")
 	}
@@ -223,10 +231,16 @@ func (w *PushWorker) Flush() error {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("failed to push metrics: status=%d body=%s", resp.StatusCode, string(body))
 	}
+
+	// reset the buffer
+	w.buf.Reset()
+	w.cnt = 0
 	return nil
 }
 
 func (w *PushWorker) Close() {
-	_ = w.Flush()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_ = w.Flush(ctx)
 	close(w.c)
 }
