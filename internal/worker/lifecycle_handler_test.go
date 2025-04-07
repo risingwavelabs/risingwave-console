@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -59,5 +60,68 @@ func TestHandleCronjob(t *testing.T) {
 	}
 
 	err = handler.handleCronjob(context.Background(), task)
+	require.NoError(t, err)
+}
+
+func TestHandleCompleted(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	var (
+		taskID = int32(1)
+	)
+
+	txm := model.NewExtendedMockModelInterface(ctrl)
+
+	handler := &TaskLifeCycleHandler{
+		txm: txm,
+	}
+
+	task := apigen.Task{
+		ID: taskID,
+	}
+
+	txm.EXPECT().UpdateTaskStatus(context.Background(), querier.UpdateTaskStatusParams{
+		ID:     taskID,
+		Status: string(apigen.Completed),
+	}).Return(nil)
+
+	err := handler.HandleCompleted(context.Background(), task)
+	require.NoError(t, err)
+}
+
+func TestHandleFailed(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	var (
+		taskID = int32(1)
+		err    = errors.New("test error")
+	)
+
+	txm := model.NewExtendedMockModelInterface(ctrl)
+
+	handler := &TaskLifeCycleHandler{
+		txm: txm,
+	}
+
+	task := apigen.Task{
+		ID: taskID,
+	}
+
+	txm.EXPECT().InsertEvent(context.Background(), apigen.EventSpec{
+		Type: apigen.TaskError,
+		TaskError: &apigen.EventTaskError{
+			TaskID: taskID,
+			Error:  err.Error(),
+		},
+	}).Return(&querier.Event{}, nil)
+
+	txm.EXPECT().UpdateTaskStatus(context.Background(), querier.UpdateTaskStatusParams{
+		ID:     taskID,
+		Status: string(apigen.Failed),
+	}).Return(nil)
+
+	err = handler.HandleFailed(context.Background(), task, err)
 	require.NoError(t, err)
 }
