@@ -1,3 +1,6 @@
+//go:build !ut
+// +build !ut
+
 package promdump
 
 import (

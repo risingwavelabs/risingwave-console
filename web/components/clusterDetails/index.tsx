@@ -190,6 +190,9 @@ export default function ClusterPage({ params }: ClusterPageProps) {
         let autoBackupConfig;
         try {
           autoBackupConfig = await DefaultService.getClusterAutoBackupConfig(clusterId);
+          if (!autoBackupConfig.enabled) {
+            autoBackupConfig = defaultAutoBackupConfig;
+          }
         } catch (error) {
           console.error("Error fetching auto backup config:", error);
           toast.error("Failed to load backup configuration, using defaults");
@@ -199,6 +202,9 @@ export default function ClusterPage({ params }: ClusterPageProps) {
         let autoDiagnosticConfig;
         try {
           autoDiagnosticConfig = await DefaultService.getClusterAutoDiagnosticConfig(clusterId);
+          if (!autoDiagnosticConfig.enabled) {
+            autoDiagnosticConfig = defaultAutoDiagnosticConfig;
+          }
         } catch (error) {
           console.error("Error fetching auto diagnostic config:", error);
           toast.error("Failed to load diagnostic configuration, using defaults");

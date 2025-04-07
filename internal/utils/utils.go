@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -124,4 +126,18 @@ func RenderProgressBar(progress float64) string {
 
 	// Return the combined progress string with percentage
 	return fmt.Sprintf("%s %.2f%%", progressBar, progress*100)
+}
+
+func ParseDuration(s string) (time.Duration, error) {
+	if s == "" {
+		return 0, errors.New("empty duration")
+	}
+	if strings.HasSuffix(s, "d") {
+		days, err := strconv.Atoi(s[:len(s)-1])
+		if err != nil {
+			return 0, errors.Wrap(err, "invalid duration")
+		}
+		return time.Duration(days) * 24 * time.Hour, nil
+	}
+	return time.ParseDuration(s)
 }

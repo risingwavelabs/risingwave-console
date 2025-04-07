@@ -1,4 +1,4 @@
-package worker
+package task
 
 import (
 	"context"
@@ -9,33 +9,46 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/conn/http"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
+	"github.com/risingwavelabs/wavekit/internal/logger"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
 	"github.com/risingwavelabs/wavekit/internal/utils"
+	"github.com/risingwavelabs/wavekit/internal/worker"
 	"go.uber.org/zap"
 )
 
-type executorGetter = func(model model.ModelInterface, risectlm *meta.RisectlManager) ExecutorInterface
+var log = logger.NewLogAgent("worker")
 
-type ExecutorInterface interface {
-	ExecuteAutoBackup(ctx context.Context, spec apigen.TaskSpecAutoBackup) error
-	ExecuteAutoDiagnostic(ctx context.Context, spec apigen.TaskSpecAutoDiagnostic) error
+type TaskExecutor struct {
+	model     model.ModelInterface
+	risectlm  meta.RisectlManagerInterface
+	taskstore TaskStoreInterface
+	now       func() time.Time
 }
 
-type Executor struct {
-	model    model.ModelInterface
-	risectlm *meta.RisectlManager
+type TaskStoreInterface interface {
+	CreateTask(ctx context.Context, orgID *int32, spec apigen.TaskSpec, startedAt *time.Time) (int32, error)
 }
 
-func newExecutor(model model.ModelInterface, risectlm *meta.RisectlManager) ExecutorInterface {
-	return &Executor{
-		model:    model,
-		risectlm: risectlm,
+type TaskStore struct {
+	model model.ModelInterface
+}
+
+func NewTaskStore(model model.ModelInterface) TaskStoreInterface {
+	return &TaskStore{model: model}
+}
+
+func NewTaskExecutor(model model.ModelInterface, risectlm meta.RisectlManagerInterface, taskstore TaskStoreInterface) worker.ExecutorInterface {
+	return &TaskExecutor{
+		model:     model,
+		risectlm:  risectlm,
+		taskstore: taskstore,
+		now:       time.Now,
 	}
 }
 
-func (e *Executor) createTask(ctx context.Context, orgID *int32, spec apigen.TaskSpec, startedAt *time.Time) (*querier.Task, error) {
-	return e.model.CreateTask(ctx, querier.CreateTaskParams{
+func (s *TaskStore) CreateTask(ctx context.Context, orgID *int32, spec apigen.TaskSpec, startedAt *time.Time) (int32, error) {
+	task, err := s.model.CreateTask(ctx, querier.CreateTaskParams{
 		Attributes: apigen.TaskAttributes{
 			OrgID: orgID,
 		},
@@ -43,9 +56,13 @@ func (e *Executor) createTask(ctx context.Context, orgID *int32, spec apigen.Tas
 		StartedAt: startedAt,
 		Status:    string(apigen.Pending),
 	})
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to create task")
+	}
+	return task.ID, nil
 }
 
-func (e *Executor) ExecuteAutoBackup(ctx context.Context, spec apigen.TaskSpecAutoBackup) error {
+func (e *TaskExecutor) ExecuteAutoBackup(ctx context.Context, spec apigen.TaskSpecAutoBackup) error {
 	cluster, err := e.model.GetClusterByID(ctx, spec.ClusterID)
 	if err != nil {
 		return errors.Wrap(err, "failed to get cluster")
@@ -75,24 +92,24 @@ func (e *Executor) ExecuteAutoBackup(ctx context.Context, spec apigen.TaskSpecAu
 	}
 
 	// create a task to delete the snapshot after the retention duration
-	retentionDuration, err := time.ParseDuration(spec.RetentionDuration)
+	retentionDuration, err := utils.ParseDuration(spec.RetentionDuration)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse retention duration")
 	}
-	task, err := e.createTask(ctx, &cluster.OrganizationID, apigen.TaskSpec{
+	taskID, err := e.taskstore.CreateTask(ctx, &cluster.OrganizationID, apigen.TaskSpec{
 		Type: apigen.DeleteSnapshot,
 		DeleteSnapshot: &apigen.TaskSpecDeleteSnapshot{
 			ClusterID:  cluster.ID,
 			SnapshotID: snapshotID,
 		},
-	}, utils.Ptr(time.Now().Add(retentionDuration)))
+	}, utils.Ptr(e.now().Add(retentionDuration)))
 	if err != nil {
 		return errors.Wrap(err, "failed to create task")
 	}
 
 	log.Info(
 		"auto delete snapshot task created",
-		zap.Int32("task_id", task.ID),
+		zap.Int32("task_id", taskID),
 		zap.String("cluster_id", fmt.Sprintf("%d", cluster.ID)),
 		zap.String("snapshot_id", fmt.Sprintf("%d", snapshotID)),
 		zap.String("retention_duration", spec.RetentionDuration),
@@ -101,7 +118,7 @@ func (e *Executor) ExecuteAutoBackup(ctx context.Context, spec apigen.TaskSpecAu
 	return nil
 }
 
-func (e *Executor) ExecuteAutoDiagnostic(ctx context.Context, spec apigen.TaskSpecAutoDiagnostic) error {
+func (e *TaskExecutor) ExecuteAutoDiagnostic(ctx context.Context, spec apigen.TaskSpecAutoDiagnostic) error {
 	cluster, err := e.model.GetClusterByID(ctx, spec.ClusterID)
 	if err != nil {
 		return errors.Wrap(err, "failed to get cluster")
@@ -127,23 +144,23 @@ func (e *Executor) ExecuteAutoDiagnostic(ctx context.Context, spec apigen.TaskSp
 	)
 
 	// create a task to delete the cluster diagnostic after the retention duration
-	retentionDuration, err := time.ParseDuration(spec.RetentionDuration)
+	retentionDuration, err := utils.ParseDuration(spec.RetentionDuration)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse retention duration")
 	}
-	task, err := e.createTask(ctx, &cluster.OrganizationID, apigen.TaskSpec{
+	taskID, err := e.taskstore.CreateTask(ctx, &cluster.OrganizationID, apigen.TaskSpec{
 		Type: apigen.DeleteClusterDiagnostic,
 		DeleteClusterDiagnostic: &apigen.TaskDeleteClusterDiagnostic{
 			ClusterID:    cluster.ID,
 			DiagnosticID: diag.ID,
 		},
-	}, utils.Ptr(time.Now().Add(retentionDuration)))
+	}, utils.Ptr(e.now().Add(retentionDuration)))
 	if err != nil {
 		return errors.Wrap(err, "failed to create task")
 	}
 	log.Info(
 		"auto delete cluster diagnostic task created",
-		zap.Int32("task_id", task.ID),
+		zap.Int32("task_id", taskID),
 		zap.String("cluster_id", fmt.Sprintf("%d", cluster.ID)),
 		zap.String("diagnostic_id", fmt.Sprintf("%d", diag.ID)),
 		zap.String("retention_duration", spec.RetentionDuration),

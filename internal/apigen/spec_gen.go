@@ -29,7 +29,8 @@ const (
 
 // Defines values for EventSpecType.
 const (
-	TaskError EventSpecType = "TaskError"
+	TaskCompleted EventSpecType = "TaskCompleted"
+	TaskError     EventSpecType = "TaskError"
 )
 
 // Defines values for MetricsStoreLabelMatcherOp.
@@ -244,12 +245,18 @@ type Event struct {
 
 // EventSpec defines model for EventSpec.
 type EventSpec struct {
-	TaskError *EventTaskError `json:"taskError,omitempty"`
-	Type      EventSpecType   `json:"type"`
+	TaskCompleted *EventTaskCompleted `json:"taskCompleted,omitempty"`
+	TaskError     *EventTaskError     `json:"taskError,omitempty"`
+	Type          EventSpecType       `json:"type"`
 }
 
 // EventSpecType defines model for EventSpec.Type.
 type EventSpecType string
+
+// EventTaskCompleted defines model for EventTaskCompleted.
+type EventTaskCompleted struct {
+	TaskID int32 `json:"taskID"`
+}
 
 // EventTaskError defines model for EventTaskError.
 type EventTaskError struct {

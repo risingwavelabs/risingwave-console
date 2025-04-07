@@ -21,11 +21,6 @@ import (
 
 const risectlFileName = "risectl"
 
-type RisectlManagerInterface interface {
-	ListVersions(ctx context.Context) ([]string, error)
-	NewConn(ctx context.Context, version string, host string, port int32) (RisectlConn, error)
-}
-
 // RisectlManager is a manager for risectl.
 type RisectlManager struct {
 	risectlDir string

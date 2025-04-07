@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/risingwavelabs/wavekit/internal/apigen"
-	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
 	"github.com/risingwavelabs/wavekit/internal/worker/mock"
@@ -23,8 +22,9 @@ func TestRunTask(t *testing.T) {
 	defer ctrl.Finish()
 
 	var (
-		taskID         int32 = 1
-		clusterID      int32 = 1
+		taskID         int32 = 101
+		orgID          int32 = 201
+		clusterID      int32 = 301
 		autoBackupSpec       = apigen.TaskSpecAutoBackup{
 			ClusterID: clusterID,
 		}
@@ -37,6 +37,9 @@ func TestRunTask(t *testing.T) {
 			ID:     taskID,
 			Spec:   taskSpec,
 			Status: taskStatus,
+			Attributes: apigen.TaskAttributes{
+				OrgID: &orgID,
+			},
 		}
 	)
 
@@ -57,18 +60,17 @@ func TestRunTask(t *testing.T) {
 
 			worker := &Worker{
 				model: mockModel,
-				getExecutor: func(m model.ModelInterface, risectlm *meta.RisectlManager) ExecutorInterface {
-					return mockExecutor
-				},
 				getHandler: func(txm model.ModelInterface) (TaskLifeCycleHandlerInterface, error) {
 					return mockLifeCycleHandler, nil
 				},
+				executor: mockExecutor,
 			}
 			// pull task
 			mockModel.EXPECT().PullTask(gomock.Any()).Return(&querier.Task{
-				ID:     taskID,
-				Spec:   taskSpec,
-				Status: string(taskStatus),
+				ID:         taskID,
+				Spec:       taskSpec,
+				Status:     string(taskStatus),
+				Attributes: task.Attributes,
 			}, nil)
 
 			// called by handle attributes

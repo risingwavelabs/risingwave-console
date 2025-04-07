@@ -80,10 +80,13 @@ install-mockgen:
 
 gen-mock: install-mockgen
 	$(MOCKGEN_BIN) -source=internal/model/model.go -destination=internal/model/mock_gen.go -package=model
-	$(MOCKGEN_BIN) -source=internal/worker/executor.go -destination=internal/worker/mock/executor_mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/task/task.go -destination=internal/task/mock/task_mock_gen.go -package=mock
 	$(MOCKGEN_BIN) -source=internal/worker/lifecycle_handler.go -destination=internal/worker/mock/lifecycle_handler_mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/worker/worker.go -destination=internal/worker/mock/worker_mock_gen.go -package=mock
 	$(MOCKGEN_BIN) -source=internal/service/service.go -destination=internal/service/service_mock_gen.go -package=service
 	$(MOCKGEN_BIN) -source=internal/modelctx/modelctx.go -destination=internal/modelctx/mock/modelctx_mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/conn/meta/types.go -destination=internal/conn/meta/mock/mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/task/task.go -destination=internal/task/mock/task_mock_gen.go -package=mock
 
 ###################################################
 ### Common

@@ -1617,9 +1617,11 @@ components:
       properties:
         type:
           type: string
-          enum: ["TaskError"]
+          enum: ["TaskError", "TaskCompleted"]
         taskError:
           $ref: "#/components/schemas/EventTaskError"
+        taskCompleted:
+          $ref: "#/components/schemas/EventTaskCompleted"
 
     EventTaskError:
       type: object
@@ -1630,3 +1632,11 @@ components:
           format: int32
         error:
           type: string
+
+    EventTaskCompleted:
+      type: object
+      required: [taskID]
+      properties:
+        taskID:
+          type: integer
+          format: int32

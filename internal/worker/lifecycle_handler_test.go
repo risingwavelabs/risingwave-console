@@ -81,6 +81,13 @@ func TestHandleCompleted(t *testing.T) {
 		ID: taskID,
 	}
 
+	txm.EXPECT().InsertEvent(context.Background(), apigen.EventSpec{
+		Type: apigen.TaskCompleted,
+		TaskCompleted: &apigen.EventTaskCompleted{
+			TaskID: taskID,
+		},
+	}).Return(&querier.Event{}, nil)
+
 	txm.EXPECT().UpdateTaskStatus(context.Background(), querier.UpdateTaskStatusParams{
 		ID:     taskID,
 		Status: string(apigen.Completed),

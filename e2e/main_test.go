@@ -42,11 +42,11 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	server, err := wire.InitializeServer()
+	app, err := wire.InitializeApplication()
 	if err != nil {
 		log.Fatal(err)
 	}
-	apiServer = server
+	apiServer = app.GetServer()
 
 	os.Exit(m.Run())
 }

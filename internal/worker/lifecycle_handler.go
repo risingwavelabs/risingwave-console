@@ -10,6 +10,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
 	"github.com/robfig/cron/v3"
+	"go.uber.org/zap"
 )
 
 type LifeCycleHandlerGetter = func(txm model.ModelInterface) (TaskLifeCycleHandlerInterface, error)
@@ -36,10 +37,14 @@ func newTaskLifeCycleHandler(txm model.ModelInterface) (TaskLifeCycleHandlerInte
 }
 
 func (a *TaskLifeCycleHandler) HandleAttributes(ctx context.Context, task apigen.Task) error {
-	if task.Attributes.Cronjob != nil {
+	if a.isCronjob(task) {
 		return a.handleCronjob(ctx, task)
 	}
 	return nil
+}
+
+func (a *TaskLifeCycleHandler) isCronjob(task apigen.Task) bool {
+	return task.Attributes.Cronjob != nil
 }
 
 func (a *TaskLifeCycleHandler) HandleFailed(ctx context.Context, task apigen.Task, err error) error {
@@ -55,7 +60,8 @@ func (a *TaskLifeCycleHandler) HandleFailed(ctx context.Context, task apigen.Tas
 	}
 
 	// cronjob should be run again anyway, no need to update status
-	if task.Attributes.Cronjob != nil {
+	if a.isCronjob(task) {
+		log.Info("cronjob failed, will be run again", zap.Int32("task_id", task.ID))
 		return nil
 	}
 
@@ -70,6 +76,22 @@ func (a *TaskLifeCycleHandler) HandleFailed(ctx context.Context, task apigen.Tas
 }
 
 func (a *TaskLifeCycleHandler) HandleCompleted(ctx context.Context, task apigen.Task) error {
+	// the event must be reported
+	if _, err := a.txm.InsertEvent(ctx, apigen.EventSpec{
+		Type: apigen.TaskCompleted,
+		TaskCompleted: &apigen.EventTaskCompleted{
+			TaskID: task.ID,
+		},
+	}); err != nil {
+		return errors.Wrap(err, "insert task completed event")
+	}
+
+	// cronjob should be run again anyway, no need to update status
+	if a.isCronjob(task) {
+		log.Info("cronjob failed, will be run again", zap.Int32("task_id", task.ID))
+		return nil
+	}
+
 	if err := a.txm.UpdateTaskStatus(ctx, querier.UpdateTaskStatusParams{
 		ID:     task.ID,
 		Status: string(apigen.Completed),

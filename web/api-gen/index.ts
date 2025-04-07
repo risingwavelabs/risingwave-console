@@ -19,6 +19,7 @@ export type { DDLProgress } from './models/DDLProgress';
 export type { DiagnosticData } from './models/DiagnosticData';
 export type { Event } from './models/Event';
 export { EventSpec } from './models/EventSpec';
+export type { EventTaskCompleted } from './models/EventTaskCompleted';
 export type { EventTaskError } from './models/EventTaskError';
 export type { MetricMatrix } from './models/MetricMatrix';
 export type { MetricSeries } from './models/MetricSeries';

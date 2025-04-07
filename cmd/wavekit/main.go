@@ -25,13 +25,13 @@ func main() {
 		return
 	}
 
-	s, err := wire.InitializeServer()
+	app, err := wire.InitializeApplication()
 	if err != nil {
-		log.Error("failed to initialize server", zap.Error(err))
+		log.Error("failed to initialize application", zap.Error(err))
 		panic(err)
 	}
 
-	if err := s.Listen(); err != nil {
+	if err := app.Start(); err != nil {
 		log.Error("exit with error", zap.Error(err))
 	}
 

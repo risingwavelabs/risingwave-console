@@ -21,6 +21,11 @@ type Root struct {
 	Password string `yaml:"password"`
 }
 
+type Worker struct {
+	// (Optional) Whether to disable the worker, default is false.
+	Disable bool `yaml:"disable,omitempty"`
+}
+
 type Config struct {
 	// (Optional) The path of file to store the initialization data, if not set, skip the initialization
 	Init string `yaml:"init,omitempty"`
@@ -31,6 +36,9 @@ type Config struct {
 
 	// (Optional) The port of the wavekit server, default is 8020
 	Port int `yaml:"port,omitempty"`
+
+	// (Optional) The port of the metrics server, default is 9020
+	MetricsPort int `yaml:"metricsport,omitempty"`
 
 	// The jwt configuration
 	Jwt Jwt `yaml:"jwt,omitempty"`
@@ -46,6 +54,9 @@ type Config struct {
 
 	// (Optional) The path of the directory to store the risectl files, default is "$HOME/.risectl"
 	RisectlDir string `yaml:"risectldir,omitempty"`
+
+	// The worker configuration
+	Worker Worker `yaml:"worker,omitempty"`
 }
 
 func NewConfig() (*Config, error) {

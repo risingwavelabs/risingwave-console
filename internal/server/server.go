@@ -17,6 +17,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/controller"
+	"github.com/risingwavelabs/wavekit/internal/globalctx"
 	"github.com/risingwavelabs/wavekit/internal/logger"
 	"github.com/risingwavelabs/wavekit/internal/service"
 	"github.com/risingwavelabs/wavekit/internal/utils"
@@ -31,9 +32,11 @@ type Server struct {
 	port       int
 	auth       auth.AuthInterface
 	controller *controller.Controller
+	globalCtx  *globalctx.GlobalContext
 }
 
-func NewServer(cfg *config.Config, c *controller.Controller, auth auth.AuthInterface, initSvc *service.InitService) (*Server, error) {
+func NewServer(cfg *config.Config, globalCtx *globalctx.GlobalContext, c *controller.Controller, auth auth.AuthInterface, initSvc *service.InitService) (*Server, error) {
+	// create fiber app
 	app := fiber.New(fiber.Config{
 		ErrorHandler: ErrorHandler,
 		BodyLimit:    50 * 1024 * 1024, // 50MB
@@ -59,6 +62,7 @@ func NewServer(cfg *config.Config, c *controller.Controller, auth auth.AuthInter
 		port:       port,
 		auth:       auth,
 		controller: c,
+		globalCtx:  globalCtx,
 	}
 
 	s.registerMiddleware()
@@ -129,7 +133,28 @@ func (s *Server) registerMiddleware() {
 }
 
 func (s *Server) Listen() error {
-	return s.app.Listen(fmt.Sprintf(":%d", s.port))
+	// Create a channel to receive shutdown signal
+	shutdownChan := make(chan error)
+
+	// Start the server in a goroutine
+	go func() {
+		if err := s.app.Listen(fmt.Sprintf(":%d", s.port)); err != nil {
+			shutdownChan <- err
+		}
+	}()
+
+	// Wait for either context cancellation or server error
+	select {
+	case err := <-shutdownChan:
+		return err
+	case <-s.globalCtx.Context().Done():
+		log.Info("shutting down server due to context cancellation")
+		return s.app.Shutdown()
+	}
+}
+
+func (s *Server) Shutdown() error {
+	return s.app.Shutdown()
 }
 
 func (s *Server) GetApp() *fiber.App {
