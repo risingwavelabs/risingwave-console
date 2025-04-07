@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
@@ -22,11 +23,7 @@ func (s *Service) CreateClusterDiagnostic(ctx context.Context, id int32, orgID i
 		return nil, errors.Wrapf(err, "failed to get cluster")
 	}
 
-	conn, err := s.getMetaHttpConn(ctx, cluster.ID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get meta http connection")
-	}
-	content, err := conn.GetDiagnose(ctx)
+	content, err := s.metahttp.GetDiagnose(ctx, fmt.Sprintf("http://%s:%d", cluster.Host, cluster.HttpPort))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get diagnose")
 	}

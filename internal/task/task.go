@@ -23,6 +23,7 @@ type TaskExecutor struct {
 	model     model.ModelInterface
 	risectlm  meta.RisectlManagerInterface
 	taskstore TaskStoreInterface
+	metahttp  http.MetaHttpManagerInterface
 	now       func() time.Time
 }
 
@@ -38,12 +39,13 @@ func NewTaskStore(model model.ModelInterface) TaskStoreInterface {
 	return &TaskStore{model: model}
 }
 
-func NewTaskExecutor(model model.ModelInterface, risectlm meta.RisectlManagerInterface, taskstore TaskStoreInterface) worker.ExecutorInterface {
+func NewTaskExecutor(model model.ModelInterface, risectlm meta.RisectlManagerInterface, taskstore TaskStoreInterface, metahttp http.MetaHttpManagerInterface) worker.ExecutorInterface {
 	return &TaskExecutor{
 		model:     model,
 		risectlm:  risectlm,
 		taskstore: taskstore,
 		now:       time.Now,
+		metahttp:  metahttp,
 	}
 }
 
@@ -125,8 +127,7 @@ func (e *TaskExecutor) ExecuteAutoDiagnostic(ctx context.Context, spec apigen.Ta
 	}
 
 	// run diagnostics
-	conn := http.NewMetaHttpConnection(fmt.Sprintf("http://%s:%d", cluster.Host, cluster.HttpPort))
-	content, err := conn.GetDiagnose(ctx)
+	content, err := e.metahttp.GetDiagnose(ctx, fmt.Sprintf("http://%s:%d", cluster.Host, cluster.HttpPort))
 	if err != nil {
 		return errors.Wrap(err, "failed to get diagnose")
 	}

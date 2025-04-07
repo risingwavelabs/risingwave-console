@@ -8,6 +8,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/app"
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
+	"github.com/risingwavelabs/wavekit/internal/conn/http"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
@@ -38,6 +39,8 @@ func InitializeApplication() (*app.Application, error) {
 		globalctx.New,
 		worker.NewWorker,
 		task.NewTaskExecutor,
+		task.NewTaskStore,
+		http.NewMetaHttpManager,
 	)
 	return nil, nil
 }

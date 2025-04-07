@@ -2,10 +2,12 @@ package task
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/risingwavelabs/wavekit/internal/apigen"
+	mock_http "github.com/risingwavelabs/wavekit/internal/conn/http/mock"
 	mock_meta "github.com/risingwavelabs/wavekit/internal/conn/meta/mock"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
@@ -68,6 +70,67 @@ func TestExecuteAutoBackup(t *testing.T) {
 	}, utils.Ptr(currTime.Add(retentionDuration))).Return(int32(1), nil)
 
 	err := executor.ExecuteAutoBackup(context.Background(), apigen.TaskSpecAutoBackup{
+		ClusterID:         clusterID,
+		RetentionDuration: retentionDurationRaw,
+	})
+	require.NoError(t, err)
+}
+
+func TestExecuteDeleteSnapshot(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	var (
+		orgID                = int32(201)
+		clusterID            = int32(101)
+		clusterHost          = "localhost"
+		clusterHttpPort      = int32(9000)
+		diagnose             = "diagnose"
+		currTime             = time.Now()
+		diagnosticID         = int32(301)
+		retentionDurationRaw = "3d"
+		retentionDuration, _ = utils.ParseDuration(retentionDurationRaw)
+	)
+
+	metahttp := mock_http.NewMockMetaHttpManagerInterface(ctrl)
+	model := model.NewMockModelInterface(ctrl)
+	taskstore := mock_task.NewMockTaskStoreInterface(ctrl)
+
+	model.EXPECT().GetClusterByID(gomock.Any(), clusterID).Return(&querier.Cluster{
+		ID:             clusterID,
+		Host:           clusterHost,
+		HttpPort:       clusterHttpPort,
+		OrganizationID: orgID,
+	}, nil)
+
+	metahttp.
+		EXPECT().
+		GetDiagnose(gomock.Any(), fmt.Sprintf("http://%s:%d", clusterHost, clusterHttpPort)).
+		Return(diagnose, nil)
+
+	model.EXPECT().CreateClusterDiagnostic(gomock.Any(), querier.CreateClusterDiagnosticParams{
+		ClusterID: clusterID,
+		Content:   diagnose,
+	}).Return(&querier.ClusterDiagnostic{
+		ID: diagnosticID,
+	}, nil)
+
+	taskstore.EXPECT().CreateTask(gomock.Any(), &orgID, apigen.TaskSpec{
+		Type: apigen.DeleteClusterDiagnostic,
+		DeleteClusterDiagnostic: &apigen.TaskDeleteClusterDiagnostic{
+			ClusterID:    clusterID,
+			DiagnosticID: diagnosticID,
+		},
+	}, utils.Ptr(currTime.Add(retentionDuration))).Return(int32(1), nil)
+
+	executor := &TaskExecutor{
+		model:     model,
+		taskstore: taskstore,
+		now:       func() time.Time { return currTime },
+		metahttp:  metahttp,
+	}
+
+	err := executor.ExecuteAutoDiagnostic(context.Background(), apigen.TaskSpecAutoDiagnostic{
 		ClusterID:         clusterID,
 		RetentionDuration: retentionDurationRaw,
 	})

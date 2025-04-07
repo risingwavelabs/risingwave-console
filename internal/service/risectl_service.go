@@ -2,11 +2,9 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
-	"github.com/risingwavelabs/wavekit/internal/conn/http"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 )
 
@@ -17,14 +15,6 @@ func (s *Service) getRisectlConn(ctx context.Context, id int32) (meta.RisectlCon
 	}
 
 	return s.risectlm.NewConn(ctx, cluster.Version, cluster.Host, cluster.MetaPort)
-}
-
-func (s *Service) getMetaHttpConn(ctx context.Context, id int32) (http.MetaHttpConn, error) {
-	cluster, err := s.m.GetClusterByID(ctx, id)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get cluster")
-	}
-	return http.NewMetaHttpConnection(fmt.Sprintf("http://%s:%d", cluster.Host, cluster.HttpPort)), nil
 }
 
 func (s *Service) RunRisectlCommand(ctx context.Context, id int32, params apigen.RisectlCommand, orgID int32) (*apigen.RisectlCommandResult, error) {

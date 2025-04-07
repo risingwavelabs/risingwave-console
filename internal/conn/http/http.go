@@ -6,27 +6,19 @@ import (
 	"net/http"
 )
 
-type MetaHttpConn interface {
-	GetDiagnose(ctx context.Context) (string, error)
+type MetaHttpManagerInterface interface {
+	GetDiagnose(ctx context.Context, endpoint string) (string, error)
 }
 
-type MetaHttpConnection struct {
-	endpoint string
+type MetaHttpManager struct {
 }
 
-func NewMetaHttpConnection(endpoint string) MetaHttpConn {
-	ep := endpoint
-	if ep[len(ep)-1] == '/' {
-		ep = ep[:len(ep)-1]
-	}
-
-	return &MetaHttpConnection{
-		endpoint: ep,
-	}
+func NewMetaHttpManager() MetaHttpManagerInterface {
+	return &MetaHttpManager{}
 }
 
-func (m *MetaHttpConnection) GetDiagnose(ctx context.Context) (string, error) {
-	return get(ctx, m.endpoint+"/api/monitor/diagnose/")
+func (m *MetaHttpManager) GetDiagnose(ctx context.Context, endpoint string) (string, error) {
+	return get(ctx, endpoint+"/api/monitor/diagnose/")
 }
 
 func get(ctx context.Context, url string) (string, error) {

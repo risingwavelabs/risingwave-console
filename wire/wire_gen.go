@@ -10,6 +10,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/app"
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
+	"github.com/risingwavelabs/wavekit/internal/conn/http"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
@@ -48,7 +49,8 @@ func InitializeApplication() (*app.Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager)
+	metaHttpManagerInterface := http.NewMetaHttpManager()
+	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager, metaHttpManagerInterface)
 	controllerController := controller.NewController(serviceInterface, authInterface)
 	initService := service.NewInitService(modelInterface, serviceInterface)
 	serverServer, err := server.NewServer(configConfig, globalContext, controllerController, authInterface, initService)
@@ -56,7 +58,8 @@ func InitializeApplication() (*app.Application, error) {
 		return nil, err
 	}
 	metricsServer := metrics.NewMetricsServer(configConfig, globalContext)
-	executorInterface := task.NewTaskExecutor(modelInterface, risectlManagerInterface)
+	taskStoreInterface := task.NewTaskStore(modelInterface)
+	executorInterface := task.NewTaskExecutor(modelInterface, risectlManagerInterface, taskStoreInterface, metaHttpManagerInterface)
 	workerWorker, err := worker.NewWorker(globalContext, modelInterface, executorInterface)
 	if err != nil {
 		return nil, err

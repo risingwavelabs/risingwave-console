@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
+	mock_http "github.com/risingwavelabs/wavekit/internal/conn/http/mock"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
 	"github.com/risingwavelabs/wavekit/internal/modelctx"
@@ -119,4 +121,54 @@ func TestUpdateClusterAutoDiagnosticConfig(t *testing.T) {
 		}, orgID)
 		assert.NoError(t, err)
 	}
+}
+
+func TestCreateClusterDiagnostic(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	var (
+		ctx               = context.Background()
+		orgID             = int32(201)
+		clusterID         = int32(101)
+		diagnosticID      = int32(301)
+		clusterHost       = "localhost"
+		clusterHttpPort   = int32(9000)
+		diagnosticContent = "diagnostic content"
+	)
+
+	metahttp := mock_http.NewMockMetaHttpManagerInterface(ctrl)
+	model := model.NewExtendedMockModelInterface(ctrl)
+	service := &Service{
+		m:        model,
+		metahttp: metahttp,
+	}
+
+	model.EXPECT().GetOrgCluster(ctx, querier.GetOrgClusterParams{
+		ID:             clusterID,
+		OrganizationID: orgID,
+	}).Return(&querier.Cluster{
+		ID:             clusterID,
+		Host:           clusterHost,
+		HttpPort:       clusterHttpPort,
+		OrganizationID: orgID,
+	}, nil)
+
+	metahttp.
+		EXPECT().
+		GetDiagnose(ctx, fmt.Sprintf("http://%s:%d", clusterHost, clusterHttpPort)).
+		Return(diagnosticContent, nil)
+
+	model.EXPECT().CreateClusterDiagnostic(ctx, querier.CreateClusterDiagnosticParams{
+		ClusterID: clusterID,
+		Content:   diagnosticContent,
+	}).Return(&querier.ClusterDiagnostic{
+		ID:      diagnosticID,
+		Content: diagnosticContent,
+	}, nil)
+
+	diagnostic, err := service.CreateClusterDiagnostic(ctx, clusterID, orgID)
+	assert.NoError(t, err)
+	assert.Equal(t, diagnosticID, diagnostic.ID)
+	assert.Equal(t, diagnosticContent, diagnostic.Content)
 }
