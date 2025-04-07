@@ -88,7 +88,7 @@ func (a *TaskLifeCycleHandler) HandleCompleted(ctx context.Context, task apigen.
 
 	// cronjob should be run again anyway, no need to update status
 	if a.isCronjob(task) {
-		log.Info("cronjob failed, will be run again", zap.Int32("task_id", task.ID))
+		log.Info("cronjob success, will be run again", zap.Int32("task_id", task.ID))
 		return nil
 	}
 
