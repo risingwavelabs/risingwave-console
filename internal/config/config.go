@@ -26,6 +26,14 @@ type Worker struct {
 	Disable bool `yaml:"disable,omitempty"`
 }
 
+type Debug struct {
+	// (Optional) Whether to enable the debug server, default is false.
+	Enable bool `yaml:"enable,omitempty"`
+
+	// (Optional) The port of the debug server, default is 8777
+	Port int `yaml:"port,omitempty"`
+}
+
 type Config struct {
 	// (Optional) The path of file to store the initialization data, if not set, skip the initialization
 	Init string `yaml:"init,omitempty"`
@@ -57,6 +65,9 @@ type Config struct {
 
 	// The worker configuration
 	Worker Worker `yaml:"worker,omitempty"`
+
+	// (Optional) The debug configuration
+	Debug Debug `yaml:"debug,omitempty"`
 }
 
 func NewConfig() (*Config, error) {

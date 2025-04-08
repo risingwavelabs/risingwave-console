@@ -13,3 +13,7 @@ scrape_configs:
       - targets: ["rw:1250"]
         labels:
           risingwave_cluster: "default"
+
+  - job_name: wavekit
+    static_configs:
+      - targets: ["dev:9020"]

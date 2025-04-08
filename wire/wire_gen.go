@@ -64,6 +64,7 @@ func InitializeApplication() (*app.Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	application := app.NewApplication(configConfig, serverServer, metricsServer, workerWorker)
+	debugServer := app.NewDebugServer(configConfig, globalContext)
+	application := app.NewApplication(configConfig, serverServer, metricsServer, workerWorker, debugServer)
 	return application, nil
 }

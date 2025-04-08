@@ -3,9 +3,11 @@
 services:
   dev:
     build: 
-      dockerfile: ./docker/Dockerfile.dev
+      dockerfile: ./dev/Dockerfile.dev
     ports:
       - "8020:8020"
+      - "9020:9020"
+      - "8777:8777"
     command:
     - go
     - run
@@ -15,13 +17,15 @@ services:
       WK_PG_DSN: postgres://postgres:postgres@db:5432/postgres
       WK_JWT_SECRET: 9138e41195112b568e22480f18a42dd69b38fab5ee1a36fbf63d49b22097d22a
       WK_ROOT_PASSWORD: '123456'
-      WK_INIT: ./init.yaml
+      WK_INIT: ./dev/init.yaml
       WK_RISECTLDIR: /wavekit-data/risectl
+      WK_METRICSPORT: 9020
+      WK_DEBUG_ENABLE: true
+      WK_DEBUG_PORT: 8777
     volumes:
       - ./:/app
       - go-data:/go/pkg/mod
       - go-build-data:/root/.cache/go-build
-      - ./init.yaml:/app/init.yaml
       - wavekit-data:/wavekit-data
   db: 
     image: "postgres:latest"
@@ -29,8 +33,8 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_PASSWORD: postgres
-    # volumes:
-    #   - db-data:/var/lib/postgresql/data
+    volumes:
+      - pg-data:/var/lib/postgresql/data
 
   rw:
     image: risingwavelabs/risingwave:v2.2.1
@@ -39,13 +43,16 @@ services:
       - 5690:5690
       - 5691:5691
       - 1250:1250
+    volumes:
+      - rw-meta-store:/root/meta
+      - rw-data-store:/root/state_store
     command: "standalone --meta-opts=\" \
                     --listen-addr 0.0.0.0:5690 \
                     --advertise-addr rw:5690 \
                     --dashboard-host 0.0.0.0:5691 \
                     --prometheus-host 0.0.0.0:1250 \
                     --backend sqlite  \
-                    --sql-endpoint /root/single_node.db \
+                    --sql-endpoint /root/meta/single_node.db \
                     --state-store hummock+fs:///root/state_store \
                     --data-directory hummock_001\" \
                  --compute-opts=\" \
@@ -74,7 +81,7 @@ services:
   prometheus:
     image: "prom/prometheus:latest"
     command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--config.file=/etc/prometheus/prometheus.yaml"
       - "--storage.tsdb.path=/prometheus"
       - "--web.console.libraries=/usr/share/prometheus/console_libraries"
       - "--web.console.templates=/usr/share/prometheus/consoles"
@@ -85,21 +92,23 @@ services:
     depends_on: [ ]
     volumes:
       - "prometheus-data:/prometheus"
-      - "./prometheus.yaml:/etc/prometheus/prometheus.yml"
-    environment: {}
-    container_name: prometheus
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - sh -c 'printf "GET /-/healthy HTTP/1.0\n\n" | nc localhost 9500; exit $$?;'
-      interval: 1s
-      timeout: 5s
-      retries: 5
-    restart: always
+      - "./dev/prometheus.yaml:/etc/prometheus/prometheus.yaml"
 
+  grafana:
+    image: "grafana/grafana-oss:latest"
+    ports:
+      - "3000:3000"
+    volumes:
+      - "./dev/grafana.ini:/etc/grafana/grafana.ini"
+      - "./dev/datasources.yaml:/etc/grafana/provisioning/datasources/wavekit-datasources.yml"
+      - "./dev/dashboards.yaml:/etc/grafana/provisioning/dashboards/wavekit-dashboards.yml"
+      - "./dev/dashboards:/dashboards"
+    
 volumes:
-  db-data:
+  pg-data:
   go-data:
   go-build-data:
   wavekit-data:
   prometheus-data:
+  rw-meta-store:
+  rw-data-store:

@@ -36,6 +36,7 @@ func InitializeApplication() (*app.Application, error) {
 		meta.NewRisectlManager,
 		metricsstore.NewMetricsManager,
 		metrics.NewMetricsServer,
+		app.NewDebugServer,
 		globalctx.New,
 		worker.NewWorker,
 		task.NewTaskHandler,

@@ -12,18 +12,21 @@ type Application struct {
 	prometheus    *metrics.MetricsServer
 	worker        *worker.Worker
 	disableWorker bool
+	debugServer   *DebugServer
 }
 
-func NewApplication(cfg *config.Config, server *server.Server, prometheus *metrics.MetricsServer, worker *worker.Worker) *Application {
+func NewApplication(cfg *config.Config, server *server.Server, prometheus *metrics.MetricsServer, worker *worker.Worker, debugServer *DebugServer) *Application {
 	return &Application{
 		server:        server,
 		prometheus:    prometheus,
 		worker:        worker,
 		disableWorker: cfg.Worker.Disable,
+		debugServer:   debugServer,
 	}
 }
 
 func (a *Application) Start() error {
+	go a.debugServer.Start()
 	go a.prometheus.Start()
 	if !a.disableWorker {
 		go a.worker.Start()
