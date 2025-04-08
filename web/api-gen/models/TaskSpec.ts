@@ -2,16 +2,16 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { TaskDeleteClusterDiagnostic } from './TaskDeleteClusterDiagnostic';
 import type { TaskSpecAutoBackup } from './TaskSpecAutoBackup';
 import type { TaskSpecAutoDiagnostic } from './TaskSpecAutoDiagnostic';
+import type { TaskSpecDeleteClusterDiagnostic } from './TaskSpecDeleteClusterDiagnostic';
 import type { TaskSpecDeleteSnapshot } from './TaskSpecDeleteSnapshot';
 export type TaskSpec = {
     type: TaskSpec.type;
     autoBackup?: TaskSpecAutoBackup;
     autoDiagnostic?: TaskSpecAutoDiagnostic;
     deleteSnapshot?: TaskSpecDeleteSnapshot;
-    deleteClusterDiagnostic?: TaskDeleteClusterDiagnostic;
+    deleteClusterDiagnostic?: TaskSpecDeleteClusterDiagnostic;
 };
 export namespace TaskSpec {
     export enum type {

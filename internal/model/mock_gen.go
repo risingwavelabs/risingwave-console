@@ -231,6 +231,20 @@ func (mr *MockModelInterfaceMockRecorder) DeleteAllOrgDatabaseConnectionsByClust
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllOrgDatabaseConnectionsByClusterID", reflect.TypeOf((*MockModelInterface)(nil).DeleteAllOrgDatabaseConnectionsByClusterID), ctx, arg)
 }
 
+// DeleteClusterDiagnostic mocks base method.
+func (m *MockModelInterface) DeleteClusterDiagnostic(ctx context.Context, id int32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteClusterDiagnostic", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteClusterDiagnostic indicates an expected call of DeleteClusterDiagnostic.
+func (mr *MockModelInterfaceMockRecorder) DeleteClusterDiagnostic(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteClusterDiagnostic", reflect.TypeOf((*MockModelInterface)(nil).DeleteClusterDiagnostic), ctx, id)
+}
+
 // DeleteClusterSnapshot mocks base method.
 func (m *MockModelInterface) DeleteClusterSnapshot(ctx context.Context, arg querier.DeleteClusterSnapshotParams) error {
 	m.ctrl.T.Helper()

@@ -1520,8 +1520,19 @@ components:
           description: Timeout of the task, e.g. 1h, 1d, 1w, 1m
         cronjob:
           $ref: "#/components/schemas/TaskCronjob"
-        scheduled:
-          $ref: "#/components/schemas/TaskScheduled"
+        retryPolicy:
+          $ref: "#/components/schemas/TaskRetryPolicy"
+
+    TaskRetryPolicy:
+      type: object
+      required: [interval]
+      properties:
+        interval:
+          type: string
+          description: Interval of the retry policy, e.g. 1h, 1d, 1w, 1m
+        always_retry_on_failure:
+          type: boolean
+          description: Whether to always retry the task on failure
 
     TaskCronjob:
       type: object
@@ -1552,7 +1563,7 @@ components:
         deleteSnapshot:
           $ref: "#/components/schemas/TaskSpecDeleteSnapshot"
         deleteClusterDiagnostic:
-          $ref: "#/components/schemas/TaskDeleteClusterDiagnostic"
+          $ref: "#/components/schemas/TaskSpecDeleteClusterDiagnostic"
 
     TaskSpecDeleteSnapshot:
       type: object
@@ -1565,7 +1576,7 @@ components:
           type: integer
           format: int64
     
-    TaskDeleteClusterDiagnostic:
+    TaskSpecDeleteClusterDiagnostic:
       type: object
       required: [clusterID, diagnosticID]
       properties:

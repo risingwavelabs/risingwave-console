@@ -11,5 +11,5 @@ type RisectlConn interface {
 
 type RisectlManagerInterface interface {
 	ListVersions(ctx context.Context) ([]string, error)
-	NewConn(ctx context.Context, version string, host string, port int32) (RisectlConn, error)
+	NewConn(ctx context.Context, version string, host string, metaPort int32) (RisectlConn, error)
 }

@@ -25,6 +25,20 @@ var WorkerGoroutines = promauto.NewGauge(
 	},
 )
 
+var PulledTasks = promauto.NewCounter(
+	prometheus.CounterOpts{
+		Name: "wavekit_pulled_tasks",
+		Help: "The number of tasks that have been pulled",
+	},
+)
+
+var RunTaskErrors = promauto.NewCounter(
+	prometheus.CounterOpts{
+		Name: "wavekit_run_task_internal_errors",
+		Help: "The number of internal errors during running tasks, not related to the task logic. This is expected to be 0.",
+	},
+)
+
 type MetricsServer struct {
 	port      int
 	server    *http.Server

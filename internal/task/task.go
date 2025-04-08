@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/conn/http"
@@ -151,7 +152,7 @@ func (e *TaskExecutor) ExecuteAutoDiagnostic(ctx context.Context, spec apigen.Ta
 	}
 	taskID, err := e.taskstore.CreateTask(ctx, &cluster.OrganizationID, apigen.TaskSpec{
 		Type: apigen.DeleteClusterDiagnostic,
-		DeleteClusterDiagnostic: &apigen.TaskDeleteClusterDiagnostic{
+		DeleteClusterDiagnostic: &apigen.TaskSpecDeleteClusterDiagnostic{
 			ClusterID:    cluster.ID,
 			DiagnosticID: diag.ID,
 		},
@@ -166,6 +167,42 @@ func (e *TaskExecutor) ExecuteAutoDiagnostic(ctx context.Context, spec apigen.Ta
 		zap.String("diagnostic_id", fmt.Sprintf("%d", diag.ID)),
 		zap.String("retention_duration", spec.RetentionDuration),
 	)
+
+	return nil
+}
+
+func (e *TaskExecutor) ExecuteDeleteClusterDiagnostic(ctx context.Context, spec apigen.TaskSpecDeleteClusterDiagnostic) error {
+	if err := e.model.DeleteClusterDiagnostic(ctx, spec.DiagnosticID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info("cluster diagnostic not found, skipping delete", zap.Int32("diagnostic_id", spec.DiagnosticID))
+			return nil
+		}
+		return errors.Wrap(err, "failed to delete cluster diagnostic")
+	}
+	return nil
+}
+
+func (e *TaskExecutor) ExecuteDeleteSnapshot(ctx context.Context, spec apigen.TaskSpecDeleteSnapshot) error {
+	cluster, err := e.model.GetClusterByID(ctx, spec.ClusterID)
+	if err != nil {
+		return errors.Wrap(err, "failed to get cluster")
+	}
+
+	conn, err := e.risectlm.NewConn(ctx, cluster.Version, cluster.Host, cluster.MetaPort)
+	if err != nil {
+		return errors.Wrap(err, "failed to get risectl connection")
+	}
+
+	if err := conn.DeleteSnapshot(ctx, spec.SnapshotID); err != nil {
+		return errors.Wrapf(err, "failed to delete snapshot in risingwave, snapshot_id: %d", spec.SnapshotID)
+	}
+
+	if err := e.model.DeleteSnapshot(ctx, querier.DeleteSnapshotParams{
+		ClusterID:  cluster.ID,
+		SnapshotID: spec.SnapshotID,
+	}); err != nil {
+		return errors.Wrapf(err, "failed to delete snapshot in database, cluster_name: %s, cluster_id: %d, snapshot_id: %d", cluster.Name, cluster.ID, spec.SnapshotID)
+	}
 
 	return nil
 }

@@ -76,7 +76,7 @@ func TestExecuteAutoBackup(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestExecuteDeleteSnapshot(t *testing.T) {
+func TestExecuteAutoDiagnostic(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -117,7 +117,7 @@ func TestExecuteDeleteSnapshot(t *testing.T) {
 
 	taskstore.EXPECT().CreateTask(gomock.Any(), &orgID, apigen.TaskSpec{
 		Type: apigen.DeleteClusterDiagnostic,
-		DeleteClusterDiagnostic: &apigen.TaskDeleteClusterDiagnostic{
+		DeleteClusterDiagnostic: &apigen.TaskSpecDeleteClusterDiagnostic{
 			ClusterID:    clusterID,
 			DiagnosticID: diagnosticID,
 		},
@@ -133,6 +133,71 @@ func TestExecuteDeleteSnapshot(t *testing.T) {
 	err := executor.ExecuteAutoDiagnostic(context.Background(), apigen.TaskSpecAutoDiagnostic{
 		ClusterID:         clusterID,
 		RetentionDuration: retentionDurationRaw,
+	})
+	require.NoError(t, err)
+}
+
+func TestExecuteDeleteClusterDiagnostic(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	var (
+		diagID = int32(301)
+	)
+
+	model := model.NewMockModelInterface(ctrl)
+
+	model.EXPECT().DeleteClusterDiagnostic(gomock.Any(), diagID).Return(nil)
+
+	executor := &TaskExecutor{
+		model: model,
+	}
+
+	err := executor.ExecuteDeleteClusterDiagnostic(context.Background(), apigen.TaskSpecDeleteClusterDiagnostic{
+		DiagnosticID: diagID,
+	})
+	require.NoError(t, err)
+}
+
+func TestExecuteDeleteSnapshot(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	var (
+		clusterID      = int32(101)
+		snapshotID     = int64(1)
+		clusterHost    = "localhost"
+		clusterPort    = int32(9000)
+		clusterVersion = "v2.2.1"
+	)
+
+	model := model.NewMockModelInterface(ctrl)
+	risectlm := mock_meta.NewMockRisectlManagerInterface(ctrl)
+	risectlcm := mock_meta.NewMockRisectlConn(ctrl)
+
+	model.EXPECT().GetClusterByID(gomock.Any(), clusterID).Return(&querier.Cluster{
+		ID:       clusterID,
+		Host:     clusterHost,
+		MetaPort: clusterPort,
+		Version:  clusterVersion,
+	}, nil)
+
+	risectlm.EXPECT().NewConn(gomock.Any(), clusterVersion, clusterHost, clusterPort).Return(risectlcm, nil)
+	risectlcm.EXPECT().DeleteSnapshot(gomock.Any(), snapshotID).Return(nil)
+
+	model.EXPECT().DeleteSnapshot(gomock.Any(), querier.DeleteSnapshotParams{
+		ClusterID:  clusterID,
+		SnapshotID: snapshotID,
+	}).Return(nil)
+
+	executor := &TaskExecutor{
+		model:    model,
+		risectlm: risectlm,
+	}
+
+	err := executor.ExecuteDeleteSnapshot(context.Background(), apigen.TaskSpecDeleteSnapshot{
+		ClusterID:  clusterID,
+		SnapshotID: snapshotID,
 	})
 	require.NoError(t, err)
 }

@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type TaskDeleteClusterDiagnostic = {
+export type TaskSpecDeleteClusterDiagnostic = {
     clusterID: number;
     diagnosticID: number;
 };

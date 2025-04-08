@@ -23,6 +23,8 @@ const maxTaskTimeout = 1 * time.Hour
 type ExecutorInterface interface {
 	ExecuteAutoBackup(ctx context.Context, spec apigen.TaskSpecAutoBackup) error
 	ExecuteAutoDiagnostic(ctx context.Context, spec apigen.TaskSpecAutoDiagnostic) error
+	ExecuteDeleteClusterDiagnostic(ctx context.Context, spec apigen.TaskSpecDeleteClusterDiagnostic) error
+	ExecuteDeleteSnapshot(ctx context.Context, spec apigen.TaskSpecDeleteSnapshot) error
 }
 
 type Worker struct {
@@ -68,6 +70,7 @@ func (w *Worker) Start() {
 				metrics.WorkerGoroutines.Inc()
 				defer metrics.WorkerGoroutines.Dec()
 				if err := w.runTask(w.globalCtx.Context()); err != nil {
+					metrics.RunTaskErrors.Inc()
 					log.Error("error running task", zap.Error(err))
 				}
 			}()
@@ -87,6 +90,16 @@ func (w *Worker) executeTask(ctx context.Context, task apigen.Task) error {
 			return fmt.Errorf("auto diagnostic spec is nil")
 		}
 		return w.executor.ExecuteAutoDiagnostic(ctx, *task.Spec.AutoDiagnostic)
+	case apigen.DeleteClusterDiagnostic:
+		if task.Spec.DeleteClusterDiagnostic == nil {
+			return fmt.Errorf("delete cluster diagnostic spec is nil")
+		}
+		return w.executor.ExecuteDeleteClusterDiagnostic(ctx, *task.Spec.DeleteClusterDiagnostic)
+	case apigen.DeleteSnapshot:
+		if task.Spec.DeleteSnapshot == nil {
+			return fmt.Errorf("delete snapshot spec is nil")
+		}
+		return w.executor.ExecuteDeleteSnapshot(ctx, *task.Spec.DeleteSnapshot)
 	default:
 		return fmt.Errorf("unknown task type: %s", task.Spec.Type)
 	}
@@ -101,6 +114,9 @@ func (w *Worker) runTask(parentCtx context.Context) error {
 			}
 			return err
 		}
+
+		metrics.PulledTasks.Inc()
+
 		task := taskToAPI(qtask)
 
 		timeout := maxTaskTimeout

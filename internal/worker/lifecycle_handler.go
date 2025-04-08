@@ -9,6 +9,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
+	"github.com/risingwavelabs/wavekit/internal/utils"
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 )
@@ -65,7 +66,26 @@ func (a *TaskLifeCycleHandler) HandleFailed(ctx context.Context, task apigen.Tas
 		return nil
 	}
 
-	// update task status
+	if task.Attributes.RetryPolicy != nil {
+		if utils.UnwrapOrDefault(task.Attributes.RetryPolicy.AlwaysRetryOnFailure, false) {
+			// retry the task by updating the started_at field
+			interval, err := time.ParseDuration(task.Attributes.RetryPolicy.Interval)
+			if err != nil {
+				return errors.Wrapf(err, "failed to parse retry interval: %s", task.Attributes.RetryPolicy.Interval)
+			}
+			nextTime := a.now().Add(interval)
+			log.Info("task failed, schedule next run", zap.Int32("task_id", task.ID), zap.Time("next_time", nextTime))
+			if err := a.txm.UpdateTaskStartedAt(ctx, querier.UpdateTaskStartedAtParams{
+				ID:        task.ID,
+				StartedAt: &nextTime,
+			}); err != nil {
+				return errors.Wrap(err, "update task started at")
+			}
+			return nil
+		}
+	}
+
+	// update task status to failed
 	if err := a.txm.UpdateTaskStatus(ctx, querier.UpdateTaskStatusParams{
 		ID:     task.ID,
 		Status: string(apigen.Failed),

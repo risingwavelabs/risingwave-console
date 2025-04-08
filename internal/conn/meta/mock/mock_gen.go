@@ -153,16 +153,16 @@ func (mr *MockRisectlManagerInterfaceMockRecorder) ListVersions(ctx any) *gomock
 }
 
 // NewConn mocks base method.
-func (m *MockRisectlManagerInterface) NewConn(ctx context.Context, version, host string, port int32) (meta.RisectlConn, error) {
+func (m *MockRisectlManagerInterface) NewConn(ctx context.Context, version, host string, metaPort int32) (meta.RisectlConn, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewConn", ctx, version, host, port)
+	ret := m.ctrl.Call(m, "NewConn", ctx, version, host, metaPort)
 	ret0, _ := ret[0].(meta.RisectlConn)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // NewConn indicates an expected call of NewConn.
-func (mr *MockRisectlManagerInterfaceMockRecorder) NewConn(ctx, version, host, port any) *gomock.Call {
+func (mr *MockRisectlManagerInterfaceMockRecorder) NewConn(ctx, version, host, metaPort any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewConn", reflect.TypeOf((*MockRisectlManagerInterface)(nil).NewConn), ctx, version, host, port)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewConn", reflect.TypeOf((*MockRisectlManagerInterface)(nil).NewConn), ctx, version, host, metaPort)
 }

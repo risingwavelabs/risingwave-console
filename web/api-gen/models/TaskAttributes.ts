@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { TaskCronjob } from './TaskCronjob';
-import type { TaskScheduled } from './TaskScheduled';
+import type { TaskRetryPolicy } from './TaskRetryPolicy';
 export type TaskAttributes = {
     /**
      * If the task is created by a user, this field will be the organization ID of the user
@@ -14,6 +14,6 @@ export type TaskAttributes = {
      */
     timeout?: string;
     cronjob?: TaskCronjob;
-    scheduled?: TaskScheduled;
+    retryPolicy?: TaskRetryPolicy;
 };
 

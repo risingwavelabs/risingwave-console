@@ -68,3 +68,31 @@ func (mr *MockExecutorInterfaceMockRecorder) ExecuteAutoDiagnostic(ctx, spec any
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteAutoDiagnostic", reflect.TypeOf((*MockExecutorInterface)(nil).ExecuteAutoDiagnostic), ctx, spec)
 }
+
+// ExecuteDeleteClusterDiagnostic mocks base method.
+func (m *MockExecutorInterface) ExecuteDeleteClusterDiagnostic(ctx context.Context, spec apigen.TaskSpecDeleteClusterDiagnostic) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExecuteDeleteClusterDiagnostic", ctx, spec)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ExecuteDeleteClusterDiagnostic indicates an expected call of ExecuteDeleteClusterDiagnostic.
+func (mr *MockExecutorInterfaceMockRecorder) ExecuteDeleteClusterDiagnostic(ctx, spec any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteDeleteClusterDiagnostic", reflect.TypeOf((*MockExecutorInterface)(nil).ExecuteDeleteClusterDiagnostic), ctx, spec)
+}
+
+// ExecuteDeleteSnapshot mocks base method.
+func (m *MockExecutorInterface) ExecuteDeleteSnapshot(ctx context.Context, spec apigen.TaskSpecDeleteSnapshot) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExecuteDeleteSnapshot", ctx, spec)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ExecuteDeleteSnapshot indicates an expected call of ExecuteDeleteSnapshot.
+func (mr *MockExecutorInterfaceMockRecorder) ExecuteDeleteSnapshot(ctx, spec any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteDeleteSnapshot", reflect.TypeOf((*MockExecutorInterface)(nil).ExecuteDeleteSnapshot), ctx, spec)
+}

@@ -6,3 +6,6 @@ SELECT * FROM cluster_diagnostics WHERE id = $1;
 
 -- name: ListClusterDiagnostics :many
 SELECT id, created_at FROM cluster_diagnostics WHERE cluster_id = $1 ORDER BY created_at DESC;
+
+-- name: DeleteClusterDiagnostic :exec
+DELETE FROM cluster_diagnostics WHERE id = $1;

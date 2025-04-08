@@ -24,6 +24,7 @@ type Querier interface {
 	CreateTask(ctx context.Context, arg CreateTaskParams) (*Task, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	DeleteAllOrgDatabaseConnectionsByClusterID(ctx context.Context, arg DeleteAllOrgDatabaseConnectionsByClusterIDParams) error
+	DeleteClusterDiagnostic(ctx context.Context, id int32) error
 	DeleteClusterSnapshot(ctx context.Context, arg DeleteClusterSnapshotParams) error
 	DeleteMetricsStore(ctx context.Context, arg DeleteMetricsStoreParams) error
 	DeleteOrgCluster(ctx context.Context, arg DeleteOrgClusterParams) error

@@ -132,3 +132,52 @@ func TestHandleFailed(t *testing.T) {
 	err = handler.HandleFailed(context.Background(), task, err)
 	require.NoError(t, err)
 }
+
+func TestHandleFailedWithRetryPolicy(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	var (
+		taskID      = int32(1)
+		err         = errors.New("test error")
+		intervalRaw = "1h"
+		interval, _ = time.ParseDuration(intervalRaw)
+		currTime    = time.Now()
+	)
+
+	txm := model.NewExtendedMockModelInterface(ctrl)
+
+	handler := &TaskLifeCycleHandler{
+		txm: txm,
+		now: func() time.Time {
+			return currTime
+		},
+	}
+
+	task := apigen.Task{
+		ID: taskID,
+		Attributes: apigen.TaskAttributes{
+			RetryPolicy: &apigen.TaskRetryPolicy{
+				AlwaysRetryOnFailure: utils.Ptr(true),
+				Interval:             intervalRaw,
+			},
+		},
+	}
+
+	txm.EXPECT().InsertEvent(context.Background(), apigen.EventSpec{
+		Type: apigen.TaskError,
+		TaskError: &apigen.EventTaskError{
+			TaskID: taskID,
+			Error:  err.Error(),
+		},
+	}).Return(&querier.Event{}, nil)
+
+	txm.EXPECT().UpdateTaskStartedAt(context.Background(), querier.UpdateTaskStartedAtParams{
+		ID:        taskID,
+		StartedAt: utils.Ptr(currTime.Add(interval)),
+	}).Return(nil)
+
+	err = handler.HandleFailed(context.Background(), task, err)
+	require.NoError(t, err)
+
+}
