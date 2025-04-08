@@ -38,7 +38,7 @@ func InitializeApplication() (*app.Application, error) {
 		metrics.NewMetricsServer,
 		globalctx.New,
 		worker.NewWorker,
-		task.NewTaskExecutor,
+		task.NewTaskHandler,
 		task.NewTaskStore,
 		http.NewMetaHttpManager,
 	)

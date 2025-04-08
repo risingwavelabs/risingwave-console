@@ -11,7 +11,6 @@ import (
 	mock_meta "github.com/risingwavelabs/wavekit/internal/conn/meta/mock"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
-	mock_task "github.com/risingwavelabs/wavekit/internal/task/mock"
 	"github.com/risingwavelabs/wavekit/internal/utils"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -36,7 +35,7 @@ func TestExecuteAutoBackup(t *testing.T) {
 	model := model.NewMockModelInterface(ctrl)
 	risectlm := mock_meta.NewMockRisectlManagerInterface(ctrl)
 	risectlcm := mock_meta.NewMockRisectlConn(ctrl)
-	taskstore := mock_task.NewMockTaskStoreInterface(ctrl)
+	taskstore := NewMockTaskStoreInterface(ctrl)
 
 	model.EXPECT().GetClusterByID(gomock.Any(), clusterID).Return(&querier.Cluster{
 		ID:             clusterID,
@@ -49,7 +48,7 @@ func TestExecuteAutoBackup(t *testing.T) {
 	risectlm.EXPECT().NewConn(gomock.Any(), clusterVersion, clusterHost, clusterPort).Return(risectlcm, nil)
 	risectlcm.EXPECT().MetaBackup(gomock.Any()).Return(snapshotID, nil)
 
-	executor := &TaskExecutor{
+	executor := &TaskHandler{
 		model:     model,
 		risectlm:  risectlm,
 		taskstore: taskstore,
@@ -61,13 +60,19 @@ func TestExecuteAutoBackup(t *testing.T) {
 		SnapshotID: snapshotID,
 	}).Return(nil)
 
-	taskstore.EXPECT().CreateTask(gomock.Any(), &orgID, apigen.TaskSpec{
-		Type: apigen.DeleteSnapshot,
-		DeleteSnapshot: &apigen.TaskSpecDeleteSnapshot{
-			ClusterID:  clusterID,
-			SnapshotID: snapshotID,
+	taskstore.EXPECT().CreateTask(gomock.Any(), CreateTaskParams{
+		OrgID: &orgID,
+		Spec: apigen.TaskSpec{
+			Type: apigen.DeleteSnapshot,
+			DeleteSnapshot: &apigen.TaskSpecDeleteSnapshot{
+				ClusterID:  clusterID,
+				SnapshotID: snapshotID,
+			},
 		},
-	}, utils.Ptr(currTime.Add(retentionDuration))).Return(int32(1), nil)
+		StartedAt:            utils.Ptr(currTime.Add(retentionDuration)),
+		AlwaysRetryOnFailure: true,
+		RetryInterval:        "10m",
+	}).Return(int32(1), nil)
 
 	err := executor.ExecuteAutoBackup(context.Background(), apigen.TaskSpecAutoBackup{
 		ClusterID:         clusterID,
@@ -94,7 +99,7 @@ func TestExecuteAutoDiagnostic(t *testing.T) {
 
 	metahttp := mock_http.NewMockMetaHttpManagerInterface(ctrl)
 	model := model.NewMockModelInterface(ctrl)
-	taskstore := mock_task.NewMockTaskStoreInterface(ctrl)
+	taskstore := NewMockTaskStoreInterface(ctrl)
 
 	model.EXPECT().GetClusterByID(gomock.Any(), clusterID).Return(&querier.Cluster{
 		ID:             clusterID,
@@ -115,15 +120,21 @@ func TestExecuteAutoDiagnostic(t *testing.T) {
 		ID: diagnosticID,
 	}, nil)
 
-	taskstore.EXPECT().CreateTask(gomock.Any(), &orgID, apigen.TaskSpec{
-		Type: apigen.DeleteClusterDiagnostic,
-		DeleteClusterDiagnostic: &apigen.TaskSpecDeleteClusterDiagnostic{
-			ClusterID:    clusterID,
-			DiagnosticID: diagnosticID,
+	taskstore.EXPECT().CreateTask(gomock.Any(), CreateTaskParams{
+		OrgID: &orgID,
+		Spec: apigen.TaskSpec{
+			Type: apigen.DeleteClusterDiagnostic,
+			DeleteClusterDiagnostic: &apigen.TaskSpecDeleteClusterDiagnostic{
+				ClusterID:    clusterID,
+				DiagnosticID: diagnosticID,
+			},
 		},
-	}, utils.Ptr(currTime.Add(retentionDuration))).Return(int32(1), nil)
+		StartedAt:            utils.Ptr(currTime.Add(retentionDuration)),
+		AlwaysRetryOnFailure: true,
+		RetryInterval:        "10m",
+	}).Return(int32(1), nil)
 
-	executor := &TaskExecutor{
+	executor := &TaskHandler{
 		model:     model,
 		taskstore: taskstore,
 		now:       func() time.Time { return currTime },
@@ -149,7 +160,7 @@ func TestExecuteDeleteClusterDiagnostic(t *testing.T) {
 
 	model.EXPECT().DeleteClusterDiagnostic(gomock.Any(), diagID).Return(nil)
 
-	executor := &TaskExecutor{
+	executor := &TaskHandler{
 		model: model,
 	}
 
@@ -190,7 +201,7 @@ func TestExecuteDeleteSnapshot(t *testing.T) {
 		SnapshotID: snapshotID,
 	}).Return(nil)
 
-	executor := &TaskExecutor{
+	executor := &TaskHandler{
 		model:    model,
 		risectlm: risectlm,
 	}

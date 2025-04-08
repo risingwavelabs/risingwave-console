@@ -55,7 +55,7 @@ func TestRunTask(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(fmt.Sprintf("errExecute: %v", testCase.errExecute), func(t *testing.T) {
 			mockModel := model.NewExtendedMockModelInterface(ctrl)
-			mockExecutor := mock.NewMockExecutorInterface(ctrl)
+			mockTaskHandler := mock.NewMockTaskHandler(ctrl)
 			mockLifeCycleHandler := mock.NewMockTaskLifeCycleHandlerInterface(ctrl)
 
 			worker := &Worker{
@@ -63,7 +63,7 @@ func TestRunTask(t *testing.T) {
 				getHandler: func(txm model.ModelInterface) (TaskLifeCycleHandlerInterface, error) {
 					return mockLifeCycleHandler, nil
 				},
-				executor: mockExecutor,
+				taskHandler: mockTaskHandler,
 			}
 			// pull task
 			mockModel.EXPECT().PullTask(gomock.Any()).Return(&querier.Task{
@@ -77,7 +77,7 @@ func TestRunTask(t *testing.T) {
 			mockLifeCycleHandler.EXPECT().HandleAttributes(gomock.Any(), task).Return(nil)
 
 			// executor run business logic
-			mockExecutor.EXPECT().ExecuteAutoBackup(gomock.Any(), autoBackupSpec).Return(testCase.errExecute)
+			mockTaskHandler.EXPECT().HandleTask(gomock.Any(), task).Return(testCase.errExecute)
 
 			if testCase.errExecute != nil {
 				mockLifeCycleHandler.EXPECT().HandleFailed(gomock.Any(), task, testCase.errExecute).Return(nil)

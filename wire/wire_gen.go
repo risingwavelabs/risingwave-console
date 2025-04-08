@@ -59,8 +59,8 @@ func InitializeApplication() (*app.Application, error) {
 	}
 	metricsServer := metrics.NewMetricsServer(configConfig, globalContext)
 	taskStoreInterface := task.NewTaskStore(modelInterface)
-	executorInterface := task.NewTaskExecutor(modelInterface, risectlManagerInterface, taskStoreInterface, metaHttpManagerInterface)
-	workerWorker, err := worker.NewWorker(globalContext, modelInterface, executorInterface)
+	taskHandler := task.NewTaskHandler(modelInterface, risectlManagerInterface, taskStoreInterface, metaHttpManagerInterface)
+	workerWorker, err := worker.NewWorker(globalContext, modelInterface, taskHandler)
 	if err != nil {
 		return nil, err
 	}

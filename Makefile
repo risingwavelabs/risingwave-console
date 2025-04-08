@@ -86,7 +86,7 @@ gen-mock: install-mockgen
 	$(MOCKGEN_BIN) -source=internal/service/service.go -destination=internal/service/service_mock_gen.go -package=service
 	$(MOCKGEN_BIN) -source=internal/modelctx/modelctx.go -destination=internal/modelctx/mock/modelctx_mock_gen.go -package=mock
 	$(MOCKGEN_BIN) -source=internal/conn/meta/types.go -destination=internal/conn/meta/mock/mock_gen.go -package=mock
-	$(MOCKGEN_BIN) -source=internal/task/task.go -destination=internal/task/mock/task_mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/task/task.go -destination=internal/task/task_mock_gen.go -package=task
 	$(MOCKGEN_BIN) -source=internal/conn/http/http.go -destination=internal/conn/http/mock/http_mock_gen.go -package=mock
 
 ###################################################

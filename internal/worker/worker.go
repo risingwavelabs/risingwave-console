@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -20,11 +19,8 @@ var log = logger.NewLogAgent("worker")
 
 const maxTaskTimeout = 1 * time.Hour
 
-type ExecutorInterface interface {
-	ExecuteAutoBackup(ctx context.Context, spec apigen.TaskSpecAutoBackup) error
-	ExecuteAutoDiagnostic(ctx context.Context, spec apigen.TaskSpecAutoDiagnostic) error
-	ExecuteDeleteClusterDiagnostic(ctx context.Context, spec apigen.TaskSpecDeleteClusterDiagnostic) error
-	ExecuteDeleteSnapshot(ctx context.Context, spec apigen.TaskSpecDeleteSnapshot) error
+type TaskHandler interface {
+	HandleTask(ctx context.Context, task apigen.Task) error
 }
 
 type Worker struct {
@@ -32,17 +28,17 @@ type Worker struct {
 
 	getHandler LifeCycleHandlerGetter
 
-	executor ExecutorInterface
-
 	globalCtx *globalctx.GlobalContext
+
+	taskHandler TaskHandler
 }
 
-func NewWorker(globalCtx *globalctx.GlobalContext, model model.ModelInterface, executor ExecutorInterface) (*Worker, error) {
+func NewWorker(globalCtx *globalctx.GlobalContext, model model.ModelInterface, taskHandler TaskHandler) (*Worker, error) {
 	w := &Worker{
-		model:      model,
-		getHandler: newTaskLifeCycleHandler,
-		globalCtx:  globalCtx,
-		executor:   executor,
+		model:       model,
+		getHandler:  newTaskLifeCycleHandler,
+		globalCtx:   globalCtx,
+		taskHandler: taskHandler,
 	}
 
 	return w, nil
@@ -75,33 +71,6 @@ func (w *Worker) Start() {
 				}
 			}()
 		}
-	}
-}
-
-func (w *Worker) executeTask(ctx context.Context, task apigen.Task) error {
-	switch task.Spec.Type {
-	case apigen.AutoBackup:
-		if task.Spec.AutoBackup == nil {
-			return fmt.Errorf("auto backup spec is nil")
-		}
-		return w.executor.ExecuteAutoBackup(ctx, *task.Spec.AutoBackup)
-	case apigen.AutoDiagnostic:
-		if task.Spec.AutoDiagnostic == nil {
-			return fmt.Errorf("auto diagnostic spec is nil")
-		}
-		return w.executor.ExecuteAutoDiagnostic(ctx, *task.Spec.AutoDiagnostic)
-	case apigen.DeleteClusterDiagnostic:
-		if task.Spec.DeleteClusterDiagnostic == nil {
-			return fmt.Errorf("delete cluster diagnostic spec is nil")
-		}
-		return w.executor.ExecuteDeleteClusterDiagnostic(ctx, *task.Spec.DeleteClusterDiagnostic)
-	case apigen.DeleteSnapshot:
-		if task.Spec.DeleteSnapshot == nil {
-			return fmt.Errorf("delete snapshot spec is nil")
-		}
-		return w.executor.ExecuteDeleteSnapshot(ctx, *task.Spec.DeleteSnapshot)
-	default:
-		return fmt.Errorf("unknown task type: %s", task.Spec.Type)
 	}
 }
 
@@ -146,7 +115,7 @@ func (w *Worker) runTask(parentCtx context.Context) error {
 		}
 
 		// run task
-		err = w.executeTask(ctx, task)
+		err = w.taskHandler.HandleTask(ctx, task)
 		if err != nil { // handle failed
 			log.Error("error executing task", zap.Int32("task_id", task.ID), zap.Error(err))
 			if err := lh.HandleFailed(ctx, task, err); err != nil {
