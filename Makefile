@@ -93,7 +93,7 @@ gen-mock: install-mockgen
 ### Common
 ###################################################
 
-gen: gen-spec gen-querier gen-wire gen-mock gen-frontend-client
+gen: doc gen-spec gen-querier gen-wire gen-mock gen-frontend-client
 	@go mod tidy
 
 ###################################################
@@ -204,9 +204,7 @@ push-docker: build-server
 	docker buildx build --platform linux/amd64,linux/arm64 -f docker/Dockerfile.pgbundle -t ${DOCKER_REPO}:${IMG_TAG}-pgbundle --push .
 	docker buildx build --platform linux/amd64,linux/arm64 -f docker/Dockerfile -t ${DOCKER_REPO}:${IMG_TAG} --push .
 
-ci: doc build-web build-server build-docker build-binary docker-push binary-push
-
-push: docker-push
+ci: doc build-web build-server build-binary push-docker binary-push
 
 ut:
 	@COLOR=ALWAYS go test -race -covermode=atomic -coverprofile=coverage.out -tags ut ./... 

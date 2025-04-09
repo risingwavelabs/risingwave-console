@@ -52,6 +52,11 @@ WaveKit supports automated initialization through a configuration file, eliminat
 Here's an example initialization file structure:
 
 ```yaml
+metricsStores:
+  - name: Default Prometheus
+    spec:
+      prometheus:
+        endpoint: http://prometheus:9500
 clusters:
   - name: Default Local Cluster
     version: v2.2.1
@@ -60,17 +65,12 @@ clusters:
       sqlPort: 4566
       metaPort: 5690
       httpPort: 5691
-    metricsStore: Default
+    metricsStore: Default Prometheus
 databases:
   - name: rw
     cluster: Default Local Cluster
     username: root
     database: dev
-metricsStores:
-  - name: Default
-    spec:
-      prometheus:
-        endpoint: http://prometheus:9500
 
 ```
 
