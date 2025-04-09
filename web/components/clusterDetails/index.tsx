@@ -34,10 +34,6 @@ import toast from "react-hot-toast"
 
 const width = "w-full"
 
-const enableAutoDiagnostic = false
-
-const enableAutoBackup = false
-
 interface BaseCluster {
   name: string
   host: string
@@ -47,14 +43,13 @@ interface BaseCluster {
   prometheusEndpoint?: string
   autoBackup?: {
     enabled: boolean
-    interval: string
-    keepCount: number
+    cronExpression: string
+    retentionDuration: string
   }
   diagnostics?: {
     enabled: boolean
-    interval: string
-    expiration: string
-    noExpiration: boolean
+    cronExpression: string
+    retentionDuration: string
   }
 }
 
@@ -98,12 +93,11 @@ export default function ClusterPage({ params }: ClusterPageProps) {
   const [deleteSnapshotId, setDeleteSnapshotId] = useState<number | null>(null)
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(false)
   const [autoBackupInterval, setAutoBackupInterval] = useState("*/30 * * * *")
-  const [autoBackupKeepCount, setAutoBackupKeepCount] = useState(7)
+  const [autoBackupRetention, setAutoBackupRetention] = useState("7d")
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)
   const [isUpdatingBackupConfig, setIsUpdatingBackupConfig] = useState(false)
   const [autoDiagnosticInterval, setAutoDiagnosticInterval] = useState("*/30 * * * *")
-  const [autoDiagnosticExpiration, setAutoDiagnosticExpiration] = useState("7d")
-  const [autoDiagnosticNoExpiration, setAutoDiagnosticNoExpiration] = useState(false)
+  const [autoDiagnosticRetention, setAutoDiagnosticRetention] = useState("7d")
   const [autoDiagnosticEnabled, setAutoDiagnosticEnabled] = useState(false)
   const [isUpdatingDiagnosticConfig, setIsUpdatingDiagnosticConfig] = useState(false)
   const [risectlCommand, setRisectlCommand] = useState("")
@@ -119,16 +113,16 @@ export default function ClusterPage({ params }: ClusterPageProps) {
   const DIAGNOSTICS_PER_PAGE = 5
 
   const updateAutoBackupConfig = async (
-    enabled?: boolean,
-    interval?: string,
-    keepCount?: number
+    enabled: boolean,
+    cronExpression: string,
+    retentionDuration: string
   ) => {
     setIsUpdatingBackupConfig(true)
     try {
       const config = {
-        enabled: enabled ?? autoBackupEnabled,
-        cronExpression: interval ?? autoBackupInterval,
-        keepLast: keepCount ?? autoBackupKeepCount
+        enabled,
+        cronExpression,
+        retentionDuration
       }
       await DefaultService.updateClusterAutoBackupConfig(clusterId, config)
       toast.success("Auto backup configuration updated")
@@ -137,26 +131,24 @@ export default function ClusterPage({ params }: ClusterPageProps) {
       toast.error("Failed to update auto backup configuration")
       // Revert the state changes on error
       setAutoBackupEnabled(clusterData?.autoBackup.enabled ?? false)
-      setAutoBackupInterval(clusterData?.autoBackup.interval ?? "*/30 * * * *")
-      setAutoBackupKeepCount(clusterData?.autoBackup.keepCount ?? 7)
+      setAutoBackupInterval(clusterData?.autoBackup.cronExpression ?? "*/30 * * * *")
+      setAutoBackupRetention(clusterData?.autoBackup.retentionDuration ?? "7d")
     } finally {
       setIsUpdatingBackupConfig(false)
     }
   }
 
   const updateAutoDiagnosticConfig = async (
-    enabled?: boolean,
-    interval?: string,
-    expiration?: string,
-    noExpiration?: boolean
+    enabled: boolean,
+    cronExpression: string,
+    retentionDuration: string
   ) => {
     setIsUpdatingDiagnosticConfig(true)
     try {
-      const noExp = noExpiration ?? autoDiagnosticNoExpiration
       await DefaultService.updateClusterAutoDiagnosticConfig(clusterId, {
-        enabled: enabled ?? autoDiagnosticEnabled,
-        cronExpression: interval ?? autoDiagnosticInterval,
-        retentionDuration: noExp ? undefined : (expiration ?? autoDiagnosticExpiration)
+        enabled,
+        cronExpression,
+        retentionDuration
       })
       toast.success("Auto diagnostic configuration updated")
     } catch (error) {
@@ -164,9 +156,8 @@ export default function ClusterPage({ params }: ClusterPageProps) {
       toast.error("Failed to update auto diagnostic configuration")
       // Revert the state changes on error
       setAutoDiagnosticEnabled(clusterData?.diagnostics.enabled ?? false)
-      setAutoDiagnosticInterval(clusterData?.diagnostics.interval ?? "*/30 * * * *")
-      setAutoDiagnosticExpiration(clusterData?.diagnostics.expiration ?? "7d")
-      setAutoDiagnosticNoExpiration(clusterData?.diagnostics.noExpiration ?? false)
+      setAutoDiagnosticInterval(clusterData?.diagnostics.cronExpression ?? "*/30 * * * *")
+      setAutoDiagnosticRetention(clusterData?.diagnostics.retentionDuration ?? "7d")
     } finally {
       setIsUpdatingDiagnosticConfig(false)
     }
@@ -175,11 +166,50 @@ export default function ClusterPage({ params }: ClusterPageProps) {
   useEffect(() => {
     const fetchClusterData = async () => {
       try {
+        // First, fetch the cluster and snapshots data
         const [data, snapshots, diagnosticsData] = await Promise.all([
           DefaultService.getCluster(clusterId),
           DefaultService.listClusterSnapshots(clusterId),
           DefaultService.listClusterDiagnostics(clusterId)
-        ])
+        ]);
+
+        // Define default configurations in case API calls fail
+        const defaultAutoBackupConfig = {
+          enabled: false,
+          cronExpression: "*/30 * * * *",
+          retentionDuration: "7d"
+        };
+
+        const defaultAutoDiagnosticConfig = {
+          enabled: false,
+          cronExpression: "*/30 * * * *",
+          retentionDuration: "7d"
+        };
+
+        // Now fetch the configurations with error handling
+        let autoBackupConfig;
+        try {
+          autoBackupConfig = await DefaultService.getClusterAutoBackupConfig(clusterId);
+          if (!autoBackupConfig.enabled) {
+            autoBackupConfig = defaultAutoBackupConfig;
+          }
+        } catch (error) {
+          console.error("Error fetching auto backup config:", error);
+          toast.error("Failed to load backup configuration, using defaults");
+          autoBackupConfig = defaultAutoBackupConfig;
+        }
+
+        let autoDiagnosticConfig;
+        try {
+          autoDiagnosticConfig = await DefaultService.getClusterAutoDiagnosticConfig(clusterId);
+          if (!autoDiagnosticConfig.enabled) {
+            autoDiagnosticConfig = defaultAutoDiagnosticConfig;
+          }
+        } catch (error) {
+          console.error("Error fetching auto diagnostic config:", error);
+          toast.error("Failed to load diagnostic configuration, using defaults");
+          autoDiagnosticConfig = defaultAutoDiagnosticConfig;
+        }
 
         const cluster = data as Cluster // Type assertion to match our interface
 
@@ -200,15 +230,14 @@ export default function ClusterPage({ params }: ClusterPageProps) {
             created_at: s.createdAt
           })),
           autoBackup: {
-            enabled: cluster.autoBackup?.enabled ?? false,
-            interval: cluster.autoBackup?.interval ?? "*/30 * * * *",
-            keepCount: cluster.autoBackup?.keepCount ?? 7
+            enabled: autoBackupConfig.enabled,
+            cronExpression: autoBackupConfig.cronExpression,
+            retentionDuration: autoBackupConfig.retentionDuration
           },
           diagnostics: {
-            enabled: cluster.diagnostics?.enabled ?? false,
-            interval: cluster.diagnostics?.interval ?? "*/30 * * * *",
-            expiration: cluster.diagnostics?.expiration ?? "7d",
-            noExpiration: cluster.diagnostics?.noExpiration ?? false,
+            enabled: autoDiagnosticConfig.enabled,
+            cronExpression: autoDiagnosticConfig.cronExpression,
+            retentionDuration: autoDiagnosticConfig.retentionDuration,
             history: []
           }
         }
@@ -219,14 +248,13 @@ export default function ClusterPage({ params }: ClusterPageProps) {
         setDiagnostics(diagnosticsData)
         setTotalDiagnostics(diagnosticsData.length)
 
-        // Initialize state with the fetched data
-        setAutoBackupEnabled(transformedData.autoBackup.enabled)
-        setAutoBackupInterval(transformedData.autoBackup.interval)
-        setAutoBackupKeepCount(transformedData.autoBackup.keepCount)
-        setAutoDiagnosticEnabled(transformedData.diagnostics.enabled)
-        setAutoDiagnosticInterval(transformedData.diagnostics.interval)
-        setAutoDiagnosticExpiration(transformedData.diagnostics.expiration)
-        setAutoDiagnosticNoExpiration(transformedData.diagnostics.noExpiration)
+        // Initialize state with the fetched data directly from configs
+        setAutoBackupEnabled(autoBackupConfig.enabled)
+        setAutoBackupInterval(autoBackupConfig.cronExpression)
+        setAutoBackupRetention(autoBackupConfig.retentionDuration)
+        setAutoDiagnosticEnabled(autoDiagnosticConfig.enabled)
+        setAutoDiagnosticInterval(autoDiagnosticConfig.cronExpression)
+        setAutoDiagnosticRetention(autoDiagnosticConfig.retentionDuration)
       } catch (error) {
         console.error("Error fetching cluster:", error)
         toast.error("Failed to load cluster details")
@@ -236,7 +264,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
       }
     }
 
-    void fetchClusterData()
+    fetchClusterData()
   }, [clusterId, router])
 
   if (loading) {
@@ -501,7 +529,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           <div className="flex flex-col justify-start gap-2">
             <div className="flex flex-col justify-start">
               <Button
-                onClick={() => void runRisectl()}
+                onClick={() => runRisectl()}
                 disabled={isRunningCommand}
                 className="whitespace-nowrap select-none w-fit"
                 size="sm"
@@ -527,7 +555,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
               onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                 if (e.key === 'Enter' && e.metaKey) {
                   e.preventDefault()
-                  void runRisectl()
+                  runRisectl()
                 }
               }}
             />
@@ -615,7 +643,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
           </Button>
         </div>
 
-        <div className={`${width} space-y-4 border rounded-lg p-4 ${enableAutoBackup ? '' : 'hidden'}`}>
+        <div className={`${width} space-y-4 border rounded-lg p-4`}>
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="text-sm font-medium">Auto Backup</Label>
@@ -625,7 +653,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
               checked={autoBackupEnabled}
               onCheckedChange={(enabled) => {
                 setAutoBackupEnabled(enabled)
-                void updateAutoBackupConfig(enabled)
+                updateAutoBackupConfig(enabled, autoBackupInterval, autoBackupRetention)
               }}
               disabled={isUpdatingBackupConfig}
             />
@@ -641,7 +669,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                 value={autoBackupInterval}
                 onValueChange={(interval) => {
                   setAutoBackupInterval(interval)
-                  void updateAutoBackupConfig(undefined, interval)
+                  updateAutoBackupConfig(autoBackupEnabled, interval, autoBackupRetention)
                 }}
                 disabled={!autoBackupEnabled || isUpdatingBackupConfig}
               >
@@ -660,27 +688,26 @@ export default function ClusterPage({ params }: ClusterPageProps) {
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Keep Last</Label>
-                <p className="text-sm text-muted-foreground">Number of automatic snapshots to retain</p>
+                <Label className="text-sm font-medium">Keep For</Label>
+                <p className="text-sm text-muted-foreground">How long to retain automatic snapshots</p>
               </div>
               <Select
-                value={autoBackupKeepCount.toString()}
+                value={autoBackupRetention}
                 onValueChange={(value) => {
-                  const keepCount = parseInt(value)
-                  setAutoBackupKeepCount(keepCount)
-                  void updateAutoBackupConfig(undefined, undefined, keepCount)
+                  setAutoBackupRetention(value)
+                  updateAutoBackupConfig(autoBackupEnabled, autoBackupInterval, value)
                 }}
                 disabled={!autoBackupEnabled || isUpdatingBackupConfig}
               >
                 <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Select count" />
+                  <SelectValue placeholder="Select retention" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="3">3 snapshots</SelectItem>
-                  <SelectItem value="5">5 snapshots</SelectItem>
-                  <SelectItem value="7">7 snapshots</SelectItem>
-                  <SelectItem value="14">14 snapshots</SelectItem>
-                  <SelectItem value="30">30 snapshots</SelectItem>
+                  <SelectItem value="1d">1 day</SelectItem>
+                  <SelectItem value="7d">7 days</SelectItem>
+                  <SelectItem value="14d">14 days</SelectItem>
+                  <SelectItem value="30d">30 days</SelectItem>
+                  <SelectItem value="90d">90 days</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -774,7 +801,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
             </p>
           </div>
           <Button
-            onClick={() => void runDiagnostic()}
+            onClick={() => runDiagnostic()}
             disabled={isDiagnosing}
             className="select-none"
             size="sm"
@@ -795,7 +822,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
 
         <div className="space-y-6">
           {/* Configuration Card */}
-          <div className={`${width} space-y-4 border rounded-lg p-4 ${enableAutoDiagnostic ? '' : 'hidden'}`}>
+          <div className={`${width} space-y-4 border rounded-lg p-4`}>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label className="text-sm font-medium">Auto Diagnostic</Label>
@@ -805,7 +832,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                 checked={autoDiagnosticEnabled}
                 onCheckedChange={(enabled) => {
                   setAutoDiagnosticEnabled(enabled)
-                  void updateAutoDiagnosticConfig(enabled)
+                  updateAutoDiagnosticConfig(enabled, autoDiagnosticInterval, autoDiagnosticRetention)
                 }}
                 disabled={isUpdatingDiagnosticConfig}
               />
@@ -819,7 +846,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                 value={autoDiagnosticInterval} 
                 onValueChange={(interval) => {
                   setAutoDiagnosticInterval(interval)
-                  void updateAutoDiagnosticConfig(undefined, interval)
+                  updateAutoDiagnosticConfig(autoDiagnosticEnabled, interval, autoDiagnosticRetention)
                 }}
                 disabled={!autoDiagnosticEnabled || isUpdatingDiagnosticConfig}
               >
@@ -843,12 +870,12 @@ export default function ClusterPage({ params }: ClusterPageProps) {
               </div>
               <div className="flex flex-col gap-2">
                 <Select
-                  value={autoDiagnosticExpiration}
-                  onValueChange={(expiration) => {
-                    setAutoDiagnosticExpiration(expiration)
-                    void updateAutoDiagnosticConfig(undefined, undefined, expiration)
+                  value={autoDiagnosticRetention}
+                  onValueChange={(value) => {
+                    setAutoDiagnosticRetention(value)
+                    updateAutoDiagnosticConfig(autoDiagnosticEnabled, autoDiagnosticInterval, value)
                   }}
-                  disabled={autoDiagnosticNoExpiration || !autoDiagnosticEnabled || isUpdatingDiagnosticConfig}
+                  disabled={!autoDiagnosticEnabled || isUpdatingDiagnosticConfig}
                 >
                   <SelectTrigger className="w-[140px]">
                     <SelectValue placeholder="Select retention" />
@@ -861,17 +888,6 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                     <SelectItem value="90d">90 days</SelectItem>
                   </SelectContent>
                 </Select>
-                <div className="flex items-center justify-end gap-1.5">
-                  <Label className="text-sm text-muted-foreground">No expiration</Label>
-                  <Switch
-                    checked={autoDiagnosticNoExpiration}
-                    onCheckedChange={(noExpiration) => {
-                      setAutoDiagnosticNoExpiration(noExpiration)
-                      void updateAutoDiagnosticConfig(undefined, undefined, undefined, noExpiration)
-                    }}
-                    disabled={!autoDiagnosticEnabled || isUpdatingDiagnosticConfig}
-                  />
-                </div>
               </div>
 
             </div>
@@ -890,9 +906,8 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                     key={diagnostic.ID}
                     onOpenChange={(isOpen: boolean) => {
                       if (isOpen && !diagnosticContent[diagnostic.ID]) {
-                        void fetchDiagnosticContent(diagnostic.ID)
+                        fetchDiagnosticContent(diagnostic.ID)
                       }
-                      return undefined
                     }}
                   >
                     <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-accent/50 transition-colors border rounded-lg">
@@ -923,7 +938,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                                 size="sm"
                                 className="h-8 w-8 p-0"
                                 onClick={() => {
-                                  void navigator.clipboard.writeText(diagnosticContent[diagnostic.ID] || '')
+                                  navigator.clipboard.writeText(diagnosticContent[diagnostic.ID] || '')
                                   toast.success('Content copied to clipboard')
                                 }}
                               >

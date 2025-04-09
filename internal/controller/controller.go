@@ -614,3 +614,11 @@ func (controller *Controller) UpdateMetricsStore(c *fiber.Ctx, id int32) error {
 
 	return c.Status(fiber.StatusOK).JSON(ms)
 }
+
+func (controller *Controller) ListTasks(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (controller *Controller) ListEvents(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}

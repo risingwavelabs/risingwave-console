@@ -13,13 +13,6 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-type RisectlConn interface {
-	RunCombined(ctx context.Context, args ...string) (string, int, error)
-	Run(ctx context.Context, args ...string) (string, string, int, error)
-	MetaBackup(ctx context.Context) (int64, error)
-	DeleteSnapshot(ctx context.Context, snapshotID int64) error
-}
-
 type RisectlConnection struct {
 	risectlPath string
 	endpoint    string

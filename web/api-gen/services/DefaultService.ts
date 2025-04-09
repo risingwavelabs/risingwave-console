@@ -11,6 +11,7 @@ import type { Database } from '../models/Database';
 import type { DatabaseConnectInfo } from '../models/DatabaseConnectInfo';
 import type { DDLProgress } from '../models/DDLProgress';
 import type { DiagnosticData } from '../models/DiagnosticData';
+import type { Event } from '../models/Event';
 import type { MetricMatrix } from '../models/MetricMatrix';
 import type { MetricsStore } from '../models/MetricsStore';
 import type { MetricsStoreCreate } from '../models/MetricsStoreCreate';
@@ -22,6 +23,7 @@ import type { RisectlCommandResult } from '../models/RisectlCommandResult';
 import type { SignInRequest } from '../models/SignInRequest';
 import type { Snapshot } from '../models/Snapshot';
 import type { SnapshotCreate } from '../models/SnapshotCreate';
+import type { Task } from '../models/Task';
 import type { TestClusterConnectionPayload } from '../models/TestClusterConnectionPayload';
 import type { TestClusterConnectionResult } from '../models/TestClusterConnectionResult';
 import type { TestDatabaseConnectionPayload } from '../models/TestDatabaseConnectionPayload';
@@ -703,6 +705,30 @@ export class DefaultService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/metrics-stores',
+        });
+    }
+    /**
+     * Get all tasks
+     * Get all tasks
+     * @returns Task Successfully retrieved tasks
+     * @throws ApiError
+     */
+    public static listTasks(): CancelablePromise<Array<Task>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/tasks',
+        });
+    }
+    /**
+     * Get all events
+     * Get all events
+     * @returns Event Successfully retrieved events
+     * @throws ApiError
+     */
+    public static listEvents(): CancelablePromise<Array<Event>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/events',
         });
     }
     /**

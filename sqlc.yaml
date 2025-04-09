@@ -75,3 +75,18 @@ sql:
             type: "MetricsStoreLabelMatcherList"
             pointer: true
           nullable: true
+
+        - column: "tasks.spec"
+          go_type:
+            import: "github.com/risingwavelabs/wavekit/internal/apigen"
+            type: "TaskSpec"
+
+        - column: "events.spec"
+          go_type:
+            import: "github.com/risingwavelabs/wavekit/internal/apigen"
+            type: "EventSpec"
+
+        - column: "tasks.attributes"
+          go_type:
+            import: "github.com/risingwavelabs/wavekit/internal/apigen"
+            type: "TaskAttributes"

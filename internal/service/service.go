@@ -8,10 +8,12 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
+	"github.com/risingwavelabs/wavekit/internal/conn/http"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/model"
+	"github.com/risingwavelabs/wavekit/internal/modelctx"
 	"github.com/risingwavelabs/wavekit/internal/utils"
 
 	prom_model "github.com/prometheus/common/model"
@@ -158,10 +160,12 @@ type Service struct {
 	auth               auth.AuthInterface
 	sqlm               sql.SQLConnectionManegerInterface
 	risectlm           meta.RisectlManagerInterface
+	metahttp           http.MetaHttpManagerInterface
 	metricsConnManager *metricsstore.MetricsManager
 
 	now                 func() time.Time
 	generateHashAndSalt func(password string) (string, string, error)
+	modelctx            func(model model.ModelInterface) modelctx.ModelContextInterface
 }
 
 func NewService(
@@ -171,14 +175,21 @@ func NewService(
 	sqlm sql.SQLConnectionManegerInterface,
 	risectlm meta.RisectlManagerInterface,
 	metricsConnManager *metricsstore.MetricsManager,
+	metahttp http.MetaHttpManagerInterface,
 ) ServiceInterface {
-	return &Service{
+
+	s := &Service{
 		m:                   m,
 		now:                 time.Now,
 		generateHashAndSalt: utils.GenerateHashAndSalt,
 		auth:                auth,
 		sqlm:                sqlm,
 		risectlm:            risectlm,
+		metahttp:            metahttp,
 		metricsConnManager:  metricsConnManager,
+		modelctx: func(model model.ModelInterface) modelctx.ModelContextInterface {
+			return modelctx.NewModelctx(model, time.Now)
+		},
 	}
+	return s
 }

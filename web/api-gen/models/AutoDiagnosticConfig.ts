@@ -14,6 +14,6 @@ export type AutoDiagnosticConfig = {
     /**
      * How long to retain diagnostic data (e.g., '1d', '7d', '14d', '30d', '90d')
      */
-    retentionDuration?: string;
+    retentionDuration: string;
 };
 

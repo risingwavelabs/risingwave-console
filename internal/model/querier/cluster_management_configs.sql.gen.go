@@ -9,8 +9,40 @@ import (
 	"context"
 )
 
+const createAutoBackupConfig = `-- name: CreateAutoBackupConfig :exec
+INSERT INTO auto_backup_configs (cluster_id, task_id, enabled)
+VALUES ($1, $2, $3)
+`
+
+type CreateAutoBackupConfigParams struct {
+	ClusterID int32
+	TaskID    int32
+	Enabled   bool
+}
+
+func (q *Queries) CreateAutoBackupConfig(ctx context.Context, arg CreateAutoBackupConfigParams) error {
+	_, err := q.db.Exec(ctx, createAutoBackupConfig, arg.ClusterID, arg.TaskID, arg.Enabled)
+	return err
+}
+
+const createAutoDiagnosticsConfig = `-- name: CreateAutoDiagnosticsConfig :exec
+INSERT INTO auto_diagnostics_configs (cluster_id, task_id, enabled)
+VALUES ($1, $2, $3)
+`
+
+type CreateAutoDiagnosticsConfigParams struct {
+	ClusterID int32
+	TaskID    int32
+	Enabled   bool
+}
+
+func (q *Queries) CreateAutoDiagnosticsConfig(ctx context.Context, arg CreateAutoDiagnosticsConfigParams) error {
+	_, err := q.db.Exec(ctx, createAutoDiagnosticsConfig, arg.ClusterID, arg.TaskID, arg.Enabled)
+	return err
+}
+
 const getAutoBackupConfig = `-- name: GetAutoBackupConfig :one
-SELECT cluster_id, enabled, cron_expression, keep_last, created_at, updated_at FROM auto_backup_configs
+SELECT cluster_id, enabled, created_at, updated_at, task_id FROM auto_backup_configs
 WHERE cluster_id = $1
 `
 
@@ -20,16 +52,15 @@ func (q *Queries) GetAutoBackupConfig(ctx context.Context, clusterID int32) (*Au
 	err := row.Scan(
 		&i.ClusterID,
 		&i.Enabled,
-		&i.CronExpression,
-		&i.KeepLast,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TaskID,
 	)
 	return &i, err
 }
 
 const getAutoDiagnosticsConfig = `-- name: GetAutoDiagnosticsConfig :one
-SELECT cluster_id, enabled, cron_expression, retention_duration, created_at, updated_at FROM auto_diagnostics_configs
+SELECT cluster_id, enabled, created_at, updated_at, task_id FROM auto_diagnostics_configs
 WHERE cluster_id = $1
 `
 
@@ -39,56 +70,41 @@ func (q *Queries) GetAutoDiagnosticsConfig(ctx context.Context, clusterID int32)
 	err := row.Scan(
 		&i.ClusterID,
 		&i.Enabled,
-		&i.CronExpression,
-		&i.RetentionDuration,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TaskID,
 	)
 	return &i, err
 }
 
-const upsertAutoBackupConfig = `-- name: UpsertAutoBackupConfig :exec
-INSERT INTO auto_backup_configs (cluster_id, enabled, cron_expression, keep_last)
-VALUES ($1, $2, $3, $4)
-ON CONFLICT (cluster_id) DO UPDATE SET enabled = $2, cron_expression = $3, keep_last = $4
+const updateAutoBackupConfig = `-- name: UpdateAutoBackupConfig :exec
+UPDATE auto_backup_configs
+SET enabled = $2
+WHERE cluster_id = $1
 `
 
-type UpsertAutoBackupConfigParams struct {
-	ClusterID      int32
-	Enabled        bool
-	CronExpression string
-	KeepLast       int32
+type UpdateAutoBackupConfigParams struct {
+	ClusterID int32
+	Enabled   bool
 }
 
-func (q *Queries) UpsertAutoBackupConfig(ctx context.Context, arg UpsertAutoBackupConfigParams) error {
-	_, err := q.db.Exec(ctx, upsertAutoBackupConfig,
-		arg.ClusterID,
-		arg.Enabled,
-		arg.CronExpression,
-		arg.KeepLast,
-	)
+func (q *Queries) UpdateAutoBackupConfig(ctx context.Context, arg UpdateAutoBackupConfigParams) error {
+	_, err := q.db.Exec(ctx, updateAutoBackupConfig, arg.ClusterID, arg.Enabled)
 	return err
 }
 
-const upsertAutoDiagnosticsConfig = `-- name: UpsertAutoDiagnosticsConfig :exec
-INSERT INTO auto_diagnostics_configs (cluster_id, enabled, cron_expression, retention_duration)
-VALUES ($1, $2, $3, $4)
-ON CONFLICT (cluster_id) DO UPDATE SET enabled = $2, cron_expression = $3, retention_duration = $4
+const updateAutoDiagnosticsConfig = `-- name: UpdateAutoDiagnosticsConfig :exec
+UPDATE auto_diagnostics_configs
+SET enabled = $2
+WHERE cluster_id = $1
 `
 
-type UpsertAutoDiagnosticsConfigParams struct {
-	ClusterID         int32
-	Enabled           bool
-	CronExpression    string
-	RetentionDuration *string
+type UpdateAutoDiagnosticsConfigParams struct {
+	ClusterID int32
+	Enabled   bool
 }
 
-func (q *Queries) UpsertAutoDiagnosticsConfig(ctx context.Context, arg UpsertAutoDiagnosticsConfigParams) error {
-	_, err := q.db.Exec(ctx, upsertAutoDiagnosticsConfig,
-		arg.ClusterID,
-		arg.Enabled,
-		arg.CronExpression,
-		arg.RetentionDuration,
-	)
+func (q *Queries) UpdateAutoDiagnosticsConfig(ctx context.Context, arg UpdateAutoDiagnosticsConfigParams) error {
+	_, err := q.db.Exec(ctx, updateAutoDiagnosticsConfig, arg.ClusterID, arg.Enabled)
 	return err
 }

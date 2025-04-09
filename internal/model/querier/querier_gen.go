@@ -6,9 +6,13 @@ package querier
 
 import (
 	"context"
+
+	"github.com/risingwavelabs/wavekit/internal/apigen"
 )
 
 type Querier interface {
+	CreateAutoBackupConfig(ctx context.Context, arg CreateAutoBackupConfigParams) error
+	CreateAutoDiagnosticsConfig(ctx context.Context, arg CreateAutoDiagnosticsConfigParams) error
 	CreateCluster(ctx context.Context, arg CreateClusterParams) (*Cluster, error)
 	CreateClusterDiagnostic(ctx context.Context, arg CreateClusterDiagnosticParams) (*ClusterDiagnostic, error)
 	CreateClusterSnapshot(ctx context.Context, arg CreateClusterSnapshotParams) error
@@ -16,14 +20,18 @@ type Querier interface {
 	CreateMetricsStore(ctx context.Context, arg CreateMetricsStoreParams) (*MetricsStore, error)
 	CreateOrganization(ctx context.Context, name string) (*Organization, error)
 	CreateOrganizationOwner(ctx context.Context, arg CreateOrganizationOwnerParams) error
+	CreateSnapshot(ctx context.Context, arg CreateSnapshotParams) error
+	CreateTask(ctx context.Context, arg CreateTaskParams) (*Task, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	DeleteAllOrgDatabaseConnectionsByClusterID(ctx context.Context, arg DeleteAllOrgDatabaseConnectionsByClusterIDParams) error
+	DeleteClusterDiagnostic(ctx context.Context, id int32) error
 	DeleteClusterSnapshot(ctx context.Context, arg DeleteClusterSnapshotParams) error
 	DeleteMetricsStore(ctx context.Context, arg DeleteMetricsStoreParams) error
 	DeleteOrgCluster(ctx context.Context, arg DeleteOrgClusterParams) error
 	DeleteOrgDatabaseConnection(ctx context.Context, arg DeleteOrgDatabaseConnectionParams) error
 	DeleteOrganization(ctx context.Context, id int32) error
 	DeleteRefreshToken(ctx context.Context, arg DeleteRefreshTokenParams) error
+	DeleteSnapshot(ctx context.Context, arg DeleteSnapshotParams) error
 	DeleteUserByName(ctx context.Context, name string) error
 	GetAllOrgDatabseConnectionsByClusterID(ctx context.Context, arg GetAllOrgDatabseConnectionsByClusterIDParams) ([]*DatabaseConnection, error)
 	GetAutoBackupConfig(ctx context.Context, clusterID int32) (*AutoBackupConfig, error)
@@ -38,10 +46,13 @@ type Querier interface {
 	GetOrgDatabaseConnection(ctx context.Context, arg GetOrgDatabaseConnectionParams) (*DatabaseConnection, error)
 	GetOrganization(ctx context.Context, id int32) (*Organization, error)
 	GetRefreshToken(ctx context.Context, arg GetRefreshTokenParams) (*RefreshToken, error)
+	GetTaskByID(ctx context.Context, id int32) (*Task, error)
+	GetTimeZone(ctx context.Context, id int32) (string, error)
 	GetUser(ctx context.Context, id int32) (*User, error)
 	GetUserByName(ctx context.Context, name string) (*User, error)
 	InitCluster(ctx context.Context, arg InitClusterParams) (*Cluster, error)
 	InitDatabaseConnection(ctx context.Context, arg InitDatabaseConnectionParams) (*DatabaseConnection, error)
+	InsertEvent(ctx context.Context, spec apigen.EventSpec) (*Event, error)
 	ListClusterDiagnostics(ctx context.Context, clusterID int32) ([]*ListClusterDiagnosticsRow, error)
 	ListClusterSnapshots(ctx context.Context, clusterID int32) ([]*ClusterSnapshot, error)
 	ListClustersByMetricsStoreID(ctx context.Context, metricsStoreID *int32) ([]*Cluster, error)
@@ -49,13 +60,19 @@ type Querier interface {
 	ListOrgClusters(ctx context.Context, organizationID int32) ([]*Cluster, error)
 	ListOrgDatabaseConnections(ctx context.Context, organizationID int32) ([]*DatabaseConnection, error)
 	ListOrganizations(ctx context.Context) ([]*Organization, error)
+	ListSnapshots(ctx context.Context, clusterID int32) ([]*Snapshot, error)
+	PullTask(ctx context.Context) (*Task, error)
 	RemoveClusterMetricsStoreID(ctx context.Context, arg RemoveClusterMetricsStoreIDParams) error
+	SetTimeZone(ctx context.Context, arg SetTimeZoneParams) error
+	UpdateAutoBackupConfig(ctx context.Context, arg UpdateAutoBackupConfigParams) error
+	UpdateAutoDiagnosticsConfig(ctx context.Context, arg UpdateAutoDiagnosticsConfigParams) error
 	UpdateMetricsStore(ctx context.Context, arg UpdateMetricsStoreParams) (*MetricsStore, error)
 	UpdateOrgCluster(ctx context.Context, arg UpdateOrgClusterParams) (*Cluster, error)
 	UpdateOrgDatabaseConnection(ctx context.Context, arg UpdateOrgDatabaseConnectionParams) (*DatabaseConnection, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (*Organization, error)
-	UpsertAutoBackupConfig(ctx context.Context, arg UpsertAutoBackupConfigParams) error
-	UpsertAutoDiagnosticsConfig(ctx context.Context, arg UpsertAutoDiagnosticsConfigParams) error
+	UpdateTask(ctx context.Context, arg UpdateTaskParams) error
+	UpdateTaskStartedAt(ctx context.Context, arg UpdateTaskStartedAtParams) error
+	UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) error
 	UpsertRefreshToken(ctx context.Context, arg UpsertRefreshTokenParams) error
 }
 

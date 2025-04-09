@@ -32,6 +32,15 @@ func (q *Queries) CreateClusterDiagnostic(ctx context.Context, arg CreateCluster
 	return &i, err
 }
 
+const deleteClusterDiagnostic = `-- name: DeleteClusterDiagnostic :exec
+DELETE FROM cluster_diagnostics WHERE id = $1
+`
+
+func (q *Queries) DeleteClusterDiagnostic(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, deleteClusterDiagnostic, id)
+	return err
+}
+
 const getClusterDiagnostic = `-- name: GetClusterDiagnostic :one
 SELECT id, cluster_id, content, created_at, updated_at FROM cluster_diagnostics WHERE id = $1
 `

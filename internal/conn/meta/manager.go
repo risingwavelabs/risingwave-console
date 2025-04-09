@@ -21,11 +21,6 @@ import (
 
 const risectlFileName = "risectl"
 
-type RisectlManagerInterface interface {
-	ListVersions(ctx context.Context) ([]string, error)
-	NewConn(ctx context.Context, version string, endpoint string) (RisectlConn, error)
-}
-
 // RisectlManager is a manager for risectl.
 type RisectlManager struct {
 	risectlDir string
@@ -60,7 +55,7 @@ func NewRisectlManager(cfg *config.Config) (RisectlManagerInterface, error) {
 	}, nil
 }
 
-func (m *RisectlManager) NewConn(ctx context.Context, version string, endpoint string) (RisectlConn, error) {
+func (m *RisectlManager) NewConn(ctx context.Context, version string, host string, port int32) (RisectlConn, error) {
 	if version == "" {
 		return nil, fmt.Errorf("version is required")
 	}
@@ -82,7 +77,7 @@ func (m *RisectlManager) NewConn(ctx context.Context, version string, endpoint s
 	return &RisectlConnection{
 		version:     version,
 		risectlPath: path,
-		endpoint:    endpoint,
+		endpoint:    fmt.Sprintf("http://%s:%d", host, port),
 	}, nil
 }
 

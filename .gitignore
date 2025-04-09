@@ -4,3 +4,4 @@ coverage.html
 upload/*
 *.parquet
 *.ndjson.gz
+profile

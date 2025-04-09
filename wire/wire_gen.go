@@ -7,24 +7,31 @@
 package wire
 
 import (
-	"github.com/risingwavelabs/wavekit/internal/apps/server"
+	"github.com/risingwavelabs/wavekit/internal/app"
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
+	"github.com/risingwavelabs/wavekit/internal/conn/http"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/controller"
+	"github.com/risingwavelabs/wavekit/internal/globalctx"
+	"github.com/risingwavelabs/wavekit/internal/metrics"
 	"github.com/risingwavelabs/wavekit/internal/model"
+	"github.com/risingwavelabs/wavekit/internal/server"
 	"github.com/risingwavelabs/wavekit/internal/service"
+	"github.com/risingwavelabs/wavekit/internal/task"
+	"github.com/risingwavelabs/wavekit/internal/worker"
 )
 
 // Injectors from wire.go:
 
-func InitializeServer() (*server.Server, error) {
+func InitializeApplication() (*app.Application, error) {
 	configConfig, err := config.NewConfig()
 	if err != nil {
 		return nil, err
 	}
+	globalContext := globalctx.New()
 	modelInterface, err := model.NewModel(configConfig)
 	if err != nil {
 		return nil, err
@@ -42,12 +49,22 @@ func InitializeServer() (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager)
+	metaHttpManagerInterface := http.NewMetaHttpManager()
+	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager, metaHttpManagerInterface)
 	controllerController := controller.NewController(serviceInterface, authInterface)
 	initService := service.NewInitService(modelInterface, serviceInterface)
-	serverServer, err := server.NewServer(configConfig, controllerController, authInterface, initService)
+	serverServer, err := server.NewServer(configConfig, globalContext, controllerController, authInterface, initService)
 	if err != nil {
 		return nil, err
 	}
-	return serverServer, nil
+	metricsServer := metrics.NewMetricsServer(configConfig, globalContext)
+	taskStoreInterface := task.NewTaskStore(modelInterface)
+	taskHandler := task.NewTaskHandler(modelInterface, risectlManagerInterface, taskStoreInterface, metaHttpManagerInterface)
+	workerWorker, err := worker.NewWorker(globalContext, modelInterface, taskHandler)
+	if err != nil {
+		return nil, err
+	}
+	debugServer := app.NewDebugServer(configConfig, globalContext)
+	application := app.NewApplication(configConfig, serverServer, metricsServer, workerWorker, debugServer)
+	return application, nil
 }

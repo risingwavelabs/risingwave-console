@@ -13,7 +13,7 @@ import (
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
-	"github.com/risingwavelabs/wavekit/internal/apps/server"
+	"github.com/risingwavelabs/wavekit/internal/server"
 	"github.com/risingwavelabs/wavekit/wire"
 )
 
@@ -42,11 +42,11 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	server, err := wire.InitializeServer()
+	app, err := wire.InitializeApplication()
 	if err != nil {
 		log.Fatal(err)
 	}
-	apiServer = server
+	apiServer = app.GetServer()
 
 	os.Exit(m.Run())
 }

@@ -12,21 +12,29 @@ import (
 )
 
 type AutoBackupConfig struct {
-	ClusterID      int32
-	Enabled        bool
-	CronExpression string
-	KeepLast       int32
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ClusterID int32
+	Enabled   bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	TaskID    int32
+}
+
+type AutoBackupTask struct {
+	ClusterID  int32
+	NextTaskID int32
 }
 
 type AutoDiagnosticsConfig struct {
-	ClusterID         int32
-	Enabled           bool
-	CronExpression    string
-	RetentionDuration *string
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	ClusterID int32
+	Enabled   bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	TaskID    int32
+}
+
+type AutoDiagnosticsTask struct {
+	ClusterID  int32
+	NextTaskID int32
 }
 
 type Cluster struct {
@@ -71,6 +79,12 @@ type DatabaseConnection struct {
 	UpdatedAt      time.Time
 }
 
+type Event struct {
+	ID        int32
+	Spec      apigen.EventSpec
+	CreatedAt time.Time
+}
+
 type MetricsStore struct {
 	ID             int32
 	Name           string
@@ -93,6 +107,7 @@ type Organization struct {
 	Name      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	Timezone  string
 }
 
 type OrganizationOwner struct {
@@ -108,6 +123,22 @@ type RefreshToken struct {
 	Token     string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type Snapshot struct {
+	ClusterID  int32
+	SnapshotID int64
+	CreatedAt  time.Time
+}
+
+type Task struct {
+	ID         int32
+	Attributes apigen.TaskAttributes
+	Spec       apigen.TaskSpec
+	Status     string
+	StartedAt  *time.Time
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 type User struct {

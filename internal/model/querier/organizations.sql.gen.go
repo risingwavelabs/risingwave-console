@@ -14,7 +14,7 @@ INSERT INTO organizations (
     name
 ) VALUES (
     $1
-) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id, name, created_at, updated_at
+) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id, name, created_at, updated_at, timezone
 `
 
 func (q *Queries) CreateOrganization(ctx context.Context, name string) (*Organization, error) {
@@ -25,6 +25,7 @@ func (q *Queries) CreateOrganization(ctx context.Context, name string) (*Organiz
 		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Timezone,
 	)
 	return &i, err
 }
@@ -60,7 +61,7 @@ func (q *Queries) DeleteOrganization(ctx context.Context, id int32) error {
 }
 
 const getOrganization = `-- name: GetOrganization :one
-SELECT id, name, created_at, updated_at FROM organizations
+SELECT id, name, created_at, updated_at, timezone FROM organizations
 WHERE id = $1
 `
 
@@ -72,12 +73,13 @@ func (q *Queries) GetOrganization(ctx context.Context, id int32) (*Organization,
 		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Timezone,
 	)
 	return &i, err
 }
 
 const listOrganizations = `-- name: ListOrganizations :many
-SELECT id, name, created_at, updated_at FROM organizations
+SELECT id, name, created_at, updated_at, timezone FROM organizations
 ORDER BY name
 `
 
@@ -95,6 +97,7 @@ func (q *Queries) ListOrganizations(ctx context.Context) ([]*Organization, error
 			&i.Name,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Timezone,
 		); err != nil {
 			return nil, err
 		}
@@ -112,7 +115,7 @@ SET
     name = $2,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, name, created_at, updated_at
+RETURNING id, name, created_at, updated_at, timezone
 `
 
 type UpdateOrganizationParams struct {
@@ -128,6 +131,7 @@ func (q *Queries) UpdateOrganization(ctx context.Context, arg UpdateOrganization
 		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Timezone,
 	)
 	return &i, err
 }

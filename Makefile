@@ -7,7 +7,7 @@ EE ?= false
 ### OpenAPI         
 ###################################################
 
-OAPI_CODEGEN_VERSION=v2.1.0
+OAPI_CODEGEN_VERSION=v2.4.1
 OAPI_CODEGEN_BIN=$(PROJECT_DIR)/bin/oapi-codegen
 OAPI_GEN_DIR=$(PROJECT_DIR)/internal/apigen
 OAPI_CODEGEN_FIBER_BIN=$(PROJECT_DIR)/bin/oapi-codegen-fiber
@@ -59,7 +59,7 @@ install-sqlc:
 	@DIR=$(PROJECT_DIR)/bin VERSION=${SQLC_VERSION} ./scripts/install-sqlc.sh
 
 clean-querier:
-	@rm -f $(QUERIER_DIR)/*sql.gen.go
+	@rm -f $(QUERIER_DIR)/*.sql.gen.go || true
 	@rm -f $(QUERIER_DIR)/copyfrom_gen.go   
 	@rm -f $(QUERIER_DIR)/db_gen.go
 	@rm -f $(QUERIER_DIR)/models_gen.go
@@ -72,7 +72,7 @@ gen-querier: install-sqlc clean-querier
 ### mock 
 ###################################################
 
-MOCKGEN_VERSION=1.6.0
+MOCKGEN_VERSION=0.5.0
 MOCKGEN_BIN=$(PROJECT_DIR)/bin/mockgen
 
 install-mockgen: 
@@ -80,6 +80,14 @@ install-mockgen:
 
 gen-mock: install-mockgen
 	$(MOCKGEN_BIN) -source=internal/model/model.go -destination=internal/model/mock_gen.go -package=model
+	$(MOCKGEN_BIN) -source=internal/task/task.go -destination=internal/task/mock/task_mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/worker/lifecycle_handler.go -destination=internal/worker/mock/lifecycle_handler_mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/worker/worker.go -destination=internal/worker/mock/worker_mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/service/service.go -destination=internal/service/service_mock_gen.go -package=service
+	$(MOCKGEN_BIN) -source=internal/modelctx/modelctx.go -destination=internal/modelctx/mock/modelctx_mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/conn/meta/types.go -destination=internal/conn/meta/mock/mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/task/task.go -destination=internal/task/task_mock_gen.go -package=task
+	$(MOCKGEN_BIN) -source=internal/conn/http/http.go -destination=internal/conn/http/mock/http_mock_gen.go -package=mock
 
 ###################################################
 ### Common
@@ -101,7 +109,7 @@ install-doc-tools:
 doc-config:
 	@awk -v cmds='$(CONFTEXT_BIN) -prefix wk -path internal/config -yaml|CONFIG_SAMPLE_YAML;\
 		$(CONFTEXT_BIN) -prefix wk -path internal/config -env -markdown|CONFIG_ENV;\
-		cat init.yaml|CONFIG_SAMPLE_INIT' \
+		cat dev/init.yaml|CONFIG_SAMPLE_INIT' \
 		-f scripts/template-subst.awk docs/templates/config.tmpl.md > docs/config.md
 
 doc-contributing:
@@ -204,3 +212,8 @@ ut:
 	@COLOR=ALWAYS go test -race -covermode=atomic -coverprofile=coverage.out -tags ut ./... 
 	@go tool cover -html coverage.out -o coverage.html
 	@go tool cover -func coverage.out | fgrep total | awk '{print "Coverage:", $$3}'
+
+
+# https://pkg.go.dev/net/http/pprof#hdr-Usage_examples
+pprof:
+	go tool pprof http://localhost:8777/debug/pprof/$(ARG)

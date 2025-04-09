@@ -10,4 +10,4 @@ fi
 
 echo "installing $VERSION for $DIR/mockgen"
 
-GOBIN=$DIR go install github.com/golang/mock/mockgen@v$VERSION
+GOBIN=$DIR go install go.uber.org/mock/mockgen@v$VERSION

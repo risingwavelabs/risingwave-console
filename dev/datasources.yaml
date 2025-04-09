@@ -1,0 +1,28 @@
+apiVersion: 1
+deleteDatasources:
+  - name: wavekit-default-prometheus
+  - name: wavekit-default-postgres
+datasources:
+  - type: prometheus
+    name: wavekit-default-prometheus
+    uid: wavekit-default-prometheus
+    access: proxy
+    url: http://prometheus:9500
+    withCredentials: false
+    isDefault: true
+    tlsAuth: false
+    tlsAuthWithCACert: false
+    version: 1
+    editable: true
+  - type: postgres
+    name: wavekit-default-postgres
+    uid: wavekit-default-postgres
+    access: proxy
+    url: db:5432
+    database: postgres
+    user: postgres
+    secureJsonData:
+      password: postgres
+    jsonData:
+      sslmode: disable 
+      postgresVersion: 1200

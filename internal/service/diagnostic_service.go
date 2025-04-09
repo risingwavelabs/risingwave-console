@@ -2,12 +2,17 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
+	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
+	"github.com/risingwavelabs/wavekit/internal/utils"
 )
+
+const defaultDiagnosticTaskTimeout = "30m"
 
 func (s *Service) CreateClusterDiagnostic(ctx context.Context, id int32, orgID int32) (*apigen.DiagnosticData, error) {
 	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
@@ -18,11 +23,7 @@ func (s *Service) CreateClusterDiagnostic(ctx context.Context, id int32, orgID i
 		return nil, errors.Wrapf(err, "failed to get cluster")
 	}
 
-	conn, err := s.getMetaHttpConn(ctx, cluster.ID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get meta http connection")
-	}
-	content, err := conn.GetDiagnose(ctx)
+	content, err := s.metahttp.GetDiagnose(ctx, fmt.Sprintf("http://%s:%d", cluster.Host, cluster.HttpPort))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get diagnose")
 	}
@@ -98,20 +99,76 @@ func (s *Service) UpdateClusterAutoDiagnosticConfig(ctx context.Context, id int3
 		return errors.Wrapf(err, "failed to get cluster")
 	}
 
-	if err := s.m.UpsertAutoDiagnosticsConfig(ctx, querier.UpsertAutoDiagnosticsConfigParams{
-		ClusterID:         cluster.ID,
-		Enabled:           params.Enabled,
-		CronExpression:    params.CronExpression,
-		RetentionDuration: params.RetentionDuration,
-	}); err != nil {
-		return errors.Wrapf(err, "failed to update auto diagnostic config")
+	taskSpec := apigen.TaskSpec{
+		Type: apigen.AutoDiagnostic,
+		AutoDiagnostic: &apigen.TaskSpecAutoDiagnostic{
+			ClusterID:         cluster.ID,
+			RetentionDuration: params.RetentionDuration,
+		},
 	}
 
+	c, err := s.m.GetAutoDiagnosticsConfig(ctx, cluster.ID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// No existing auto backup config, create a new one and a new cron job
+			if err := s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
+				mc := s.modelctx(txm)
+				taskID, err := mc.CreateCronJob(ctx, utils.Ptr(defaultBackupTaskTimeout), &orgID, params.CronExpression, taskSpec)
+				if err != nil {
+					return errors.Wrapf(err, "failed to create cron job")
+				}
+				if err := txm.CreateAutoDiagnosticsConfig(ctx, querier.CreateAutoDiagnosticsConfigParams{
+					ClusterID: cluster.ID,
+					TaskID:    taskID,
+					Enabled:   true,
+				}); err != nil {
+					return errors.Wrapf(err, "failed to create auto diagnostics config")
+				}
+				return nil
+			}); err != nil {
+				return errors.Wrapf(err, "failed to create new cluster auto diagnostics config")
+			}
+			return nil
+		}
+		return errors.Wrapf(err, "failed to get auto diagnostics config")
+	}
+
+	if err := s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
+		mc := s.modelctx(txm)
+		if !params.Enabled {
+			if err := mc.PauseCronJob(ctx, c.TaskID); err != nil {
+				return errors.Wrapf(err, "failed to pause cron job")
+			}
+		} else {
+			if err := mc.ResumeCronJob(ctx, c.TaskID); err != nil {
+				return errors.Wrapf(err, "failed to resume cron job")
+			}
+		}
+		if err := txm.UpdateAutoDiagnosticsConfig(ctx, querier.UpdateAutoDiagnosticsConfigParams{
+			ClusterID: cluster.ID,
+			Enabled:   params.Enabled,
+		}); err != nil {
+			return errors.Wrapf(err, "failed to update auto diagnostics config")
+		}
+		if err := mc.UpdateCronJob(ctx, c.TaskID, utils.Ptr(defaultDiagnosticTaskTimeout), &orgID, params.CronExpression, taskSpec); err != nil {
+			return errors.Wrapf(err, "failed to update cron job")
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrapf(err, "failed to update cluster auto diagnostics config")
+	}
 	return nil
 }
 
 func (s *Service) GetClusterAutoDiagnosticConfig(ctx context.Context, id int32, orgID int32) (*apigen.AutoDiagnosticConfig, error) {
-	c, err := s.m.GetAutoDiagnosticsConfig(ctx, id)
+	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
+		ID:             id,
+		OrganizationID: orgID,
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get cluster")
+	}
+	c, err := s.m.GetAutoDiagnosticsConfig(ctx, cluster.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return &apigen.AutoDiagnosticConfig{
@@ -119,10 +176,14 @@ func (s *Service) GetClusterAutoDiagnosticConfig(ctx context.Context, id int32, 
 			}, nil
 		}
 	}
+	task, err := s.m.GetTaskByID(ctx, c.TaskID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get task")
+	}
 
 	return &apigen.AutoDiagnosticConfig{
 		Enabled:           c.Enabled,
-		CronExpression:    c.CronExpression,
-		RetentionDuration: c.RetentionDuration,
+		CronExpression:    task.Attributes.Cronjob.CronExpression,
+		RetentionDuration: task.Spec.AutoDiagnostic.RetentionDuration,
 	}, nil
 }
