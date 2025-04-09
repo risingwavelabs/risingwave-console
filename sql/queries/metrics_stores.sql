@@ -13,6 +13,16 @@ INSERT INTO metrics_stores (name, spec, organization_id, default_labels)
 VALUES ($1, $2, $3, $4)
 RETURNING *;
 
+-- name: InitMetricsStore :one
+INSERT INTO metrics_stores (name, spec, organization_id, default_labels)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (organization_id, name) DO UPDATE 
+    SET 
+        spec = EXCLUDED.spec,
+        default_labels = EXCLUDED.default_labels,
+        updated_at = CURRENT_TIMESTAMP
+RETURNING *;
+
 -- name: UpdateMetricsStore :one
 UPDATE metrics_stores
 SET name = $2, 

@@ -211,7 +211,13 @@ INSERT INTO database_connections (
     organization_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6
-) ON CONFLICT (organization_id, name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+) ON CONFLICT (organization_id, name) DO UPDATE 
+    SET 
+        cluster_id = EXCLUDED.cluster_id,
+        username = EXCLUDED.username,
+        password = EXCLUDED.password,
+        database = EXCLUDED.database,
+        updated_at = CURRENT_TIMESTAMP
 RETURNING id, organization_id, name, cluster_id, username, password, database, created_at, updated_at
 `
 

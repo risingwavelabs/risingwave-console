@@ -52,6 +52,7 @@ type Querier interface {
 	GetUserByName(ctx context.Context, name string) (*User, error)
 	InitCluster(ctx context.Context, arg InitClusterParams) (*Cluster, error)
 	InitDatabaseConnection(ctx context.Context, arg InitDatabaseConnectionParams) (*DatabaseConnection, error)
+	InitMetricsStore(ctx context.Context, arg InitMetricsStoreParams) (*MetricsStore, error)
 	InsertEvent(ctx context.Context, spec apigen.EventSpec) (*Event, error)
 	ListClusterDiagnostics(ctx context.Context, clusterID int32) ([]*ListClusterDiagnosticsRow, error)
 	ListClusterSnapshots(ctx context.Context, clusterID int32) ([]*ClusterSnapshot, error)

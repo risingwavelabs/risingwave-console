@@ -105,7 +105,28 @@ func (s *InitService) initDatabase(ctx context.Context, cfg *InitConfig, orgID i
 		clusterNameToID := make(map[string]int32)
 		metricsStoreNameToID := make(map[string]int32)
 
+		ms, err := s.m.ListMetricsStoresByOrgID(ctx, orgID)
+		if err != nil {
+			return errors.Wrapf(err, "failed to list metrics stores")
+		}
+		for _, m := range ms {
+			metricsStoreNameToID[m.Name] = m.ID
+		}
+
 		for _, metricsStore := range cfg.MetricsStores {
+			if _, ok := metricsStoreNameToID[metricsStore.Name]; ok {
+				_, err := s.m.UpdateMetricsStore(ctx, querier.UpdateMetricsStoreParams{
+					ID:             metricsStoreNameToID[metricsStore.Name],
+					OrganizationID: orgID,
+					Name:           metricsStore.Name,
+					Spec:           metricsStore.Spec,
+					DefaultLabels:  metricsStore.DefaultLabels,
+				})
+				if err != nil {
+					return errors.Wrapf(err, "failed to update metrics store: %s", metricsStore.Name)
+				}
+				continue
+			}
 			ms, err := s.m.CreateMetricsStore(ctx, querier.CreateMetricsStoreParams{
 				OrganizationID: orgID,
 				Name:           metricsStore.Name,

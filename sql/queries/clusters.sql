@@ -24,7 +24,15 @@ INSERT INTO clusters (
     metrics_store_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8
-) ON CONFLICT (organization_id, name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+) ON CONFLICT (organization_id, name) DO UPDATE 
+    SET 
+        host = EXCLUDED.host,
+        sql_port = EXCLUDED.sql_port,
+        meta_port = EXCLUDED.meta_port,
+        http_port = EXCLUDED.http_port,
+        version = EXCLUDED.version,
+        metrics_store_id = EXCLUDED.metrics_store_id,
+        updated_at = CURRENT_TIMESTAMP
 RETURNING *;
 
 -- name: GetOrgCluster :one

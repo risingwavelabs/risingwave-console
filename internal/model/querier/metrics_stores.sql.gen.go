@@ -106,6 +106,44 @@ func (q *Queries) GetMetricsStoreByIDAndOrgID(ctx context.Context, arg GetMetric
 	return &i, err
 }
 
+const initMetricsStore = `-- name: InitMetricsStore :one
+INSERT INTO metrics_stores (name, spec, organization_id, default_labels)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (organization_id, name) DO UPDATE 
+    SET 
+        spec = EXCLUDED.spec,
+        default_labels = EXCLUDED.default_labels,
+        updated_at = CURRENT_TIMESTAMP
+RETURNING id, name, spec, organization_id, default_labels, created_at, updated_at
+`
+
+type InitMetricsStoreParams struct {
+	Name           string
+	Spec           *apigen.MetricsStoreSpec
+	OrganizationID int32
+	DefaultLabels  *apigen.MetricsStoreLabelMatcherList
+}
+
+func (q *Queries) InitMetricsStore(ctx context.Context, arg InitMetricsStoreParams) (*MetricsStore, error) {
+	row := q.db.QueryRow(ctx, initMetricsStore,
+		arg.Name,
+		arg.Spec,
+		arg.OrganizationID,
+		arg.DefaultLabels,
+	)
+	var i MetricsStore
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Spec,
+		&i.OrganizationID,
+		&i.DefaultLabels,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const listMetricsStoresByOrgID = `-- name: ListMetricsStoresByOrgID :many
 SELECT id, name, spec, organization_id, default_labels, created_at, updated_at FROM metrics_stores
 WHERE organization_id = $1

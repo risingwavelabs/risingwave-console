@@ -656,6 +656,21 @@ func (mr *MockModelInterfaceMockRecorder) InitDatabaseConnection(ctx, arg any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).InitDatabaseConnection), ctx, arg)
 }
 
+// InitMetricsStore mocks base method.
+func (m *MockModelInterface) InitMetricsStore(ctx context.Context, arg querier.InitMetricsStoreParams) (*querier.MetricsStore, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InitMetricsStore", ctx, arg)
+	ret0, _ := ret[0].(*querier.MetricsStore)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InitMetricsStore indicates an expected call of InitMetricsStore.
+func (mr *MockModelInterfaceMockRecorder) InitMetricsStore(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitMetricsStore", reflect.TypeOf((*MockModelInterface)(nil).InitMetricsStore), ctx, arg)
+}
+
 // InsertEvent mocks base method.
 func (m *MockModelInterface) InsertEvent(ctx context.Context, spec apigen.EventSpec) (*querier.Event, error) {
 	m.ctrl.T.Helper()

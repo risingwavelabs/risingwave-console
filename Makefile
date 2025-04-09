@@ -175,7 +175,7 @@ test:
 ### Build
 ###################################################
 
-VERSION=v0.3.0
+VERSION=v0.3.1
 
 build-web:
 	@cd web && pnpm run build
