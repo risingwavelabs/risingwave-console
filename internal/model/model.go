@@ -73,6 +73,8 @@ func NewModel(cfg *config.Config) (ModelInterface, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse pgxpool config: %s", dsn)
 	}
+	config.MaxConns = 30
+	config.MinConns = 5
 
 	var (
 		retryLimit = 10

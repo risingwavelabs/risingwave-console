@@ -57,11 +57,13 @@ func taskToAPI(task *querier.Task) apigen.Task {
 }
 
 func (w *Worker) Start() {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-w.globalCtx.Context().Done():
 			return
-		case <-time.Tick(1 * time.Second):
+		case <-ticker.C:
 			go func() {
 				metrics.WorkerGoroutines.Inc()
 				defer metrics.WorkerGoroutines.Dec()

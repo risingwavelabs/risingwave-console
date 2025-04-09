@@ -109,7 +109,7 @@ install-doc-tools:
 doc-config:
 	@awk -v cmds='$(CONFTEXT_BIN) -prefix wk -path internal/config -yaml|CONFIG_SAMPLE_YAML;\
 		$(CONFTEXT_BIN) -prefix wk -path internal/config -env -markdown|CONFIG_ENV;\
-		cat init.yaml|CONFIG_SAMPLE_INIT' \
+		cat dev/init.yaml|CONFIG_SAMPLE_INIT' \
 		-f scripts/template-subst.awk docs/templates/config.tmpl.md > docs/config.md
 
 doc-contributing:
