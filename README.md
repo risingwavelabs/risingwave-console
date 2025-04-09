@@ -28,14 +28,14 @@ You can start the WaveKit server in two ways:
 Runs WaveKit with a bundled PostgreSQL database, but metadata is stored inside the container. If the container is removed, all metadata will be lost.  
 
 ```shell
-docker run --rm -p 8020:8020 --name wavekit risingwavelabs/wavekit:v0.1.2-pgbundle
+docker run --rm -p 8020:8020 --name wavekit risingwavelabs/wavekit:v0.3.0-pgbundle
 ```
 
 #### **Option 2: Persistent Storage (Recommended)**  
 Runs WaveKit with a bundled PostgreSQL database and stores metadata in a persistent Docker volume (`wavekit-data`), ensuring data persists across restarts.  
 
 ```shell
-docker run -p 8020:8020 --name wavekit -v wavekit-data:/var/lib/postgresql risingwavelabs/wavekit:v0.1.2-pgbundle
+docker run -p 8020:8020 --name wavekit -v wavekit-data:/var/lib/postgresql risingwavelabs/wavekit:v0.3.0-pgbundle
 ```
 
 ### **Accessing WaveKit**  
@@ -78,7 +78,7 @@ First, create `docker-compose.yaml` file with the following content:
 version: "3.9"
 services:
   wavekit:
-    image: cloudcarver/wavekit:v0.1.2
+    image: cloudcarver/wavekit:v0.3.0
     ports:
       - "8020:8020"
     environment:
