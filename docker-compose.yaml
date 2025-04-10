@@ -1,114 +1,40 @@
-# This is a docker compose file for local development of wavekit.
-# The wavekit server is built and run in the dev container, which is defined in `docker/Dockerfile.dev`.
 services:
   dev:
-    build: 
-      dockerfile: ./dev/Dockerfile.dev
-    ports:
-      - "8020:8020"
-      - "9020:9020"
-      - "8777:8777"
+    container_name: wavekit-k0s
+    image: docker.io/k0sproject/k0s:latest
     command:
-    - go
-    - run
-    - cmd/wavekit/main.go
-    environment:
-      WK_PORT: 8020
-      WK_PG_DSN: postgres://postgres:postgres@db:5432/postgres
-      WK_JWT_SECRET: 9138e41195112b568e22480f18a42dd69b38fab5ee1a36fbf63d49b22097d22a
-      WK_ROOT_PASSWORD: '123456'
-      WK_INIT: ./dev/init.yaml
-      WK_RISECTLDIR: /wavekit-data/risectl
-      WK_METRICSPORT: 9020
-      WK_DEBUG_ENABLE: true
-      WK_DEBUG_PORT: 8777
+      - k0s
+      - controller
+      - --single
+    hostname: k0s
+    privileged: true
     volumes:
-      - ./:/app
-      - go-data:/go/pkg/mod
-      - go-build-data:/root/.cache/go-build
-      - wavekit-data:/wavekit-data
-  db: 
-    image: "postgres:latest"
+      - k0s-data:/var/lib/k0s
+      - ./:/opt/wavekit-dev/codebase
+      - go-data:/opt/wavekit-dev/go-data
+      - go-build-data:/opt/wavekit-dev/go-build-data
+      - postgres-data:/opt/wavekit-dev/postgres-data
+      - wavekit-data:/opt/wavekit-dev/wavekit-data
+    tmpfs:
+      - /run
+      - /var/run
     ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - pg-data:/var/lib/postgresql/data
+      - 6443:6443
+      - 30080:30080
+      - 30090:30090
+      - 30087:30087
+    network_mode: "bridge"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - k0s kubectl get nodes | grep -q "Ready" && k0s kubectl apply -f /opt/wavekit-dev/codebase/dev/k0s.yaml
+      interval: 1s
+      timeout: 5s
+      retries: 3600
 
-  rw:
-    image: risingwavelabs/risingwave:v2.2.1
-    ports:
-      - 4566:4566
-      - 5690:5690
-      - 5691:5691
-      - 1250:1250
-    volumes:
-      - rw-meta-store:/root/meta
-      - rw-data-store:/root/state_store
-    command: "standalone --meta-opts=\" \
-                    --listen-addr 0.0.0.0:5690 \
-                    --advertise-addr rw:5690 \
-                    --dashboard-host 0.0.0.0:5691 \
-                    --prometheus-host 0.0.0.0:1250 \
-                    --backend sqlite  \
-                    --sql-endpoint /root/meta/single_node.db \
-                    --state-store hummock+fs:///root/state_store \
-                    --data-directory hummock_001\" \
-                 --compute-opts=\" \
-                    --listen-addr 0.0.0.0:5688 \
-                    --prometheus-listener-addr 0.0.0.0:1250 \
-                    --advertise-addr rw:5688 \
-                    --async-stack-trace verbose \
-                    --parallelism 4 \
-                    --total-memory-bytes 2147483648 \
-                    --role both \
-                    --meta-address http://0.0.0.0:5690\" \
-                 --frontend-opts=\" \
-                   --listen-addr 0.0.0.0:4566 \
-                   --advertise-addr rw:4566 \
-                   --prometheus-listener-addr 0.0.0.0:1250 \
-                   --health-check-listener-addr 0.0.0.0:6786 \
-                   --meta-addr http://0.0.0.0:5690 \
-                   --frontend-total-memory-bytes=500000000\" \
-                 --compactor-opts=\" \
-                   --listen-addr 0.0.0.0:6660 \
-                   --prometheus-listener-addr 0.0.0.0:1250 \
-                   --advertise-addr rw:6660 \
-                   --meta-address http://0.0.0.0:5690 \
-                   --compactor-total-memory-bytes=1000000000\""
-
-  prometheus:
-    image: "prom/prometheus:latest"
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yaml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
-      - "--web.console.templates=/usr/share/prometheus/consoles"
-      - "--web.listen-address=0.0.0.0:9500"
-      - "--storage.tsdb.retention.time=30d"
-    ports:
-      - "9500:9500"
-    depends_on: [ ]
-    volumes:
-      - "prometheus-data:/prometheus"
-      - "./dev/prometheus.yaml:/etc/prometheus/prometheus.yaml"
-
-  grafana:
-    image: "grafana/grafana-oss:latest"
-    ports:
-      - "3000:3000"
-    volumes:
-      - "./dev/grafana.ini:/etc/grafana/grafana.ini"
-      - "./dev/datasources.yaml:/etc/grafana/provisioning/datasources/wavekit-datasources.yml"
-      - "./dev/dashboards.yaml:/etc/grafana/provisioning/dashboards/wavekit-dashboards.yml"
-      - "./dev/dashboards:/dashboards"
-    
 volumes:
-  pg-data:
+  k0s-data:
+  wavekit-data:
   go-data:
   go-build-data:
-  wavekit-data:
-  prometheus-data:
-  rw-meta-store:
-  rw-data-store:
+  postgres-data:
