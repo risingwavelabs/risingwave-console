@@ -38,7 +38,7 @@ make gen
 2. Start development environment
 
 ```shell
-make dev
+make start
 ```
 
 3. Reload code 
@@ -51,10 +51,4 @@ make reload
 
 ```shell
 make ut
-```
-
-5. Run end-to-end test
-
-```shell
-make test
 ```
