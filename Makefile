@@ -158,11 +158,22 @@ upload-prompush:
 ### Dev enviornment
 ###################################################
 
-dev:
-	docker-compose up
+K0S_KUBECTL=docker exec -ti wavekit-k0s k0s kubectl
+K0S_CODEBASE_DIR=/opt/wavekit-dev/codebase
+
+start:
+	docker-compose up -d
+	./dev/init.sh
+	$(K0S_KUBECTL) apply -f $(K0S_CODEBASE_DIR)/dev/k0s.yaml
+
+apply:
+	$(K0S_KUBECTL) apply -f $(K0S_CODEBASE_DIR)/dev/k0s.yaml
 
 reload:
-	docker-compose restart dev
+	$(K0S_KUBECTL) rollout restart deployment/wavekit
+
+log:
+	$(K0S_KUBECTL) logs -l app=wavekit --follow
 
 db:
 	psql "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"
