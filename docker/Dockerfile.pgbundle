@@ -1,14 +1,16 @@
-FROM ubuntu:20.04
+FROM ubuntu:24.04
 WORKDIR /app
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y postgresql-12 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update 
+RUN apt-get install -y ca-certificates
+RUN apt-get install -y postgresql-16
+    
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/12/main/pg_hba.conf
+RUN echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/16/main/pg_hba.conf
 # RUN echo "listen_addresses='*'\nport = 5432" >> /etc/postgresql/12/main/postgresql.conf
-
-RUN apt-get update && apt-get install -y ca-certificates
 
 ARG TARGETARCH
 COPY ./bin/wavekit-server-${TARGETARCH} /app/wavekit-server

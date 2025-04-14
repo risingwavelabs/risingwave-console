@@ -186,10 +186,10 @@ test:
 ### Build
 ###################################################
 
-VERSION=v0.3.1
+VERSION=v0.3.2
 
 build-web:
-	@cd web && pnpm run build
+	@cd web && pnpm install && pnpm run build
 
 build-binary:
 	@rm -rf upload
