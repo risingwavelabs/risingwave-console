@@ -5500,7 +5500,7 @@ type ServerInterface interface {
 	// Get DDL progress
 	// (GET /databases/{ID}/ddl-progress)
 	GetDDLProgress(c *fiber.Ctx, id int32) error
-
+	// Cancel DDL progress
 	// (POST /databases/{ID}/ddl-progress/{ddlID}/cancel)
 	CancelDDLProgress(c *fiber.Ctx, id int32, ddlID int64) error
 	// Query database

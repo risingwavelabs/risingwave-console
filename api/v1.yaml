@@ -156,7 +156,7 @@ paths:
             format: int32
       summary: Get DDL progress
       description: Get the progress of a DDL operation
-      operationId: get DDL progress
+      operationId: getDDLProgress
       security:
         - BearerAuth: []
       responses:
@@ -172,6 +172,7 @@ paths:
   /databases/{ID}/ddl-progress/{ddlID}/cancel:
     post:
       operationId: cancelDDLProgress
+      summary: Cancel DDL progress
       parameters:
         - name: ID
           in: path
@@ -226,6 +227,7 @@ paths:
                 type: array
                 items:
                   type: string
+      security: []
 
   /clusters:
     get:
@@ -286,8 +288,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Cluster"
-    security:
-      - BearerAuth: []
 
     put:
       summary: Update cluster
@@ -486,6 +486,10 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/DiagnosticData"
+      responses:
+        "200":
+          description: Successfully created diagnostic data
+
     get:
       summary: List diagnostic data
       description: Retrieve diagnostic data for a specific cluster with optional date range filtering
@@ -619,6 +623,7 @@ paths:
                 $ref: "#/components/schemas/Credentials"
         "401":
           description: Invalid credentials
+      security: []
 
   /auth/refresh:
     post:
@@ -640,6 +645,7 @@ paths:
                 $ref: "#/components/schemas/Credentials"
         "401":
           description: Invalid or expired refresh token
+      security: []
           
   /metrics-stores/{ID}:
     get:
@@ -1540,14 +1546,6 @@ components:
       properties:
         cronExpression:
           type: string
-
-    TaskScheduled:
-      type: object
-      required: [scheduledTo]
-      properties:
-        scheduledTo:
-          type: string
-          format: date-time
 
     TaskSpec:
       type: object

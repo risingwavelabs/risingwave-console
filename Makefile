@@ -24,8 +24,8 @@ prune-spec:
 OAPI_GENERATE_ARG=types,fiber,client
 
 gen-spec: install-oapi-codegen-fiber install-oapi-codegen prune-spec
-	$(OAPI_CODEGEN_BIN) -generate $(OAPI_GENERATE_ARG) -o $(OAPI_GEN_DIR)/spec_gen.go -package apigen $(PROJECT_DIR)/web/api/v1.yaml
-	$(PROJECT_DIR)/bin/oapi-codegen-fiber --package apigen --path $(PROJECT_DIR)/web/api/v1.yaml --out $(PROJECT_DIR)/internal/apigen/scopes_extend_gen.go
+	$(OAPI_CODEGEN_BIN) -generate $(OAPI_GENERATE_ARG) -o $(OAPI_GEN_DIR)/spec_gen.go -package apigen $(PROJECT_DIR)/api/v1.yaml
+	$(PROJECT_DIR)/bin/oapi-codegen-fiber --package apigen --path $(PROJECT_DIR)/api/v1.yaml --out $(PROJECT_DIR)/internal/apigen/scopes_extend_gen.go
 
 gen-frontend-client:
 	cd web && pnpm run gen
@@ -88,6 +88,7 @@ gen-mock: install-mockgen
 	$(MOCKGEN_BIN) -source=internal/conn/meta/types.go -destination=internal/conn/meta/mock/mock_gen.go -package=mock
 	$(MOCKGEN_BIN) -source=internal/task/task.go -destination=internal/task/task_mock_gen.go -package=task
 	$(MOCKGEN_BIN) -source=internal/conn/http/http.go -destination=internal/conn/http/mock/http_mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=ee/macaroons/types.go -destination=ee/macaroons/mock_gen.go -package=macaroons
 
 ###################################################
 ### Common
@@ -164,7 +165,7 @@ K0S_CODEBASE_DIR=/opt/wavekit-dev/codebase
 start:
 	docker-compose up -d
 	./dev/init.sh
-	$(K0S_KUBECTL) apply -f $(K0S_CODEBASE_DIR)/dev/k0s.yaml
+	$(K0S_KUBECTL) apply -f $(K0S_CODEBASE_DIR)/dev/k0s.yaml > /dev/null 2>&1
 
 apply:
 	$(K0S_KUBECTL) apply -f $(K0S_CODEBASE_DIR)/dev/k0s.yaml
@@ -177,10 +178,6 @@ log:
 
 db:
 	psql "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"
-
-test:
-	TEST_DIR=$(PROJECT_DIR)/e2e HOLD="$(HOLD)" ./scripts/run-local-test.sh "$(K)" 
-
 
 ###################################################
 ### Build

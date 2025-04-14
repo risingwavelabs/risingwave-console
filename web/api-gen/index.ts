@@ -46,7 +46,6 @@ export { Task } from './models/Task';
 export type { TaskAttributes } from './models/TaskAttributes';
 export type { TaskCronjob } from './models/TaskCronjob';
 export type { TaskRetryPolicy } from './models/TaskRetryPolicy';
-export type { TaskScheduled } from './models/TaskScheduled';
 export { TaskSpec } from './models/TaskSpec';
 export type { TaskSpecAutoBackup } from './models/TaskSpecAutoBackup';
 export type { TaskSpecAutoDiagnostic } from './models/TaskSpecAutoDiagnostic';

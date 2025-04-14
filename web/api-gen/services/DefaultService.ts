@@ -178,6 +178,7 @@ export class DefaultService {
         });
     }
     /**
+     * Cancel DDL progress
      * @param id
      * @param ddlId
      * @returns any Successfully canceled DDL operation
@@ -466,12 +467,13 @@ export class DefaultService {
      * Create diagnostic data for a specific cluster
      * @param id
      * @param requestBody
+     * @returns any Successfully created diagnostic data
      * @throws ApiError
      */
     public static createClusterDiagnostic(
         id: number,
         requestBody: DiagnosticData,
-    ): CancelablePromise<void> {
+    ): CancelablePromise<any> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/clusters/{ID}/diagnostics',

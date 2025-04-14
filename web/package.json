@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "gen": "npx openapi-typescript-codegen --input ./api/v1.yaml --output ./api-gen --client axios"
+    "gen": "npx openapi-typescript-codegen --input ../api/v1.yaml --output ./api-gen --client axios"
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.1.4",
