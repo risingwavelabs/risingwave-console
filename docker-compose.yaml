@@ -23,6 +23,7 @@ services:
       - 30080:30080
       - 30090:30090
       - 30087:30087
+      - 30432:30432
     network_mode: "bridge"
     healthcheck:
       test:

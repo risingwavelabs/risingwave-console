@@ -646,7 +646,18 @@ paths:
         "401":
           description: Invalid or expired refresh token
       security: []
-          
+
+  /auth/sign-out:
+    post:
+      summary: Sign out user
+      description: Sign out user and invalidate all tokens
+      operationId: signOut
+      responses:
+        "200":
+          description: Successfully signed out
+      security:
+        - BearerAuth: []
+
   /metrics-stores/{ID}:
     get:
       summary: Get a metrics store

@@ -50,6 +50,7 @@ export { TaskSpec } from './models/TaskSpec';
 export type { TaskSpecAutoBackup } from './models/TaskSpecAutoBackup';
 export type { TaskSpecAutoDiagnostic } from './models/TaskSpecAutoDiagnostic';
 export type { TaskSpecDeleteClusterDiagnostic } from './models/TaskSpecDeleteClusterDiagnostic';
+export type { TaskSpecDeleteOpaqueKey } from './models/TaskSpecDeleteOpaqueKey';
 export type { TaskSpecDeleteSnapshot } from './models/TaskSpecDeleteSnapshot';
 export type { TestClusterConnectionPayload } from './models/TestClusterConnectionPayload';
 export type { TestClusterConnectionResult } from './models/TestClusterConnectionResult';

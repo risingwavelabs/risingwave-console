@@ -27,20 +27,19 @@ func (s *Service) SignIn(ctx context.Context, params apigen.SignInRequest) (*api
 	if input != user.PasswordHash {
 		return nil, ErrInvalidPassword
 	}
+
+	if err := s.auth.InvalidateUserTokens(ctx, user.ID); err != nil {
+		return nil, errors.Wrapf(err, "failed to invalidate user tokens")
+	}
+
 	keyID, token, err := s.auth.CreateToken(ctx, user, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create token")
 	}
+
 	refreshToken, err := s.auth.CreateRefreshToken(ctx, keyID, user.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to generate refresh token")
-	}
-	err = s.m.UpsertRefreshToken(ctx, querier.UpsertRefreshTokenParams{
-		UserID: user.ID,
-		Token:  refreshToken,
-	})
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to upsert refresh token")
 	}
 
 	return &apigen.Credentials{
@@ -51,20 +50,14 @@ func (s *Service) SignIn(ctx context.Context, params apigen.SignInRequest) (*api
 }
 
 func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken string) (*apigen.Credentials, error) {
-	originalRefreshToken, err := s.m.GetRefreshToken(ctx, querier.GetRefreshTokenParams{
-		UserID: userID,
-		Token:  refreshToken,
-	})
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get refresh token")
-	}
-	if originalRefreshToken.UpdatedAt.Add(RefreshTokenExpireDuration).Before(s.now()) {
-		return nil, ErrRefreshTokenExpired
-	}
 	user, err := s.m.GetUser(ctx, userID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get user by id: %d", userID)
 	}
+	if err := s.auth.InvalidateUserTokens(ctx, userID); err != nil {
+		return nil, errors.Wrapf(err, "failed to invalidate user tokens")
+	}
+
 	keyID, accessToken, err := s.auth.CreateToken(ctx, user, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create token")
@@ -73,12 +66,6 @@ func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken s
 	newRefreshToken, err := s.auth.CreateRefreshToken(ctx, keyID, userID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to generate refresh token")
-	}
-	if err = s.m.UpsertRefreshToken(ctx, querier.UpsertRefreshTokenParams{
-		UserID: userID,
-		Token:  newRefreshToken,
-	}); err != nil {
-		return nil, errors.Wrapf(err, "failed to upsert refresh token")
 	}
 
 	return &apigen.Credentials{

@@ -47,6 +47,14 @@ func (controller *Controller) SignIn(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(credentials)
 }
 
+func (controller *Controller) SignOut(c *fiber.Ctx) error {
+	userID, err := auth.GetUserID(c)
+	if err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+	return controller.auth.InvalidateUserTokens(c.Context(), userID)
+}
+
 func (controller *Controller) RefreshToken(c *fiber.Ctx) error {
 	var params apigen.RefreshTokenRequest
 	if err := c.BodyParser(&params); err != nil {

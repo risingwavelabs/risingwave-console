@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
@@ -26,10 +26,13 @@ func NewStore(model model.ModelInterface, taskStore task.TaskStoreInterface) Key
 	}
 }
 
-func (s *Store) Create(ctx context.Context, key []byte, ttl time.Duration) (int64, error) {
+func (s *Store) Create(ctx context.Context, userID int32, key []byte, ttl time.Duration) (int64, error) {
 	var ret int64
 	if err := s.model.RunTransaction(ctx, func(txm model.ModelInterface) error {
-		keyID, err := txm.CreateOpaqueKey(ctx, key)
+		keyID, err := txm.CreateOpaqueKey(ctx, querier.CreateOpaqueKeyParams{
+			UserID: userID,
+			Key:    key,
+		})
 		if err != nil {
 			return errors.Wrap(err, "failed to create key")
 		}
@@ -78,6 +81,17 @@ func (s *Store) Delete(ctx context.Context, keyID int64) error {
 			return ErrKeyNotFound
 		}
 		return errors.Wrap(err, "failed to delete key")
+	}
+	return nil
+}
+
+func (s *Store) DeleteUserKeys(ctx context.Context, userID int32) error {
+	err := s.model.DeleteOpaqueKeys(ctx, userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrKeyNotFound
+		}
+		return errors.Wrap(err, "failed to delete user keys")
 	}
 	return nil
 }

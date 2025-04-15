@@ -17,8 +17,8 @@ const (
 )
 
 const (
-	TimeoutRefreshToken = time.Hour * 24 * 30
-	TimeoutAccessToken  = time.Minute * 30
+	TimeoutAccessToken  = time.Minute * 5
+	TimeoutRefreshToken = time.Hour * 2
 )
 
 var ErrUserIdentityNotExist = errors.New("user identity not exists")
@@ -40,6 +40,9 @@ type AuthInterface interface {
 
 	// ParseRefreshToken parses the given refresh token and returns the user ID
 	ParseRefreshToken(ctx context.Context, refreshToken string) (int32, error)
+
+	// InvalidateUserTokens invalidates all tokens for the given user
+	InvalidateUserTokens(ctx context.Context, userID int32) error
 }
 
 type Auth struct {
@@ -82,7 +85,7 @@ func (a *Auth) Authfunc(c *fiber.Ctx, rules ...string) error {
 }
 
 func (a *Auth) CreateToken(ctx context.Context, user *querier.User, rules []string) (int64, string, error) {
-	token, err := a.macaroons.CreateToken(ctx, []macaroons.Caveat{
+	token, err := a.macaroons.CreateToken(ctx, user.ID, []macaroons.Caveat{
 		NewUserContextCaveat(user.ID, user.OrganizationID),
 	}, TimeoutAccessToken)
 	if err != nil {
@@ -92,7 +95,7 @@ func (a *Auth) CreateToken(ctx context.Context, user *querier.User, rules []stri
 }
 
 func (a *Auth) CreateRefreshToken(ctx context.Context, accessKeyID int64, userID int32) (string, error) {
-	token, err := a.macaroons.CreateToken(ctx, []macaroons.Caveat{
+	token, err := a.macaroons.CreateToken(ctx, userID, []macaroons.Caveat{
 		NewRefreshOnlyCaveat(userID, accessKeyID),
 	}, TimeoutRefreshToken)
 	if err != nil {
@@ -104,7 +107,7 @@ func (a *Auth) CreateRefreshToken(ctx context.Context, accessKeyID int64, userID
 func (a *Auth) ParseRefreshToken(ctx context.Context, refreshToken string) (int32, error) {
 	token, err := a.macaroons.Parse(ctx, refreshToken)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to parse macaroon token")
+		return 0, errors.Wrapf(err, "failed to parse macaroon token, token: %s", refreshToken)
 	}
 
 	for _, caveat := range token.Caveats() {
@@ -118,6 +121,10 @@ func (a *Auth) ParseRefreshToken(ctx context.Context, refreshToken string) (int3
 	}
 
 	return 0, errors.New("no userID found in refresh token")
+}
+
+func (a *Auth) InvalidateUserTokens(ctx context.Context, userID int32) error {
+	return a.macaroons.InvalidateUserTokens(ctx, userID)
 }
 
 func GetUserID(c *fiber.Ctx) (int32, error) {

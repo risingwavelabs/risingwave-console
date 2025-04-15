@@ -118,9 +118,10 @@ func (s *Server) registerMiddleware() {
 		end := time.Now()
 		log.Info(
 			"response",
+			zap.Int("status", c.Response().StatusCode()),
 			zap.String("method", c.Method()),
 			zap.String("path", c.Path()),
-			zap.Int("status", c.Response().StatusCode()),
+			zap.String("token", fmt.Sprintf("%v", c.Get("Authorization"))),
 			zap.String("request-id", c.Locals(requestid.ConfigDefault.ContextKey).(string)),
 			zap.Float32("latency-ms", float32(end.Sub(start).Milliseconds())),
 			zap.String("body", utils.TruncateString(string(c.Response().Body()), 512)),

@@ -44,10 +44,11 @@ func TestMacaroonManager_CreateMacaroon(t *testing.T) {
 			&TestCaveat{Data: "caveat1"},
 			&TestCaveat{Data: "caveat2"},
 		}
-		ttl = time.Second * 10
+		ttl    = time.Second * 10
+		userID = int32(1)
 	)
 
-	keyStore.EXPECT().Create(gomock.Any(), []byte("key"), ttl).Return(keyID, nil)
+	keyStore.EXPECT().Create(gomock.Any(), userID, []byte("key"), ttl).Return(keyID, nil)
 	keyStore.EXPECT().Get(gomock.Any(), keyID).Return([]byte("key"), nil)
 
 	caveatParser.EXPECT().Parse("caveat1").Return(caveats[0], nil)
@@ -59,7 +60,7 @@ func TestMacaroonManager_CreateMacaroon(t *testing.T) {
 		randomKey:    func() ([]byte, error) { return []byte("key"), nil },
 	}
 
-	macaroon, err := manager.CreateToken(context.Background(), caveats, ttl)
+	macaroon, err := manager.CreateToken(context.Background(), userID, caveats, ttl)
 	require.NoError(t, err)
 
 	parsed, err := manager.Parse(context.Background(), macaroon.StringToken())

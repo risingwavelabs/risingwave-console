@@ -28,7 +28,12 @@ func NewCaveatParser() macaroons.CaveatParser {
 }
 
 func (c *CaveatParser) Parse(s string) (macaroons.Caveat, error) {
-	typ, err := utils.RetrieveFromJSON[string](s, "type")
+	decoded, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to decode base64 encoded caveat, raw: %s", s)
+	}
+
+	typ, err := utils.RetrieveFromJSON[string](string(decoded), "type")
 	if err != nil {
 		return nil, err
 	}

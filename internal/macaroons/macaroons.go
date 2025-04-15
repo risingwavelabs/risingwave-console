@@ -55,12 +55,12 @@ func NewMacaroonManager(keyStore KeyStore, caveatParser CaveatParser) MacaroonMa
 	}
 }
 
-func (m *MacaroonManager) CreateToken(ctx context.Context, caveats []Caveat, ttl time.Duration) (*Macaroon, error) {
+func (m *MacaroonManager) CreateToken(ctx context.Context, userID int32, caveats []Caveat, ttl time.Duration) (*Macaroon, error) {
 	key, err := m.randomKey()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate random key")
 	}
-	keyID, err := m.keyStore.Create(ctx, key, ttl)
+	keyID, err := m.keyStore.Create(ctx, userID, key, ttl)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get key")
 	}
@@ -156,6 +156,16 @@ func (m *MacaroonManager) InvalidateToken(ctx context.Context, token string) err
 		return errors.Wrap(err, "failed to delete key")
 	}
 
+	return nil
+}
+
+func (m *MacaroonManager) InvalidateUserTokens(ctx context.Context, userID int32) error {
+	if err := m.keyStore.DeleteUserKeys(ctx, userID); err != nil {
+		if errors.Is(err, ErrKeyNotFound) {
+			return nil
+		}
+		return errors.Wrap(err, "failed to delete user keys")
+	}
 	return nil
 }
 

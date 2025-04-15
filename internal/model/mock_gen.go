@@ -145,18 +145,18 @@ func (mr *MockModelInterfaceMockRecorder) CreateMetricsStore(ctx, arg any) *gomo
 }
 
 // CreateOpaqueKey mocks base method.
-func (m *MockModelInterface) CreateOpaqueKey(ctx context.Context, key []byte) (int64, error) {
+func (m *MockModelInterface) CreateOpaqueKey(ctx context.Context, arg querier.CreateOpaqueKeyParams) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOpaqueKey", ctx, key)
+	ret := m.ctrl.Call(m, "CreateOpaqueKey", ctx, arg)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateOpaqueKey indicates an expected call of CreateOpaqueKey.
-func (mr *MockModelInterfaceMockRecorder) CreateOpaqueKey(ctx, key any) *gomock.Call {
+func (mr *MockModelInterfaceMockRecorder) CreateOpaqueKey(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOpaqueKey", reflect.TypeOf((*MockModelInterface)(nil).CreateOpaqueKey), ctx, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOpaqueKey", reflect.TypeOf((*MockModelInterface)(nil).CreateOpaqueKey), ctx, arg)
 }
 
 // CreateOrganization mocks base method.
@@ -302,6 +302,20 @@ func (mr *MockModelInterfaceMockRecorder) DeleteOpaqueKey(ctx, id any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOpaqueKey", reflect.TypeOf((*MockModelInterface)(nil).DeleteOpaqueKey), ctx, id)
 }
 
+// DeleteOpaqueKeys mocks base method.
+func (m *MockModelInterface) DeleteOpaqueKeys(ctx context.Context, userID any) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOpaqueKeys", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteOpaqueKeys indicates an expected call of DeleteOpaqueKeys.
+func (mr *MockModelInterfaceMockRecorder) DeleteOpaqueKeys(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOpaqueKeys", reflect.TypeOf((*MockModelInterface)(nil).DeleteOpaqueKeys), ctx, userID)
+}
+
 // DeleteOrgCluster mocks base method.
 func (m *MockModelInterface) DeleteOrgCluster(ctx context.Context, arg querier.DeleteOrgClusterParams) error {
 	m.ctrl.T.Helper()
@@ -342,20 +356,6 @@ func (m *MockModelInterface) DeleteOrganization(ctx context.Context, id int32) e
 func (mr *MockModelInterfaceMockRecorder) DeleteOrganization(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrganization", reflect.TypeOf((*MockModelInterface)(nil).DeleteOrganization), ctx, id)
-}
-
-// DeleteRefreshToken mocks base method.
-func (m *MockModelInterface) DeleteRefreshToken(ctx context.Context, arg querier.DeleteRefreshTokenParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteRefreshToken", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteRefreshToken indicates an expected call of DeleteRefreshToken.
-func (mr *MockModelInterfaceMockRecorder) DeleteRefreshToken(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRefreshToken", reflect.TypeOf((*MockModelInterface)(nil).DeleteRefreshToken), ctx, arg)
 }
 
 // DeleteSnapshot mocks base method.
@@ -579,21 +579,6 @@ func (m *MockModelInterface) GetOrganization(ctx context.Context, id int32) (*qu
 func (mr *MockModelInterfaceMockRecorder) GetOrganization(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganization", reflect.TypeOf((*MockModelInterface)(nil).GetOrganization), ctx, id)
-}
-
-// GetRefreshToken mocks base method.
-func (m *MockModelInterface) GetRefreshToken(ctx context.Context, arg querier.GetRefreshTokenParams) (*querier.RefreshToken, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRefreshToken", ctx, arg)
-	ret0, _ := ret[0].(*querier.RefreshToken)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRefreshToken indicates an expected call of GetRefreshToken.
-func (mr *MockModelInterfaceMockRecorder) GetRefreshToken(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRefreshToken", reflect.TypeOf((*MockModelInterface)(nil).GetRefreshToken), ctx, arg)
 }
 
 // GetTaskByID mocks base method.
@@ -1035,18 +1020,4 @@ func (m *MockModelInterface) UpdateTaskStatus(ctx context.Context, arg querier.U
 func (mr *MockModelInterfaceMockRecorder) UpdateTaskStatus(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTaskStatus", reflect.TypeOf((*MockModelInterface)(nil).UpdateTaskStatus), ctx, arg)
-}
-
-// UpsertRefreshToken mocks base method.
-func (m *MockModelInterface) UpsertRefreshToken(ctx context.Context, arg querier.UpsertRefreshTokenParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertRefreshToken", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpsertRefreshToken indicates an expected call of UpsertRefreshToken.
-func (mr *MockModelInterfaceMockRecorder) UpsertRefreshToken(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRefreshToken", reflect.TypeOf((*MockModelInterface)(nil).UpsertRefreshToken), ctx, arg)
 }

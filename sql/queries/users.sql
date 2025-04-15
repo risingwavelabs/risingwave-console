@@ -24,4 +24,3 @@ WHERE name = $1;
 -- name: DeleteUserByName :exec
 DELETE FROM users
 WHERE name = $1;
-

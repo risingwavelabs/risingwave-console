@@ -718,6 +718,9 @@ type ClientInterface interface {
 
 	SignIn(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// SignOut request
+	SignOut(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListClusterVersions request
 	ListClusterVersions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -893,6 +896,18 @@ func (c *Client) SignInWithBody(ctx context.Context, contentType string, body io
 
 func (c *Client) SignIn(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewSignInRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SignOut(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSignOutRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1579,6 +1594,33 @@ func NewSignInRequestWithBody(server string, contentType string, body io.Reader)
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSignOutRequest generates requests for SignOut
+func NewSignOutRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/auth/sign-out")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -3103,6 +3145,9 @@ type ClientWithResponsesInterface interface {
 
 	SignInWithResponse(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*SignInResponse, error)
 
+	// SignOutWithResponse request
+	SignOutWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*SignOutResponse, error)
+
 	// ListClusterVersionsWithResponse request
 	ListClusterVersionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListClusterVersionsResponse, error)
 
@@ -3278,6 +3323,27 @@ func (r SignInResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r SignInResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SignOutResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r SignOutResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SignOutResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4100,6 +4166,15 @@ func (c *ClientWithResponses) SignInWithResponse(ctx context.Context, body SignI
 	return ParseSignInResponse(rsp)
 }
 
+// SignOutWithResponse request returning *SignOutResponse
+func (c *ClientWithResponses) SignOutWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*SignOutResponse, error) {
+	rsp, err := c.SignOut(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSignOutResponse(rsp)
+}
+
 // ListClusterVersionsWithResponse request returning *ListClusterVersionsResponse
 func (c *ClientWithResponses) ListClusterVersionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListClusterVersionsResponse, error) {
 	rsp, err := c.ListClusterVersions(ctx, reqEditors...)
@@ -4583,6 +4658,22 @@ func ParseSignInResponse(rsp *http.Response) (*SignInResponse, error) {
 		}
 		response.JSON200 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseSignOutResponse parses an HTTP response from a SignOutWithResponse call
+func ParseSignOutResponse(rsp *http.Response) (*SignOutResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SignOutResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
 	}
 
 	return response, nil
@@ -5432,6 +5523,9 @@ type ServerInterface interface {
 	// Sign in user
 	// (POST /auth/sign-in)
 	SignIn(c *fiber.Ctx) error
+	// Sign out user
+	// (POST /auth/sign-out)
+	SignOut(c *fiber.Ctx) error
 	// List all cluster versions
 	// (GET /cluster-versions)
 	ListClusterVersions(c *fiber.Ctx) error
@@ -5559,6 +5653,14 @@ func (siw *ServerInterfaceWrapper) RefreshToken(c *fiber.Ctx) error {
 func (siw *ServerInterfaceWrapper) SignIn(c *fiber.Ctx) error {
 
 	return siw.Handler.SignIn(c)
+}
+
+// SignOut operation middleware
+func (siw *ServerInterfaceWrapper) SignOut(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.SignOut(c)
 }
 
 // ListClusterVersions operation middleware
@@ -6230,6 +6332,8 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	router.Post(options.BaseURL+"/auth/refresh", wrapper.RefreshToken)
 
 	router.Post(options.BaseURL+"/auth/sign-in", wrapper.SignIn)
+
+	router.Post(options.BaseURL+"/auth/sign-out", wrapper.SignOut)
 
 	router.Get(options.BaseURL+"/cluster-versions", wrapper.ListClusterVersions)
 

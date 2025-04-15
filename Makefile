@@ -179,7 +179,7 @@ log:
 	$(K0S_KUBECTL) logs -l app=wavekit --follow
 
 db:
-	psql "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+	psql "postgresql://postgres:postgres@localhost:30432/postgres?sslmode=disable"
 
 ###################################################
 ### Build

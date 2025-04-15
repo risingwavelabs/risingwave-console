@@ -618,6 +618,18 @@ export class DefaultService {
         });
     }
     /**
+     * Sign out user
+     * Sign out user and invalidate all tokens
+     * @returns any Successfully signed out
+     * @throws ApiError
+     */
+    public static signOut(): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/auth/sign-out',
+        });
+    }
+    /**
      * Get a metrics store
      * Get a metrics store by ID
      * @param id
