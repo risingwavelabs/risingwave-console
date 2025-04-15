@@ -17,7 +17,7 @@ const (
 )
 
 const (
-	TimeoutAccessToken  = time.Minute * 5
+	TimeoutAccessToken  = time.Minute * 10
 	TimeoutRefreshToken = time.Hour * 2
 )
 

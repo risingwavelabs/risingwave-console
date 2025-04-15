@@ -51,6 +51,8 @@ func (s *Store) Create(ctx context.Context, userID int32, key []byte, ttl time.D
 						KeyID: keyID,
 					},
 				},
+				StartedAt: utils.Ptr(time.Now().Add(ttl)),
+				Status:    string(apigen.Pending),
 			}); err != nil {
 				return errors.Wrap(err, "failed to create task")
 			}
