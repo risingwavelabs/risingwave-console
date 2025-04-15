@@ -41,10 +41,9 @@ install-wire:
 
 WIRE_GEN=$(PROJECT_DIR)/bin/wire
 gen-wire: install-wire
-ifeq ($(EE), true)
-	$(WIRE_GEN) ./ee/wire
-else
 	$(WIRE_GEN) ./wire
+ifeq ($(EE), true)
+#$(WIRE_GEN) ./ee/wire
 endif
 
 ###################################################
@@ -88,7 +87,10 @@ gen-mock: install-mockgen
 	$(MOCKGEN_BIN) -source=internal/conn/meta/types.go -destination=internal/conn/meta/mock/mock_gen.go -package=mock
 	$(MOCKGEN_BIN) -source=internal/task/task.go -destination=internal/task/task_mock_gen.go -package=task
 	$(MOCKGEN_BIN) -source=internal/conn/http/http.go -destination=internal/conn/http/mock/http_mock_gen.go -package=mock
-	$(MOCKGEN_BIN) -source=ee/macaroons/types.go -destination=ee/macaroons/mock_gen.go -package=macaroons
+	$(MOCKGEN_BIN) -source=internal/macaroons/interfaces.go -destination=internal/macaroons/mock_gen.go -package=macaroons
+ifeq ($(EE), true)
+	
+endif
 
 ###################################################
 ### Common

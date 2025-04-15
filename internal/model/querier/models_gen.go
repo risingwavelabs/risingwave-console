@@ -95,6 +95,13 @@ type MetricsStore struct {
 	UpdatedAt      pgtype.Timestamp
 }
 
+type OpaqueKey struct {
+	ID        int64
+	Key       []byte
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type OrgSetting struct {
 	OrganizationID int32
 	Timezone       string

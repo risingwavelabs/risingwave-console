@@ -53,12 +53,12 @@ func (controller *Controller) RefreshToken(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	userID, refreshToken, err := controller.auth.ParseJWTRefreshToken(params.RefreshToken)
+	userID, err := controller.auth.ParseRefreshToken(c.Context(), params.RefreshToken)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
-	credentials, err := controller.svc.RefreshToken(c.Context(), userID, refreshToken)
+	credentials, err := controller.svc.RefreshToken(c.Context(), userID, params.RefreshToken)
 	if err != nil {
 		if errors.Is(err, service.ErrRefreshTokenExpired) {
 			return c.SendStatus(fiber.StatusUnauthorized)
@@ -75,12 +75,12 @@ func (controller *Controller) CreateCluster(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	cluster, err := controller.svc.CreateCluster(c.Context(), params, user.OrganizationID)
+	cluster, err := controller.svc.CreateCluster(c.Context(), params, orgID)
 	if err != nil {
 		return err
 	}
@@ -89,12 +89,12 @@ func (controller *Controller) CreateCluster(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) DeleteCluster(c *fiber.Ctx, id int32, params apigen.DeleteClusterParams) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	err = controller.svc.DeleteCluster(c.Context(), id, utils.UnwrapOrDefault(params.Cascade, false), user.OrganizationID)
+	err = controller.svc.DeleteCluster(c.Context(), id, utils.UnwrapOrDefault(params.Cascade, false), orgID)
 	if err != nil {
 		if errors.Is(err, service.ErrClusterHasDatabaseConnections) {
 			return c.Status(fiber.StatusConflict).SendString(err.Error())
@@ -106,12 +106,12 @@ func (controller *Controller) DeleteCluster(c *fiber.Ctx, id int32, params apige
 }
 
 func (controller *Controller) GetCluster(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	cluster, err := controller.svc.GetCluster(c.Context(), id, user.OrganizationID)
+	cluster, err := controller.svc.GetCluster(c.Context(), id, orgID)
 	if err != nil {
 		if errors.Is(err, service.ErrClusterNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
@@ -123,7 +123,7 @@ func (controller *Controller) GetCluster(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) UpdateCluster(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
@@ -133,7 +133,7 @@ func (controller *Controller) UpdateCluster(c *fiber.Ctx, id int32) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	cluster, err := controller.svc.UpdateCluster(c.Context(), id, params, user.OrganizationID)
+	cluster, err := controller.svc.UpdateCluster(c.Context(), id, params, orgID)
 	if err != nil {
 		if errors.Is(err, service.ErrClusterNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
@@ -145,12 +145,12 @@ func (controller *Controller) UpdateCluster(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) ListClusters(c *fiber.Ctx) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	clusters, err := controller.svc.ListClusters(c.Context(), user.OrganizationID)
+	clusters, err := controller.svc.ListClusters(c.Context(), orgID)
 	if err != nil {
 		return err
 	}
@@ -164,12 +164,12 @@ func (controller *Controller) CreateDatabase(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	database, err := controller.svc.CreateDatabase(c.Context(), params, user.OrganizationID)
+	database, err := controller.svc.CreateDatabase(c.Context(), params, orgID)
 	if err != nil {
 		return err
 	}
@@ -178,12 +178,12 @@ func (controller *Controller) CreateDatabase(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) DeleteDatabase(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	err = controller.svc.DeleteDatabase(c.Context(), id, user.OrganizationID)
+	err = controller.svc.DeleteDatabase(c.Context(), id, orgID)
 	if err != nil {
 		return err
 	}
@@ -192,12 +192,12 @@ func (controller *Controller) DeleteDatabase(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) GetDatabase(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	database, err := controller.svc.GetDatabase(c.Context(), id, user.OrganizationID)
+	database, err := controller.svc.GetDatabase(c.Context(), id, orgID)
 	if err != nil {
 		if errors.Is(err, service.ErrDatabaseNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
@@ -214,12 +214,12 @@ func (controller *Controller) UpdateDatabase(c *fiber.Ctx, id int32) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	database, err := controller.svc.UpdateDatabase(c.Context(), id, params, user.OrganizationID)
+	database, err := controller.svc.UpdateDatabase(c.Context(), id, params, orgID)
 	if err != nil {
 		if errors.Is(err, service.ErrDatabaseNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
@@ -231,12 +231,12 @@ func (controller *Controller) UpdateDatabase(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) ListDatabases(c *fiber.Ctx) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	databases, err := controller.svc.ListDatabases(c.Context(), user.OrganizationID)
+	databases, err := controller.svc.ListDatabases(c.Context(), orgID)
 	if err != nil {
 		return err
 	}
@@ -245,12 +245,12 @@ func (controller *Controller) ListDatabases(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) GetDDLProgress(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	progress, err := controller.svc.GetDDLProgress(c.Context(), id, user.OrganizationID)
+	progress, err := controller.svc.GetDDLProgress(c.Context(), id, orgID)
 	if err != nil {
 		return err
 	}
@@ -259,12 +259,12 @@ func (controller *Controller) GetDDLProgress(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) CancelDDLProgress(c *fiber.Ctx, id int32, ddlID int64) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	err = controller.svc.CancelDDLProgress(c.Context(), id, ddlID, user.OrganizationID)
+	err = controller.svc.CancelDDLProgress(c.Context(), id, ddlID, orgID)
 	if err != nil {
 		return err
 	}
@@ -273,7 +273,7 @@ func (controller *Controller) CancelDDLProgress(c *fiber.Ctx, id int32, ddlID in
 }
 
 func (controller *Controller) TestDatabaseConnection(c *fiber.Ctx) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
@@ -283,7 +283,7 @@ func (controller *Controller) TestDatabaseConnection(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	result, err := controller.svc.TestDatabaseConnection(c.Context(), params, user.OrganizationID)
+	result, err := controller.svc.TestDatabaseConnection(c.Context(), params, orgID)
 	if err != nil {
 		return err
 	}
@@ -297,12 +297,12 @@ func (controller *Controller) QueryDatabase(c *fiber.Ctx, id int32) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	result, err := controller.svc.QueryDatabase(c.Context(), id, params, user.OrganizationID, utils.UnwrapOrDefault(params.BackgroundDDL, false))
+	result, err := controller.svc.QueryDatabase(c.Context(), id, params, orgID, utils.UnwrapOrDefault(params.BackgroundDDL, false))
 	if err != nil {
 		if errors.Is(err, service.ErrDatabaseNotFound) {
 			return c.Status(fiber.StatusNotFound).SendString(fmt.Sprintf("database %d not found", id))
@@ -314,7 +314,7 @@ func (controller *Controller) QueryDatabase(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) CreateClusterSnapshot(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
@@ -324,7 +324,7 @@ func (controller *Controller) CreateClusterSnapshot(c *fiber.Ctx, id int32) erro
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	snapshot, err := controller.svc.CreateClusterSnapshot(c.Context(), id, params.Name, user.OrganizationID)
+	snapshot, err := controller.svc.CreateClusterSnapshot(c.Context(), id, params.Name, orgID)
 	if err != nil {
 		return err
 	}
@@ -333,12 +333,12 @@ func (controller *Controller) CreateClusterSnapshot(c *fiber.Ctx, id int32) erro
 }
 
 func (controller *Controller) DeleteClusterSnapshot(c *fiber.Ctx, id int32, snapshotId int64) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	err = controller.svc.DeleteClusterSnapshot(c.Context(), id, snapshotId, user.OrganizationID)
+	err = controller.svc.DeleteClusterSnapshot(c.Context(), id, snapshotId, orgID)
 	if err != nil {
 		return err
 	}
@@ -350,12 +350,12 @@ func (controller *Controller) RestoreClusterSnapshot(c *fiber.Ctx, id int32, sna
 }
 
 func (controller *Controller) ListClusterSnapshots(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	snapshots, err := controller.svc.ListClusterSnapshots(c.Context(), id, user.OrganizationID)
+	snapshots, err := controller.svc.ListClusterSnapshots(c.Context(), id, orgID)
 	if err != nil {
 		return err
 	}
@@ -363,12 +363,12 @@ func (controller *Controller) ListClusterSnapshots(c *fiber.Ctx, id int32) error
 }
 
 func (controller *Controller) ListClusterDiagnostics(c *fiber.Ctx, id int32, params apigen.ListClusterDiagnosticsParams) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	diagnostics, err := controller.svc.ListClusterDiagnostics(c.Context(), id, user.OrganizationID)
+	diagnostics, err := controller.svc.ListClusterDiagnostics(c.Context(), id, orgID)
 	if err != nil {
 		return err
 	}
@@ -376,12 +376,12 @@ func (controller *Controller) ListClusterDiagnostics(c *fiber.Ctx, id int32, par
 }
 
 func (controller *Controller) GetClusterAutoBackupConfig(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	config, err := controller.svc.GetClusterAutoBackupConfig(c.Context(), id, user.OrganizationID)
+	config, err := controller.svc.GetClusterAutoBackupConfig(c.Context(), id, orgID)
 	if err != nil {
 		return err
 	}
@@ -389,7 +389,7 @@ func (controller *Controller) GetClusterAutoBackupConfig(c *fiber.Ctx, id int32)
 }
 
 func (controller *Controller) UpdateClusterAutoBackupConfig(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
@@ -399,7 +399,7 @@ func (controller *Controller) UpdateClusterAutoBackupConfig(c *fiber.Ctx, id int
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	err = controller.svc.UpdateClusterAutoBackupConfig(c.Context(), id, params, user.OrganizationID)
+	err = controller.svc.UpdateClusterAutoBackupConfig(c.Context(), id, params, orgID)
 	if err != nil {
 		return err
 	}
@@ -408,12 +408,12 @@ func (controller *Controller) UpdateClusterAutoBackupConfig(c *fiber.Ctx, id int
 }
 
 func (controller *Controller) GetClusterAutoDiagnosticConfig(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	config, err := controller.svc.GetClusterAutoDiagnosticConfig(c.Context(), id, user.OrganizationID)
+	config, err := controller.svc.GetClusterAutoDiagnosticConfig(c.Context(), id, orgID)
 	if err != nil {
 		return err
 	}
@@ -421,7 +421,7 @@ func (controller *Controller) GetClusterAutoDiagnosticConfig(c *fiber.Ctx, id in
 }
 
 func (controller *Controller) UpdateClusterAutoDiagnosticConfig(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
@@ -431,7 +431,7 @@ func (controller *Controller) UpdateClusterAutoDiagnosticConfig(c *fiber.Ctx, id
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	err = controller.svc.UpdateClusterAutoDiagnosticConfig(c.Context(), id, params, user.OrganizationID)
+	err = controller.svc.UpdateClusterAutoDiagnosticConfig(c.Context(), id, params, orgID)
 	if err != nil {
 		return err
 	}
@@ -453,12 +453,12 @@ func (controller *Controller) TestClusterConnection(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	conn, err := controller.svc.TestClusterConnection(c.Context(), params, user.OrganizationID)
+	conn, err := controller.svc.TestClusterConnection(c.Context(), params, orgID)
 	if err != nil {
 		return err
 	}
@@ -467,7 +467,7 @@ func (controller *Controller) TestClusterConnection(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) RunRisectlCommand(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
@@ -477,7 +477,7 @@ func (controller *Controller) RunRisectlCommand(c *fiber.Ctx, id int32) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	result, err := controller.svc.RunRisectlCommand(c.Context(), id, params, user.OrganizationID)
+	result, err := controller.svc.RunRisectlCommand(c.Context(), id, params, orgID)
 	if err != nil {
 		return err
 	}
@@ -486,12 +486,12 @@ func (controller *Controller) RunRisectlCommand(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) CreateClusterDiagnostic(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	diagnostic, err := controller.svc.CreateClusterDiagnostic(c.Context(), id, user.OrganizationID)
+	diagnostic, err := controller.svc.CreateClusterDiagnostic(c.Context(), id, orgID)
 	if err != nil {
 		return err
 	}
@@ -499,12 +499,12 @@ func (controller *Controller) CreateClusterDiagnostic(c *fiber.Ctx, id int32) er
 }
 
 func (controller *Controller) GetClusterDiagnostic(c *fiber.Ctx, id int32, diagnosticId int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	diagnostic, err := controller.svc.GetClusterDiagnostic(c.Context(), id, diagnosticId, user.OrganizationID)
+	diagnostic, err := controller.svc.GetClusterDiagnostic(c.Context(), id, diagnosticId, orgID)
 	if err != nil {
 		return err
 	}
@@ -528,12 +528,12 @@ func (controller *Controller) CreateMetricsStore(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	ms, err := controller.svc.CreateMetricsStore(c.Context(), req, user.OrganizationID)
+	ms, err := controller.svc.CreateMetricsStore(c.Context(), req, orgID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
@@ -542,7 +542,7 @@ func (controller *Controller) CreateMetricsStore(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) DeleteMetricsStore(c *fiber.Ctx, id int32, params apigen.DeleteMetricsStoreParams) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
@@ -561,7 +561,7 @@ func (controller *Controller) DeleteMetricsStore(c *fiber.Ctx, id int32, params 
 		}
 	}
 
-	if err := controller.svc.DeleteMetricsStore(c.Context(), id, user.OrganizationID, params.Force); err != nil {
+	if err := controller.svc.DeleteMetricsStore(c.Context(), id, orgID, params.Force); err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 
@@ -569,12 +569,12 @@ func (controller *Controller) DeleteMetricsStore(c *fiber.Ctx, id int32, params 
 }
 
 func (controller *Controller) GetMetricsStore(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	ms, err := controller.svc.GetMetricsStore(c.Context(), id, user.OrganizationID)
+	ms, err := controller.svc.GetMetricsStore(c.Context(), id, orgID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
@@ -583,12 +583,12 @@ func (controller *Controller) GetMetricsStore(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) ListMetricsStores(c *fiber.Ctx) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	msList, err := controller.svc.ListMetricsStores(c.Context(), user.OrganizationID)
+	msList, err := controller.svc.ListMetricsStores(c.Context(), orgID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
@@ -597,7 +597,7 @@ func (controller *Controller) ListMetricsStores(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) UpdateMetricsStore(c *fiber.Ctx, id int32) error {
-	user, err := auth.GetUser(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
@@ -607,7 +607,7 @@ func (controller *Controller) UpdateMetricsStore(c *fiber.Ctx, id int32) error {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
-	ms, err := controller.svc.UpdateMetricsStore(c.Context(), id, req, user.OrganizationID)
+	ms, err := controller.svc.UpdateMetricsStore(c.Context(), id, req, orgID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}

@@ -16,6 +16,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/controller"
 	"github.com/risingwavelabs/wavekit/internal/globalctx"
+	"github.com/risingwavelabs/wavekit/internal/macaroons"
 	"github.com/risingwavelabs/wavekit/internal/metrics"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/server"
@@ -36,7 +37,11 @@ func InitializeApplication() (*app.Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	authInterface, err := auth.NewAuth(configConfig)
+	taskStoreInterface := task.NewTaskStore(modelInterface)
+	keyStore := macaroons.NewStore(modelInterface, taskStoreInterface)
+	caveatParser := auth.NewCaveatParser()
+	macaroonManagerInterface := macaroons.NewMacaroonManager(keyStore, caveatParser)
+	authInterface, err := auth.NewAuth(macaroonManagerInterface)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +63,6 @@ func InitializeApplication() (*app.Application, error) {
 		return nil, err
 	}
 	metricsServer := metrics.NewMetricsServer(configConfig, globalContext)
-	taskStoreInterface := task.NewTaskStore(modelInterface)
 	taskHandler := task.NewTaskHandler(modelInterface, risectlManagerInterface, taskStoreInterface, metaHttpManagerInterface)
 	workerWorker, err := worker.NewWorker(globalContext, modelInterface, taskHandler)
 	if err != nil {

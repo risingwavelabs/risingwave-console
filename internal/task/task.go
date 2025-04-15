@@ -106,6 +106,11 @@ func (e *TaskHandler) HandleTask(ctx context.Context, task apigen.Task) error {
 			return fmt.Errorf("delete snapshot spec is nil")
 		}
 		return e.ExecuteDeleteSnapshot(ctx, *task.Spec.DeleteSnapshot)
+	case apigen.DeleteOpaqueKey:
+		if task.Spec.DeleteOpaqueKey == nil {
+			return fmt.Errorf("delete opaque key spec is nil")
+		}
+		return e.ExecuteDeleteOpaqueKey(ctx, *task.Spec.DeleteOpaqueKey)
 	default:
 		return fmt.Errorf("unknown task type: %s", task.Spec.Type)
 	}
@@ -262,5 +267,16 @@ func (e *TaskHandler) ExecuteDeleteSnapshot(ctx context.Context, spec apigen.Tas
 		return errors.Wrapf(err, "failed to delete snapshot in database, cluster_name: %s, cluster_id: %d, snapshot_id: %d", cluster.Name, cluster.ID, spec.SnapshotID)
 	}
 
+	return nil
+}
+
+func (e *TaskHandler) ExecuteDeleteOpaqueKey(ctx context.Context, spec apigen.TaskSpecDeleteOpaqueKey) error {
+	if err := e.model.DeleteOpaqueKey(ctx, spec.KeyID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info("opaque key not found, skipping delete", zap.Int64("key_id", spec.KeyID))
+			return nil
+		}
+		return errors.Wrapf(err, "failed to delete opaque key in database, key_id: %d", spec.KeyID)
+	}
 	return nil
 }

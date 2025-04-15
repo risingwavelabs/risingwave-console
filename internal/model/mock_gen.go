@@ -144,6 +144,21 @@ func (mr *MockModelInterfaceMockRecorder) CreateMetricsStore(ctx, arg any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMetricsStore", reflect.TypeOf((*MockModelInterface)(nil).CreateMetricsStore), ctx, arg)
 }
 
+// CreateOpaqueKey mocks base method.
+func (m *MockModelInterface) CreateOpaqueKey(ctx context.Context, key []byte) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateOpaqueKey", ctx, key)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateOpaqueKey indicates an expected call of CreateOpaqueKey.
+func (mr *MockModelInterfaceMockRecorder) CreateOpaqueKey(ctx, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOpaqueKey", reflect.TypeOf((*MockModelInterface)(nil).CreateOpaqueKey), ctx, key)
+}
+
 // CreateOrganization mocks base method.
 func (m *MockModelInterface) CreateOrganization(ctx context.Context, name string) (*querier.Organization, error) {
 	m.ctrl.T.Helper()
@@ -271,6 +286,20 @@ func (m *MockModelInterface) DeleteMetricsStore(ctx context.Context, arg querier
 func (mr *MockModelInterfaceMockRecorder) DeleteMetricsStore(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMetricsStore", reflect.TypeOf((*MockModelInterface)(nil).DeleteMetricsStore), ctx, arg)
+}
+
+// DeleteOpaqueKey mocks base method.
+func (m *MockModelInterface) DeleteOpaqueKey(ctx context.Context, id int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOpaqueKey", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteOpaqueKey indicates an expected call of DeleteOpaqueKey.
+func (mr *MockModelInterfaceMockRecorder) DeleteOpaqueKey(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOpaqueKey", reflect.TypeOf((*MockModelInterface)(nil).DeleteOpaqueKey), ctx, id)
 }
 
 // DeleteOrgCluster mocks base method.
@@ -475,6 +504,21 @@ func (m *MockModelInterface) GetMetricsStoreByIDAndOrgID(ctx context.Context, ar
 func (mr *MockModelInterfaceMockRecorder) GetMetricsStoreByIDAndOrgID(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricsStoreByIDAndOrgID", reflect.TypeOf((*MockModelInterface)(nil).GetMetricsStoreByIDAndOrgID), ctx, arg)
+}
+
+// GetOpaqueKey mocks base method.
+func (m *MockModelInterface) GetOpaqueKey(ctx context.Context, id int64) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOpaqueKey", ctx, id)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOpaqueKey indicates an expected call of GetOpaqueKey.
+func (mr *MockModelInterfaceMockRecorder) GetOpaqueKey(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpaqueKey", reflect.TypeOf((*MockModelInterface)(nil).GetOpaqueKey), ctx, id)
 }
 
 // GetOrgCluster mocks base method.

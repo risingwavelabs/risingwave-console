@@ -1553,7 +1553,7 @@ components:
       properties:
         type:
           type: string
-          enum: ["auto-backup", "auto-diagnostic", "delete-snapshot", "delete-cluster-diagnostic"]
+          enum: ["auto-backup", "auto-diagnostic", "delete-snapshot", "delete-cluster-diagnostic", "delete-opaque-key"]
         autoBackup:
           $ref: "#/components/schemas/TaskSpecAutoBackup"
         autoDiagnostic:
@@ -1562,6 +1562,8 @@ components:
           $ref: "#/components/schemas/TaskSpecDeleteSnapshot"
         deleteClusterDiagnostic:
           $ref: "#/components/schemas/TaskSpecDeleteClusterDiagnostic"
+        deleteOpaqueKey:
+          $ref: "#/components/schemas/TaskSpecDeleteOpaqueKey"
 
     TaskSpecDeleteSnapshot:
       type: object
@@ -1606,6 +1608,14 @@ components:
         retentionDuration:
           type: string
           description: Retention duration of the diagnostic data, e.g. 1d, 1w, 1m, 1y
+    
+    TaskSpecDeleteOpaqueKey:
+      type: object
+      required: [keyID]
+      properties:
+        keyID:
+          type: integer
+          format: int64
 
     Event:
       type: object

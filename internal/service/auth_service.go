@@ -27,11 +27,11 @@ func (s *Service) SignIn(ctx context.Context, params apigen.SignInRequest) (*api
 	if input != user.PasswordHash {
 		return nil, ErrInvalidPassword
 	}
-	token, err := s.auth.CreateToken(user, nil)
+	keyID, token, err := s.auth.CreateToken(ctx, user, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create token")
 	}
-	refreshToken, jwtToken, err := s.auth.CreateRefreshToken(user.ID)
+	refreshToken, err := s.auth.CreateRefreshToken(ctx, keyID, user.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to generate refresh token")
 	}
@@ -45,7 +45,7 @@ func (s *Service) SignIn(ctx context.Context, params apigen.SignInRequest) (*api
 
 	return &apigen.Credentials{
 		AccessToken:  token,
-		RefreshToken: jwtToken,
+		RefreshToken: refreshToken,
 		TokenType:    apigen.Bearer,
 	}, nil
 }
@@ -65,8 +65,12 @@ func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken s
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get user by id: %d", userID)
 	}
+	keyID, accessToken, err := s.auth.CreateToken(ctx, user, nil)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create token")
+	}
 
-	newRefreshToken, jwtToken, err := s.auth.CreateRefreshToken(userID)
+	newRefreshToken, err := s.auth.CreateRefreshToken(ctx, keyID, userID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to generate refresh token")
 	}
@@ -76,14 +80,10 @@ func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken s
 	}); err != nil {
 		return nil, errors.Wrapf(err, "failed to upsert refresh token")
 	}
-	accessToken, err := s.auth.CreateToken(user, nil)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create token")
-	}
 
 	return &apigen.Credentials{
 		AccessToken:  accessToken,
-		RefreshToken: jwtToken,
+		RefreshToken: newRefreshToken,
 		TokenType:    apigen.Bearer,
 	}, nil
 }

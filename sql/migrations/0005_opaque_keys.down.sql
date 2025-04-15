@@ -1,0 +1,5 @@
+BEGIN;
+
+DROP TABLE IF EXISTS opaque_keys;
+
+COMMIT;

@@ -1,0 +1,10 @@
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS opaque_keys (
+    id              BIGSERIAL   PRIMARY KEY,
+    key             BYTEA       NOT NULL,
+    created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+COMMIT;

@@ -11,11 +11,6 @@ type Pg struct {
 	DSN *string `yaml:"dsn,omitempty"`
 }
 
-type Jwt struct {
-	// (Optional) The secret of the jwt. If not set, a random secret will be used.
-	Secret string `yaml:"secret"`
-}
-
 type Root struct {
 	// (Optional) The password of the root user, if not set, the default password is "123456"
 	Password string `yaml:"password"`
@@ -47,9 +42,6 @@ type Config struct {
 
 	// (Optional) The port of the metrics server, default is 9020
 	MetricsPort int `yaml:"metricsport,omitempty"`
-
-	// The jwt configuration
-	Jwt Jwt `yaml:"jwt,omitempty"`
 
 	// The postgres configuration
 	Pg Pg `yaml:"pg,omitempty"`

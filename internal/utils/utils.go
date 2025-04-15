@@ -141,3 +141,42 @@ func ParseDuration(s string) (time.Duration, error) {
 	}
 	return time.ParseDuration(s)
 }
+
+// RetrieveFromJSON uses json.Decoder to parse only one field in a streaming way
+func RetrieveFromJSON[T any](s string, targetKey string) (*T, error) {
+	decoder := json.NewDecoder(strings.NewReader(s))
+
+	// Read opening brace
+	if _, err := decoder.Token(); err != nil {
+		return nil, err
+	}
+
+	var ret *T
+	for decoder.More() {
+		token, err := decoder.Token()
+		if err != nil {
+			return nil, err
+		}
+
+		if key, ok := token.(string); ok && key == targetKey {
+			if token, err = decoder.Token(); err != nil {
+				return nil, err
+			}
+			if val, ok := token.(T); ok {
+				ret = &val
+				break
+			}
+		} else {
+			// Skip the value for this field
+			if _, err := decoder.Token(); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if ret == nil {
+		return nil, errors.Errorf("missing attribute: %s", targetKey)
+	}
+
+	return ret, nil
+}

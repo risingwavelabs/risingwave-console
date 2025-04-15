@@ -63,6 +63,7 @@ const (
 	AutoBackup              TaskSpecType = "auto-backup"
 	AutoDiagnostic          TaskSpecType = "auto-diagnostic"
 	DeleteClusterDiagnostic TaskSpecType = "delete-cluster-diagnostic"
+	DeleteOpaqueKey         TaskSpecType = "delete-opaque-key"
 	DeleteSnapshot          TaskSpecType = "delete-snapshot"
 )
 
@@ -472,6 +473,7 @@ type TaskSpec struct {
 	AutoBackup              *TaskSpecAutoBackup              `json:"autoBackup,omitempty"`
 	AutoDiagnostic          *TaskSpecAutoDiagnostic          `json:"autoDiagnostic,omitempty"`
 	DeleteClusterDiagnostic *TaskSpecDeleteClusterDiagnostic `json:"deleteClusterDiagnostic,omitempty"`
+	DeleteOpaqueKey         *TaskSpecDeleteOpaqueKey         `json:"deleteOpaqueKey,omitempty"`
 	DeleteSnapshot          *TaskSpecDeleteSnapshot          `json:"deleteSnapshot,omitempty"`
 	Type                    TaskSpecType                     `json:"type"`
 }
@@ -499,6 +501,11 @@ type TaskSpecAutoDiagnostic struct {
 type TaskSpecDeleteClusterDiagnostic struct {
 	ClusterID    int32 `json:"clusterID"`
 	DiagnosticID int32 `json:"diagnosticID"`
+}
+
+// TaskSpecDeleteOpaqueKey defines model for TaskSpecDeleteOpaqueKey.
+type TaskSpecDeleteOpaqueKey struct {
+	KeyID int64 `json:"keyID"`
 }
 
 // TaskSpecDeleteSnapshot defines model for TaskSpecDeleteSnapshot.
