@@ -217,8 +217,9 @@ ci: doc build-web build-server build-binary push-docker binary-push
 
 ut:
 	@COLOR=ALWAYS go test -race -covermode=atomic -coverprofile=coverage.out -tags ut ./... 
-	@go tool cover -html coverage.out -o coverage.html
-	@go tool cover -func coverage.out | fgrep total | awk '{print "Coverage:", $$3}'
+	@grep -vE "_gen\.go|/mock[s]?/" coverage.out > coverage.filtered
+	@go tool cover -func=coverage.filtered | fgrep total | awk '{print "Coverage:", $$3}'
+	@go tool cover -html=coverage.filtered -o coverage.html
 
 
 # https://pkg.go.dev/net/http/pprof#hdr-Usage_examples
