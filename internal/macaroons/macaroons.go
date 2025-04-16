@@ -1,3 +1,17 @@
+// Copyright 2025 RisingWave Labs
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package macaroons
 
 import (
@@ -11,11 +25,11 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/risingwavelabs/wavekit/internal/macaroons/store"
 )
 
 var (
 	ErrMalformedToken   = errors.New("malformed token")
-	ErrKeyNotFound      = errors.New("key not found")
 	ErrInvalidSignature = errors.New("invalid signature")
 )
 
@@ -41,13 +55,13 @@ func (m *Macaroon) KeyID() int64 {
 }
 
 type MacaroonManager struct {
-	keyStore     KeyStore
+	keyStore     store.KeyStore
 	caveatParser CaveatParser
 
 	randomKey func() ([]byte, error)
 }
 
-func NewMacaroonManager(keyStore KeyStore, caveatParser CaveatParser) MacaroonManagerInterface {
+func NewMacaroonManager(keyStore store.KeyStore, caveatParser CaveatParser) MacaroonManagerInterface {
 	return &MacaroonManager{
 		keyStore:     keyStore,
 		caveatParser: caveatParser,
@@ -140,28 +154,9 @@ func (m *MacaroonManager) Parse(ctx context.Context, token string) (*Macaroon, e
 	}, nil
 }
 
-func (m *MacaroonManager) InvalidateToken(ctx context.Context, token string) error {
-	macaroon, err := m.Parse(ctx, token)
-	if err != nil {
-		if errors.Is(err, ErrKeyNotFound) {
-			return nil
-		}
-		return errors.Wrap(err, "failed to parse token")
-	}
-
-	if err := m.keyStore.Delete(ctx, macaroon.keyID); err != nil {
-		if errors.Is(err, ErrKeyNotFound) {
-			return nil
-		}
-		return errors.Wrap(err, "failed to delete key")
-	}
-
-	return nil
-}
-
 func (m *MacaroonManager) InvalidateUserTokens(ctx context.Context, userID int32) error {
 	if err := m.keyStore.DeleteUserKeys(ctx, userID); err != nil {
-		if errors.Is(err, ErrKeyNotFound) {
+		if errors.Is(err, store.ErrKeyNotFound) {
 			return nil
 		}
 		return errors.Wrap(err, "failed to delete user keys")

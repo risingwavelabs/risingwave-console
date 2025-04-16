@@ -12,33 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package macaroons
+package store
 
 import (
 	"context"
 	"time"
-
-	"github.com/gofiber/fiber/v2"
 )
 
-type CaveatParser interface {
-	Parse(string) (Caveat, error)
-}
+type KeyStore interface {
+	// Create creates a new key and returns the keyID.
+	Create(ctx context.Context, userID int32, key []byte, ttl time.Duration) (int64, error)
 
-type Caveat interface {
-	Encode() (string, error)
+	// Get returns the key for the given keyID. returns ErrKeyNotFound if the key is not found.
+	Get(ctx context.Context, keyID int64) ([]byte, error)
 
-	Decode(string) error
+	// Delete deletes the key for the given keyID. returns ErrKeyNotFound if the key is not found.
+	Delete(ctx context.Context, keyID int64) error
 
-	Type() string
-
-	Validate(*fiber.Ctx) error
-}
-
-type MacaroonManagerInterface interface {
-	CreateToken(ctx context.Context, userID int32, caveats []Caveat, ttl time.Duration) (*Macaroon, error)
-
-	Parse(ctx context.Context, token string) (*Macaroon, error)
-
-	InvalidateUserTokens(ctx context.Context, userID int32) error
+	// DeleteUserKeys deletes all keys for the given userID.
+	DeleteUserKeys(ctx context.Context, userID int32) error
 }
