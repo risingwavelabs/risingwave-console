@@ -18,7 +18,7 @@ func TestHandleCronjob(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	txm := model.NewExtendedMockModelInterface(ctrl)
+	txm := model.NewMockModelInterfaceWithTransaction(ctrl)
 
 	tz := "Asia/Shanghai"
 	location, err := time.LoadLocation(tz)
@@ -71,7 +71,7 @@ func TestHandleCompleted(t *testing.T) {
 		taskID = int32(1)
 	)
 
-	txm := model.NewExtendedMockModelInterface(ctrl)
+	txm := model.NewMockModelInterfaceWithTransaction(ctrl)
 
 	handler := &TaskLifeCycleHandler{
 		txm: txm,
@@ -106,7 +106,7 @@ func TestHandleFailed(t *testing.T) {
 		err    = errors.New("test error")
 	)
 
-	txm := model.NewExtendedMockModelInterface(ctrl)
+	txm := model.NewMockModelInterfaceWithTransaction(ctrl)
 
 	handler := &TaskLifeCycleHandler{
 		txm: txm,
@@ -145,7 +145,7 @@ func TestHandleFailedWithRetryPolicy(t *testing.T) {
 		currTime    = time.Now()
 	)
 
-	txm := model.NewExtendedMockModelInterface(ctrl)
+	txm := model.NewMockModelInterfaceWithTransaction(ctrl)
 
 	handler := &TaskLifeCycleHandler{
 		txm: txm,

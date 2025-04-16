@@ -74,7 +74,7 @@ func TestUpdateClusterAutoBackupConfig(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockModel := model.NewExtendedMockModelInterface(ctrl)
+			mockModel := model.NewMockModelInterfaceWithTransaction(ctrl)
 			taskstore := task.NewMockTaskStoreInterface(ctrl)
 			service := &Service{
 				m:         mockModel,

@@ -54,7 +54,7 @@ func TestRunTask(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(fmt.Sprintf("errExecute: %v", testCase.errExecute), func(t *testing.T) {
-			mockModel := model.NewExtendedMockModelInterface(ctrl)
+			mockModel := model.NewMockModelInterfaceWithTransaction(ctrl)
 			mockTaskHandler := mock.NewMockTaskHandler(ctrl)
 			mockLifeCycleHandler := mock.NewMockTaskLifeCycleHandlerInterface(ctrl)
 

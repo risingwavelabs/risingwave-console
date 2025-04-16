@@ -76,7 +76,7 @@ func TestUpdateClusterAutoDiagnosticConfig(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		mockModel := model.NewExtendedMockModelInterface(ctrl)
+		mockModel := model.NewMockModelInterfaceWithTransaction(ctrl)
 		taskstore := task.NewMockTaskStoreInterface(ctrl)
 
 		service := &Service{
@@ -136,7 +136,7 @@ func TestCreateClusterDiagnostic(t *testing.T) {
 	)
 
 	metahttp := mock_http.NewMockMetaHttpManagerInterface(ctrl)
-	model := model.NewExtendedMockModelInterface(ctrl)
+	model := model.NewMockModelInterfaceWithTransaction(ctrl)
 	service := &Service{
 		m:        model,
 		metahttp: metahttp,

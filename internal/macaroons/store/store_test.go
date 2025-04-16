@@ -33,7 +33,7 @@ func TestCreate(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	model := model.NewExtendedMockModelInterface(ctrl)
+	model := model.NewMockModelInterfaceWithTransaction(ctrl)
 	taskStore := task.NewMockTaskStoreInterface(ctrl)
 
 	var (
@@ -104,7 +104,7 @@ func TestDelete(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			model := model.NewExtendedMockModelInterface(ctrl)
+			model := model.NewMockModelInterfaceWithTransaction(ctrl)
 
 			store := &Store{
 				model: model,
@@ -158,7 +158,7 @@ func TestGet(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			model := model.NewExtendedMockModelInterface(ctrl)
+			model := model.NewMockModelInterfaceWithTransaction(ctrl)
 
 			store := &Store{
 				model: model,
@@ -212,7 +212,7 @@ func TestDeleteUserKeys(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			model := model.NewExtendedMockModelInterface(ctrl)
+			model := model.NewMockModelInterfaceWithTransaction(ctrl)
 
 			store := &Store{
 				model: model,

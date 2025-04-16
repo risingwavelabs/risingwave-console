@@ -32,7 +32,7 @@ func TestService_SignIn(t *testing.T) {
 	username := "testuser"
 	password := "testpass"
 	salt := "salt"
-	// 使用 utils.HashPassword 生成正确的密码哈希
+
 	hash, err := utils.HashPassword(password, salt)
 	require.NoError(t, err)
 	keyID := int64(123)
@@ -209,7 +209,7 @@ func TestService_CreateNewUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockModel := model.NewExtendedMockModelInterface(ctrl)
+	mockModel := model.NewMockModelInterfaceWithTransaction(ctrl)
 
 	service := &Service{
 		m:                   mockModel,
