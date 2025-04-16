@@ -17,6 +17,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/controller"
 	"github.com/risingwavelabs/wavekit/internal/globalctx"
 	"github.com/risingwavelabs/wavekit/internal/macaroons"
+	"github.com/risingwavelabs/wavekit/internal/macaroons/store"
 	"github.com/risingwavelabs/wavekit/internal/metrics"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/server"
@@ -39,7 +40,7 @@ func InitializeApplication() (*app.Application, error) {
 		return nil, err
 	}
 	taskStoreInterface := task.NewTaskStore()
-	keyStore := macaroons.NewStore(modelInterface, taskStoreInterface)
+	keyStore := store.NewStore(modelInterface, taskStoreInterface)
 	caveatParser := auth.NewCaveatParser()
 	macaroonManagerInterface := macaroons.NewMacaroonManager(keyStore, caveatParser)
 	authInterface, err := auth.NewAuth(macaroonManagerInterface)
