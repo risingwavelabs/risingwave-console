@@ -12,6 +12,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/metrics"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
+	"github.com/risingwavelabs/wavekit/internal/modelctx"
 	"go.uber.org/zap"
 )
 
@@ -20,7 +21,7 @@ var log = logger.NewLogAgent("worker")
 const maxTaskTimeout = 1 * time.Hour
 
 type TaskHandler interface {
-	HandleTask(ctx context.Context, task apigen.Task) error
+	HandleTask(c *modelctx.ModelCtx, task apigen.Task) error
 }
 
 type Worker struct {
@@ -117,7 +118,7 @@ func (w *Worker) runTask(parentCtx context.Context) error {
 		}
 
 		// run task
-		err = w.taskHandler.HandleTask(ctx, task)
+		err = w.taskHandler.HandleTask(modelctx.NewModelctx(ctx, txm), task)
 		if err != nil { // handle failed
 			log.Error("error executing task", zap.Int32("task_id", task.ID), zap.Error(err))
 			if err := lh.HandleFailed(ctx, task, err); err != nil {

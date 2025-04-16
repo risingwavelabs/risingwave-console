@@ -23,6 +23,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/service"
 	"github.com/risingwavelabs/wavekit/internal/task"
 	"github.com/risingwavelabs/wavekit/internal/worker"
+	"github.com/risingwavelabs/wavekit/internal/worker/handler"
 )
 
 // Injectors from wire.go:
@@ -37,7 +38,7 @@ func InitializeApplication() (*app.Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	taskStoreInterface := task.NewTaskStore(modelInterface)
+	taskStoreInterface := task.NewTaskStore()
 	keyStore := macaroons.NewStore(modelInterface, taskStoreInterface)
 	caveatParser := auth.NewCaveatParser()
 	macaroonManagerInterface := macaroons.NewMacaroonManager(keyStore, caveatParser)
@@ -55,7 +56,7 @@ func InitializeApplication() (*app.Application, error) {
 		return nil, err
 	}
 	metaHttpManagerInterface := http.NewMetaHttpManager()
-	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager, metaHttpManagerInterface)
+	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager, metaHttpManagerInterface, taskStoreInterface)
 	controllerController := controller.NewController(serviceInterface, authInterface)
 	initService := service.NewInitService(modelInterface, serviceInterface)
 	serverServer, err := server.NewServer(configConfig, globalContext, controllerController, authInterface, initService)
@@ -63,7 +64,7 @@ func InitializeApplication() (*app.Application, error) {
 		return nil, err
 	}
 	metricsServer := metrics.NewMetricsServer(configConfig, globalContext)
-	taskHandler := task.NewTaskHandler(modelInterface, risectlManagerInterface, taskStoreInterface, metaHttpManagerInterface)
+	taskHandler := handler.NewTaskHandler(risectlManagerInterface, taskStoreInterface, metaHttpManagerInterface)
 	workerWorker, err := worker.NewWorker(globalContext, modelInterface, taskHandler)
 	if err != nil {
 		return nil, err

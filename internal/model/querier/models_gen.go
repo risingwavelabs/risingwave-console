@@ -98,7 +98,7 @@ type MetricsStore struct {
 type OpaqueKey struct {
 	ID        int64
 	Key       []byte
-	UserID    interface{}
+	UserID    int32
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

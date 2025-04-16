@@ -303,7 +303,7 @@ func (mr *MockModelInterfaceMockRecorder) DeleteOpaqueKey(ctx, id any) *gomock.C
 }
 
 // DeleteOpaqueKeys mocks base method.
-func (m *MockModelInterface) DeleteOpaqueKeys(ctx context.Context, userID any) error {
+func (m *MockModelInterface) DeleteOpaqueKeys(ctx context.Context, userID int32) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteOpaqueKeys", ctx, userID)
 	ret0, _ := ret[0].(error)
