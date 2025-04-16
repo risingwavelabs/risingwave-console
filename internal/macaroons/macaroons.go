@@ -79,6 +79,10 @@ func (m *MacaroonManager) CreateToken(ctx context.Context, userID int32, caveats
 		return nil, errors.Wrap(err, "failed to get key")
 	}
 
+	return CreateMacaroon(keyID, key, caveats)
+}
+
+func CreateMacaroon(keyID int64, key []byte, caveats []Caveat) (*Macaroon, error) {
 	encodedKeyID := base64.StdEncoding.EncodeToString([]byte(strconv.FormatInt(keyID, 10)))
 	token := encodedKeyID
 

@@ -38,7 +38,7 @@ type Server struct {
 func NewServer(cfg *config.Config, globalCtx *globalctx.GlobalContext, c *controller.Controller, auth auth.AuthInterface, initSvc *service.InitService) (*Server, error) {
 	// create fiber app
 	app := fiber.New(fiber.Config{
-		ErrorHandler: ErrorHandler,
+		ErrorHandler: utils.ErrorHandler,
 		BodyLimit:    50 * 1024 * 1024, // 50MB
 	})
 
@@ -160,28 +160,4 @@ func (s *Server) Shutdown() error {
 
 func (s *Server) GetApp() *fiber.App {
 	return s.app
-}
-
-func ErrorHandler(c *fiber.Ctx, err error) error {
-	// default 500
-	var code = fiber.StatusInternalServerError
-
-	// Retrieve the custom status code if it's a *fiber.Error
-	var e *fiber.Error
-	if errors.As(err, &e) {
-		code = e.Code
-	}
-
-	// Set Content-Type: text/plain; charset=utf-8
-	c.Set(fiber.HeaderContentType, fiber.MIMETextPlainCharsetUTF8)
-
-	rid := c.Locals(requestid.ConfigDefault.ContextKey)
-
-	if code == fiber.StatusInternalServerError {
-		zap.L().Info(fmt.Sprintf("unexpected error, request-id: %v", rid), zap.Error(err))
-		return c.Status(code).SendString(fmt.Sprintf("unexpected error, request-id: %v", rid))
-	}
-
-	// Return status code with error message
-	return c.Status(code).SendString(err.Error())
 }
