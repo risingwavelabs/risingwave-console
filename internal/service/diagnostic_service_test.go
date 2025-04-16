@@ -10,8 +10,7 @@ import (
 	mock_http "github.com/risingwavelabs/wavekit/internal/conn/http/mock"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
-	"github.com/risingwavelabs/wavekit/internal/modelctx"
-	mock_modelctx "github.com/risingwavelabs/wavekit/internal/modelctx/mock"
+	"github.com/risingwavelabs/wavekit/internal/task"
 	"github.com/risingwavelabs/wavekit/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -78,37 +77,36 @@ func TestUpdateClusterAutoDiagnosticConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		mockModel := model.NewExtendedMockModelInterface(ctrl)
-		mockModelctx := mock_modelctx.NewMockModelContextInterface(ctrl)
+		taskstore := task.NewMockTaskStoreInterface(ctrl)
+
 		service := &Service{
-			m: mockModel,
-			modelctx: func(model model.ModelInterface) modelctx.ModelContextInterface {
-				return mockModelctx
-			},
+			m:         mockModel,
+			taskstore: taskstore,
 		}
 
-		mockModel.EXPECT().GetOrgCluster(ctx, querier.GetOrgClusterParams{
+		mockModel.EXPECT().GetOrgCluster(gomock.Any(), querier.GetOrgClusterParams{
 			ID:             clusterID,
 			OrganizationID: orgID,
 		}).Return(&querier.Cluster{
 			ID: clusterID,
 		}, nil)
 
-		mockModel.EXPECT().GetAutoDiagnosticsConfig(ctx, clusterID).Return(tc.cfg, tc.err)
+		mockModel.EXPECT().GetAutoDiagnosticsConfig(gomock.Any(), clusterID).Return(tc.cfg, tc.err)
 
 		if tc.err == nil { // UPDATE
 			if tc.enabled {
-				mockModelctx.EXPECT().ResumeCronJob(ctx, taskID).Return(nil)
+				taskstore.EXPECT().ResumeCronJob(gomock.Any(), taskID).Return(nil)
 			} else {
-				mockModelctx.EXPECT().PauseCronJob(ctx, taskID).Return(nil)
+				taskstore.EXPECT().PauseCronJob(gomock.Any(), taskID).Return(nil)
 			}
-			mockModelctx.EXPECT().UpdateCronJob(ctx, taskID, utils.Ptr(defaultDiagnosticTaskTimeout), &orgID, cronExpression, taskSpec).Return(nil)
-			mockModel.EXPECT().UpdateAutoDiagnosticsConfig(ctx, querier.UpdateAutoDiagnosticsConfigParams{
+			taskstore.EXPECT().UpdateCronJob(gomock.Any(), taskID, utils.Ptr(defaultDiagnosticTaskTimeout), &orgID, cronExpression, taskSpec).Return(nil)
+			mockModel.EXPECT().UpdateAutoDiagnosticsConfig(gomock.Any(), querier.UpdateAutoDiagnosticsConfigParams{
 				ClusterID: clusterID,
 				Enabled:   tc.enabled,
 			}).Return(nil)
 		} else { // CREATE
-			mockModelctx.EXPECT().CreateCronJob(ctx, utils.Ptr(defaultDiagnosticTaskTimeout), &orgID, cronExpression, taskSpec).Return(taskID, nil)
-			mockModel.EXPECT().CreateAutoDiagnosticsConfig(ctx, querier.CreateAutoDiagnosticsConfigParams{
+			taskstore.EXPECT().CreateCronJob(gomock.Any(), utils.Ptr(defaultDiagnosticTaskTimeout), &orgID, cronExpression, taskSpec).Return(taskID, nil)
+			mockModel.EXPECT().CreateAutoDiagnosticsConfig(gomock.Any(), querier.CreateAutoDiagnosticsConfigParams{
 				ClusterID: clusterID,
 				TaskID:    taskID,
 				Enabled:   true,

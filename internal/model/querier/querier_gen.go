@@ -29,7 +29,7 @@ type Querier interface {
 	DeleteClusterSnapshot(ctx context.Context, arg DeleteClusterSnapshotParams) error
 	DeleteMetricsStore(ctx context.Context, arg DeleteMetricsStoreParams) error
 	DeleteOpaqueKey(ctx context.Context, id int64) error
-	DeleteOpaqueKeys(ctx context.Context, userID interface{}) error
+	DeleteOpaqueKeys(ctx context.Context, userID int32) error
 	DeleteOrgCluster(ctx context.Context, arg DeleteOrgClusterParams) error
 	DeleteOrgDatabaseConnection(ctx context.Context, arg DeleteOrgDatabaseConnectionParams) error
 	DeleteOrganization(ctx context.Context, id int32) error

@@ -9,6 +9,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
+	"github.com/risingwavelabs/wavekit/internal/modelctx"
 	"github.com/risingwavelabs/wavekit/internal/utils"
 )
 
@@ -112,8 +113,8 @@ func (s *Service) UpdateClusterAutoDiagnosticConfig(ctx context.Context, id int3
 		if errors.Is(err, pgx.ErrNoRows) {
 			// No existing auto backup config, create a new one and a new cron job
 			if err := s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
-				mc := s.modelctx(txm)
-				taskID, err := mc.CreateCronJob(ctx, utils.Ptr(defaultBackupTaskTimeout), &orgID, params.CronExpression, taskSpec)
+				c := modelctx.NewModelctx(ctx, txm)
+				taskID, err := s.taskstore.CreateCronJob(c, utils.Ptr(defaultDiagnosticTaskTimeout), &orgID, params.CronExpression, taskSpec)
 				if err != nil {
 					return errors.Wrapf(err, "failed to create cron job")
 				}
@@ -134,13 +135,13 @@ func (s *Service) UpdateClusterAutoDiagnosticConfig(ctx context.Context, id int3
 	}
 
 	if err := s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
-		mc := s.modelctx(txm)
+		mc := modelctx.NewModelctx(ctx, txm)
 		if !params.Enabled {
-			if err := mc.PauseCronJob(ctx, c.TaskID); err != nil {
+			if err := s.taskstore.PauseCronJob(mc, c.TaskID); err != nil {
 				return errors.Wrapf(err, "failed to pause cron job")
 			}
 		} else {
-			if err := mc.ResumeCronJob(ctx, c.TaskID); err != nil {
+			if err := s.taskstore.ResumeCronJob(mc, c.TaskID); err != nil {
 				return errors.Wrapf(err, "failed to resume cron job")
 			}
 		}
@@ -150,7 +151,7 @@ func (s *Service) UpdateClusterAutoDiagnosticConfig(ctx context.Context, id int3
 		}); err != nil {
 			return errors.Wrapf(err, "failed to update auto diagnostics config")
 		}
-		if err := mc.UpdateCronJob(ctx, c.TaskID, utils.Ptr(defaultDiagnosticTaskTimeout), &orgID, params.CronExpression, taskSpec); err != nil {
+		if err := s.taskstore.UpdateCronJob(mc, c.TaskID, utils.Ptr(defaultDiagnosticTaskTimeout), &orgID, params.CronExpression, taskSpec); err != nil {
 			return errors.Wrapf(err, "failed to update cron job")
 		}
 		return nil

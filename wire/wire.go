@@ -21,6 +21,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/service"
 	"github.com/risingwavelabs/wavekit/internal/task"
 	"github.com/risingwavelabs/wavekit/internal/worker"
+	"github.com/risingwavelabs/wavekit/internal/worker/handler"
 )
 
 func InitializeApplication() (*app.Application, error) {
@@ -40,12 +41,12 @@ func InitializeApplication() (*app.Application, error) {
 		app.NewDebugServer,
 		globalctx.New,
 		worker.NewWorker,
-		task.NewTaskHandler,
 		task.NewTaskStore,
 		http.NewMetaHttpManager,
 		macaroons.NewMacaroonManager,
 		macaroons.NewStore,
 		auth.NewCaveatParser,
+		handler.NewTaskHandler,
 	)
 	return nil, nil
 }

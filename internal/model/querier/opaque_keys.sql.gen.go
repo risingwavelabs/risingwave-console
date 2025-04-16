@@ -14,7 +14,7 @@ INSERT INTO opaque_keys (user_id, key) VALUES ($1, $2) RETURNING id
 `
 
 type CreateOpaqueKeyParams struct {
-	UserID interface{}
+	UserID int32
 	Key    []byte
 }
 
@@ -38,7 +38,7 @@ const deleteOpaqueKeys = `-- name: DeleteOpaqueKeys :exec
 DELETE FROM opaque_keys WHERE user_id = $1
 `
 
-func (q *Queries) DeleteOpaqueKeys(ctx context.Context, userID interface{}) error {
+func (q *Queries) DeleteOpaqueKeys(ctx context.Context, userID int32) error {
 	_, err := q.db.Exec(ctx, deleteOpaqueKeys, userID)
 	return err
 }
