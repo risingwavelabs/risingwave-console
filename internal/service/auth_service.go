@@ -7,7 +7,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
-	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
 	"github.com/risingwavelabs/wavekit/internal/utils"
 )
@@ -80,31 +79,28 @@ func (s *Service) CreateNewUser(ctx context.Context, username, password string) 
 	if err != nil {
 		return 0, errors.Wrapf(err, "failed to generate hash and salt")
 	}
-	var orgID int32
-	if err := s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
-		org, err := txm.CreateOrganization(ctx, fmt.Sprintf("%s's Org", username))
-		if err != nil {
-			return errors.Wrapf(err, "failed to create organization")
-		}
-		user, err := txm.CreateUser(ctx, querier.CreateUserParams{
-			Name:           username,
-			PasswordHash:   hash,
-			PasswordSalt:   salt,
-			OrganizationID: org.ID,
-		})
-		if err := txm.CreateOrganizationOwner(ctx, querier.CreateOrganizationOwnerParams{
-			UserID:         user.ID,
-			OrganizationID: org.ID,
-		}); err != nil {
-			return errors.Wrapf(err, "failed to create organization owner")
-		}
-		if err != nil {
-			return errors.Wrapf(err, "failed to create user")
-		}
-		orgID = org.ID
-		return nil
-	}); err != nil {
-		return 0, err
+
+	org, err := s.m.CreateOrganization(ctx, fmt.Sprintf("%s's Org", username))
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to create organization")
 	}
-	return orgID, nil
+
+	user, err := s.m.CreateUser(ctx, querier.CreateUserParams{
+		Name:           username,
+		PasswordHash:   hash,
+		PasswordSalt:   salt,
+		OrganizationID: org.ID,
+	})
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to create user")
+	}
+
+	if err := s.m.CreateOrganizationOwner(ctx, querier.CreateOrganizationOwnerParams{
+		UserID:         user.ID,
+		OrganizationID: org.ID,
+	}); err != nil {
+		return 0, errors.Wrapf(err, "failed to create organization owner")
+	}
+
+	return org.ID, nil
 }

@@ -88,6 +88,7 @@ gen-mock: install-mockgen
 	$(MOCKGEN_BIN) -source=internal/conn/http/http.go -destination=internal/conn/http/mock/http_mock_gen.go -package=mock
 	$(MOCKGEN_BIN) -source=internal/macaroons/interfaces.go -destination=internal/macaroons/mock_gen.go -package=macaroons
 	$(MOCKGEN_BIN) -source=internal/macaroons/store/interfaces.go -destination=internal/macaroons/store/mock/mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/auth/auth.go -destination=internal/auth/mock_gen.go -package=auth
 ifeq ($(EE), true)
 	
 endif
