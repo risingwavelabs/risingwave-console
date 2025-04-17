@@ -10,7 +10,7 @@ type ExtendMockModel struct {
 	*MockModelInterface
 }
 
-func NewExtendedMockModelInterface(ctrl *gomock.Controller) *ExtendMockModel {
+func NewMockModelInterfaceWithTransaction(ctrl *gomock.Controller) *ExtendMockModel {
 	mock := NewMockModelInterface(ctrl)
 	return &ExtendMockModel{mock}
 }

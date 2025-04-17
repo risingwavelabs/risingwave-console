@@ -16,12 +16,15 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/controller"
 	"github.com/risingwavelabs/wavekit/internal/globalctx"
+	"github.com/risingwavelabs/wavekit/internal/macaroons"
+	"github.com/risingwavelabs/wavekit/internal/macaroons/store"
 	"github.com/risingwavelabs/wavekit/internal/metrics"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/server"
 	"github.com/risingwavelabs/wavekit/internal/service"
 	"github.com/risingwavelabs/wavekit/internal/task"
 	"github.com/risingwavelabs/wavekit/internal/worker"
+	"github.com/risingwavelabs/wavekit/internal/worker/handler"
 )
 
 // Injectors from wire.go:
@@ -36,7 +39,11 @@ func InitializeApplication() (*app.Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	authInterface, err := auth.NewAuth(configConfig)
+	taskStoreInterface := task.NewTaskStore()
+	keyStore := store.NewStore(modelInterface, taskStoreInterface)
+	caveatParser := auth.NewCaveatParser()
+	macaroonManagerInterface := macaroons.NewMacaroonManager(keyStore, caveatParser)
+	authInterface, err := auth.NewAuth(macaroonManagerInterface)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +57,7 @@ func InitializeApplication() (*app.Application, error) {
 		return nil, err
 	}
 	metaHttpManagerInterface := http.NewMetaHttpManager()
-	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager, metaHttpManagerInterface)
+	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager, metaHttpManagerInterface, taskStoreInterface)
 	controllerController := controller.NewController(serviceInterface, authInterface)
 	initService := service.NewInitService(modelInterface, serviceInterface)
 	serverServer, err := server.NewServer(configConfig, globalContext, controllerController, authInterface, initService)
@@ -58,8 +65,7 @@ func InitializeApplication() (*app.Application, error) {
 		return nil, err
 	}
 	metricsServer := metrics.NewMetricsServer(configConfig, globalContext)
-	taskStoreInterface := task.NewTaskStore(modelInterface)
-	taskHandler := task.NewTaskHandler(modelInterface, risectlManagerInterface, taskStoreInterface, metaHttpManagerInterface)
+	taskHandler := handler.NewTaskHandler(risectlManagerInterface, taskStoreInterface, metaHttpManagerInterface)
 	workerWorker, err := worker.NewWorker(globalContext, modelInterface, taskHandler)
 	if err != nil {
 		return nil, err

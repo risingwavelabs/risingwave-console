@@ -9,7 +9,6 @@ require (
 	github.com/gavv/httpexpect/v2 v2.16.0
 	github.com/go-playground/validator/v10 v10.24.0
 	github.com/gofiber/fiber/v2 v2.52.6
-	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/golang-migrate/migrate/v4 v4.17.1
 	github.com/golang/snappy v1.0.0
 	github.com/google/go-github/v68 v68.0.0

@@ -10,10 +10,10 @@
 package mock
 
 import (
-	context "context"
 	reflect "reflect"
 
 	apigen "github.com/risingwavelabs/wavekit/internal/apigen"
+	modelctx "github.com/risingwavelabs/wavekit/internal/modelctx"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,15 +42,15 @@ func (m *MockTaskHandler) EXPECT() *MockTaskHandlerMockRecorder {
 }
 
 // HandleTask mocks base method.
-func (m *MockTaskHandler) HandleTask(ctx context.Context, task apigen.Task) error {
+func (m *MockTaskHandler) HandleTask(c *modelctx.ModelCtx, task apigen.Task) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HandleTask", ctx, task)
+	ret := m.ctrl.Call(m, "HandleTask", c, task)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // HandleTask indicates an expected call of HandleTask.
-func (mr *MockTaskHandlerMockRecorder) HandleTask(ctx, task any) *gomock.Call {
+func (mr *MockTaskHandlerMockRecorder) HandleTask(c, task any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleTask", reflect.TypeOf((*MockTaskHandler)(nil).HandleTask), ctx, task)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleTask", reflect.TypeOf((*MockTaskHandler)(nil).HandleTask), c, task)
 }

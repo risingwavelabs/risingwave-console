@@ -1,4 +1,4 @@
-package modelctx
+package task
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
+	"github.com/risingwavelabs/wavekit/internal/modelctx"
 	"github.com/risingwavelabs/wavekit/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,8 +18,6 @@ import (
 func TestCreateCronJob(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
-	ctx := context.Background()
 
 	var (
 		orgID            = int32(1)
@@ -31,7 +30,13 @@ func TestCreateCronJob(t *testing.T) {
 	)
 
 	mockModel := model.NewMockModelInterface(ctrl)
-	mockModel.EXPECT().CreateTask(ctx, querier.CreateTaskParams{
+
+	c := &modelctx.ModelCtx{
+		ModelInterface: mockModel,
+		Context:        context.Background(),
+	}
+
+	mockModel.EXPECT().CreateTask(c, querier.CreateTaskParams{
 		Attributes: apigen.TaskAttributes{
 			OrgID: &orgID,
 			Cronjob: &apigen.TaskCronjob{
@@ -46,13 +51,13 @@ func TestCreateCronJob(t *testing.T) {
 		ID: taskID,
 	}, nil)
 
-	mc := &ModelContext{
-		model: mockModel,
+	taskStore := &TaskStore{
 		now: func() time.Time {
 			return currentTime
 		},
 	}
-	id, err := mc.CreateCronJob(ctx, utils.Ptr(timeoutDuration), &orgID, cronExpression, taskSpec)
+
+	id, err := taskStore.CreateCronJob(c, utils.Ptr(timeoutDuration), &orgID, cronExpression, taskSpec)
 	require.NoError(t, err)
 	assert.Equal(t, taskID, id)
 }
@@ -60,8 +65,6 @@ func TestCreateCronJob(t *testing.T) {
 func TestUpdateCronJob(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
-	ctx := context.Background()
 
 	var (
 		taskID           = int32(1)
@@ -74,7 +77,13 @@ func TestUpdateCronJob(t *testing.T) {
 	)
 
 	mockModel := model.NewMockModelInterface(ctrl)
-	mockModel.EXPECT().UpdateTask(ctx, querier.UpdateTaskParams{
+
+	c := &modelctx.ModelCtx{
+		ModelInterface: mockModel,
+		Context:        context.Background(),
+	}
+
+	mockModel.EXPECT().UpdateTask(c, querier.UpdateTaskParams{
 		ID: taskID,
 		Attributes: apigen.TaskAttributes{
 			OrgID: &orgID,
@@ -87,13 +96,12 @@ func TestUpdateCronJob(t *testing.T) {
 		StartedAt: &expectedNextTime,
 	})
 
-	mc := &ModelContext{
-		model: mockModel,
+	taskStore := &TaskStore{
 		now: func() time.Time {
 			return currentTime
 		},
 	}
-	err := mc.UpdateCronJob(ctx, taskID, utils.Ptr(timeoutDuration), &orgID, cronExpression, taskSpec)
+	err := taskStore.UpdateCronJob(c, taskID, utils.Ptr(timeoutDuration), &orgID, cronExpression, taskSpec)
 	require.NoError(t, err)
 }
 
@@ -101,22 +109,24 @@ func TestPauseCronJob(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	ctx := context.Background()
-
 	var (
 		taskID = int32(1)
 	)
 
 	mockModel := model.NewMockModelInterface(ctrl)
-	mockModel.EXPECT().UpdateTaskStatus(ctx, querier.UpdateTaskStatusParams{
+
+	c := &modelctx.ModelCtx{
+		ModelInterface: mockModel,
+		Context:        context.Background(),
+	}
+
+	mockModel.EXPECT().UpdateTaskStatus(c, querier.UpdateTaskStatusParams{
 		ID:     taskID,
 		Status: string(apigen.Paused),
 	}).Return(nil)
 
-	mc := &ModelContext{
-		model: mockModel,
-	}
-	err := mc.PauseCronJob(ctx, taskID)
+	taskStore := &TaskStore{}
+	err := taskStore.PauseCronJob(c, taskID)
 	require.NoError(t, err)
 }
 
@@ -124,21 +134,23 @@ func TestResumeCronJob(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	ctx := context.Background()
-
 	var (
 		taskID = int32(1)
 	)
 
 	mockModel := model.NewMockModelInterface(ctrl)
-	mockModel.EXPECT().UpdateTaskStatus(ctx, querier.UpdateTaskStatusParams{
+
+	c := &modelctx.ModelCtx{
+		ModelInterface: mockModel,
+		Context:        context.Background(),
+	}
+
+	mockModel.EXPECT().UpdateTaskStatus(c, querier.UpdateTaskStatusParams{
 		ID:     taskID,
 		Status: string(apigen.Pending),
 	}).Return(nil)
 
-	mc := &ModelContext{
-		model: mockModel,
-	}
-	err := mc.ResumeCronJob(ctx, taskID)
+	taskStore := &TaskStore{}
+	err := taskStore.ResumeCronJob(c, taskID)
 	require.NoError(t, err)
 }

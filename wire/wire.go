@@ -14,12 +14,15 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/controller"
 	"github.com/risingwavelabs/wavekit/internal/globalctx"
+	"github.com/risingwavelabs/wavekit/internal/macaroons"
+	"github.com/risingwavelabs/wavekit/internal/macaroons/store"
 	"github.com/risingwavelabs/wavekit/internal/metrics"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/server"
 	"github.com/risingwavelabs/wavekit/internal/service"
 	"github.com/risingwavelabs/wavekit/internal/task"
 	"github.com/risingwavelabs/wavekit/internal/worker"
+	"github.com/risingwavelabs/wavekit/internal/worker/handler"
 )
 
 func InitializeApplication() (*app.Application, error) {
@@ -39,9 +42,12 @@ func InitializeApplication() (*app.Application, error) {
 		app.NewDebugServer,
 		globalctx.New,
 		worker.NewWorker,
-		task.NewTaskHandler,
 		task.NewTaskStore,
 		http.NewMetaHttpManager,
+		macaroons.NewMacaroonManager,
+		store.NewStore,
+		auth.NewCaveatParser,
+		handler.NewTaskHandler,
 	)
 	return nil, nil
 }

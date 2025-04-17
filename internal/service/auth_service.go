@@ -7,7 +7,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
-	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
 	"github.com/risingwavelabs/wavekit/internal/utils"
 )
@@ -27,63 +26,50 @@ func (s *Service) SignIn(ctx context.Context, params apigen.SignInRequest) (*api
 	if input != user.PasswordHash {
 		return nil, ErrInvalidPassword
 	}
-	token, err := s.auth.CreateToken(user, nil)
+
+	if err := s.auth.InvalidateUserTokens(ctx, user.ID); err != nil {
+		return nil, errors.Wrapf(err, "failed to invalidate user tokens")
+	}
+
+	keyID, token, err := s.auth.CreateToken(ctx, user, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create token")
 	}
-	refreshToken, jwtToken, err := s.auth.CreateRefreshToken(user.ID)
+
+	refreshToken, err := s.auth.CreateRefreshToken(ctx, keyID, user.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to generate refresh token")
-	}
-	err = s.m.UpsertRefreshToken(ctx, querier.UpsertRefreshTokenParams{
-		UserID: user.ID,
-		Token:  refreshToken,
-	})
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to upsert refresh token")
 	}
 
 	return &apigen.Credentials{
 		AccessToken:  token,
-		RefreshToken: jwtToken,
+		RefreshToken: refreshToken,
 		TokenType:    apigen.Bearer,
 	}, nil
 }
 
 func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken string) (*apigen.Credentials, error) {
-	originalRefreshToken, err := s.m.GetRefreshToken(ctx, querier.GetRefreshTokenParams{
-		UserID: userID,
-		Token:  refreshToken,
-	})
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get refresh token")
-	}
-	if originalRefreshToken.UpdatedAt.Add(RefreshTokenExpireDuration).Before(s.now()) {
-		return nil, ErrRefreshTokenExpired
-	}
 	user, err := s.m.GetUser(ctx, userID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get user by id: %d", userID)
 	}
+	if err := s.auth.InvalidateUserTokens(ctx, userID); err != nil {
+		return nil, errors.Wrapf(err, "failed to invalidate user tokens")
+	}
 
-	newRefreshToken, jwtToken, err := s.auth.CreateRefreshToken(userID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to generate refresh token")
-	}
-	if err = s.m.UpsertRefreshToken(ctx, querier.UpsertRefreshTokenParams{
-		UserID: userID,
-		Token:  newRefreshToken,
-	}); err != nil {
-		return nil, errors.Wrapf(err, "failed to upsert refresh token")
-	}
-	accessToken, err := s.auth.CreateToken(user, nil)
+	keyID, accessToken, err := s.auth.CreateToken(ctx, user, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create token")
 	}
 
+	newRefreshToken, err := s.auth.CreateRefreshToken(ctx, keyID, userID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to generate refresh token")
+	}
+
 	return &apigen.Credentials{
 		AccessToken:  accessToken,
-		RefreshToken: jwtToken,
+		RefreshToken: newRefreshToken,
 		TokenType:    apigen.Bearer,
 	}, nil
 }
@@ -93,31 +79,28 @@ func (s *Service) CreateNewUser(ctx context.Context, username, password string) 
 	if err != nil {
 		return 0, errors.Wrapf(err, "failed to generate hash and salt")
 	}
-	var orgID int32
-	if err := s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
-		org, err := txm.CreateOrganization(ctx, fmt.Sprintf("%s's Org", username))
-		if err != nil {
-			return errors.Wrapf(err, "failed to create organization")
-		}
-		user, err := txm.CreateUser(ctx, querier.CreateUserParams{
-			Name:           username,
-			PasswordHash:   hash,
-			PasswordSalt:   salt,
-			OrganizationID: org.ID,
-		})
-		if err := txm.CreateOrganizationOwner(ctx, querier.CreateOrganizationOwnerParams{
-			UserID:         user.ID,
-			OrganizationID: org.ID,
-		}); err != nil {
-			return errors.Wrapf(err, "failed to create organization owner")
-		}
-		if err != nil {
-			return errors.Wrapf(err, "failed to create user")
-		}
-		orgID = org.ID
-		return nil
-	}); err != nil {
-		return 0, err
+
+	org, err := s.m.CreateOrganization(ctx, fmt.Sprintf("%s's Org", username))
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to create organization")
 	}
-	return orgID, nil
+
+	user, err := s.m.CreateUser(ctx, querier.CreateUserParams{
+		Name:           username,
+		PasswordHash:   hash,
+		PasswordSalt:   salt,
+		OrganizationID: org.ID,
+	})
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to create user")
+	}
+
+	if err := s.m.CreateOrganizationOwner(ctx, querier.CreateOrganizationOwnerParams{
+		UserID:         user.ID,
+		OrganizationID: org.ID,
+	}); err != nil {
+		return 0, errors.Wrapf(err, "failed to create organization owner")
+	}
+
+	return org.ID, nil
 }

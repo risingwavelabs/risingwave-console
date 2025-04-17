@@ -6,6 +6,25 @@ type AuthFunc func(c *fiber.Ctx, rules ...string) error
 
 func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 	
+	app.Post("/api/v1/auth/refresh", func(c *fiber.Ctx) error { 
+		return c.Next()
+	})
+	app.Post("/api/v1/auth/sign-in", func(c *fiber.Ctx) error { 
+		return c.Next()
+	})
+	app.Post("/api/v1/auth/sign-out", func(c *fiber.Ctx) error { 
+		if c.Get("Authorization") == "" {
+			return c.SendStatus(fiber.StatusUnauthorized)
+		} 
+		if err := f(c); err != nil {
+			return err
+		}
+		
+		return c.Next()
+	})
+	app.Get("/api/v1/cluster-versions", func(c *fiber.Ctx) error { 
+		return c.Next()
+	})
 	app.Get("/api/v1/clusters", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
@@ -26,7 +45,7 @@ func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 		
 		return c.Next()
 	})
-	app.Delete("/api/v1/clusters/:ID", func(c *fiber.Ctx) error { 
+	app.Put("/api/v1/clusters/:ID", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		} 
@@ -46,17 +65,7 @@ func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 		
 		return c.Next()
 	})
-	app.Put("/api/v1/clusters/:ID", func(c *fiber.Ctx) error { 
-		if c.Get("Authorization") == "" {
-			return c.SendStatus(fiber.StatusUnauthorized)
-		} 
-		if err := f(c); err != nil {
-			return err
-		}
-		
-		return c.Next()
-	})
-	app.Get("/api/v1/clusters/:ID/auto-backup-config", func(c *fiber.Ctx) error { 
+	app.Delete("/api/v1/clusters/:ID", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		} 
@@ -76,7 +85,7 @@ func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 		
 		return c.Next()
 	})
-	app.Get("/api/v1/clusters/:ID/diagnostics", func(c *fiber.Ctx) error { 
+	app.Get("/api/v1/clusters/:ID/auto-backup-config", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		} 
@@ -96,6 +105,16 @@ func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 		
 		return c.Next()
 	})
+	app.Get("/api/v1/clusters/:ID/diagnostics", func(c *fiber.Ctx) error { 
+		if c.Get("Authorization") == "" {
+			return c.SendStatus(fiber.StatusUnauthorized)
+		} 
+		if err := f(c); err != nil {
+			return err
+		}
+		
+		return c.Next()
+	})
 	app.Get("/api/v1/clusters/:ID/diagnostics/:diagnosticId", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
@@ -106,7 +125,7 @@ func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 		
 		return c.Next()
 	})
-	app.Get("/api/v1/clusters/:ID/diagnostics/config", func(c *fiber.Ctx) error { 
+	app.Put("/api/v1/clusters/:ID/diagnostics/config", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		} 
@@ -116,7 +135,7 @@ func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 		
 		return c.Next()
 	})
-	app.Put("/api/v1/clusters/:ID/diagnostics/config", func(c *fiber.Ctx) error { 
+	app.Get("/api/v1/clusters/:ID/diagnostics/config", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		} 
@@ -156,7 +175,7 @@ func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 		
 		return c.Next()
 	})
-	app.Delete("/api/v1/clusters/:ID/snapshots/:snapshotId", func(c *fiber.Ctx) error { 
+	app.Post("/api/v1/clusters/:ID/snapshots/:snapshotId", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		} 
@@ -166,7 +185,7 @@ func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 		
 		return c.Next()
 	})
-	app.Post("/api/v1/clusters/:ID/snapshots/:snapshotId", func(c *fiber.Ctx) error { 
+	app.Delete("/api/v1/clusters/:ID/snapshots/:snapshotId", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		} 
@@ -196,16 +215,6 @@ func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 		
 		return c.Next()
 	})
-	app.Delete("/api/v1/databases/:ID", func(c *fiber.Ctx) error { 
-		if c.Get("Authorization") == "" {
-			return c.SendStatus(fiber.StatusUnauthorized)
-		} 
-		if err := f(c); err != nil {
-			return err
-		}
-		
-		return c.Next()
-	})
 	app.Get("/api/v1/databases/:ID", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
@@ -217,6 +226,16 @@ func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 		return c.Next()
 	})
 	app.Put("/api/v1/databases/:ID", func(c *fiber.Ctx) error { 
+		if c.Get("Authorization") == "" {
+			return c.SendStatus(fiber.StatusUnauthorized)
+		} 
+		if err := f(c); err != nil {
+			return err
+		}
+		
+		return c.Next()
+	})
+	app.Delete("/api/v1/databases/:ID", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		} 
@@ -296,16 +315,6 @@ func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 		
 		return c.Next()
 	})
-	app.Get("/api/v1/metrics-stores/:ID", func(c *fiber.Ctx) error { 
-		if c.Get("Authorization") == "" {
-			return c.SendStatus(fiber.StatusUnauthorized)
-		} 
-		if err := f(c); err != nil {
-			return err
-		}
-		
-		return c.Next()
-	})
 	app.Delete("/api/v1/metrics-stores/:ID", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
@@ -317,6 +326,16 @@ func RegisterAuthFunc(app *fiber.App, f AuthFunc) {
 		return c.Next()
 	})
 	app.Put("/api/v1/metrics-stores/:ID", func(c *fiber.Ctx) error { 
+		if c.Get("Authorization") == "" {
+			return c.SendStatus(fiber.StatusUnauthorized)
+		} 
+		if err := f(c); err != nil {
+			return err
+		}
+		
+		return c.Next()
+	})
+	app.Get("/api/v1/metrics-stores/:ID", func(c *fiber.Ctx) error { 
 		if c.Get("Authorization") == "" {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		} 

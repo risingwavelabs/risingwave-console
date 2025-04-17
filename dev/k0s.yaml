@@ -50,7 +50,7 @@ spec:
             - cmd/wavekit/main.go
           env:
             - name: WK_PORT
-              value: '8020'
+              value: '30080'
             - name: WK_PG_DSN
               value: postgres://postgres:postgres@db:5432/postgres
             - name: WK_JWT_SECRET
@@ -131,9 +131,11 @@ kind: Service
 metadata:
   name: db
 spec:
+  type: NodePort
   ports:
   - port: 5432
     targetPort: 5432
+    nodePort: 30432
   selector:
     app: db
 ---
@@ -156,8 +158,8 @@ spec:
   type: NodePort
   ports:
     - name: wavekit
-      port: 8020
-      targetPort: 8020
+      port: 30080
+      targetPort: 30080
       nodePort: 30080
     - name: wavekit-metric
       port: 9020

@@ -23,7 +23,7 @@ make build-server
 
 2. `wire/wire.go` helps to resolve dependency injection.
 
-3. `web/api` is the single source of truth for API definition. Controller code in server and client code in web are generated from this file.
+3. `api` is the single source of truth for API definition. Controller code in server and client code in web are generated from this file.
 
 4. `internal/config` is the single source of truth for configuration. It will be used to load configuration from `config.yaml` or environment variables.
 

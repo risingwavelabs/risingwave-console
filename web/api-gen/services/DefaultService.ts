@@ -178,6 +178,7 @@ export class DefaultService {
         });
     }
     /**
+     * Cancel DDL progress
      * @param id
      * @param ddlId
      * @returns any Successfully canceled DDL operation
@@ -466,12 +467,13 @@ export class DefaultService {
      * Create diagnostic data for a specific cluster
      * @param id
      * @param requestBody
+     * @returns any Successfully created diagnostic data
      * @throws ApiError
      */
     public static createClusterDiagnostic(
         id: number,
         requestBody: DiagnosticData,
-    ): CancelablePromise<void> {
+    ): CancelablePromise<any> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/clusters/{ID}/diagnostics',
@@ -613,6 +615,18 @@ export class DefaultService {
             errors: {
                 401: `Invalid or expired refresh token`,
             },
+        });
+    }
+    /**
+     * Sign out user
+     * Sign out user and invalidate all tokens
+     * @returns any Successfully signed out
+     * @throws ApiError
+     */
+    public static signOut(): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/auth/sign-out',
         });
     }
     /**

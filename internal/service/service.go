@@ -13,7 +13,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/model"
-	"github.com/risingwavelabs/wavekit/internal/modelctx"
+	"github.com/risingwavelabs/wavekit/internal/task"
 	"github.com/risingwavelabs/wavekit/internal/utils"
 
 	prom_model "github.com/prometheus/common/model"
@@ -162,10 +162,10 @@ type Service struct {
 	risectlm           meta.RisectlManagerInterface
 	metahttp           http.MetaHttpManagerInterface
 	metricsConnManager *metricsstore.MetricsManager
+	taskstore          task.TaskStoreInterface
 
 	now                 func() time.Time
 	generateHashAndSalt func(password string) (string, string, error)
-	modelctx            func(model model.ModelInterface) modelctx.ModelContextInterface
 }
 
 func NewService(
@@ -176,6 +176,7 @@ func NewService(
 	risectlm meta.RisectlManagerInterface,
 	metricsConnManager *metricsstore.MetricsManager,
 	metahttp http.MetaHttpManagerInterface,
+	taskstore task.TaskStoreInterface,
 ) ServiceInterface {
 
 	s := &Service{
@@ -187,9 +188,7 @@ func NewService(
 		risectlm:            risectlm,
 		metahttp:            metahttp,
 		metricsConnManager:  metricsConnManager,
-		modelctx: func(model model.ModelInterface) modelctx.ModelContextInterface {
-			return modelctx.NewModelctx(model, time.Now)
-		},
+		taskstore:           taskstore,
 	}
 	return s
 }

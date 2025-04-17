@@ -156,7 +156,7 @@ paths:
             format: int32
       summary: Get DDL progress
       description: Get the progress of a DDL operation
-      operationId: get DDL progress
+      operationId: getDDLProgress
       security:
         - BearerAuth: []
       responses:
@@ -172,6 +172,7 @@ paths:
   /databases/{ID}/ddl-progress/{ddlID}/cancel:
     post:
       operationId: cancelDDLProgress
+      summary: Cancel DDL progress
       parameters:
         - name: ID
           in: path
@@ -226,6 +227,7 @@ paths:
                 type: array
                 items:
                   type: string
+      security: []
 
   /clusters:
     get:
@@ -286,8 +288,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Cluster"
-    security:
-      - BearerAuth: []
 
     put:
       summary: Update cluster
@@ -486,6 +486,10 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/DiagnosticData"
+      responses:
+        "200":
+          description: Successfully created diagnostic data
+
     get:
       summary: List diagnostic data
       description: Retrieve diagnostic data for a specific cluster with optional date range filtering
@@ -619,6 +623,7 @@ paths:
                 $ref: "#/components/schemas/Credentials"
         "401":
           description: Invalid credentials
+      security: []
 
   /auth/refresh:
     post:
@@ -640,7 +645,19 @@ paths:
                 $ref: "#/components/schemas/Credentials"
         "401":
           description: Invalid or expired refresh token
-          
+      security: []
+
+  /auth/sign-out:
+    post:
+      summary: Sign out user
+      description: Sign out user and invalidate all tokens
+      operationId: signOut
+      responses:
+        "200":
+          description: Successfully signed out
+      security:
+        - BearerAuth: []
+
   /metrics-stores/{ID}:
     get:
       summary: Get a metrics store
@@ -1541,21 +1558,13 @@ components:
         cronExpression:
           type: string
 
-    TaskScheduled:
-      type: object
-      required: [scheduledTo]
-      properties:
-        scheduledTo:
-          type: string
-          format: date-time
-
     TaskSpec:
       type: object
       required: [type]
       properties:
         type:
           type: string
-          enum: ["auto-backup", "auto-diagnostic", "delete-snapshot", "delete-cluster-diagnostic"]
+          enum: ["auto-backup", "auto-diagnostic", "delete-snapshot", "delete-cluster-diagnostic", "delete-opaque-key"]
         autoBackup:
           $ref: "#/components/schemas/TaskSpecAutoBackup"
         autoDiagnostic:
@@ -1564,6 +1573,8 @@ components:
           $ref: "#/components/schemas/TaskSpecDeleteSnapshot"
         deleteClusterDiagnostic:
           $ref: "#/components/schemas/TaskSpecDeleteClusterDiagnostic"
+        deleteOpaqueKey:
+          $ref: "#/components/schemas/TaskSpecDeleteOpaqueKey"
 
     TaskSpecDeleteSnapshot:
       type: object
@@ -1608,6 +1619,14 @@ components:
         retentionDuration:
           type: string
           description: Retention duration of the diagnostic data, e.g. 1d, 1w, 1m, 1y
+    
+    TaskSpecDeleteOpaqueKey:
+      type: object
+      required: [keyID]
+      properties:
+        keyID:
+          type: integer
+          format: int64
 
     Event:
       type: object

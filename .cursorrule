@@ -1,4 +1,4 @@
-The API is defined in the `web/api/v1.yaml` file. If you want to update the API, you need to update the `web/api/v1.yaml` file,
+The API is defined in the `api/v1.yaml` file. If you want to update the API, you need to update the `api/v1.yaml` file,
 then run `make gen-spec` to generate the API client and server code. 
 
 The database schema is defined in `sql/migrations`, if the code is not committed, you only need to add one migration file and then modify this file in your following updates.

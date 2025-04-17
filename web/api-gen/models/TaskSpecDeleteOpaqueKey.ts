@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type TaskScheduled = {
-    scheduledTo: string;
+export type TaskSpecDeleteOpaqueKey = {
+    keyID: number;
 };
 

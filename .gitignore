@@ -1,6 +1,7 @@
 bin/*
 coverage.out
 coverage.html
+coverage.filtered
 upload/*
 *.parquet
 *.ndjson.gz

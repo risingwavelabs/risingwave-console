@@ -1,20 +1,25 @@
 package auth
 
 import (
-	"fmt"
-	"log"
-	"math/rand"
+	"context"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/errors"
-	"github.com/risingwavelabs/wavekit/internal/config"
+	"github.com/risingwavelabs/wavekit/internal/macaroons"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
-	"github.com/risingwavelabs/wavekit/internal/utils"
 )
 
-const UserContextKey = "user"
+const (
+	ContextKeyUserID = iota
+	ContextKeyOrgID
+	ContextKeyMacaroon
+)
+
+const (
+	TimeoutAccessToken  = time.Minute * 10
+	TimeoutRefreshToken = time.Hour * 2
+)
 
 var ErrUserIdentityNotExist = errors.New("user identity not exists")
 
@@ -28,39 +33,28 @@ type AuthInterface interface {
 	Authfunc(c *fiber.Ctx, rules ...string) error
 
 	// CreateToken creates a new JWT token for the given user with specified access rules
-	CreateToken(user *querier.User, rules []string) (string, error)
+	CreateToken(ctx context.Context, user *querier.User, rules []string) (int64, string, error)
 
-	// ValidateToken validates the given token string and returns the user if valid
-	ValidateToken(tokenString string) (*User, error)
+	// CreateRefreshToken returns a refresh token
+	CreateRefreshToken(ctx context.Context, accessKeyID int64, userID int32) (string, error)
 
-	// GetJWTSecret returns the JWT secret used for signing tokens
-	GetJWTSecret() []byte
+	// ParseRefreshToken parses the given refresh token and returns the user ID
+	ParseRefreshToken(ctx context.Context, refreshToken string) (int32, error)
 
-	// CreateRefreshToken returns a refresh token and its JWT token
-	CreateRefreshToken(userID int32) (string, string, error)
-
-	// ParseJWTRefreshToken parses the given JWT refresh token and returns the user ID and the refresh token
-	ParseJWTRefreshToken(jwtToken string) (int32, string, error)
+	// InvalidateUserTokens invalidates all tokens for the given user
+	InvalidateUserTokens(ctx context.Context, userID int32) error
 }
 
 type Auth struct {
-	jwtSecret []byte
+	macaroons macaroons.MacaroonManagerInterface
 }
 
 // Ensure AuthService implements AuthServiceInterface
 var _ AuthInterface = (*Auth)(nil)
 
-func NewAuth(cfg *config.Config) (AuthInterface, error) {
-	var secret string
-	if cfg.Jwt.Secret == "" {
-		secret = randomString(32)
-		log.Default().Println("JWT secret is not set, using random secret")
-	} else {
-		secret = cfg.Jwt.Secret
-	}
-
+func NewAuth(macaroons macaroons.MacaroonManagerInterface) (AuthInterface, error) {
 	return &Auth{
-		jwtSecret: []byte(secret),
+		macaroons: macaroons,
 	}, nil
 }
 
@@ -76,132 +70,75 @@ func (a *Auth) Authfunc(c *fiber.Ctx, rules ...string) error {
 		tokenString = authHeader[7:]
 	}
 
-	user, err := a.ValidateToken(tokenString)
+	token, err := a.macaroons.Parse(c.Context(), tokenString)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString(err.Error())
 	}
 
-	c.Locals(UserContextKey, user)
-
-	for _, rule := range rules {
-		if _, ok := user.AccessRules[rule]; !ok {
-			return c.Status(fiber.StatusForbidden).SendString(fmt.Sprintf("Permission denied, need rule %s", rule))
+	for _, caveat := range token.Caveats() {
+		if err := caveat.Validate(c); err != nil {
+			return c.Status(fiber.StatusUnauthorized).SendString(err.Error())
 		}
 	}
+
 	return nil
 }
 
-func (a *Auth) CreateToken(user *querier.User, rules []string) (string, error) {
-	claims := a.createClaims(user, rules)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(a.jwtSecret)
+func (a *Auth) CreateToken(ctx context.Context, user *querier.User, rules []string) (int64, string, error) {
+	token, err := a.macaroons.CreateToken(ctx, user.ID, []macaroons.Caveat{
+		NewUserContextCaveat(user.ID, user.OrganizationID),
+	}, TimeoutAccessToken)
+	if err != nil {
+		return 0, "", errors.Wrap(err, "failed to create macaroon token")
+	}
+	return token.KeyID(), token.StringToken(), nil
 }
 
-func (a *Auth) ValidateToken(tokenString string) (*User, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+func (a *Auth) CreateRefreshToken(ctx context.Context, accessKeyID int64, userID int32) (string, error) {
+	token, err := a.macaroons.CreateToken(ctx, userID, []macaroons.Caveat{
+		NewRefreshOnlyCaveat(userID, accessKeyID),
+	}, TimeoutRefreshToken)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to create macaroon token")
+	}
+	return token.StringToken(), nil
+}
+
+func (a *Auth) ParseRefreshToken(ctx context.Context, refreshToken string) (int32, error) {
+	token, err := a.macaroons.Parse(ctx, refreshToken)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to parse macaroon token, token: %s", refreshToken)
+	}
+
+	for _, caveat := range token.Caveats() {
+		if caveat.Type() == CaveatRefreshOnly {
+			roc, ok := caveat.(*RefreshOnlyCaveat)
+			if !ok {
+				return 0, errors.Errorf("caveat is not a RefreshOnlyCaveat even though it has type %s", CaveatRefreshOnly)
+			}
+			return roc.UserID, nil
 		}
-		return a.jwtSecret, nil
-	})
-	if err != nil {
-		return nil, err
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil, errors.New("unexpected error when parsing claims: claims is not jwt.MapClaims")
-	}
-
-	exp, ok := claims["exp"].(float64)
-	if !ok {
-		return nil, fmt.Errorf("failed to parse exp")
-	}
-	if time.Since(time.Unix(int64(exp), 0)) > 0 {
-		return nil, errors.New("token is expired")
-	}
-
-	var user User
-	if err := utils.JSONConvert(claims["user"], &user); err != nil {
-		return nil, errors.Wrapf(err, "failed to parse user from claims: %s", utils.TryMarshal(claims["user"]))
-	}
-	return &user, nil
+	return 0, errors.New("no userID found in refresh token")
 }
 
-func (a *Auth) createClaims(user *querier.User, accessRules []string) jwt.MapClaims {
-	ruleMap := make(map[string]struct{})
-	for _, rule := range accessRules {
-		ruleMap[rule] = struct{}{}
-	}
-
-	return jwt.MapClaims{
-		"user": &User{
-			ID:             user.ID,
-			OrganizationID: user.OrganizationID,
-			AccessRules:    ruleMap,
-		},
-		"exp": time.Now().Add(12 * time.Hour).Unix(),
-	}
+func (a *Auth) InvalidateUserTokens(ctx context.Context, userID int32) error {
+	return a.macaroons.InvalidateUserTokens(ctx, userID)
 }
 
-func (a *Auth) GetJWTSecret() []byte {
-	return a.jwtSecret
-}
-
-func (a *Auth) CreateRefreshToken(userID int32) (string, string, error) {
-	refreshToken := randomString(32)
-	jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID": userID,
-		"token":  refreshToken,
-	})
-	jwtToken, err := jwt.SignedString(a.jwtSecret)
-	if err != nil {
-		return "", "", err
-	}
-	return refreshToken, jwtToken, nil
-}
-
-func (a *Auth) ParseJWTRefreshToken(jwtToken string) (int32, string, error) {
-	token, err := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return a.jwtSecret, nil
-	})
-	if err != nil {
-		return 0, "", err
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
+func GetUserID(c *fiber.Ctx) (int32, error) {
+	userID, ok := c.Locals(ContextKeyUserID).(int32)
 	if !ok {
-		return 0, "", errors.New("unexpected error when parsing claims: claims is not jwt.MapClaims")
+		return 0, ErrUserIdentityNotExist
 	}
-
-	userID, ok := claims["userID"].(float64)
-	if !ok {
-		return 0, "", errors.New("unexpected error when parsing userID: userID is not float64")
-	}
-
-	refreshToken, ok := claims["token"].(string)
-	if !ok {
-		return 0, "", errors.New("unexpected error when parsing token: token is not string")
-	}
-	return int32(userID), refreshToken, nil
+	return userID, nil
 }
 
-func randomString(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[rand.Intn(len(charset))]
-	}
-	return string(b)
-}
-
-func GetUser(c *fiber.Ctx) (*User, error) {
-	user, ok := c.Locals(UserContextKey).(*User)
+func GetOrgID(c *fiber.Ctx) (int32, error) {
+	orgID, ok := c.Locals(ContextKeyOrgID).(int32)
 	if !ok {
-		return nil, ErrUserIdentityNotExist
+		return 0, ErrUserIdentityNotExist
 	}
-	return user, nil
+	return orgID, nil
 }

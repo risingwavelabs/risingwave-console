@@ -24,8 +24,8 @@ prune-spec:
 OAPI_GENERATE_ARG=types,fiber,client
 
 gen-spec: install-oapi-codegen-fiber install-oapi-codegen prune-spec
-	$(OAPI_CODEGEN_BIN) -generate $(OAPI_GENERATE_ARG) -o $(OAPI_GEN_DIR)/spec_gen.go -package apigen $(PROJECT_DIR)/web/api/v1.yaml
-	$(PROJECT_DIR)/bin/oapi-codegen-fiber --package apigen --path $(PROJECT_DIR)/web/api/v1.yaml --out $(PROJECT_DIR)/internal/apigen/scopes_extend_gen.go
+	$(OAPI_CODEGEN_BIN) -generate $(OAPI_GENERATE_ARG) -o $(OAPI_GEN_DIR)/spec_gen.go -package apigen $(PROJECT_DIR)/api/v1.yaml
+	$(PROJECT_DIR)/bin/oapi-codegen-fiber --package apigen --path $(PROJECT_DIR)/api/v1.yaml --out $(PROJECT_DIR)/internal/apigen/scopes_extend_gen.go
 
 gen-frontend-client:
 	cd web && pnpm run gen
@@ -41,10 +41,9 @@ install-wire:
 
 WIRE_GEN=$(PROJECT_DIR)/bin/wire
 gen-wire: install-wire
-ifeq ($(EE), true)
-	$(WIRE_GEN) ./ee/wire
-else
 	$(WIRE_GEN) ./wire
+ifeq ($(EE), true)
+#$(WIRE_GEN) ./ee/wire
 endif
 
 ###################################################
@@ -80,14 +79,19 @@ install-mockgen:
 
 gen-mock: install-mockgen
 	$(MOCKGEN_BIN) -source=internal/model/model.go -destination=internal/model/mock_gen.go -package=model
-	$(MOCKGEN_BIN) -source=internal/task/task.go -destination=internal/task/mock/task_mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/task/interfaces.go -destination=internal/task/mock_gen.go -package=task
 	$(MOCKGEN_BIN) -source=internal/worker/lifecycle_handler.go -destination=internal/worker/mock/lifecycle_handler_mock_gen.go -package=mock
 	$(MOCKGEN_BIN) -source=internal/worker/worker.go -destination=internal/worker/mock/worker_mock_gen.go -package=mock
 	$(MOCKGEN_BIN) -source=internal/service/service.go -destination=internal/service/service_mock_gen.go -package=service
 	$(MOCKGEN_BIN) -source=internal/modelctx/modelctx.go -destination=internal/modelctx/mock/modelctx_mock_gen.go -package=mock
 	$(MOCKGEN_BIN) -source=internal/conn/meta/types.go -destination=internal/conn/meta/mock/mock_gen.go -package=mock
-	$(MOCKGEN_BIN) -source=internal/task/task.go -destination=internal/task/task_mock_gen.go -package=task
 	$(MOCKGEN_BIN) -source=internal/conn/http/http.go -destination=internal/conn/http/mock/http_mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/macaroons/interfaces.go -destination=internal/macaroons/mock_gen.go -package=macaroons
+	$(MOCKGEN_BIN) -source=internal/macaroons/store/interfaces.go -destination=internal/macaroons/store/mock/mock_gen.go -package=mock
+	$(MOCKGEN_BIN) -source=internal/auth/auth.go -destination=internal/auth/mock_gen.go -package=auth
+ifeq ($(EE), true)
+	
+endif
 
 ###################################################
 ### Common
@@ -164,7 +168,7 @@ K0S_CODEBASE_DIR=/opt/wavekit-dev/codebase
 start:
 	docker-compose up -d
 	./dev/init.sh
-	$(K0S_KUBECTL) apply -f $(K0S_CODEBASE_DIR)/dev/k0s.yaml
+	$(K0S_KUBECTL) apply -f $(K0S_CODEBASE_DIR)/dev/k0s.yaml > /dev/null 2>&1
 
 apply:
 	$(K0S_KUBECTL) apply -f $(K0S_CODEBASE_DIR)/dev/k0s.yaml
@@ -176,11 +180,7 @@ log:
 	$(K0S_KUBECTL) logs -l app=wavekit --follow
 
 db:
-	psql "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"
-
-test:
-	TEST_DIR=$(PROJECT_DIR)/e2e HOLD="$(HOLD)" ./scripts/run-local-test.sh "$(K)" 
-
+	psql "postgresql://postgres:postgres@localhost:30432/postgres?sslmode=disable"
 
 ###################################################
 ### Build
@@ -219,8 +219,9 @@ ci: doc build-web build-server build-binary push-docker binary-push
 
 ut:
 	@COLOR=ALWAYS go test -race -covermode=atomic -coverprofile=coverage.out -tags ut ./... 
-	@go tool cover -html coverage.out -o coverage.html
-	@go tool cover -func coverage.out | fgrep total | awk '{print "Coverage:", $$3}'
+	@grep -vE "_gen\.go|/mock[s]?/" coverage.out > coverage.filtered
+	@go tool cover -func=coverage.filtered | fgrep total | awk '{print "Coverage:", $$3}'
+	@go tool cover -html=coverage.filtered -o coverage.html
 
 
 # https://pkg.go.dev/net/http/pprof#hdr-Usage_examples

@@ -18,6 +18,7 @@ type Querier interface {
 	CreateClusterSnapshot(ctx context.Context, arg CreateClusterSnapshotParams) error
 	CreateDatabaseConnection(ctx context.Context, arg CreateDatabaseConnectionParams) (*DatabaseConnection, error)
 	CreateMetricsStore(ctx context.Context, arg CreateMetricsStoreParams) (*MetricsStore, error)
+	CreateOpaqueKey(ctx context.Context, arg CreateOpaqueKeyParams) (int64, error)
 	CreateOrganization(ctx context.Context, name string) (*Organization, error)
 	CreateOrganizationOwner(ctx context.Context, arg CreateOrganizationOwnerParams) error
 	CreateSnapshot(ctx context.Context, arg CreateSnapshotParams) error
@@ -27,10 +28,11 @@ type Querier interface {
 	DeleteClusterDiagnostic(ctx context.Context, id int32) error
 	DeleteClusterSnapshot(ctx context.Context, arg DeleteClusterSnapshotParams) error
 	DeleteMetricsStore(ctx context.Context, arg DeleteMetricsStoreParams) error
+	DeleteOpaqueKey(ctx context.Context, id int64) error
+	DeleteOpaqueKeys(ctx context.Context, userID int32) error
 	DeleteOrgCluster(ctx context.Context, arg DeleteOrgClusterParams) error
 	DeleteOrgDatabaseConnection(ctx context.Context, arg DeleteOrgDatabaseConnectionParams) error
 	DeleteOrganization(ctx context.Context, id int32) error
-	DeleteRefreshToken(ctx context.Context, arg DeleteRefreshTokenParams) error
 	DeleteSnapshot(ctx context.Context, arg DeleteSnapshotParams) error
 	DeleteUserByName(ctx context.Context, name string) error
 	GetAllOrgDatabseConnectionsByClusterID(ctx context.Context, arg GetAllOrgDatabseConnectionsByClusterIDParams) ([]*DatabaseConnection, error)
@@ -41,11 +43,11 @@ type Querier interface {
 	GetDatabaseConnectionByID(ctx context.Context, id int32) (*DatabaseConnection, error)
 	GetMetricsStore(ctx context.Context, id int32) (*MetricsStore, error)
 	GetMetricsStoreByIDAndOrgID(ctx context.Context, arg GetMetricsStoreByIDAndOrgIDParams) (*MetricsStore, error)
+	GetOpaqueKey(ctx context.Context, id int64) ([]byte, error)
 	GetOrgCluster(ctx context.Context, arg GetOrgClusterParams) (*Cluster, error)
 	GetOrgDatabaseByID(ctx context.Context, arg GetOrgDatabaseByIDParams) (*DatabaseConnection, error)
 	GetOrgDatabaseConnection(ctx context.Context, arg GetOrgDatabaseConnectionParams) (*DatabaseConnection, error)
 	GetOrganization(ctx context.Context, id int32) (*Organization, error)
-	GetRefreshToken(ctx context.Context, arg GetRefreshTokenParams) (*RefreshToken, error)
 	GetTaskByID(ctx context.Context, id int32) (*Task, error)
 	GetTimeZone(ctx context.Context, id int32) (string, error)
 	GetUser(ctx context.Context, id int32) (*User, error)
@@ -74,7 +76,6 @@ type Querier interface {
 	UpdateTask(ctx context.Context, arg UpdateTaskParams) error
 	UpdateTaskStartedAt(ctx context.Context, arg UpdateTaskStartedAtParams) error
 	UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) error
-	UpsertRefreshToken(ctx context.Context, arg UpsertRefreshTokenParams) error
 }
 
 var _ Querier = (*Queries)(nil)
