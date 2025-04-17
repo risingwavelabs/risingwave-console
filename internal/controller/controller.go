@@ -18,12 +18,10 @@ type Controller struct {
 	auth auth.AuthInterface
 }
 
-var _ apigen.ServerInterface = &Controller{}
-
 func NewController(
 	s service.ServiceInterface,
 	auth auth.AuthInterface,
-) *Controller {
+) apigen.ServerInterface {
 	return &Controller{
 		svc:  s,
 		auth: auth,

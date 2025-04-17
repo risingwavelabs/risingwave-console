@@ -58,9 +58,10 @@ func InitializeApplication() (*app.Application, error) {
 	}
 	metaHttpManagerInterface := http.NewMetaHttpManager()
 	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager, metaHttpManagerInterface, taskStoreInterface)
-	controllerController := controller.NewController(serviceInterface, authInterface)
 	initService := service.NewInitService(modelInterface, serviceInterface)
-	serverServer, err := server.NewServer(configConfig, globalContext, controllerController, authInterface, initService)
+	serverInterface := controller.NewController(serviceInterface, authInterface)
+	validator := controller.NewValidator(modelInterface)
+	serverServer, err := server.NewServer(configConfig, globalContext, authInterface, initService, serverInterface, validator)
 	if err != nil {
 		return nil, err
 	}
