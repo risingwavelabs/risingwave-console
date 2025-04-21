@@ -80,7 +80,8 @@ paths:
       description: Retrieve details of a specific database
       operationId: getDatabase
       security:
-        - BearerAuth: []
+        - BearerAuth:
+            - x.OwnDatabase(c, x.GetOrgID(c), id)
       responses:
         "200":
           description: Successfully retrieved database
@@ -1670,3 +1671,26 @@ components:
         taskID:
           type: integer
           format: int32
+
+x-check-rules:
+  OwnDatabase:
+    useContext: true
+    parameters:
+      - name: UserID
+        schema:
+          type: integer
+          format: int32
+      - name: DatabaseID
+        schema:
+          type: integer
+          format: int32
+
+x-functions:
+  GetOrgID:
+    description: Get the organization ID from the request
+    useContext: true
+    return:
+      schema:
+        type: integer
+        format: int32
+      description: The organization ID

@@ -6087,7 +6087,7 @@ func (siw *ServerInterfaceWrapper) GetDatabase(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter ID: %w", err).Error())
 	}
 
-	c.Context().SetUserValue(BearerAuthScopes, []string{})
+	c.Context().SetUserValue(BearerAuthScopes, []string{"x.OwnDatabase(c, x.GetOrgID(c), id)"})
 
 	return siw.Handler.GetDatabase(c, id)
 }

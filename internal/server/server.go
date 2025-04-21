@@ -16,7 +16,6 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
-	"github.com/risingwavelabs/wavekit/internal/controller"
 	"github.com/risingwavelabs/wavekit/internal/globalctx"
 	"github.com/risingwavelabs/wavekit/internal/logger"
 	"github.com/risingwavelabs/wavekit/internal/service"
@@ -27,15 +26,23 @@ import (
 var log = logger.NewLogAgent("server")
 
 type Server struct {
-	app        *fiber.App
-	host       string
-	port       int
-	auth       auth.AuthInterface
-	controller *controller.Controller
-	globalCtx  *globalctx.GlobalContext
+	app             *fiber.App
+	host            string
+	port            int
+	auth            auth.AuthInterface
+	globalCtx       *globalctx.GlobalContext
+	serverInterface apigen.ServerInterface
+	validator       apigen.Validator
 }
 
-func NewServer(cfg *config.Config, globalCtx *globalctx.GlobalContext, c *controller.Controller, auth auth.AuthInterface, initSvc *service.InitService) (*Server, error) {
+func NewServer(
+	cfg *config.Config,
+	globalCtx *globalctx.GlobalContext,
+	auth auth.AuthInterface,
+	initSvc *service.InitService,
+	serverInterface apigen.ServerInterface,
+	validator apigen.Validator,
+) (*Server, error) {
 	// create fiber app
 	app := fiber.New(fiber.Config{
 		ErrorHandler: utils.ErrorHandler,
@@ -57,17 +64,18 @@ func NewServer(cfg *config.Config, globalCtx *globalctx.GlobalContext, c *contro
 	}
 
 	s := &Server{
-		app:        app,
-		host:       host,
-		port:       port,
-		auth:       auth,
-		controller: c,
-		globalCtx:  globalCtx,
+		app:             app,
+		host:            host,
+		port:            port,
+		auth:            auth,
+		serverInterface: serverInterface,
+		globalCtx:       globalCtx,
+		validator:       validator,
 	}
 
 	s.registerMiddleware()
 
-	apigen.RegisterHandlersWithOptions(s.app, s.controller, apigen.FiberServerOptions{
+	apigen.RegisterHandlersWithOptions(s.app, apigen.NewXMiddleware(s.serverInterface, s.validator), apigen.FiberServerOptions{
 		BaseURL:     "/api/v1",
 		Middlewares: []apigen.MiddlewareFunc{},
 	})
@@ -79,10 +87,6 @@ func NewServer(cfg *config.Config, globalCtx *globalctx.GlobalContext, c *contro
 	}
 
 	return s, nil
-}
-
-func (s *Server) GetController() *controller.Controller {
-	return s.controller
 }
 
 func (s *Server) registerMiddleware() {
@@ -130,7 +134,6 @@ func (s *Server) registerMiddleware() {
 		return err
 	})
 
-	apigen.RegisterAuthFunc(s.app, s.auth.Authfunc)
 }
 
 func (s *Server) Listen() error {

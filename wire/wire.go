@@ -48,6 +48,7 @@ func InitializeApplication() (*app.Application, error) {
 		store.NewStore,
 		auth.NewCaveatParser,
 		handler.NewTaskHandler,
+		controller.NewValidator,
 	)
 	return nil, nil
 }
