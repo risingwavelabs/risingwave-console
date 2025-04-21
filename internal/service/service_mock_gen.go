@@ -56,21 +56,6 @@ func (mr *MockServiceInterfaceMockRecorder) CancelDDLProgress(ctx, id, ddlID, or
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelDDLProgress", reflect.TypeOf((*MockServiceInterface)(nil).CancelDDLProgress), ctx, id, ddlID, orgID)
 }
 
-// CreateCluster mocks base method.
-func (m *MockServiceInterface) CreateCluster(ctx context.Context, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateCluster", ctx, params, orgID)
-	ret0, _ := ret[0].(*apigen.Cluster)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateCluster indicates an expected call of CreateCluster.
-func (mr *MockServiceInterfaceMockRecorder) CreateCluster(ctx, params, orgID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCluster", reflect.TypeOf((*MockServiceInterface)(nil).CreateCluster), ctx, params, orgID)
-}
-
 // CreateClusterDiagnostic mocks base method.
 func (m *MockServiceInterface) CreateClusterDiagnostic(ctx context.Context, id, orgID int32) (*apigen.DiagnosticData, error) {
 	m.ctrl.T.Helper()
@@ -99,36 +84,6 @@ func (m *MockServiceInterface) CreateClusterSnapshot(ctx context.Context, id int
 func (mr *MockServiceInterfaceMockRecorder) CreateClusterSnapshot(ctx, id, name, orgID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateClusterSnapshot", reflect.TypeOf((*MockServiceInterface)(nil).CreateClusterSnapshot), ctx, id, name, orgID)
-}
-
-// CreateDatabase mocks base method.
-func (m *MockServiceInterface) CreateDatabase(ctx context.Context, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateDatabase", ctx, params, orgID)
-	ret0, _ := ret[0].(*apigen.Database)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateDatabase indicates an expected call of CreateDatabase.
-func (mr *MockServiceInterfaceMockRecorder) CreateDatabase(ctx, params, orgID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDatabase", reflect.TypeOf((*MockServiceInterface)(nil).CreateDatabase), ctx, params, orgID)
-}
-
-// CreateMetricsStore mocks base method.
-func (m *MockServiceInterface) CreateMetricsStore(arg0 context.Context, arg1 apigen.MetricsStoreCreate, arg2 int32) (*apigen.MetricsStore, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateMetricsStore", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*apigen.MetricsStore)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateMetricsStore indicates an expected call of CreateMetricsStore.
-func (mr *MockServiceInterfaceMockRecorder) CreateMetricsStore(arg0, arg1, arg2 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMetricsStore", reflect.TypeOf((*MockServiceInterface)(nil).CreateMetricsStore), arg0, arg1, arg2)
 }
 
 // CreateNewUser mocks base method.
@@ -320,6 +275,51 @@ func (m *MockServiceInterface) GetMetricsStore(ctx context.Context, id, organiza
 func (mr *MockServiceInterfaceMockRecorder) GetMetricsStore(ctx, id, organizationID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricsStore", reflect.TypeOf((*MockServiceInterface)(nil).GetMetricsStore), ctx, id, organizationID)
+}
+
+// ImportCluster mocks base method.
+func (m *MockServiceInterface) ImportCluster(ctx context.Context, params apigen.ClusterImport, orgID int32) (*apigen.Cluster, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ImportCluster", ctx, params, orgID)
+	ret0, _ := ret[0].(*apigen.Cluster)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ImportCluster indicates an expected call of ImportCluster.
+func (mr *MockServiceInterfaceMockRecorder) ImportCluster(ctx, params, orgID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ImportCluster", reflect.TypeOf((*MockServiceInterface)(nil).ImportCluster), ctx, params, orgID)
+}
+
+// ImportDatabase mocks base method.
+func (m *MockServiceInterface) ImportDatabase(ctx context.Context, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ImportDatabase", ctx, params, orgID)
+	ret0, _ := ret[0].(*apigen.Database)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ImportDatabase indicates an expected call of ImportDatabase.
+func (mr *MockServiceInterfaceMockRecorder) ImportDatabase(ctx, params, orgID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ImportDatabase", reflect.TypeOf((*MockServiceInterface)(nil).ImportDatabase), ctx, params, orgID)
+}
+
+// ImportMetricsStore mocks base method.
+func (m *MockServiceInterface) ImportMetricsStore(arg0 context.Context, arg1 apigen.MetricsStoreImport, arg2 int32) (*apigen.MetricsStore, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ImportMetricsStore", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*apigen.MetricsStore)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ImportMetricsStore indicates an expected call of ImportMetricsStore.
+func (mr *MockServiceInterfaceMockRecorder) ImportMetricsStore(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ImportMetricsStore", reflect.TypeOf((*MockServiceInterface)(nil).ImportMetricsStore), arg0, arg1, arg2)
 }
 
 // ListClusterDiagnostics mocks base method.
@@ -518,7 +518,7 @@ func (mr *MockServiceInterfaceMockRecorder) TestDatabaseConnection(ctx, params, 
 }
 
 // UpdateCluster mocks base method.
-func (m *MockServiceInterface) UpdateCluster(ctx context.Context, id int32, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error) {
+func (m *MockServiceInterface) UpdateCluster(ctx context.Context, id int32, params apigen.ClusterImport, orgID int32) (*apigen.Cluster, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateCluster", ctx, id, params, orgID)
 	ret0, _ := ret[0].(*apigen.Cluster)
@@ -576,7 +576,7 @@ func (mr *MockServiceInterfaceMockRecorder) UpdateDatabase(ctx, id, params, orgI
 }
 
 // UpdateMetricsStore mocks base method.
-func (m *MockServiceInterface) UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreCreate, organizationID int32) (*apigen.MetricsStore, error) {
+func (m *MockServiceInterface) UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreImport, organizationID int32) (*apigen.MetricsStore, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateMetricsStore", ctx, id, req, organizationID)
 	ret0, _ := ret[0].(*apigen.MetricsStore)

@@ -52,7 +52,7 @@ type ServiceInterface interface {
 	RefreshToken(ctx context.Context, userID int32, refreshToken string) (*apigen.Credentials, error)
 
 	// Cluster management
-	CreateCluster(ctx context.Context, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error)
+	ImportCluster(ctx context.Context, params apigen.ClusterImport, orgID int32) (*apigen.Cluster, error)
 
 	// GetCluster gets a cluster by its ID
 	GetCluster(ctx context.Context, id int32, orgID int32) (*apigen.Cluster, error)
@@ -61,13 +61,13 @@ type ServiceInterface interface {
 	ListClusters(ctx context.Context, orgID int32) ([]*apigen.Cluster, error)
 
 	// UpdateCluster updates a cluster
-	UpdateCluster(ctx context.Context, id int32, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error)
+	UpdateCluster(ctx context.Context, id int32, params apigen.ClusterImport, orgID int32) (*apigen.Cluster, error)
 
 	// DeleteCluster deletes a cluster
 	DeleteCluster(ctx context.Context, id int32, cascade bool, orgID int32) error
 
 	// Database management
-	CreateDatabase(ctx context.Context, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error)
+	ImportDatabase(ctx context.Context, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error)
 
 	// GetDatabase gets a database by its ID and organization ID
 	GetDatabase(ctx context.Context, id int32, orgID int32) (*apigen.Database, error)
@@ -136,8 +136,8 @@ type ServiceInterface interface {
 	// GetMaterializedViewThroughput gets the throughput of materialized views
 	GetMaterializedViewThroughput(ctx context.Context, clusterID int32) (prom_model.Matrix, error)
 
-	// CreateMetricsStore creates a new metrics store
-	CreateMetricsStore(context.Context, apigen.MetricsStoreCreate, int32) (*apigen.MetricsStore, error)
+	// ImportMetricsStore creates a new metrics store
+	ImportMetricsStore(context.Context, apigen.MetricsStoreImport, int32) (*apigen.MetricsStore, error)
 
 	// DeleteMetricsStore deletes a metrics store
 	DeleteMetricsStore(ctx context.Context, id int32, organizationID int32, force bool) error
@@ -146,7 +146,7 @@ type ServiceInterface interface {
 	GetMetricsStore(ctx context.Context, id int32, organizationID int32) (*apigen.MetricsStore, error)
 
 	// UpdateMetricsStore updates a metrics store
-	UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreCreate, organizationID int32) (*apigen.MetricsStore, error)
+	UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreImport, organizationID int32) (*apigen.MetricsStore, error)
 
 	// ListClustersByMetricsStoreID lists all clusters by metrics store ID
 	ListMetricsStores(ctx context.Context, organizationID int32) ([]*apigen.MetricsStore, error)

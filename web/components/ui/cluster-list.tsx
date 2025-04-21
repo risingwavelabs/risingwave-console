@@ -357,7 +357,7 @@ export function ClusterList({ clusters: initialClusters, onEdit, onDelete }: Clu
 
       {clusters.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
-          No clusters found. Create a new cluster to get started.
+          No clusters found. Add a new cluster to get started.
         </div>
       ) : (
         <DndProvider backend={HTML5Backend}>

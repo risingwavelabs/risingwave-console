@@ -47,7 +47,7 @@ export default function ClustersPage() {
 
   const handleCreateCluster = async (data: ClusterFormData) => {
     try {
-      const newCluster = await DefaultService.createCluster({
+      const newCluster = await DefaultService.importCluster({
         name: data.name,
         host: data.host,
         sqlPort: data.sqlPort,

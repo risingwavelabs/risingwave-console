@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { ApiError, DefaultService } from "@/api-gen"
 import { MetricsStore } from "@/api-gen/models/MetricsStore"
-import { MetricsStoreCreate } from "@/api-gen/models/MetricsStoreCreate"
+import { MetricsStoreImport } from "@/api-gen/models/MetricsStoreImport"
 import { MetricsStoreSpec } from "@/api-gen/models/MetricsStoreSpec"
 import toast from "react-hot-toast"
 import { Button } from "@/components/ui/button"
@@ -104,13 +104,13 @@ export default function MetricsStorePage() {
       console.log("Create formData", formData);
       console.log("Create defaultLabels", defaultLabels);
 
-      const createPayload: MetricsStoreCreate = {
+      const createPayload: MetricsStoreImport = {
         name: formData.name,
         spec: spec,
         defaultLabels: defaultLabels
       }
 
-      const newStore = await DefaultService.createMetricsStore(createPayload)
+      const newStore = await DefaultService.importMetricsStore(createPayload)
       setMetricsStores(prev => [...prev, newStore])
       setCreateDialogOpen(false)
       toast.success("Metrics store created successfully")
@@ -254,14 +254,14 @@ export default function MetricsStorePage() {
             Manage your metrics stores for monitoring
           </p>
         </div>
-        <Button onClick={openCreateDialog}>Create Metrics Store</Button>
+        <Button onClick={openCreateDialog}>Import Metrics Store</Button>
       </div>
 
       {metricsStores.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center">
           <h3 className="text-lg font-medium">No metrics stores found</h3>
           <p className="text-sm text-muted-foreground mt-2">
-            Create a metrics store to start monitoring your clusters
+            Add a metrics store to start monitoring your clusters
           </p>
         </div>
       ) : (
@@ -318,7 +318,7 @@ export default function MetricsStorePage() {
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Metrics Store</DialogTitle>
+            <DialogTitle>Import Metrics Store</DialogTitle>
             <DialogDescription>
               Add a new metrics store to monitor your clusters.
             </DialogDescription>

@@ -12,7 +12,7 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/utils"
 )
 
-func (s *Service) CreateDatabase(ctx context.Context, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error) {
+func (s *Service) ImportDatabase(ctx context.Context, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error) {
 	cluster, err := s.m.CreateDatabaseConnection(ctx, querier.CreateDatabaseConnectionParams{
 		ClusterID:      params.ClusterID,
 		Name:           params.Name,

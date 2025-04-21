@@ -162,7 +162,7 @@ export function DatabaseManagement({ isOpen, onClose, onDatabaseChange }: Databa
 
     try {
       if (isAddingDatabase) {
-        const newDb = await DefaultService.createDatabase(dbConnectInfo)
+        const newDb = await DefaultService.importDatabase(dbConnectInfo)
         setDatabases(prev => [...prev, newDb])
         toast.success("Database created successfully")
         setIsAddingDatabase(false)
@@ -365,7 +365,7 @@ export function DatabaseManagement({ isOpen, onClose, onDatabaseChange }: Databa
                             className="h-auto p-0"
                             onClick={() => window.open('/clusters', '_blank')}
                           >
-                            Create a new cluster
+                            Add a new cluster
                           </Button>
                         </div>
                       ) : (

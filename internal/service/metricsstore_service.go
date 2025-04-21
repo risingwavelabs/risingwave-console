@@ -25,8 +25,8 @@ func metricsStoreToAPI(ms *querier.MetricsStore) *apigen.MetricsStore {
 	}
 }
 
-// CreateMetricsStore creates a new metrics store
-func (s *Service) CreateMetricsStore(ctx context.Context, req apigen.MetricsStoreCreate, organizationID int32) (*apigen.MetricsStore, error) {
+// ImportMetricsStore creates a new metrics store
+func (s *Service) ImportMetricsStore(ctx context.Context, req apigen.MetricsStoreImport, organizationID int32) (*apigen.MetricsStore, error) {
 	params := querier.CreateMetricsStoreParams{
 		Name:           req.Name,
 		Spec:           &req.Spec,
@@ -116,7 +116,7 @@ func (s *Service) ListMetricsStores(ctx context.Context, organizationID int32) (
 	return apiMsList, nil
 }
 
-func (s *Service) UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreCreate, organizationID int32) (*apigen.MetricsStore, error) {
+func (s *Service) UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreImport, organizationID int32) (*apigen.MetricsStore, error) {
 	params := querier.UpdateMetricsStoreParams{
 		ID:             id,
 		Name:           req.Name,
