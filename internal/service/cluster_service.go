@@ -45,7 +45,7 @@ func (s *Service) ListClusterVersions(ctx context.Context) ([]string, error) {
 	return versions, nil
 }
 
-func (s *Service) CreateCluster(ctx context.Context, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error) {
+func (s *Service) ImportCluster(ctx context.Context, params apigen.ClusterImport, orgID int32) (*apigen.Cluster, error) {
 	cluster, err := s.m.CreateCluster(ctx, querier.CreateClusterParams{
 		OrganizationID: orgID,
 		Name:           params.Name,
@@ -94,7 +94,7 @@ func (s *Service) ListClusters(ctx context.Context, orgID int32) ([]*apigen.Clus
 	return result, nil
 }
 
-func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.ClusterCreate, orgID int32) (*apigen.Cluster, error) {
+func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.ClusterImport, orgID int32) (*apigen.Cluster, error) {
 	cluster, err := s.m.UpdateOrgCluster(ctx, querier.UpdateOrgClusterParams{
 		ID:             id,
 		OrganizationID: orgID,

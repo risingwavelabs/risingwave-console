@@ -4,7 +4,7 @@
 /* eslint-disable */
 import type { MetricsStoreLabelMatcherList } from './MetricsStoreLabelMatcherList';
 import type { MetricsStoreSpec } from './MetricsStoreSpec';
-export type MetricsStoreCreate = {
+export type MetricsStoreImport = {
     name: string;
     spec: MetricsStoreSpec;
     defaultLabels?: MetricsStoreLabelMatcherList;

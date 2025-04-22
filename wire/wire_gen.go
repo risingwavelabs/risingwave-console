@@ -60,7 +60,7 @@ func InitializeApplication() (*app.Application, error) {
 	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager, metaHttpManagerInterface, taskStoreInterface)
 	initService := service.NewInitService(modelInterface, serviceInterface)
 	serverInterface := controller.NewController(serviceInterface, authInterface)
-	validator := controller.NewValidator(modelInterface)
+	validator := controller.NewValidator(modelInterface, authInterface)
 	serverServer, err := server.NewServer(configConfig, globalContext, authInterface, initService, serverInterface, validator)
 	if err != nil {
 		return nil, err

@@ -5,7 +5,7 @@
 import type { AutoBackupConfig } from '../models/AutoBackupConfig';
 import type { AutoDiagnosticConfig } from '../models/AutoDiagnosticConfig';
 import type { Cluster } from '../models/Cluster';
-import type { ClusterCreate } from '../models/ClusterCreate';
+import type { ClusterImport } from '../models/ClusterImport';
 import type { Credentials } from '../models/Credentials';
 import type { Database } from '../models/Database';
 import type { DatabaseConnectInfo } from '../models/DatabaseConnectInfo';
@@ -14,7 +14,7 @@ import type { DiagnosticData } from '../models/DiagnosticData';
 import type { Event } from '../models/Event';
 import type { MetricMatrix } from '../models/MetricMatrix';
 import type { MetricsStore } from '../models/MetricsStore';
-import type { MetricsStoreCreate } from '../models/MetricsStoreCreate';
+import type { MetricsStoreImport } from '../models/MetricsStoreImport';
 import type { QueryRequest } from '../models/QueryRequest';
 import type { QueryResponse } from '../models/QueryResponse';
 import type { RefreshTokenRequest } from '../models/RefreshTokenRequest';
@@ -46,18 +46,18 @@ export class DefaultService {
         });
     }
     /**
-     * Create a new database
-     * Create a new database
+     * Import a database
+     * Import a database
      * @param requestBody
-     * @returns Database Database created successfully
+     * @returns Database Database imported successfully
      * @throws ApiError
      */
-    public static createDatabase(
+    public static importDatabase(
         requestBody: DatabaseConnectInfo,
     ): CancelablePromise<Database> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/databases',
+            url: '/databases/import',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -239,18 +239,18 @@ export class DefaultService {
         });
     }
     /**
-     * Create a new cluster
-     * Create a new database cluster
+     * Import a cluster
+     * Import a database cluster
      * @param requestBody
-     * @returns Cluster Cluster created successfully
+     * @returns Cluster Cluster imported successfully
      * @throws ApiError
      */
-    public static createCluster(
-        requestBody: ClusterCreate,
+    public static importCluster(
+        requestBody: ClusterImport,
     ): CancelablePromise<Cluster> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/clusters',
+            url: '/clusters/import',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -693,18 +693,18 @@ export class DefaultService {
         });
     }
     /**
-     * Create a new metrics store
-     * Create a new metrics store
+     * Import a metrics store
+     * Import a metrics store
      * @param requestBody
-     * @returns MetricsStore Successfully created metrics store
+     * @returns MetricsStore Successfully imported metrics store
      * @throws ApiError
      */
-    public static createMetricsStore(
-        requestBody: MetricsStoreCreate,
+    public static importMetricsStore(
+        requestBody: MetricsStoreImport,
     ): CancelablePromise<MetricsStore> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/metrics-stores',
+            url: '/metrics-stores/import',
             body: requestBody,
             mediaType: 'application/json',
         });

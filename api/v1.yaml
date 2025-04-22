@@ -26,10 +26,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Database"
+  
+  /databases/import:
     post:
-      summary: Create a new database
-      description: Create a new database
-      operationId: createDatabase
+      summary: Import a database
+      description: Import a database
+      operationId: importDatabase
       security:
         - BearerAuth: []
       requestBody:
@@ -40,7 +42,7 @@ paths:
               $ref: "#/components/schemas/DatabaseConnectInfo"
       responses:
         "201":
-          description: Database created successfully
+          description: Database imported successfully
           content:
             application/json:
               schema:
@@ -247,19 +249,20 @@ paths:
       security:
         - BearerAuth: []
 
+  /clusters/import:
     post:
-      summary: Create a new cluster
-      description: Create a new database cluster
-      operationId: createCluster
+      summary: Import a cluster
+      description: Import a database cluster
+      operationId: importCluster
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ClusterCreate"
+              $ref: "#/components/schemas/ClusterImport"
       responses:
         "201":
-          description: Cluster created successfully
+          description: Cluster imported successfully
           content:
             application/json:
               schema:
@@ -624,7 +627,6 @@ paths:
                 $ref: "#/components/schemas/Credentials"
         "401":
           description: Invalid credentials
-      security: []
 
   /auth/refresh:
     post:
@@ -646,7 +648,6 @@ paths:
                 $ref: "#/components/schemas/Credentials"
         "401":
           description: Invalid or expired refresh token
-      security: []
 
   /auth/sign-out:
     post:
@@ -727,11 +728,11 @@ paths:
         "204":
           description: Successfully deleted metrics store
 
-  /metrics-stores:
+  /metrics-stores/import:
     post:
-      summary: Create a new metrics store
-      description: Create a new metrics store
-      operationId: createMetricsStore
+      summary: Import a metrics store
+      description: Import a metrics store
+      operationId: importMetricsStore
       security:
         - BearerAuth: []
       requestBody:
@@ -739,14 +740,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MetricsStoreCreate"
+              $ref: "#/components/schemas/MetricsStoreImport"
       responses:
         "201":
-          description: Successfully created metrics store
+          description: Successfully imported metrics store
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/MetricsStore"
+  
+  /metrics-stores:
     get:
       summary: Get all metrics stores
       description: Get all metrics stores
@@ -971,7 +974,7 @@ components:
             format: int32
             description: ID of the relation this relation depends on
 
-    ClusterCreate:
+    ClusterImport:
       type: object
       required:
         - name
@@ -1423,7 +1426,7 @@ components:
         defaultLabels:
           $ref: "#/components/schemas/MetricsStoreLabelMatcherList"
 
-    MetricsStoreCreate:
+    MetricsStoreImport:
       type: object
       required: [name, spec]
       properties:

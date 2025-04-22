@@ -43,22 +43,17 @@ func (m *MockAuthInterface) EXPECT() *MockAuthInterfaceMockRecorder {
 }
 
 // Authfunc mocks base method.
-func (m *MockAuthInterface) Authfunc(c *fiber.Ctx, rules ...string) error {
+func (m *MockAuthInterface) Authfunc(c *fiber.Ctx) error {
 	m.ctrl.T.Helper()
-	varargs := []any{c}
-	for _, a := range rules {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "Authfunc", varargs...)
+	ret := m.ctrl.Call(m, "Authfunc", c)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Authfunc indicates an expected call of Authfunc.
-func (mr *MockAuthInterfaceMockRecorder) Authfunc(c any, rules ...any) *gomock.Call {
+func (mr *MockAuthInterfaceMockRecorder) Authfunc(c any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{c}, rules...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Authfunc", reflect.TypeOf((*MockAuthInterface)(nil).Authfunc), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Authfunc", reflect.TypeOf((*MockAuthInterface)(nil).Authfunc), c)
 }
 
 // CreateRefreshToken mocks base method.

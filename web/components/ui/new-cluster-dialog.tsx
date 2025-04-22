@@ -179,15 +179,15 @@ export function ClusterDialog({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        {trigger || <Button>{mode === 'create' ? 'New Cluster' : 'Edit'}</Button>}
+        {trigger || <Button>{mode === 'create' ? 'Import' : 'Edit'}</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleFormSubmit}>
           <DialogHeader>
-            <DialogTitle>{mode === 'create' ? 'Create New Cluster' : 'Edit Cluster'}</DialogTitle>
+            <DialogTitle>{mode === 'create' ? 'Import New Cluster' : 'Edit Cluster'}</DialogTitle>
             <DialogDescription>
               {mode === 'create' 
-                ? 'Enter the details for your new database cluster.'
+                ? 'Enter the details for your cluster.'
                 : 'Modify the cluster connection details.'
               }
             </DialogDescription>

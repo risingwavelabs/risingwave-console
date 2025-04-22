@@ -6,9 +6,12 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/pkg/errors"
+	"github.com/risingwavelabs/wavekit/internal/logger"
 	"github.com/risingwavelabs/wavekit/internal/macaroons"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
 )
+
+var log = logger.NewLogAgent("auth")
 
 const (
 	ContextKeyUserID = iota
@@ -30,7 +33,7 @@ type User struct {
 }
 
 type AuthInterface interface {
-	Authfunc(c *fiber.Ctx, rules ...string) error
+	Authfunc(c *fiber.Ctx) error
 
 	// CreateToken creates a new JWT token for the given user with specified access rules
 	CreateToken(ctx context.Context, user *querier.User, rules []string) (int64, string, error)
@@ -58,7 +61,7 @@ func NewAuth(macaroons macaroons.MacaroonManagerInterface) (AuthInterface, error
 	}, nil
 }
 
-func (a *Auth) Authfunc(c *fiber.Ctx, rules ...string) error {
+func (a *Auth) Authfunc(c *fiber.Ctx) error {
 	authHeader := c.Get("Authorization")
 	if authHeader == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing authorization header")

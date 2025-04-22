@@ -3,10 +3,13 @@ package apigen
 import "github.com/gofiber/fiber/v2"
 
 type Validator interface { 
+    PreValidate(*fiber.Ctx) error
+    
+    PostValidate(*fiber.Ctx) error
+
     OwnDatabase(c *fiber.Ctx, UserID int32, DatabaseID int32) error
  
-    GetOrgID(c *fiber.Ctx, ) int32
-
+    GetOrgID(c *fiber.Ctx) int32
 }
 
 
@@ -22,21 +25,29 @@ func NewXMiddleware(handler ServerInterface, validator Validator) ServerInterfac
 // Refresh access token
 // (POST /auth/refresh)
 func (x *XMiddleware) RefreshToken(c *fiber.Ctx) error {
-    if c.Get("Authorization") == "" {
-		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
-	} 
-	c.Locals("operationID", "RefreshToken")
+    
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
 	
+	
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.RefreshToken(c)
 }
 // Sign in user
 // (POST /auth/sign-in)
 func (x *XMiddleware) SignIn(c *fiber.Ctx) error {
-    if c.Get("Authorization") == "" {
-		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
-	} 
-	c.Locals("operationID", "SignIn")
+    
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
 	
+	
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.SignIn(c)
 }
 // Sign out user
@@ -45,18 +56,28 @@ func (x *XMiddleware) SignOut(c *fiber.Ctx) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "SignOut")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.SignOut(c)
 }
 // List all cluster versions
 // (GET /cluster-versions)
 func (x *XMiddleware) ListClusterVersions(c *fiber.Ctx) error {
-    if c.Get("Authorization") == "" {
-		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
-	} 
-	c.Locals("operationID", "ListClusterVersions")
+    
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
 	
+	
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.ListClusterVersions(c)
 }
 // List all clusters
@@ -65,19 +86,31 @@ func (x *XMiddleware) ListClusters(c *fiber.Ctx) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "ListClusters")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.ListClusters(c)
 }
-// Create a new cluster
-// (POST /clusters)
-func (x *XMiddleware) CreateCluster(c *fiber.Ctx) error {
+// Import a cluster
+// (POST /clusters/import)
+func (x *XMiddleware) ImportCluster(c *fiber.Ctx) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "CreateCluster")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
-    return x.Handler.CreateCluster(c)
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+    return x.Handler.ImportCluster(c)
 }
 // Delete cluster
 // (DELETE /clusters/{ID})
@@ -85,8 +118,14 @@ func (x *XMiddleware) DeleteCluster(c *fiber.Ctx, id int32, params DeleteCluster
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "DeleteCluster")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.DeleteCluster(c, id, params)
 }
 // Get cluster details
@@ -95,8 +134,14 @@ func (x *XMiddleware) GetCluster(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "GetCluster")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.GetCluster(c, id)
 }
 // Update cluster
@@ -105,8 +150,14 @@ func (x *XMiddleware) UpdateCluster(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "UpdateCluster")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.UpdateCluster(c, id)
 }
 // Get snapshot configuration
@@ -115,8 +166,14 @@ func (x *XMiddleware) GetClusterAutoBackupConfig(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "GetClusterAutoBackupConfig")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.GetClusterAutoBackupConfig(c, id)
 }
 // Update snapshot configuration
@@ -125,8 +182,14 @@ func (x *XMiddleware) UpdateClusterAutoBackupConfig(c *fiber.Ctx, id int32) erro
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "UpdateClusterAutoBackupConfig")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.UpdateClusterAutoBackupConfig(c, id)
 }
 // List diagnostic data
@@ -135,8 +198,14 @@ func (x *XMiddleware) ListClusterDiagnostics(c *fiber.Ctx, id int32, params List
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "ListClusterDiagnostics")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.ListClusterDiagnostics(c, id, params)
 }
 // Create diagnostic data
@@ -145,8 +214,14 @@ func (x *XMiddleware) CreateClusterDiagnostic(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "CreateClusterDiagnostic")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.CreateClusterDiagnostic(c, id)
 }
 // Get diagnostic configuration
@@ -155,8 +230,14 @@ func (x *XMiddleware) GetClusterAutoDiagnosticConfig(c *fiber.Ctx, id int32) err
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "GetClusterAutoDiagnosticConfig")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.GetClusterAutoDiagnosticConfig(c, id)
 }
 // Update diagnostic configuration
@@ -165,8 +246,14 @@ func (x *XMiddleware) UpdateClusterAutoDiagnosticConfig(c *fiber.Ctx, id int32) 
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "UpdateClusterAutoDiagnosticConfig")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.UpdateClusterAutoDiagnosticConfig(c, id)
 }
 // Get diagnostic data
@@ -175,8 +262,14 @@ func (x *XMiddleware) GetClusterDiagnostic(c *fiber.Ctx, id int32, diagnosticId 
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "GetClusterDiagnostic")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.GetClusterDiagnostic(c, id, diagnosticId)
 }
 // Run risectl command
@@ -185,8 +278,14 @@ func (x *XMiddleware) RunRisectlCommand(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "RunRisectlCommand")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.RunRisectlCommand(c, id)
 }
 // List cluster snapshots
@@ -195,8 +294,14 @@ func (x *XMiddleware) ListClusterSnapshots(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "ListClusterSnapshots")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.ListClusterSnapshots(c, id)
 }
 // Create a new snapshot
@@ -205,8 +310,14 @@ func (x *XMiddleware) CreateClusterSnapshot(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "CreateClusterSnapshot")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.CreateClusterSnapshot(c, id)
 }
 // Delete snapshot
@@ -215,8 +326,14 @@ func (x *XMiddleware) DeleteClusterSnapshot(c *fiber.Ctx, id int32, snapshotId i
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "DeleteClusterSnapshot")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.DeleteClusterSnapshot(c, id, snapshotId)
 }
 // Restore snapshot
@@ -225,8 +342,14 @@ func (x *XMiddleware) RestoreClusterSnapshot(c *fiber.Ctx, id int32, snapshotId 
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "RestoreClusterSnapshot")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.RestoreClusterSnapshot(c, id, snapshotId)
 }
 // List all databases
@@ -235,19 +358,31 @@ func (x *XMiddleware) ListDatabases(c *fiber.Ctx) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "ListDatabases")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.ListDatabases(c)
 }
-// Create a new database
-// (POST /databases)
-func (x *XMiddleware) CreateDatabase(c *fiber.Ctx) error {
+// Import a database
+// (POST /databases/import)
+func (x *XMiddleware) ImportDatabase(c *fiber.Ctx) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "CreateDatabase")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
-    return x.Handler.CreateDatabase(c)
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+    return x.Handler.ImportDatabase(c)
 }
 // Test database connection
 // (POST /databases/test-connection)
@@ -255,8 +390,14 @@ func (x *XMiddleware) TestDatabaseConnection(c *fiber.Ctx) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "TestDatabaseConnection")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.TestDatabaseConnection(c)
 }
 // Delete database
@@ -265,8 +406,14 @@ func (x *XMiddleware) DeleteDatabase(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "DeleteDatabase")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.DeleteDatabase(c, id)
 }
 // Get database details
@@ -275,11 +422,17 @@ func (x *XMiddleware) GetDatabase(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "GetDatabase")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	 
 	if err := x.OwnDatabase(c, x.GetOrgID(c), id); err != nil {
 	    return c.Status(fiber.StatusForbidden).SendString(err.Error())
 	}  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.GetDatabase(c, id)
 }
 // Update database
@@ -288,8 +441,14 @@ func (x *XMiddleware) UpdateDatabase(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "UpdateDatabase")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.UpdateDatabase(c, id)
 }
 // Get DDL progress
@@ -298,8 +457,14 @@ func (x *XMiddleware) GetDDLProgress(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "GetDDLProgress")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.GetDDLProgress(c, id)
 }
 // Cancel DDL progress
@@ -308,8 +473,14 @@ func (x *XMiddleware) CancelDDLProgress(c *fiber.Ctx, id int32, ddlID int64) err
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "CancelDDLProgress")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.CancelDDLProgress(c, id, ddlID)
 }
 // Query database
@@ -318,8 +489,14 @@ func (x *XMiddleware) QueryDatabase(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "QueryDatabase")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.QueryDatabase(c, id)
 }
 // Get all events
@@ -328,8 +505,14 @@ func (x *XMiddleware) ListEvents(c *fiber.Ctx) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "ListEvents")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.ListEvents(c)
 }
 // Get all metrics stores
@@ -338,19 +521,31 @@ func (x *XMiddleware) ListMetricsStores(c *fiber.Ctx) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "ListMetricsStores")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.ListMetricsStores(c)
 }
-// Create a new metrics store
-// (POST /metrics-stores)
-func (x *XMiddleware) CreateMetricsStore(c *fiber.Ctx) error {
+// Import a metrics store
+// (POST /metrics-stores/import)
+func (x *XMiddleware) ImportMetricsStore(c *fiber.Ctx) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "CreateMetricsStore")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
-    return x.Handler.CreateMetricsStore(c)
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+    return x.Handler.ImportMetricsStore(c)
 }
 // Delete a metrics store
 // (DELETE /metrics-stores/{ID})
@@ -358,8 +553,14 @@ func (x *XMiddleware) DeleteMetricsStore(c *fiber.Ctx, id int32, params DeleteMe
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "DeleteMetricsStore")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.DeleteMetricsStore(c, id, params)
 }
 // Get a metrics store
@@ -368,8 +569,14 @@ func (x *XMiddleware) GetMetricsStore(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "GetMetricsStore")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.GetMetricsStore(c, id)
 }
 // Update a metrics store
@@ -378,8 +585,14 @@ func (x *XMiddleware) UpdateMetricsStore(c *fiber.Ctx, id int32) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "UpdateMetricsStore")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.UpdateMetricsStore(c, id)
 }
 // Get materialized view throughput
@@ -388,8 +601,14 @@ func (x *XMiddleware) GetMaterializedViewThroughput(c *fiber.Ctx, clusterID int3
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "GetMaterializedViewThroughput")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.GetMaterializedViewThroughput(c, clusterID)
 }
 // Get all tasks
@@ -398,8 +617,14 @@ func (x *XMiddleware) ListTasks(c *fiber.Ctx) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "ListTasks")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.ListTasks(c)
 }
 // Test cluster connection
@@ -408,8 +633,14 @@ func (x *XMiddleware) TestClusterConnection(c *fiber.Ctx) error {
     if c.Get("Authorization") == "" {
 		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
 	} 
-	c.Locals("operationID", "TestClusterConnection")
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
 	  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
     return x.Handler.TestClusterConnection(c)
 }
 

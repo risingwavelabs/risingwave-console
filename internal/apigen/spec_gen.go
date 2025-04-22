@@ -108,8 +108,8 @@ type Cluster struct {
 	Version        string    `json:"version"`
 }
 
-// ClusterCreate defines model for ClusterCreate.
-type ClusterCreate struct {
+// ClusterImport defines model for ClusterImport.
+type ClusterImport struct {
 	// Host Cluster host address
 	Host string `json:"host"`
 
@@ -286,8 +286,8 @@ type MetricsStore struct {
 	Spec          *MetricsStoreSpec             `json:"spec,omitempty"`
 }
 
-// MetricsStoreCreate defines model for MetricsStoreCreate.
-type MetricsStoreCreate struct {
+// MetricsStoreImport defines model for MetricsStoreImport.
+type MetricsStoreImport struct {
 	DefaultLabels *MetricsStoreLabelMatcherList `json:"defaultLabels,omitempty"`
 	Name          string                        `json:"name"`
 	Spec          MetricsStoreSpec              `json:"spec"`
@@ -593,8 +593,8 @@ type RefreshTokenJSONRequestBody = RefreshTokenRequest
 // SignInJSONRequestBody defines body for SignIn for application/json ContentType.
 type SignInJSONRequestBody = SignInRequest
 
-// CreateClusterJSONRequestBody defines body for CreateCluster for application/json ContentType.
-type CreateClusterJSONRequestBody = ClusterCreate
+// ImportClusterJSONRequestBody defines body for ImportCluster for application/json ContentType.
+type ImportClusterJSONRequestBody = ClusterImport
 
 // UpdateClusterJSONRequestBody defines body for UpdateCluster for application/json ContentType.
 type UpdateClusterJSONRequestBody = UpdateClusterRequest
@@ -614,8 +614,8 @@ type RunRisectlCommandJSONRequestBody = RisectlCommand
 // CreateClusterSnapshotJSONRequestBody defines body for CreateClusterSnapshot for application/json ContentType.
 type CreateClusterSnapshotJSONRequestBody = SnapshotCreate
 
-// CreateDatabaseJSONRequestBody defines body for CreateDatabase for application/json ContentType.
-type CreateDatabaseJSONRequestBody = DatabaseConnectInfo
+// ImportDatabaseJSONRequestBody defines body for ImportDatabase for application/json ContentType.
+type ImportDatabaseJSONRequestBody = DatabaseConnectInfo
 
 // TestDatabaseConnectionJSONRequestBody defines body for TestDatabaseConnection for application/json ContentType.
 type TestDatabaseConnectionJSONRequestBody = TestDatabaseConnectionPayload
@@ -626,8 +626,8 @@ type UpdateDatabaseJSONRequestBody = DatabaseConnectInfo
 // QueryDatabaseJSONRequestBody defines body for QueryDatabase for application/json ContentType.
 type QueryDatabaseJSONRequestBody = QueryRequest
 
-// CreateMetricsStoreJSONRequestBody defines body for CreateMetricsStore for application/json ContentType.
-type CreateMetricsStoreJSONRequestBody = MetricsStoreCreate
+// ImportMetricsStoreJSONRequestBody defines body for ImportMetricsStore for application/json ContentType.
+type ImportMetricsStoreJSONRequestBody = MetricsStoreImport
 
 // UpdateMetricsStoreJSONRequestBody defines body for UpdateMetricsStore for application/json ContentType.
 type UpdateMetricsStoreJSONRequestBody = MetricsStore
@@ -727,10 +727,10 @@ type ClientInterface interface {
 	// ListClusters request
 	ListClusters(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateClusterWithBody request with any body
-	CreateClusterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ImportClusterWithBody request with any body
+	ImportClusterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateCluster(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ImportCluster(ctx context.Context, body ImportClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteCluster request
 	DeleteCluster(ctx context.Context, id int32, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -792,10 +792,10 @@ type ClientInterface interface {
 	// ListDatabases request
 	ListDatabases(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateDatabaseWithBody request with any body
-	CreateDatabaseWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ImportDatabaseWithBody request with any body
+	ImportDatabaseWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateDatabase(ctx context.Context, body CreateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ImportDatabase(ctx context.Context, body ImportDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TestDatabaseConnectionWithBody request with any body
 	TestDatabaseConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -830,10 +830,10 @@ type ClientInterface interface {
 	// ListMetricsStores request
 	ListMetricsStores(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateMetricsStoreWithBody request with any body
-	CreateMetricsStoreWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ImportMetricsStoreWithBody request with any body
+	ImportMetricsStoreWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateMetricsStore(ctx context.Context, body CreateMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ImportMetricsStore(ctx context.Context, body ImportMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteMetricsStore request
 	DeleteMetricsStore(ctx context.Context, id int32, params *DeleteMetricsStoreParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -942,8 +942,8 @@ func (c *Client) ListClusters(ctx context.Context, reqEditors ...RequestEditorFn
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateClusterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateClusterRequestWithBody(c.Server, contentType, body)
+func (c *Client) ImportClusterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportClusterRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -954,8 +954,8 @@ func (c *Client) CreateClusterWithBody(ctx context.Context, contentType string, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateCluster(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateClusterRequest(c.Server, body)
+func (c *Client) ImportCluster(ctx context.Context, body ImportClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportClusterRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1230,8 +1230,8 @@ func (c *Client) ListDatabases(ctx context.Context, reqEditors ...RequestEditorF
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateDatabaseWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateDatabaseRequestWithBody(c.Server, contentType, body)
+func (c *Client) ImportDatabaseWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportDatabaseRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1242,8 +1242,8 @@ func (c *Client) CreateDatabaseWithBody(ctx context.Context, contentType string,
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateDatabase(ctx context.Context, body CreateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateDatabaseRequest(c.Server, body)
+func (c *Client) ImportDatabase(ctx context.Context, body ImportDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportDatabaseRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1398,8 +1398,8 @@ func (c *Client) ListMetricsStores(ctx context.Context, reqEditors ...RequestEdi
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateMetricsStoreWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateMetricsStoreRequestWithBody(c.Server, contentType, body)
+func (c *Client) ImportMetricsStoreWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportMetricsStoreRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1410,8 +1410,8 @@ func (c *Client) CreateMetricsStoreWithBody(ctx context.Context, contentType str
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateMetricsStore(ctx context.Context, body CreateMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateMetricsStoreRequest(c.Server, body)
+func (c *Client) ImportMetricsStore(ctx context.Context, body ImportMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportMetricsStoreRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1679,19 +1679,19 @@ func NewListClustersRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewCreateClusterRequest calls the generic CreateCluster builder with application/json body
-func NewCreateClusterRequest(server string, body CreateClusterJSONRequestBody) (*http.Request, error) {
+// NewImportClusterRequest calls the generic ImportCluster builder with application/json body
+func NewImportClusterRequest(server string, body ImportClusterJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateClusterRequestWithBody(server, "application/json", bodyReader)
+	return NewImportClusterRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateClusterRequestWithBody generates requests for CreateCluster with any type of body
-func NewCreateClusterRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewImportClusterRequestWithBody generates requests for ImportCluster with any type of body
+func NewImportClusterRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -1699,7 +1699,7 @@ func NewCreateClusterRequestWithBody(server string, contentType string, body io.
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/clusters")
+	operationPath := fmt.Sprintf("/clusters/import")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2447,19 +2447,19 @@ func NewListDatabasesRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewCreateDatabaseRequest calls the generic CreateDatabase builder with application/json body
-func NewCreateDatabaseRequest(server string, body CreateDatabaseJSONRequestBody) (*http.Request, error) {
+// NewImportDatabaseRequest calls the generic ImportDatabase builder with application/json body
+func NewImportDatabaseRequest(server string, body ImportDatabaseJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateDatabaseRequestWithBody(server, "application/json", bodyReader)
+	return NewImportDatabaseRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateDatabaseRequestWithBody generates requests for CreateDatabase with any type of body
-func NewCreateDatabaseRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewImportDatabaseRequestWithBody generates requests for ImportDatabase with any type of body
+func NewImportDatabaseRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -2467,7 +2467,7 @@ func NewCreateDatabaseRequestWithBody(server string, contentType string, body io
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/databases")
+	operationPath := fmt.Sprintf("/databases/import")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2818,19 +2818,19 @@ func NewListMetricsStoresRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewCreateMetricsStoreRequest calls the generic CreateMetricsStore builder with application/json body
-func NewCreateMetricsStoreRequest(server string, body CreateMetricsStoreJSONRequestBody) (*http.Request, error) {
+// NewImportMetricsStoreRequest calls the generic ImportMetricsStore builder with application/json body
+func NewImportMetricsStoreRequest(server string, body ImportMetricsStoreJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateMetricsStoreRequestWithBody(server, "application/json", bodyReader)
+	return NewImportMetricsStoreRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateMetricsStoreRequestWithBody generates requests for CreateMetricsStore with any type of body
-func NewCreateMetricsStoreRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewImportMetricsStoreRequestWithBody generates requests for ImportMetricsStore with any type of body
+func NewImportMetricsStoreRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -2838,7 +2838,7 @@ func NewCreateMetricsStoreRequestWithBody(server string, contentType string, bod
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/metrics-stores")
+	operationPath := fmt.Sprintf("/metrics-stores/import")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -3154,10 +3154,10 @@ type ClientWithResponsesInterface interface {
 	// ListClustersWithResponse request
 	ListClustersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListClustersResponse, error)
 
-	// CreateClusterWithBodyWithResponse request with any body
-	CreateClusterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterResponse, error)
+	// ImportClusterWithBodyWithResponse request with any body
+	ImportClusterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportClusterResponse, error)
 
-	CreateClusterWithResponse(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterResponse, error)
+	ImportClusterWithResponse(ctx context.Context, body ImportClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportClusterResponse, error)
 
 	// DeleteClusterWithResponse request
 	DeleteClusterWithResponse(ctx context.Context, id int32, params *DeleteClusterParams, reqEditors ...RequestEditorFn) (*DeleteClusterResponse, error)
@@ -3219,10 +3219,10 @@ type ClientWithResponsesInterface interface {
 	// ListDatabasesWithResponse request
 	ListDatabasesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDatabasesResponse, error)
 
-	// CreateDatabaseWithBodyWithResponse request with any body
-	CreateDatabaseWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDatabaseResponse, error)
+	// ImportDatabaseWithBodyWithResponse request with any body
+	ImportDatabaseWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportDatabaseResponse, error)
 
-	CreateDatabaseWithResponse(ctx context.Context, body CreateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDatabaseResponse, error)
+	ImportDatabaseWithResponse(ctx context.Context, body ImportDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportDatabaseResponse, error)
 
 	// TestDatabaseConnectionWithBodyWithResponse request with any body
 	TestDatabaseConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TestDatabaseConnectionResponse, error)
@@ -3257,10 +3257,10 @@ type ClientWithResponsesInterface interface {
 	// ListMetricsStoresWithResponse request
 	ListMetricsStoresWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMetricsStoresResponse, error)
 
-	// CreateMetricsStoreWithBodyWithResponse request with any body
-	CreateMetricsStoreWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateMetricsStoreResponse, error)
+	// ImportMetricsStoreWithBodyWithResponse request with any body
+	ImportMetricsStoreWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportMetricsStoreResponse, error)
 
-	CreateMetricsStoreWithResponse(ctx context.Context, body CreateMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateMetricsStoreResponse, error)
+	ImportMetricsStoreWithResponse(ctx context.Context, body ImportMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportMetricsStoreResponse, error)
 
 	// DeleteMetricsStoreWithResponse request
 	DeleteMetricsStoreWithResponse(ctx context.Context, id int32, params *DeleteMetricsStoreParams, reqEditors ...RequestEditorFn) (*DeleteMetricsStoreResponse, error)
@@ -3394,14 +3394,14 @@ func (r ListClustersResponse) StatusCode() int {
 	return 0
 }
 
-type CreateClusterResponse struct {
+type ImportClusterResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON201      *Cluster
 }
 
 // Status returns HTTPResponse.Status
-func (r CreateClusterResponse) Status() string {
+func (r ImportClusterResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3409,7 +3409,7 @@ func (r CreateClusterResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r CreateClusterResponse) StatusCode() int {
+func (r ImportClusterResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3762,14 +3762,14 @@ func (r ListDatabasesResponse) StatusCode() int {
 	return 0
 }
 
-type CreateDatabaseResponse struct {
+type ImportDatabaseResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON201      *Database
 }
 
 // Status returns HTTPResponse.Status
-func (r CreateDatabaseResponse) Status() string {
+func (r ImportDatabaseResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3777,7 +3777,7 @@ func (r CreateDatabaseResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r CreateDatabaseResponse) StatusCode() int {
+func (r ImportDatabaseResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3980,14 +3980,14 @@ func (r ListMetricsStoresResponse) StatusCode() int {
 	return 0
 }
 
-type CreateMetricsStoreResponse struct {
+type ImportMetricsStoreResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON201      *MetricsStore
 }
 
 // Status returns HTTPResponse.Status
-func (r CreateMetricsStoreResponse) Status() string {
+func (r ImportMetricsStoreResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3995,7 +3995,7 @@ func (r CreateMetricsStoreResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r CreateMetricsStoreResponse) StatusCode() int {
+func (r ImportMetricsStoreResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4193,21 +4193,21 @@ func (c *ClientWithResponses) ListClustersWithResponse(ctx context.Context, reqE
 	return ParseListClustersResponse(rsp)
 }
 
-// CreateClusterWithBodyWithResponse request with arbitrary body returning *CreateClusterResponse
-func (c *ClientWithResponses) CreateClusterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterResponse, error) {
-	rsp, err := c.CreateClusterWithBody(ctx, contentType, body, reqEditors...)
+// ImportClusterWithBodyWithResponse request with arbitrary body returning *ImportClusterResponse
+func (c *ClientWithResponses) ImportClusterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportClusterResponse, error) {
+	rsp, err := c.ImportClusterWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateClusterResponse(rsp)
+	return ParseImportClusterResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateClusterWithResponse(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterResponse, error) {
-	rsp, err := c.CreateCluster(ctx, body, reqEditors...)
+func (c *ClientWithResponses) ImportClusterWithResponse(ctx context.Context, body ImportClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportClusterResponse, error) {
+	rsp, err := c.ImportCluster(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateClusterResponse(rsp)
+	return ParseImportClusterResponse(rsp)
 }
 
 // DeleteClusterWithResponse request returning *DeleteClusterResponse
@@ -4402,21 +4402,21 @@ func (c *ClientWithResponses) ListDatabasesWithResponse(ctx context.Context, req
 	return ParseListDatabasesResponse(rsp)
 }
 
-// CreateDatabaseWithBodyWithResponse request with arbitrary body returning *CreateDatabaseResponse
-func (c *ClientWithResponses) CreateDatabaseWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDatabaseResponse, error) {
-	rsp, err := c.CreateDatabaseWithBody(ctx, contentType, body, reqEditors...)
+// ImportDatabaseWithBodyWithResponse request with arbitrary body returning *ImportDatabaseResponse
+func (c *ClientWithResponses) ImportDatabaseWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportDatabaseResponse, error) {
+	rsp, err := c.ImportDatabaseWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateDatabaseResponse(rsp)
+	return ParseImportDatabaseResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateDatabaseWithResponse(ctx context.Context, body CreateDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDatabaseResponse, error) {
-	rsp, err := c.CreateDatabase(ctx, body, reqEditors...)
+func (c *ClientWithResponses) ImportDatabaseWithResponse(ctx context.Context, body ImportDatabaseJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportDatabaseResponse, error) {
+	rsp, err := c.ImportDatabase(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateDatabaseResponse(rsp)
+	return ParseImportDatabaseResponse(rsp)
 }
 
 // TestDatabaseConnectionWithBodyWithResponse request with arbitrary body returning *TestDatabaseConnectionResponse
@@ -4524,21 +4524,21 @@ func (c *ClientWithResponses) ListMetricsStoresWithResponse(ctx context.Context,
 	return ParseListMetricsStoresResponse(rsp)
 }
 
-// CreateMetricsStoreWithBodyWithResponse request with arbitrary body returning *CreateMetricsStoreResponse
-func (c *ClientWithResponses) CreateMetricsStoreWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateMetricsStoreResponse, error) {
-	rsp, err := c.CreateMetricsStoreWithBody(ctx, contentType, body, reqEditors...)
+// ImportMetricsStoreWithBodyWithResponse request with arbitrary body returning *ImportMetricsStoreResponse
+func (c *ClientWithResponses) ImportMetricsStoreWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportMetricsStoreResponse, error) {
+	rsp, err := c.ImportMetricsStoreWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateMetricsStoreResponse(rsp)
+	return ParseImportMetricsStoreResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateMetricsStoreWithResponse(ctx context.Context, body CreateMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateMetricsStoreResponse, error) {
-	rsp, err := c.CreateMetricsStore(ctx, body, reqEditors...)
+func (c *ClientWithResponses) ImportMetricsStoreWithResponse(ctx context.Context, body ImportMetricsStoreJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportMetricsStoreResponse, error) {
+	rsp, err := c.ImportMetricsStore(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateMetricsStoreResponse(rsp)
+	return ParseImportMetricsStoreResponse(rsp)
 }
 
 // DeleteMetricsStoreWithResponse request returning *DeleteMetricsStoreResponse
@@ -4731,15 +4731,15 @@ func ParseListClustersResponse(rsp *http.Response) (*ListClustersResponse, error
 	return response, nil
 }
 
-// ParseCreateClusterResponse parses an HTTP response from a CreateClusterWithResponse call
-func ParseCreateClusterResponse(rsp *http.Response) (*CreateClusterResponse, error) {
+// ParseImportClusterResponse parses an HTTP response from a ImportClusterWithResponse call
+func ParseImportClusterResponse(rsp *http.Response) (*ImportClusterResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &CreateClusterResponse{
+	response := &ImportClusterResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -5113,15 +5113,15 @@ func ParseListDatabasesResponse(rsp *http.Response) (*ListDatabasesResponse, err
 	return response, nil
 }
 
-// ParseCreateDatabaseResponse parses an HTTP response from a CreateDatabaseWithResponse call
-func ParseCreateDatabaseResponse(rsp *http.Response) (*CreateDatabaseResponse, error) {
+// ParseImportDatabaseResponse parses an HTTP response from a ImportDatabaseWithResponse call
+func ParseImportDatabaseResponse(rsp *http.Response) (*ImportDatabaseResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &CreateDatabaseResponse{
+	response := &ImportDatabaseResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -5353,15 +5353,15 @@ func ParseListMetricsStoresResponse(rsp *http.Response) (*ListMetricsStoresRespo
 	return response, nil
 }
 
-// ParseCreateMetricsStoreResponse parses an HTTP response from a CreateMetricsStoreWithResponse call
-func ParseCreateMetricsStoreResponse(rsp *http.Response) (*CreateMetricsStoreResponse, error) {
+// ParseImportMetricsStoreResponse parses an HTTP response from a ImportMetricsStoreWithResponse call
+func ParseImportMetricsStoreResponse(rsp *http.Response) (*ImportMetricsStoreResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &CreateMetricsStoreResponse{
+	response := &ImportMetricsStoreResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -5532,9 +5532,9 @@ type ServerInterface interface {
 	// List all clusters
 	// (GET /clusters)
 	ListClusters(c *fiber.Ctx) error
-	// Create a new cluster
-	// (POST /clusters)
-	CreateCluster(c *fiber.Ctx) error
+	// Import a cluster
+	// (POST /clusters/import)
+	ImportCluster(c *fiber.Ctx) error
 	// Delete cluster
 	// (DELETE /clusters/{ID})
 	DeleteCluster(c *fiber.Ctx, id int32, params DeleteClusterParams) error
@@ -5583,9 +5583,9 @@ type ServerInterface interface {
 	// List all databases
 	// (GET /databases)
 	ListDatabases(c *fiber.Ctx) error
-	// Create a new database
-	// (POST /databases)
-	CreateDatabase(c *fiber.Ctx) error
+	// Import a database
+	// (POST /databases/import)
+	ImportDatabase(c *fiber.Ctx) error
 	// Test database connection
 	// (POST /databases/test-connection)
 	TestDatabaseConnection(c *fiber.Ctx) error
@@ -5613,9 +5613,9 @@ type ServerInterface interface {
 	// Get all metrics stores
 	// (GET /metrics-stores)
 	ListMetricsStores(c *fiber.Ctx) error
-	// Create a new metrics store
-	// (POST /metrics-stores)
-	CreateMetricsStore(c *fiber.Ctx) error
+	// Import a metrics store
+	// (POST /metrics-stores/import)
+	ImportMetricsStore(c *fiber.Ctx) error
 	// Delete a metrics store
 	// (DELETE /metrics-stores/{ID})
 	DeleteMetricsStore(c *fiber.Ctx, id int32, params DeleteMetricsStoreParams) error
@@ -5677,12 +5677,12 @@ func (siw *ServerInterfaceWrapper) ListClusters(c *fiber.Ctx) error {
 	return siw.Handler.ListClusters(c)
 }
 
-// CreateCluster operation middleware
-func (siw *ServerInterfaceWrapper) CreateCluster(c *fiber.Ctx) error {
+// ImportCluster operation middleware
+func (siw *ServerInterfaceWrapper) ImportCluster(c *fiber.Ctx) error {
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.CreateCluster(c)
+	return siw.Handler.ImportCluster(c)
 }
 
 // DeleteCluster operation middleware
@@ -6040,12 +6040,12 @@ func (siw *ServerInterfaceWrapper) ListDatabases(c *fiber.Ctx) error {
 	return siw.Handler.ListDatabases(c)
 }
 
-// CreateDatabase operation middleware
-func (siw *ServerInterfaceWrapper) CreateDatabase(c *fiber.Ctx) error {
+// ImportDatabase operation middleware
+func (siw *ServerInterfaceWrapper) ImportDatabase(c *fiber.Ctx) error {
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.CreateDatabase(c)
+	return siw.Handler.ImportDatabase(c)
 }
 
 // TestDatabaseConnection operation middleware
@@ -6188,12 +6188,12 @@ func (siw *ServerInterfaceWrapper) ListMetricsStores(c *fiber.Ctx) error {
 	return siw.Handler.ListMetricsStores(c)
 }
 
-// CreateMetricsStore operation middleware
-func (siw *ServerInterfaceWrapper) CreateMetricsStore(c *fiber.Ctx) error {
+// ImportMetricsStore operation middleware
+func (siw *ServerInterfaceWrapper) ImportMetricsStore(c *fiber.Ctx) error {
 
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
-	return siw.Handler.CreateMetricsStore(c)
+	return siw.Handler.ImportMetricsStore(c)
 }
 
 // DeleteMetricsStore operation middleware
@@ -6339,7 +6339,7 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Get(options.BaseURL+"/clusters", wrapper.ListClusters)
 
-	router.Post(options.BaseURL+"/clusters", wrapper.CreateCluster)
+	router.Post(options.BaseURL+"/clusters/import", wrapper.ImportCluster)
 
 	router.Delete(options.BaseURL+"/clusters/:ID", wrapper.DeleteCluster)
 
@@ -6373,7 +6373,7 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Get(options.BaseURL+"/databases", wrapper.ListDatabases)
 
-	router.Post(options.BaseURL+"/databases", wrapper.CreateDatabase)
+	router.Post(options.BaseURL+"/databases/import", wrapper.ImportDatabase)
 
 	router.Post(options.BaseURL+"/databases/test-connection", wrapper.TestDatabaseConnection)
 
@@ -6393,7 +6393,7 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Get(options.BaseURL+"/metrics-stores", wrapper.ListMetricsStores)
 
-	router.Post(options.BaseURL+"/metrics-stores", wrapper.CreateMetricsStore)
+	router.Post(options.BaseURL+"/metrics-stores/import", wrapper.ImportMetricsStore)
 
 	router.Delete(options.BaseURL+"/metrics-stores/:ID", wrapper.DeleteMetricsStore)
 

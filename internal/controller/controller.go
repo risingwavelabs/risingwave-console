@@ -75,8 +75,8 @@ func (controller *Controller) RefreshToken(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(credentials)
 }
 
-func (controller *Controller) CreateCluster(c *fiber.Ctx) error {
-	var params apigen.ClusterCreate
+func (controller *Controller) ImportCluster(c *fiber.Ctx) error {
+	var params apigen.ClusterImport
 	if err := c.BodyParser(&params); err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
@@ -86,7 +86,7 @@ func (controller *Controller) CreateCluster(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	cluster, err := controller.svc.CreateCluster(c.Context(), params, orgID)
+	cluster, err := controller.svc.ImportCluster(c.Context(), params, orgID)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (controller *Controller) UpdateCluster(c *fiber.Ctx, id int32) error {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	var params apigen.ClusterCreate
+	var params apigen.ClusterImport
 	if err := c.BodyParser(&params); err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
@@ -164,7 +164,7 @@ func (controller *Controller) ListClusters(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(clusters)
 }
 
-func (controller *Controller) CreateDatabase(c *fiber.Ctx) error {
+func (controller *Controller) ImportDatabase(c *fiber.Ctx) error {
 	var params apigen.DatabaseConnectInfo
 	if err := c.BodyParser(&params); err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
@@ -175,7 +175,7 @@ func (controller *Controller) CreateDatabase(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	database, err := controller.svc.CreateDatabase(c.Context(), params, orgID)
+	database, err := controller.svc.ImportDatabase(c.Context(), params, orgID)
 	if err != nil {
 		return err
 	}
@@ -528,8 +528,8 @@ func (controller *Controller) GetMaterializedViewThroughput(c *fiber.Ctx, cluste
 	return c.Status(fiber.StatusOK).JSON(throughput)
 }
 
-func (controller *Controller) CreateMetricsStore(c *fiber.Ctx) error {
-	var req apigen.MetricsStoreCreate
+func (controller *Controller) ImportMetricsStore(c *fiber.Ctx) error {
+	var req apigen.MetricsStoreImport
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
@@ -539,7 +539,7 @@ func (controller *Controller) CreateMetricsStore(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	ms, err := controller.svc.CreateMetricsStore(c.Context(), req, orgID)
+	ms, err := controller.svc.ImportMetricsStore(c.Context(), req, orgID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
@@ -608,7 +608,7 @@ func (controller *Controller) UpdateMetricsStore(c *fiber.Ctx, id int32) error {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	var req apigen.MetricsStoreCreate
+	var req apigen.MetricsStoreImport
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
