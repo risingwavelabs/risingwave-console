@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/auth"
@@ -13,7 +15,17 @@ type Validator struct {
 	auth  auth.AuthInterface
 }
 
-func NewValidator(model model.ModelInterface, auth auth.AuthInterface) apigen.Validator {
+type ValidatorImpl struct {
+	*Validator
+}
+
+func NewValidatorImpl(validator *Validator) apigen.Validator {
+	return &ValidatorImpl{
+		Validator: validator,
+	}
+}
+
+func NewValidator(model model.ModelInterface, auth auth.AuthInterface) *Validator {
 	return &Validator{model: model, auth: auth}
 }
 
@@ -38,4 +50,8 @@ func (v *Validator) PreValidate(c *fiber.Ctx) error {
 
 func (v *Validator) PostValidate(c *fiber.Ctx) error {
 	return nil
+}
+
+func (v *Validator) PremiumAccess(c *fiber.Ctx) error {
+	return errors.New("premium access required")
 }

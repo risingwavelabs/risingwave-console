@@ -27,10 +27,8 @@ import (
 
 func InitializeApplication() (*app.Application, error) {
 	wire.Build(
-		app.NewApplication,
 		config.NewConfig,
 		service.NewService,
-		controller.NewController,
 		model.NewModel,
 		server.NewServer,
 		service.NewInitService,
@@ -48,7 +46,12 @@ func InitializeApplication() (*app.Application, error) {
 		store.NewStore,
 		auth.NewCaveatParser,
 		handler.NewTaskHandler,
+		controller.NewController,
 		controller.NewValidator,
+		app.NewApplication,
+		//
+		controller.NewSeverInterface,
+		controller.NewValidatorImpl,
 	)
 	return nil, nil
 }

@@ -21,10 +21,20 @@ type Controller struct {
 func NewController(
 	s service.ServiceInterface,
 	auth auth.AuthInterface,
-) apigen.ServerInterface {
+) *Controller {
 	return &Controller{
 		svc:  s,
 		auth: auth,
+	}
+}
+
+type ServerInterfaceImpl struct {
+	*Controller
+}
+
+func NewSeverInterface(controller *Controller) apigen.ServerInterface {
+	return &ServerInterfaceImpl{
+		Controller: controller,
 	}
 }
 
@@ -626,5 +636,9 @@ func (controller *Controller) ListTasks(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) ListEvents(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusNotImplemented)
+}
+
+func (controller *Controller) CreateCluster(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
 }

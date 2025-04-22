@@ -58,8 +58,16 @@ type Config struct {
 	// The worker configuration
 	Worker Worker `yaml:"worker,omitempty"`
 
+	// The enterprise edition configuration
+	EE EE `yaml:"ee,omitempty"`
+
 	// (Optional) The debug configuration
 	Debug Debug `yaml:"debug,omitempty"`
+}
+
+type EE struct {
+	// (Optional) The activation code of the enterprise edition, if not set, the enterprise edition will be disabled.
+	Code string `yaml:"code,omitempty"`
 }
 
 func NewConfig() (*Config, error) {

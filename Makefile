@@ -43,7 +43,7 @@ WIRE_GEN=$(PROJECT_DIR)/bin/wire
 gen-wire: install-wire
 	$(WIRE_GEN) ./wire
 ifeq ($(EE), true)
-#$(WIRE_GEN) ./ee/wire
+	$(WIRE_GEN) ./ee/wire
 endif
 
 ###################################################

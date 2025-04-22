@@ -108,6 +108,15 @@ type Cluster struct {
 	Version        string    `json:"version"`
 }
 
+// ClusterCreate defines model for ClusterCreate.
+type ClusterCreate struct {
+	// Name Name of the cluster
+	Name string `json:"name"`
+
+	// Version Version of the cluster
+	Version string `json:"version"`
+}
+
 // ClusterImport defines model for ClusterImport.
 type ClusterImport struct {
 	// Host Cluster host address
@@ -593,6 +602,9 @@ type RefreshTokenJSONRequestBody = RefreshTokenRequest
 // SignInJSONRequestBody defines body for SignIn for application/json ContentType.
 type SignInJSONRequestBody = SignInRequest
 
+// CreateClusterJSONRequestBody defines body for CreateCluster for application/json ContentType.
+type CreateClusterJSONRequestBody = ClusterCreate
+
 // ImportClusterJSONRequestBody defines body for ImportCluster for application/json ContentType.
 type ImportClusterJSONRequestBody = ClusterImport
 
@@ -726,6 +738,11 @@ type ClientInterface interface {
 
 	// ListClusters request
 	ListClusters(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateClusterWithBody request with any body
+	CreateClusterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateCluster(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ImportClusterWithBody request with any body
 	ImportClusterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -932,6 +949,30 @@ func (c *Client) ListClusterVersions(ctx context.Context, reqEditors ...RequestE
 
 func (c *Client) ListClusters(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListClustersRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateClusterWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateClusterRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateCluster(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateClusterRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1675,6 +1716,46 @@ func NewListClustersRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewCreateClusterRequest calls the generic CreateCluster builder with application/json body
+func NewCreateClusterRequest(server string, body CreateClusterJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateClusterRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateClusterRequestWithBody generates requests for CreateCluster with any type of body
+func NewCreateClusterRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/clusters")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -3154,6 +3235,11 @@ type ClientWithResponsesInterface interface {
 	// ListClustersWithResponse request
 	ListClustersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListClustersResponse, error)
 
+	// CreateClusterWithBodyWithResponse request with any body
+	CreateClusterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterResponse, error)
+
+	CreateClusterWithResponse(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterResponse, error)
+
 	// ImportClusterWithBodyWithResponse request with any body
 	ImportClusterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportClusterResponse, error)
 
@@ -3388,6 +3474,28 @@ func (r ListClustersResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListClustersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateClusterResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *Cluster
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateClusterResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateClusterResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4193,6 +4301,23 @@ func (c *ClientWithResponses) ListClustersWithResponse(ctx context.Context, reqE
 	return ParseListClustersResponse(rsp)
 }
 
+// CreateClusterWithBodyWithResponse request with arbitrary body returning *CreateClusterResponse
+func (c *ClientWithResponses) CreateClusterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateClusterResponse, error) {
+	rsp, err := c.CreateClusterWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateClusterResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateClusterWithResponse(ctx context.Context, body CreateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateClusterResponse, error) {
+	rsp, err := c.CreateCluster(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateClusterResponse(rsp)
+}
+
 // ImportClusterWithBodyWithResponse request with arbitrary body returning *ImportClusterResponse
 func (c *ClientWithResponses) ImportClusterWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportClusterResponse, error) {
 	rsp, err := c.ImportClusterWithBody(ctx, contentType, body, reqEditors...)
@@ -4725,6 +4850,32 @@ func ParseListClustersResponse(rsp *http.Response) (*ListClustersResponse, error
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateClusterResponse parses an HTTP response from a CreateClusterWithResponse call
+func ParseCreateClusterResponse(rsp *http.Response) (*CreateClusterResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateClusterResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Cluster
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
 
 	}
 
@@ -5532,6 +5683,9 @@ type ServerInterface interface {
 	// List all clusters
 	// (GET /clusters)
 	ListClusters(c *fiber.Ctx) error
+	// Create a new cluster
+	// (POST /clusters)
+	CreateCluster(c *fiber.Ctx) error
 	// Import a cluster
 	// (POST /clusters/import)
 	ImportCluster(c *fiber.Ctx) error
@@ -5675,6 +5829,14 @@ func (siw *ServerInterfaceWrapper) ListClusters(c *fiber.Ctx) error {
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.ListClusters(c)
+}
+
+// CreateCluster operation middleware
+func (siw *ServerInterfaceWrapper) CreateCluster(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{"x.PremiumAccess(c)"})
+
+	return siw.Handler.CreateCluster(c)
 }
 
 // ImportCluster operation middleware
@@ -6338,6 +6500,8 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	router.Get(options.BaseURL+"/cluster-versions", wrapper.ListClusterVersions)
 
 	router.Get(options.BaseURL+"/clusters", wrapper.ListClusters)
+
+	router.Post(options.BaseURL+"/clusters", wrapper.CreateCluster)
 
 	router.Post(options.BaseURL+"/clusters/import", wrapper.ImportCluster)
 

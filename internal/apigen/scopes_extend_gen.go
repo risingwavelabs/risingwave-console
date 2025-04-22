@@ -8,6 +8,8 @@ type Validator interface {
     PostValidate(*fiber.Ctx) error
 
     OwnDatabase(c *fiber.Ctx, UserID int32, DatabaseID int32) error
+
+    PremiumAccess(c *fiber.Ctx) error
  
     GetOrgID(c *fiber.Ctx) int32
 }
@@ -95,6 +97,25 @@ func (x *XMiddleware) ListClusters(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusForbidden).SendString(err.Error())
 	}
     return x.Handler.ListClusters(c)
+}
+// Create a new cluster
+// (POST /clusters)
+func (x *XMiddleware) CreateCluster(c *fiber.Ctx) error {
+    if c.Get("Authorization") == "" {
+		return c.Status(fiber.StatusUnauthorized).SendString("Authorization header is required")
+	} 
+	if err := x.PreValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+	
+	 
+	if err := x.PremiumAccess(c); err != nil {
+	    return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}  
+	if err := x.PostValidate(c); err != nil {
+		return c.Status(fiber.StatusForbidden).SendString(err.Error())
+	}
+    return x.Handler.CreateCluster(c)
 }
 // Import a cluster
 // (POST /clusters/import)

@@ -248,6 +248,26 @@ paths:
                   $ref: "#/components/schemas/Cluster"
       security:
         - BearerAuth: []
+    post:
+      summary: Create a new cluster
+      description: Create a new database cluster
+      operationId: createCluster
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClusterCreate"
+      responses:
+        "201":
+          description: Cluster created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cluster"
+      security:
+      - BearerAuth:
+          - x.PremiumAccess(c)
 
   /clusters/import:
     post:
@@ -974,6 +994,19 @@ components:
             format: int32
             description: ID of the relation this relation depends on
 
+    ClusterCreate:
+      type: object
+      required:
+        - name
+        - version
+      properties:
+        name:
+          type: string
+          description: Name of the cluster
+        version:
+          type: string
+          description: Version of the cluster
+
     ClusterImport:
       type: object
       required:
@@ -1687,6 +1720,9 @@ x-check-rules:
         schema:
           type: integer
           format: int32
+  PremiumAccess:
+    useContext: true
+    parameters: []
 
 x-functions:
   GetOrgID:
