@@ -9,7 +9,6 @@ import (
 	"github.com/risingwavelabs/wavekit/internal/apigen"
 	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/model/querier"
-	"github.com/risingwavelabs/wavekit/internal/worker/mock"
 	"go.uber.org/mock/gomock"
 )
 
@@ -55,8 +54,8 @@ func TestRunTask(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(fmt.Sprintf("errExecute: %v", testCase.errExecute), func(t *testing.T) {
 			mockModel := model.NewMockModelInterfaceWithTransaction(ctrl)
-			mockTaskHandler := mock.NewMockTaskHandler(ctrl)
-			mockLifeCycleHandler := mock.NewMockTaskLifeCycleHandlerInterface(ctrl)
+			mockTaskHandler := NewMockTaskHandler(ctrl)
+			mockLifeCycleHandler := NewMockTaskLifeCycleHandlerInterface(ctrl)
 
 			worker := &Worker{
 				model: mockModel,

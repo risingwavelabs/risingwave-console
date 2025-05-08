@@ -1,103 +1,20 @@
 SHELL := /bin/zsh
 PROJECT_DIR=$(shell pwd)
 
-EE ?= false
-
-###################################################
-### OpenAPI         
-###################################################
-
-OAPI_CODEGEN_VERSION=v2.4.1
-OAPI_CODEGEN_BIN=$(PROJECT_DIR)/bin/oapi-codegen
-OAPI_GEN_DIR=$(PROJECT_DIR)/internal/apigen
-OAPI_CODEGEN_FIBER_BIN=$(PROJECT_DIR)/bin/oapi-codegen-fiber
-
-install-oapi-codegen:
-	@DIR=$(PROJECT_DIR)/bin VERSION=${OAPI_CODEGEN_VERSION} ./scripts/install-oapi-codegen.sh
-	
-install-oapi-codegen-fiber:
-	@GOBIN=$(PROJECT_DIR)/bin go install github.com/cloudcarver/oapi-codegen-fiber@v0.7.0
-
-prune-spec:
-	@rm -f $(OAPI_GEN_DIR)/spec_gen.go
-
-OAPI_GENERATE_ARG=types,fiber,client
-
-gen-spec: install-oapi-codegen-fiber install-oapi-codegen prune-spec
-	$(OAPI_CODEGEN_BIN) -generate $(OAPI_GENERATE_ARG) -o $(OAPI_GEN_DIR)/spec_gen.go -package apigen $(PROJECT_DIR)/api/v1.yaml
-	$(PROJECT_DIR)/bin/oapi-codegen-fiber --package apigen --path $(PROJECT_DIR)/api/v1.yaml --out $(PROJECT_DIR)/internal/apigen/scopes_extend_gen.go
-
 gen-frontend-client:
 	cd web && pnpm run gen
 
-###################################################
-### Wire
-###################################################
+install-anchor:
+	@GOBIN=$(PROJECT_DIR)/bin go install github.com/cloudcarver/anchor/cmd/anchor@latest
 
-WIRE_VERSION=v0.6.0
-
-install-wire:
-	@DIR=$(PROJECT_DIR)/bin VERSION=${WIRE_VERSION} ./scripts/install-wire.sh
-
-WIRE_GEN=$(PROJECT_DIR)/bin/wire
-gen-wire: install-wire
-	$(WIRE_GEN) ./wire
-ifeq ($(EE), true)
-	$(WIRE_GEN) ./ee/wire
-endif
-
-###################################################
-### SQL  
-###################################################
-
-SQLC_VERSION=v1.27.0
-QUERIER_DIR=$(PROJECT_DIR)/internal/model/querier
-SQLC_BIN=$(PROJECT_DIR)/bin/sqlc
-
-install-sqlc:
-	@DIR=$(PROJECT_DIR)/bin VERSION=${SQLC_VERSION} ./scripts/install-sqlc.sh
-
-clean-querier:
-	@rm -f $(QUERIER_DIR)/*.sql.gen.go || true
-	@rm -f $(QUERIER_DIR)/copyfrom_gen.go   
-	@rm -f $(QUERIER_DIR)/db_gen.go
-	@rm -f $(QUERIER_DIR)/models_gen.go
-	@rm -f $(QUERIER_DIR)/querier_gen.go
-
-gen-querier: install-sqlc clean-querier
-	$(SQLC_BIN) generate
-
-###################################################
-### mock 
-###################################################
-
-MOCKGEN_VERSION=0.5.0
-MOCKGEN_BIN=$(PROJECT_DIR)/bin/mockgen
-
-install-mockgen: 
-	@DIR=$(PROJECT_DIR)/bin VERSION=${MOCKGEN_VERSION} ./scripts/install-mockgen.sh
-
-gen-mock: install-mockgen
-	$(MOCKGEN_BIN) -source=internal/model/model.go -destination=internal/model/mock_gen.go -package=model
-	$(MOCKGEN_BIN) -source=internal/task/interfaces.go -destination=internal/task/mock_gen.go -package=task
-	$(MOCKGEN_BIN) -source=internal/worker/lifecycle_handler.go -destination=internal/worker/mock/lifecycle_handler_mock_gen.go -package=mock
-	$(MOCKGEN_BIN) -source=internal/worker/worker.go -destination=internal/worker/mock/worker_mock_gen.go -package=mock
-	$(MOCKGEN_BIN) -source=internal/service/service.go -destination=internal/service/service_mock_gen.go -package=service
-	$(MOCKGEN_BIN) -source=internal/modelctx/modelctx.go -destination=internal/modelctx/mock/modelctx_mock_gen.go -package=mock
-	$(MOCKGEN_BIN) -source=internal/conn/meta/types.go -destination=internal/conn/meta/mock/mock_gen.go -package=mock
-	$(MOCKGEN_BIN) -source=internal/conn/http/http.go -destination=internal/conn/http/mock/http_mock_gen.go -package=mock
-	$(MOCKGEN_BIN) -source=internal/macaroons/interfaces.go -destination=internal/macaroons/mock_gen.go -package=macaroons
-	$(MOCKGEN_BIN) -source=internal/macaroons/store/interfaces.go -destination=internal/macaroons/store/mock/mock_gen.go -package=mock
-	$(MOCKGEN_BIN) -source=internal/auth/auth.go -destination=internal/auth/mock_gen.go -package=auth
-ifeq ($(EE), true)
-	
-endif
+anchor-gen: install-anchor
+	$(PROJECT_DIR)/bin/anchor gen .
 
 ###################################################
 ### Common
 ###################################################
 
-gen: doc gen-spec gen-querier gen-wire gen-mock gen-frontend-client
+gen: anchor-gen doc gen-frontend-client
 	@go mod tidy
 
 ###################################################
@@ -121,42 +38,6 @@ doc-contributing:
 		-f scripts/template-subst.awk docs/templates/CONTRIBUTING.tmpl.md > CONTRIBUTING.md
 
 doc: install-doc-tools doc-config doc-contributing
-
-###################################################
-### Promdump
-###################################################
-
-upload-promdump:
-	CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build -o upload/promdump/Darwin/x86_64/promdump cmd/promdump/main.go
-	CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build -o upload/promdump/Darwin/arm64/promdump cmd/promdump/main.go
-	CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -o upload/promdump/Linux/x86_64/promdump cmd/promdump/main.go
-	CGO_ENABLED=0 GOOS=linux   GOARCH=386   go build -o upload/promdump/Linux/i386/promdump cmd/promdump/main.go
-	CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build -o upload/promdump/Linux/arm64/promdump cmd/promdump/main.go
-	chmod +x upload/promdump/Darwin/x86_64/promdump
-	chmod +x upload/promdump/Darwin/arm64/promdump
-	chmod +x upload/promdump/Linux/x86_64/promdump
-	chmod +x upload/promdump/Linux/i386/promdump
-	chmod +x upload/promdump/Linux/arm64/promdump
-	cp scripts/download-promdump.sh upload/promdump/download.sh
-	aws s3 cp --recursive upload/promdump/ s3://wavekit-release/promdump/
-
-###################################################
-### Prompush
-###################################################
-
-upload-prompush:
-	CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build -o upload/prompush/Darwin/x86_64/prompush cmd/prompush/main.go
-	CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build -o upload/prompush/Darwin/arm64/prompush cmd/prompush/main.go
-	CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -o upload/prompush/Linux/x86_64/prompush cmd/prompush/main.go
-	CGO_ENABLED=0 GOOS=linux   GOARCH=386   go build -o upload/prompush/Linux/i386/prompush cmd/prompush/main.go
-	CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build -o upload/prompush/Linux/arm64/prompush cmd/prompush/main.go
-	chmod +x upload/prompush/Darwin/x86_64/prompush
-	chmod +x upload/prompush/Darwin/arm64/prompush
-	chmod +x upload/prompush/Linux/x86_64/prompush
-	chmod +x upload/prompush/Linux/i386/prompush
-	chmod +x upload/prompush/Linux/arm64/prompush
-	cp scripts/download-prompush.sh upload/prompush/download.sh
-	aws s3 cp --recursive upload/prompush/ s3://wavekit-release/prompush/
 
 ###################################################
 ### Dev enviornment

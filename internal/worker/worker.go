@@ -20,10 +20,6 @@ var log = logger.NewLogAgent("worker")
 
 const maxTaskTimeout = 1 * time.Hour
 
-type TaskHandler interface {
-	HandleTask(c *modelctx.ModelCtx, task apigen.Task) error
-}
-
 type Worker struct {
 	model model.ModelInterface
 

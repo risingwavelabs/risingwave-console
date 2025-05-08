@@ -16,12 +16,6 @@ import (
 
 type LifeCycleHandlerGetter = func(txm model.ModelInterface) (TaskLifeCycleHandlerInterface, error)
 
-type TaskLifeCycleHandlerInterface interface {
-	HandleAttributes(ctx context.Context, task apigen.Task) error
-	HandleFailed(ctx context.Context, task apigen.Task, err error) error
-	HandleCompleted(ctx context.Context, task apigen.Task) error
-}
-
 type TaskLifeCycleHandler struct {
 	txm model.ModelInterface
 	now func() time.Time

@@ -28,6 +28,8 @@ type TaskHandler struct {
 	metahttp http.MetaHttpManagerInterface
 
 	now func() time.Time
+
+	taskHandlers []worker.TaskHandler
 }
 
 func NewTaskHandler(risectlm meta.RisectlManagerInterface, taskstore task.TaskStoreInterface, metahttp http.MetaHttpManagerInterface) worker.TaskHandler {
@@ -39,7 +41,20 @@ func NewTaskHandler(risectlm meta.RisectlManagerInterface, taskstore task.TaskSt
 	}
 }
 
+func (e *TaskHandler) RegisterTaskHandler(taskHandler worker.TaskHandler) {
+	e.taskHandlers = append(e.taskHandlers, taskHandler)
+}
+
 func (e *TaskHandler) HandleTask(c *modelctx.ModelCtx, task apigen.Task) error {
+	for _, handler := range e.taskHandlers {
+		if err := handler.HandleTask(c, task); err != nil {
+			if errors.Is(err, worker.ErrUnknownTaskType) {
+				continue
+			}
+			return err
+		}
+	}
+
 	switch task.Spec.Type {
 	case apigen.AutoBackup:
 		if task.Spec.AutoBackup == nil {
@@ -67,7 +82,7 @@ func (e *TaskHandler) HandleTask(c *modelctx.ModelCtx, task apigen.Task) error {
 		}
 		return e.ExecuteDeleteOpaqueKey(c, *task.Spec.DeleteOpaqueKey)
 	default:
-		return fmt.Errorf("unknown task type: %s", task.Spec.Type)
+		return worker.ErrUnknownTaskType
 	}
 }
 

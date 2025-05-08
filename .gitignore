@@ -6,3 +6,4 @@ upload/*
 *.parquet
 *.ndjson.gz
 profile
+.anchor/*
