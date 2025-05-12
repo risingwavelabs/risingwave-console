@@ -6,9 +6,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
-	"github.com/risingwavelabs/wavekit/internal/apigen"
-	"github.com/risingwavelabs/wavekit/internal/model/querier"
 	"github.com/risingwavelabs/wavekit/internal/utils"
+	"github.com/risingwavelabs/wavekit/internal/zgen/apigen"
+	"github.com/risingwavelabs/wavekit/internal/zgen/querier"
 )
 
 func (s *Service) SignIn(ctx context.Context, params apigen.SignInRequest) (*apigen.Credentials, error) {
@@ -31,7 +31,7 @@ func (s *Service) SignIn(ctx context.Context, params apigen.SignInRequest) (*api
 		return nil, errors.Wrapf(err, "failed to invalidate user tokens")
 	}
 
-	keyID, token, err := s.auth.CreateToken(ctx, user, nil)
+	keyID, token, err := s.auth.CreateToken(ctx, user.ID, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create token")
 	}
@@ -57,7 +57,7 @@ func (s *Service) RefreshToken(ctx context.Context, userID int32, refreshToken s
 		return nil, errors.Wrapf(err, "failed to invalidate user tokens")
 	}
 
-	keyID, accessToken, err := s.auth.CreateToken(ctx, user, nil)
+	keyID, accessToken, err := s.auth.CreateToken(ctx, user.ID, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create token")
 	}

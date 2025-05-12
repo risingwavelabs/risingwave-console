@@ -5,53 +5,41 @@ package wire
 
 import (
 	"github.com/google/wire"
-	"github.com/risingwavelabs/wavekit/internal/app"
-	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/conn/http"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
 	"github.com/risingwavelabs/wavekit/internal/controller"
-	"github.com/risingwavelabs/wavekit/internal/globalctx"
-	"github.com/risingwavelabs/wavekit/internal/macaroons"
-	"github.com/risingwavelabs/wavekit/internal/macaroons/store"
-	"github.com/risingwavelabs/wavekit/internal/metrics"
-	"github.com/risingwavelabs/wavekit/internal/model"
-	"github.com/risingwavelabs/wavekit/internal/server"
 	"github.com/risingwavelabs/wavekit/internal/service"
 	"github.com/risingwavelabs/wavekit/internal/task"
-	"github.com/risingwavelabs/wavekit/internal/worker"
-	"github.com/risingwavelabs/wavekit/internal/worker/handler"
+	"github.com/risingwavelabs/wavekit/internal/zcore/initapp"
+	"github.com/risingwavelabs/wavekit/internal/zcore/injection"
+	"github.com/risingwavelabs/wavekit/internal/zcore/model"
+	"github.com/risingwavelabs/wavekit/internal/zgen/taskgen"
+
+	anchor_wire "github.com/cloudcarver/anchor/wire"
 )
 
-func InitializeApplication() (*app.Application, error) {
+func InitializeApplication() (*initapp.App, error) {
 	wire.Build(
+		anchor_wire.InitializeApplication,
+		initapp.NewApp,
+		injection.InjectAuth,
+		injection.InjectTaskStore,
 		config.NewConfig,
 		service.NewService,
-		model.NewModel,
-		server.NewServer,
 		service.NewInitService,
-		auth.NewAuth,
+		model.NewModel,
 		sql.NewSQLConnectionManager,
 		meta.NewRisectlManager,
 		metricsstore.NewMetricsManager,
-		metrics.NewMetricsServer,
-		app.NewDebugServer,
-		globalctx.New,
-		worker.NewWorker,
-		task.NewTaskStore,
 		http.NewMetaHttpManager,
-		macaroons.NewMacaroonManager,
-		store.NewStore,
-		auth.NewCaveatParser,
-		handler.NewTaskHandler,
-		controller.NewController,
 		controller.NewValidator,
-		app.NewApplication,
-		//
 		controller.NewSeverInterface,
-		controller.NewValidatorImpl,
+		taskgen.NewTaskHandler,
+		taskgen.NewTaskRunner,
+		task.NewTaskExecutor,
 	)
 	return nil, nil
 }

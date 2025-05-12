@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cloudcarver/anchor/pkg/auth"
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
-	"github.com/risingwavelabs/wavekit/internal/apigen"
-	"github.com/risingwavelabs/wavekit/internal/auth"
-	"github.com/risingwavelabs/wavekit/internal/model"
-	"github.com/risingwavelabs/wavekit/internal/model/querier"
 	"github.com/risingwavelabs/wavekit/internal/utils"
+	"github.com/risingwavelabs/wavekit/internal/zcore/model"
+	"github.com/risingwavelabs/wavekit/internal/zgen/apigen"
+	"github.com/risingwavelabs/wavekit/internal/zgen/querier"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -61,7 +61,7 @@ func TestService_SignIn(t *testing.T) {
 			setupMock: func() {
 				mockModel.EXPECT().GetUserByName(ctx, username).Return(user, nil)
 				mockAuth.EXPECT().InvalidateUserTokens(ctx, userID).Return(nil)
-				mockAuth.EXPECT().CreateToken(ctx, user, nil).Return(keyID, accessToken, nil)
+				mockAuth.EXPECT().CreateToken(ctx, user.ID, nil).Return(keyID, accessToken, nil)
 				mockAuth.EXPECT().CreateRefreshToken(ctx, keyID, userID).Return(refreshToken, nil)
 			},
 			expectedError: nil,
@@ -159,7 +159,7 @@ func TestService_RefreshToken(t *testing.T) {
 			setupMock: func() {
 				mockModel.EXPECT().GetUser(ctx, userID).Return(user, nil)
 				mockAuth.EXPECT().InvalidateUserTokens(ctx, userID).Return(nil)
-				mockAuth.EXPECT().CreateToken(ctx, user, nil).Return(keyID, accessToken, nil)
+				mockAuth.EXPECT().CreateToken(ctx, user.ID, nil).Return(keyID, accessToken, nil)
 				mockAuth.EXPECT().CreateRefreshToken(ctx, keyID, userID).Return(refreshToken, nil)
 			},
 			expectedError: nil,

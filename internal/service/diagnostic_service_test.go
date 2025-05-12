@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cloudcarver/anchor/pkg/taskcore"
 	"github.com/jackc/pgx/v5"
-	"github.com/risingwavelabs/wavekit/internal/apigen"
 	mock_http "github.com/risingwavelabs/wavekit/internal/conn/http/mock"
-	"github.com/risingwavelabs/wavekit/internal/model"
-	"github.com/risingwavelabs/wavekit/internal/model/querier"
-	"github.com/risingwavelabs/wavekit/internal/task"
-	"github.com/risingwavelabs/wavekit/internal/utils"
+	"github.com/risingwavelabs/wavekit/internal/zcore/model"
+	"github.com/risingwavelabs/wavekit/internal/zgen/apigen"
+	"github.com/risingwavelabs/wavekit/internal/zgen/querier"
+	"github.com/risingwavelabs/wavekit/internal/zgen/taskgen"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -28,13 +28,7 @@ func TestUpdateClusterAutoDiagnosticConfig(t *testing.T) {
 		taskID            = int32(301)
 		cronExpression    = "0 0 * * *"
 		retentionDuration = "10m"
-		taskSpec          = apigen.TaskSpec{
-			Type: apigen.AutoDiagnostic,
-			AutoDiagnostic: &apigen.TaskSpecAutoDiagnostic{
-				ClusterID:         clusterID,
-				RetentionDuration: retentionDuration,
-			},
-		}
+		tz                = "America/New_York"
 	)
 
 	type testCase struct {
@@ -77,11 +71,13 @@ func TestUpdateClusterAutoDiagnosticConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		mockModel := model.NewMockModelInterfaceWithTransaction(ctrl)
-		taskstore := task.NewMockTaskStoreInterface(ctrl)
+		taskRunner := taskgen.NewMockTaskRunner(ctrl)
+		taskstore := taskcore.NewMockTaskStoreInterfaceWithTx(ctrl)
 
 		service := &Service{
-			m:         mockModel,
-			taskstore: taskstore,
+			m:          mockModel,
+			taskRunner: taskRunner,
+			taskstore:  taskstore,
 		}
 
 		mockModel.EXPECT().GetOrgCluster(gomock.Any(), querier.GetOrgClusterParams{
@@ -89,6 +85,11 @@ func TestUpdateClusterAutoDiagnosticConfig(t *testing.T) {
 			OrganizationID: orgID,
 		}).Return(&querier.Cluster{
 			ID: clusterID,
+		}, nil)
+
+		mockModel.EXPECT().GetOrganization(gomock.Any(), orgID).Return(&querier.Organization{
+			ID:       orgID,
+			Timezone: tz,
 		}, nil)
 
 		mockModel.EXPECT().GetAutoDiagnosticsConfig(gomock.Any(), clusterID).Return(tc.cfg, tc.err)
@@ -99,13 +100,26 @@ func TestUpdateClusterAutoDiagnosticConfig(t *testing.T) {
 			} else {
 				taskstore.EXPECT().PauseCronJob(gomock.Any(), taskID).Return(nil)
 			}
-			taskstore.EXPECT().UpdateCronJob(gomock.Any(), taskID, utils.Ptr(defaultDiagnosticTaskTimeout), &orgID, cronExpression, taskSpec).Return(nil)
+			taskParams := taskgen.AutoDiagnosticParameters{
+				ClusterID:         clusterID,
+				RetentionDuration: retentionDuration,
+			}
+			spec, err := taskParams.Marshal()
+			if err != nil {
+				t.Fatalf("failed to marshal task parameters: %v", err)
+			}
+
+			taskstore.EXPECT().UpdateCronJob(gomock.Any(), taskID, fmt.Sprintf("CRON_TZ=%s %s", tz, cronExpression), spec).Return(nil)
 			mockModel.EXPECT().UpdateAutoDiagnosticsConfig(gomock.Any(), querier.UpdateAutoDiagnosticsConfigParams{
 				ClusterID: clusterID,
 				Enabled:   tc.enabled,
 			}).Return(nil)
 		} else { // CREATE
-			taskstore.EXPECT().CreateCronJob(gomock.Any(), utils.Ptr(defaultDiagnosticTaskTimeout), &orgID, cronExpression, taskSpec).Return(taskID, nil)
+			taskRunner.EXPECT().RunAutoDiagnosticWithTx(gomock.Any(), gomock.Any(), &taskgen.AutoDiagnosticParameters{
+				ClusterID:         clusterID,
+				RetentionDuration: retentionDuration,
+			}, taskcore.Eq(taskcore.WithCronjob(fmt.Sprintf("CRON_TZ=%s %s", tz, cronExpression)))).Return(taskID, nil)
+
 			mockModel.EXPECT().CreateAutoDiagnosticsConfig(gomock.Any(), querier.CreateAutoDiagnosticsConfigParams{
 				ClusterID: clusterID,
 				TaskID:    taskID,

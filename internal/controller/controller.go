@@ -1,16 +1,19 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/cloudcarver/anchor/pkg/auth"
 	"github.com/gofiber/fiber/v2"
-	"github.com/risingwavelabs/wavekit/internal/apigen"
-	"github.com/risingwavelabs/wavekit/internal/auth"
+	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
 	"github.com/risingwavelabs/wavekit/internal/service"
 	"github.com/risingwavelabs/wavekit/internal/utils"
+	"github.com/risingwavelabs/wavekit/internal/zgen/apigen"
 )
 
 type Controller struct {
@@ -18,24 +21,18 @@ type Controller struct {
 	auth auth.AuthInterface
 }
 
-func NewController(
-	s service.ServiceInterface,
-	auth auth.AuthInterface,
-) *Controller {
+func NewSeverInterface(cfg *config.Config, s service.ServiceInterface, auth auth.AuthInterface, initService *service.InitService) (apigen.ServerInterface, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := initService.Init(ctx, cfg); err != nil {
+		return nil, err
+	}
+
 	return &Controller{
 		svc:  s,
 		auth: auth,
-	}
-}
-
-type ServerInterfaceImpl struct {
-	*Controller
-}
-
-func NewSeverInterface(controller *Controller) apigen.ServerInterface {
-	return &ServerInterfaceImpl{
-		Controller: controller,
-	}
+	}, nil
 }
 
 func (controller *Controller) SignIn(c *fiber.Ctx) error {

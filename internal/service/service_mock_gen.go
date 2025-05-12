@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	model "github.com/prometheus/common/model"
-	apigen "github.com/risingwavelabs/wavekit/internal/apigen"
+	apigen "github.com/risingwavelabs/wavekit/internal/zgen/apigen"
 	gomock "go.uber.org/mock/gomock"
 )
 

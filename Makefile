@@ -8,60 +8,30 @@ install-anchor:
 	@GOBIN=$(PROJECT_DIR)/bin go install github.com/cloudcarver/anchor/cmd/anchor@latest
 
 anchor-gen: install-anchor
-	$(PROJECT_DIR)/bin/anchor gen .
+	$(PROJECT_DIR)/bin/anchor gen --config dev/anchor.yaml .
 
 ###################################################
 ### Common
 ###################################################
 
-gen: anchor-gen doc gen-frontend-client
+gen: anchor-gen
 	@go mod tidy
-
-###################################################
-### Documentation
-###################################################
-
-CONFTEXT_VERSION=v0.3.3
-CONFTEXT_BIN=$(PROJECT_DIR)/bin/conftext
-
-install-doc-tools:
-	@GOBIN=$(PROJECT_DIR)/bin BIN=conftext VERSION=${CONFTEXT_VERSION} DIR=$(PROJECT_DIR)/bin REPO=github.com/cloudcarver/edc/cmd/conftext ./scripts/go-install.sh
-
-doc-config:
-	@awk -v cmds='$(CONFTEXT_BIN) -prefix wk -path internal/config -yaml|CONFIG_SAMPLE_YAML;\
-		$(CONFTEXT_BIN) -prefix wk -path internal/config -env -markdown|CONFIG_ENV;\
-		cat dev/init.yaml|CONFIG_SAMPLE_INIT' \
-		-f scripts/template-subst.awk docs/templates/config.tmpl.md > docs/config.md
-
-doc-contributing:
-	@awk -v cmds='cat CONTRIBUTING.md|CONTRIBUTING_MD' \
-		-f scripts/template-subst.awk docs/templates/CONTRIBUTING.tmpl.md > CONTRIBUTING.md
-
-doc: install-doc-tools doc-config doc-contributing
 
 ###################################################
 ### Dev enviornment
 ###################################################
 
-K0S_KUBECTL=docker exec -ti wavekit-k0s k0s kubectl
-K0S_CODEBASE_DIR=/opt/wavekit-dev/codebase
-
 start:
-	docker-compose up -d
-	./dev/init.sh
-	$(K0S_KUBECTL) apply -f $(K0S_CODEBASE_DIR)/dev/k0s.yaml > /dev/null 2>&1
-
-apply:
-	$(K0S_KUBECTL) apply -f $(K0S_CODEBASE_DIR)/dev/k0s.yaml
+	docker compose -f dev/docker-compose.yaml up 
 
 reload:
-	$(K0S_KUBECTL) rollout restart deployment/wavekit
+	docker compose restart dev
 
 log:
-	$(K0S_KUBECTL) logs -l app=wavekit --follow
+	docker compose logs -f dev
 
 db:
-	psql "postgresql://postgres:postgres@localhost:30432/postgres?sslmode=disable"
+	psql "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"
 
 ###################################################
 ### Build

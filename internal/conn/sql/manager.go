@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/risingwavelabs/wavekit/internal/model"
 	"github.com/risingwavelabs/wavekit/internal/utils"
+	"github.com/risingwavelabs/wavekit/internal/zcore/model"
 )
 
 type SQLConnectionManegerInterface interface {

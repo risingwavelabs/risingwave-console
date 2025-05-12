@@ -4,17 +4,18 @@ import (
 	"context"
 	"time"
 
+	"github.com/cloudcarver/anchor/pkg/auth"
+	"github.com/cloudcarver/anchor/pkg/taskcore"
 	"github.com/pkg/errors"
-	"github.com/risingwavelabs/wavekit/internal/apigen"
-	"github.com/risingwavelabs/wavekit/internal/auth"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/conn/http"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
 	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
 	"github.com/risingwavelabs/wavekit/internal/conn/sql"
-	"github.com/risingwavelabs/wavekit/internal/model"
-	"github.com/risingwavelabs/wavekit/internal/task"
 	"github.com/risingwavelabs/wavekit/internal/utils"
+	"github.com/risingwavelabs/wavekit/internal/zcore/model"
+	"github.com/risingwavelabs/wavekit/internal/zgen/apigen"
+	"github.com/risingwavelabs/wavekit/internal/zgen/taskgen"
 
 	prom_model "github.com/prometheus/common/model"
 )
@@ -162,7 +163,8 @@ type Service struct {
 	risectlm           meta.RisectlManagerInterface
 	metahttp           http.MetaHttpManagerInterface
 	metricsConnManager *metricsstore.MetricsManager
-	taskstore          task.TaskStoreInterface
+	taskRunner         taskgen.TaskRunner
+	taskstore          taskcore.TaskStoreInterface
 
 	now                 func() time.Time
 	generateHashAndSalt func(password string) (string, string, error)
@@ -176,9 +178,9 @@ func NewService(
 	risectlm meta.RisectlManagerInterface,
 	metricsConnManager *metricsstore.MetricsManager,
 	metahttp http.MetaHttpManagerInterface,
-	taskstore task.TaskStoreInterface,
-) ServiceInterface {
-
+	taskRunner taskgen.TaskRunner,
+	taskstore taskcore.TaskStoreInterface,
+) (ServiceInterface, error) {
 	s := &Service{
 		m:                   m,
 		now:                 time.Now,
@@ -188,7 +190,8 @@ func NewService(
 		risectlm:            risectlm,
 		metahttp:            metahttp,
 		metricsConnManager:  metricsConnManager,
+		taskRunner:          taskRunner,
 		taskstore:           taskstore,
 	}
-	return s
+	return s, nil
 }

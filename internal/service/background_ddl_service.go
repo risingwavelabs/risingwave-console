@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/risingwavelabs/wavekit/internal/apigen"
+	"github.com/risingwavelabs/wavekit/internal/zgen/apigen"
 )
 
 const getDDLProgressSQL = `SELECT * FROM rw_ddl_progress ORDER BY initialized_at DESC`

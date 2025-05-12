@@ -3,11 +3,11 @@ package controller
 import (
 	"errors"
 
+	"github.com/cloudcarver/anchor/pkg/auth"
 	"github.com/gofiber/fiber/v2"
-	"github.com/risingwavelabs/wavekit/internal/apigen"
-	"github.com/risingwavelabs/wavekit/internal/auth"
-	"github.com/risingwavelabs/wavekit/internal/model"
-	"github.com/risingwavelabs/wavekit/internal/model/querier"
+	"github.com/risingwavelabs/wavekit/internal/zcore/model"
+	"github.com/risingwavelabs/wavekit/internal/zgen/apigen"
+	"github.com/risingwavelabs/wavekit/internal/zgen/querier"
 )
 
 type Validator struct {
@@ -15,17 +15,7 @@ type Validator struct {
 	auth  auth.AuthInterface
 }
 
-type ValidatorImpl struct {
-	*Validator
-}
-
-func NewValidatorImpl(validator *Validator) apigen.Validator {
-	return &ValidatorImpl{
-		Validator: validator,
-	}
-}
-
-func NewValidator(model model.ModelInterface, auth auth.AuthInterface) *Validator {
+func NewValidator(model model.ModelInterface, auth auth.AuthInterface) apigen.Validator {
 	return &Validator{model: model, auth: auth}
 }
 
