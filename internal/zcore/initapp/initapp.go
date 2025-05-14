@@ -11,7 +11,7 @@ type App struct {
 	anchorApp *app.Application
 }
 
-func NewApp(anchorApp *app.Application, serverInterface apigen.ServerInterface, validator apigen.Validator, taskHandler worker.TaskHandler) *App {
+func NewApp(anchorApp *app.Application, serverInterface apigen.ServerInterface, validator apigen.Validator, taskHandler worker.TaskHandler, init func(anchorApp *app.Application) error) (*App, error) {
 	app := &App{
 		anchorApp: anchorApp,
 	}
@@ -19,7 +19,11 @@ func NewApp(anchorApp *app.Application, serverInterface apigen.ServerInterface, 
 	app.RegisterServerInterface(serverInterface, validator)
 	app.RegisterTaskHandler(taskHandler)
 
-	return app
+	if err := init(anchorApp); err != nil {
+		return nil, err
+	}
+
+	return app, nil
 }
 
 func (a *App) Start() error {
@@ -35,4 +39,8 @@ func (a *App) RegisterServerInterface(serverInterface apigen.ServerInterface, va
 		BaseURL:     "/api/v1",
 		Middlewares: []apigen.MiddlewareFunc{},
 	})
+}
+
+func (a *App) Register(authMiddleware apigen.MiddlewareFunc) {
+	a.anchorApp.GetServer().GetApp().Use(authMiddleware)
 }

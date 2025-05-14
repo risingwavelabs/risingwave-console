@@ -86,21 +86,6 @@ func (mr *MockServiceInterfaceMockRecorder) CreateClusterSnapshot(ctx, id, name,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateClusterSnapshot", reflect.TypeOf((*MockServiceInterface)(nil).CreateClusterSnapshot), ctx, id, name, orgID)
 }
 
-// CreateNewUser mocks base method.
-func (m *MockServiceInterface) CreateNewUser(ctx context.Context, username, password string) (int32, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateNewUser", ctx, username, password)
-	ret0, _ := ret[0].(int32)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateNewUser indicates an expected call of CreateNewUser.
-func (mr *MockServiceInterfaceMockRecorder) CreateNewUser(ctx, username, password any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNewUser", reflect.TypeOf((*MockServiceInterface)(nil).CreateNewUser), ctx, username, password)
-}
-
 // DeleteCluster mocks base method.
 func (m *MockServiceInterface) DeleteCluster(ctx context.Context, id int32, cascade bool, orgID int32) error {
 	m.ctrl.T.Helper()
@@ -144,17 +129,17 @@ func (mr *MockServiceInterfaceMockRecorder) DeleteDatabase(ctx, id, orgID any) *
 }
 
 // DeleteMetricsStore mocks base method.
-func (m *MockServiceInterface) DeleteMetricsStore(ctx context.Context, id, organizationID int32, force bool) error {
+func (m *MockServiceInterface) DeleteMetricsStore(ctx context.Context, id, OrgID int32, force bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteMetricsStore", ctx, id, organizationID, force)
+	ret := m.ctrl.Call(m, "DeleteMetricsStore", ctx, id, OrgID, force)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteMetricsStore indicates an expected call of DeleteMetricsStore.
-func (mr *MockServiceInterfaceMockRecorder) DeleteMetricsStore(ctx, id, organizationID, force any) *gomock.Call {
+func (mr *MockServiceInterfaceMockRecorder) DeleteMetricsStore(ctx, id, OrgID, force any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMetricsStore", reflect.TypeOf((*MockServiceInterface)(nil).DeleteMetricsStore), ctx, id, organizationID, force)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMetricsStore", reflect.TypeOf((*MockServiceInterface)(nil).DeleteMetricsStore), ctx, id, OrgID, force)
 }
 
 // GetCluster mocks base method.
@@ -263,18 +248,18 @@ func (mr *MockServiceInterfaceMockRecorder) GetMaterializedViewThroughput(ctx, c
 }
 
 // GetMetricsStore mocks base method.
-func (m *MockServiceInterface) GetMetricsStore(ctx context.Context, id, organizationID int32) (*apigen.MetricsStore, error) {
+func (m *MockServiceInterface) GetMetricsStore(ctx context.Context, id, OrgID int32) (*apigen.MetricsStore, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMetricsStore", ctx, id, organizationID)
+	ret := m.ctrl.Call(m, "GetMetricsStore", ctx, id, OrgID)
 	ret0, _ := ret[0].(*apigen.MetricsStore)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetMetricsStore indicates an expected call of GetMetricsStore.
-func (mr *MockServiceInterfaceMockRecorder) GetMetricsStore(ctx, id, organizationID any) *gomock.Call {
+func (mr *MockServiceInterfaceMockRecorder) GetMetricsStore(ctx, id, OrgID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricsStore", reflect.TypeOf((*MockServiceInterface)(nil).GetMetricsStore), ctx, id, organizationID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricsStore", reflect.TypeOf((*MockServiceInterface)(nil).GetMetricsStore), ctx, id, OrgID)
 }
 
 // ImportCluster mocks base method.
@@ -413,18 +398,18 @@ func (mr *MockServiceInterfaceMockRecorder) ListDatabases(ctx, orgID any) *gomoc
 }
 
 // ListMetricsStores mocks base method.
-func (m *MockServiceInterface) ListMetricsStores(ctx context.Context, organizationID int32) ([]*apigen.MetricsStore, error) {
+func (m *MockServiceInterface) ListMetricsStores(ctx context.Context, OrgID int32) ([]*apigen.MetricsStore, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListMetricsStores", ctx, organizationID)
+	ret := m.ctrl.Call(m, "ListMetricsStores", ctx, OrgID)
 	ret0, _ := ret[0].([]*apigen.MetricsStore)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListMetricsStores indicates an expected call of ListMetricsStores.
-func (mr *MockServiceInterfaceMockRecorder) ListMetricsStores(ctx, organizationID any) *gomock.Call {
+func (mr *MockServiceInterfaceMockRecorder) ListMetricsStores(ctx, OrgID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMetricsStores", reflect.TypeOf((*MockServiceInterface)(nil).ListMetricsStores), ctx, organizationID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMetricsStores", reflect.TypeOf((*MockServiceInterface)(nil).ListMetricsStores), ctx, OrgID)
 }
 
 // QueryDatabase mocks base method.
@@ -442,21 +427,6 @@ func (mr *MockServiceInterfaceMockRecorder) QueryDatabase(ctx, id, params, orgID
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryDatabase", reflect.TypeOf((*MockServiceInterface)(nil).QueryDatabase), ctx, id, params, orgID, backgroundDDL)
 }
 
-// RefreshToken mocks base method.
-func (m *MockServiceInterface) RefreshToken(ctx context.Context, userID int32, refreshToken string) (*apigen.Credentials, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RefreshToken", ctx, userID, refreshToken)
-	ret0, _ := ret[0].(*apigen.Credentials)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RefreshToken indicates an expected call of RefreshToken.
-func (mr *MockServiceInterfaceMockRecorder) RefreshToken(ctx, userID, refreshToken any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshToken", reflect.TypeOf((*MockServiceInterface)(nil).RefreshToken), ctx, userID, refreshToken)
-}
-
 // RunRisectlCommand mocks base method.
 func (m *MockServiceInterface) RunRisectlCommand(ctx context.Context, id int32, params apigen.RisectlCommand, orgID int32) (*apigen.RisectlCommandResult, error) {
 	m.ctrl.T.Helper()
@@ -470,21 +440,6 @@ func (m *MockServiceInterface) RunRisectlCommand(ctx context.Context, id int32, 
 func (mr *MockServiceInterfaceMockRecorder) RunRisectlCommand(ctx, id, params, orgID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunRisectlCommand", reflect.TypeOf((*MockServiceInterface)(nil).RunRisectlCommand), ctx, id, params, orgID)
-}
-
-// SignIn mocks base method.
-func (m *MockServiceInterface) SignIn(ctx context.Context, params apigen.SignInRequest) (*apigen.Credentials, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SignIn", ctx, params)
-	ret0, _ := ret[0].(*apigen.Credentials)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SignIn indicates an expected call of SignIn.
-func (mr *MockServiceInterfaceMockRecorder) SignIn(ctx, params any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignIn", reflect.TypeOf((*MockServiceInterface)(nil).SignIn), ctx, params)
 }
 
 // TestClusterConnection mocks base method.
@@ -576,16 +531,16 @@ func (mr *MockServiceInterfaceMockRecorder) UpdateDatabase(ctx, id, params, orgI
 }
 
 // UpdateMetricsStore mocks base method.
-func (m *MockServiceInterface) UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreImport, organizationID int32) (*apigen.MetricsStore, error) {
+func (m *MockServiceInterface) UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreImport, OrgID int32) (*apigen.MetricsStore, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateMetricsStore", ctx, id, req, organizationID)
+	ret := m.ctrl.Call(m, "UpdateMetricsStore", ctx, id, req, OrgID)
 	ret0, _ := ret[0].(*apigen.MetricsStore)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateMetricsStore indicates an expected call of UpdateMetricsStore.
-func (mr *MockServiceInterfaceMockRecorder) UpdateMetricsStore(ctx, id, req, organizationID any) *gomock.Call {
+func (mr *MockServiceInterfaceMockRecorder) UpdateMetricsStore(ctx, id, req, OrgID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMetricsStore", reflect.TypeOf((*MockServiceInterface)(nil).UpdateMetricsStore), ctx, id, req, organizationID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMetricsStore", reflect.TypeOf((*MockServiceInterface)(nil).UpdateMetricsStore), ctx, id, req, OrgID)
 }

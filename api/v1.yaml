@@ -627,59 +627,6 @@ paths:
         "200":
           description: Diagnostic configuration updated successfully
 
-  /auth/sign-in:
-    post:
-      summary: Sign in user
-      description: Authenticate user and return access token
-      operationId: signIn
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SignInRequest"
-      responses:
-        "200":
-          description: Successfully authenticated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Credentials"
-        "401":
-          description: Invalid credentials
-
-  /auth/refresh:
-    post:
-      summary: Refresh access token
-      description: Get a new access token using a refresh token
-      operationId: refreshToken
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RefreshTokenRequest"
-      responses:
-        "200":
-          description: Successfully refreshed token
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Credentials"
-        "401":
-          description: Invalid or expired refresh token
-
-  /auth/sign-out:
-    post:
-      summary: Sign out user
-      description: Sign out user and invalidate all tokens
-      operationId: signOut
-      responses:
-        "200":
-          description: Successfully signed out
-      security:
-        - BearerAuth: []
-
   /metrics-stores/{ID}:
     get:
       summary: Get a metrics store
@@ -882,7 +829,7 @@ components:
         - ID
         - name
         - clusterID
-        - organizationID
+        - OrgID
         - username
         - database
         - createdAt
@@ -899,7 +846,7 @@ components:
           type: integer
           format: int32
           description: ID of the cluster this database belongs to
-        organizationID:
+        OrgID:
           type: integer
           format: int32
           description: ID of the organization this database belongs to
@@ -1047,7 +994,7 @@ components:
       type: object
       required:
         - ID
-        - organizationID
+        - OrgID
         - name
         - host
         - sqlPort
@@ -1060,7 +1007,7 @@ components:
         ID:
           type: integer
           format: int32
-        organizationID:
+        OrgID:
           type: integer
           format: int32
         name:
@@ -1206,20 +1153,6 @@ components:
           type: string
           description: Raw diagnostic data message containing system metrics and information
 
-    SignInRequest:
-      type: object
-      required:
-        - name
-        - password
-      properties:
-        name:
-          type: string
-          description: User's name
-        password:
-          type: string
-          format: password
-          description: User's password
-
     Credentials:
       type: object
       required:
@@ -1252,7 +1185,7 @@ components:
       required:
         - ID
         - name
-        - organizationID
+        - OrgID
         - createdAt
         - updatedAt
       properties:
@@ -1263,7 +1196,7 @@ components:
         name:
           type: string
           description: User's name
-        organizationID:
+        OrgID:
           type: integer
           format: int32
           description: ID of the organization this user belongs to

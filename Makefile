@@ -4,11 +4,11 @@ PROJECT_DIR=$(shell pwd)
 gen-frontend-client:
 	cd web && pnpm run gen
 
-install-anchor:
-	@GOBIN=$(PROJECT_DIR)/bin go install github.com/cloudcarver/anchor/cmd/anchor@latest
+install-toolchains:
+	$(PROJECT_DIR)/.anchor/bin/anchor install --config dev/anchor.yaml .
 
-anchor-gen: install-anchor
-	$(PROJECT_DIR)/bin/anchor gen --config dev/anchor.yaml .
+anchor-gen: install-toolchains
+	$(PROJECT_DIR)/.anchor/bin/anchor gen --config dev/anchor.yaml .
 
 ###################################################
 ### Common
@@ -22,7 +22,7 @@ gen: anchor-gen
 ###################################################
 
 start:
-	docker compose -f dev/docker-compose.yaml up 
+	docker compose up 
 
 reload:
 	docker compose restart dev

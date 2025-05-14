@@ -16,19 +16,19 @@ INSERT INTO database_connections (
     username,
     password,
     database,
-    organization_id
+    org_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6
-) RETURNING id, organization_id, name, cluster_id, username, password, database, created_at, updated_at
+) RETURNING id, org_id, name, cluster_id, username, password, database, created_at, updated_at
 `
 
 type CreateDatabaseConnectionParams struct {
-	Name           string
-	ClusterID      int32
-	Username       string
-	Password       *string
-	Database       string
-	OrganizationID int32
+	Name      string
+	ClusterID int32
+	Username  string
+	Password  *string
+	Database  string
+	OrgID     int32
 }
 
 func (q *Queries) CreateDatabaseConnection(ctx context.Context, arg CreateDatabaseConnectionParams) (*DatabaseConnection, error) {
@@ -38,12 +38,12 @@ func (q *Queries) CreateDatabaseConnection(ctx context.Context, arg CreateDataba
 		arg.Username,
 		arg.Password,
 		arg.Database,
-		arg.OrganizationID,
+		arg.OrgID,
 	)
 	var i DatabaseConnection
 	err := row.Scan(
 		&i.ID,
-		&i.OrganizationID,
+		&i.OrgID,
 		&i.Name,
 		&i.ClusterID,
 		&i.Username,
@@ -57,46 +57,46 @@ func (q *Queries) CreateDatabaseConnection(ctx context.Context, arg CreateDataba
 
 const deleteAllOrgDatabaseConnectionsByClusterID = `-- name: DeleteAllOrgDatabaseConnectionsByClusterID :exec
 DELETE FROM database_connections
-WHERE cluster_id = $1 AND organization_id = $2
+WHERE cluster_id = $1 AND org_id = $2
 `
 
 type DeleteAllOrgDatabaseConnectionsByClusterIDParams struct {
-	ClusterID      int32
-	OrganizationID int32
+	ClusterID int32
+	OrgID     int32
 }
 
 func (q *Queries) DeleteAllOrgDatabaseConnectionsByClusterID(ctx context.Context, arg DeleteAllOrgDatabaseConnectionsByClusterIDParams) error {
-	_, err := q.db.Exec(ctx, deleteAllOrgDatabaseConnectionsByClusterID, arg.ClusterID, arg.OrganizationID)
+	_, err := q.db.Exec(ctx, deleteAllOrgDatabaseConnectionsByClusterID, arg.ClusterID, arg.OrgID)
 	return err
 }
 
 const deleteOrgDatabaseConnection = `-- name: DeleteOrgDatabaseConnection :exec
 DELETE FROM database_connections
-WHERE id = $1 AND organization_id = $2
+WHERE id = $1 AND org_id = $2
 `
 
 type DeleteOrgDatabaseConnectionParams struct {
-	ID             int32
-	OrganizationID int32
+	ID    int32
+	OrgID int32
 }
 
 func (q *Queries) DeleteOrgDatabaseConnection(ctx context.Context, arg DeleteOrgDatabaseConnectionParams) error {
-	_, err := q.db.Exec(ctx, deleteOrgDatabaseConnection, arg.ID, arg.OrganizationID)
+	_, err := q.db.Exec(ctx, deleteOrgDatabaseConnection, arg.ID, arg.OrgID)
 	return err
 }
 
 const getAllOrgDatabseConnectionsByClusterID = `-- name: GetAllOrgDatabseConnectionsByClusterID :many
-SELECT id, organization_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
-WHERE cluster_id = $1 AND organization_id = $2
+SELECT id, org_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
+WHERE cluster_id = $1 AND org_id = $2
 `
 
 type GetAllOrgDatabseConnectionsByClusterIDParams struct {
-	ClusterID      int32
-	OrganizationID int32
+	ClusterID int32
+	OrgID     int32
 }
 
 func (q *Queries) GetAllOrgDatabseConnectionsByClusterID(ctx context.Context, arg GetAllOrgDatabseConnectionsByClusterIDParams) ([]*DatabaseConnection, error) {
-	rows, err := q.db.Query(ctx, getAllOrgDatabseConnectionsByClusterID, arg.ClusterID, arg.OrganizationID)
+	rows, err := q.db.Query(ctx, getAllOrgDatabseConnectionsByClusterID, arg.ClusterID, arg.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (q *Queries) GetAllOrgDatabseConnectionsByClusterID(ctx context.Context, ar
 		var i DatabaseConnection
 		if err := rows.Scan(
 			&i.ID,
-			&i.OrganizationID,
+			&i.OrgID,
 			&i.Name,
 			&i.ClusterID,
 			&i.Username,
@@ -126,7 +126,7 @@ func (q *Queries) GetAllOrgDatabseConnectionsByClusterID(ctx context.Context, ar
 }
 
 const getDatabaseConnectionByID = `-- name: GetDatabaseConnectionByID :one
-SELECT id, organization_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
+SELECT id, org_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
 WHERE id = $1
 `
 
@@ -135,7 +135,7 @@ func (q *Queries) GetDatabaseConnectionByID(ctx context.Context, id int32) (*Dat
 	var i DatabaseConnection
 	err := row.Scan(
 		&i.ID,
-		&i.OrganizationID,
+		&i.OrgID,
 		&i.Name,
 		&i.ClusterID,
 		&i.Username,
@@ -148,21 +148,21 @@ func (q *Queries) GetDatabaseConnectionByID(ctx context.Context, id int32) (*Dat
 }
 
 const getOrgDatabaseByID = `-- name: GetOrgDatabaseByID :one
-SELECT id, organization_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
-WHERE id = $1 AND organization_id = $2
+SELECT id, org_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
+WHERE id = $1 AND org_id = $2
 `
 
 type GetOrgDatabaseByIDParams struct {
-	ID             int32
-	OrganizationID int32
+	ID    int32
+	OrgID int32
 }
 
 func (q *Queries) GetOrgDatabaseByID(ctx context.Context, arg GetOrgDatabaseByIDParams) (*DatabaseConnection, error) {
-	row := q.db.QueryRow(ctx, getOrgDatabaseByID, arg.ID, arg.OrganizationID)
+	row := q.db.QueryRow(ctx, getOrgDatabaseByID, arg.ID, arg.OrgID)
 	var i DatabaseConnection
 	err := row.Scan(
 		&i.ID,
-		&i.OrganizationID,
+		&i.OrgID,
 		&i.Name,
 		&i.ClusterID,
 		&i.Username,
@@ -175,21 +175,21 @@ func (q *Queries) GetOrgDatabaseByID(ctx context.Context, arg GetOrgDatabaseByID
 }
 
 const getOrgDatabaseConnection = `-- name: GetOrgDatabaseConnection :one
-SELECT id, organization_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
-WHERE id = $1 AND organization_id = $2
+SELECT id, org_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
+WHERE id = $1 AND org_id = $2
 `
 
 type GetOrgDatabaseConnectionParams struct {
-	ID             int32
-	OrganizationID int32
+	ID    int32
+	OrgID int32
 }
 
 func (q *Queries) GetOrgDatabaseConnection(ctx context.Context, arg GetOrgDatabaseConnectionParams) (*DatabaseConnection, error) {
-	row := q.db.QueryRow(ctx, getOrgDatabaseConnection, arg.ID, arg.OrganizationID)
+	row := q.db.QueryRow(ctx, getOrgDatabaseConnection, arg.ID, arg.OrgID)
 	var i DatabaseConnection
 	err := row.Scan(
 		&i.ID,
-		&i.OrganizationID,
+		&i.OrgID,
 		&i.Name,
 		&i.ClusterID,
 		&i.Username,
@@ -208,26 +208,26 @@ INSERT INTO database_connections (
     username,
     password,
     database,
-    organization_id
+    org_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6
-) ON CONFLICT (organization_id, name) DO UPDATE 
+) ON CONFLICT (org_id, name) DO UPDATE 
     SET 
         cluster_id = EXCLUDED.cluster_id,
         username = EXCLUDED.username,
         password = EXCLUDED.password,
         database = EXCLUDED.database,
         updated_at = CURRENT_TIMESTAMP
-RETURNING id, organization_id, name, cluster_id, username, password, database, created_at, updated_at
+RETURNING id, org_id, name, cluster_id, username, password, database, created_at, updated_at
 `
 
 type InitDatabaseConnectionParams struct {
-	Name           string
-	ClusterID      int32
-	Username       string
-	Password       *string
-	Database       string
-	OrganizationID int32
+	Name      string
+	ClusterID int32
+	Username  string
+	Password  *string
+	Database  string
+	OrgID     int32
 }
 
 func (q *Queries) InitDatabaseConnection(ctx context.Context, arg InitDatabaseConnectionParams) (*DatabaseConnection, error) {
@@ -237,12 +237,12 @@ func (q *Queries) InitDatabaseConnection(ctx context.Context, arg InitDatabaseCo
 		arg.Username,
 		arg.Password,
 		arg.Database,
-		arg.OrganizationID,
+		arg.OrgID,
 	)
 	var i DatabaseConnection
 	err := row.Scan(
 		&i.ID,
-		&i.OrganizationID,
+		&i.OrgID,
 		&i.Name,
 		&i.ClusterID,
 		&i.Username,
@@ -255,13 +255,13 @@ func (q *Queries) InitDatabaseConnection(ctx context.Context, arg InitDatabaseCo
 }
 
 const listOrgDatabaseConnections = `-- name: ListOrgDatabaseConnections :many
-SELECT id, organization_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
-WHERE organization_id = $1
+SELECT id, org_id, name, cluster_id, username, password, database, created_at, updated_at FROM database_connections
+WHERE org_id = $1
 ORDER BY name
 `
 
-func (q *Queries) ListOrgDatabaseConnections(ctx context.Context, organizationID int32) ([]*DatabaseConnection, error) {
-	rows, err := q.db.Query(ctx, listOrgDatabaseConnections, organizationID)
+func (q *Queries) ListOrgDatabaseConnections(ctx context.Context, orgID int32) ([]*DatabaseConnection, error) {
+	rows, err := q.db.Query(ctx, listOrgDatabaseConnections, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +271,7 @@ func (q *Queries) ListOrgDatabaseConnections(ctx context.Context, organizationID
 		var i DatabaseConnection
 		if err := rows.Scan(
 			&i.ID,
-			&i.OrganizationID,
+			&i.OrgID,
 			&i.Name,
 			&i.ClusterID,
 			&i.Username,
@@ -298,38 +298,38 @@ SET
     username = $5,
     password = $6,
     database = $7,
-    organization_id = $8,
+    org_id = $8,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND organization_id = $2
-RETURNING id, organization_id, name, cluster_id, username, password, database, created_at, updated_at
+WHERE id = $1 AND org_id = $2
+RETURNING id, org_id, name, cluster_id, username, password, database, created_at, updated_at
 `
 
 type UpdateOrgDatabaseConnectionParams struct {
-	ID               int32
-	OrganizationID   int32
-	Name             string
-	ClusterID        int32
-	Username         string
-	Password         *string
-	Database         string
-	OrganizationID_2 int32
+	ID        int32
+	OrgID     int32
+	Name      string
+	ClusterID int32
+	Username  string
+	Password  *string
+	Database  string
+	OrgID_2   int32
 }
 
 func (q *Queries) UpdateOrgDatabaseConnection(ctx context.Context, arg UpdateOrgDatabaseConnectionParams) (*DatabaseConnection, error) {
 	row := q.db.QueryRow(ctx, updateOrgDatabaseConnection,
 		arg.ID,
-		arg.OrganizationID,
+		arg.OrgID,
 		arg.Name,
 		arg.ClusterID,
 		arg.Username,
 		arg.Password,
 		arg.Database,
-		arg.OrganizationID_2,
+		arg.OrgID_2,
 	)
 	var i DatabaseConnection
 	err := row.Scan(
 		&i.ID,
-		&i.OrganizationID,
+		&i.OrgID,
 		&i.Name,
 		&i.ClusterID,
 		&i.Username,

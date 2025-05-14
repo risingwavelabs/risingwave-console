@@ -14,34 +14,34 @@ import (
 
 func (s *Service) ImportDatabase(ctx context.Context, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error) {
 	cluster, err := s.m.CreateDatabaseConnection(ctx, querier.CreateDatabaseConnectionParams{
-		ClusterID:      params.ClusterID,
-		Name:           params.Name,
-		Username:       params.Username,
-		Password:       params.Password,
-		Database:       params.Database,
-		OrganizationID: orgID,
+		ClusterID: params.ClusterID,
+		Name:      params.Name,
+		Username:  params.Username,
+		Password:  params.Password,
+		Database:  params.Database,
+		OrgID:     orgID,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create database")
 	}
 
 	return &apigen.Database{
-		ID:             cluster.ID,
-		Name:           cluster.Name,
-		ClusterID:      cluster.ClusterID,
-		OrganizationID: cluster.OrganizationID,
-		Username:       cluster.Username,
-		Password:       cluster.Password,
-		Database:       cluster.Database,
-		CreatedAt:      cluster.CreatedAt,
-		UpdatedAt:      cluster.UpdatedAt,
+		ID:        cluster.ID,
+		Name:      cluster.Name,
+		ClusterID: cluster.ClusterID,
+		OrgID:     cluster.OrgID,
+		Username:  cluster.Username,
+		Password:  cluster.Password,
+		Database:  cluster.Database,
+		CreatedAt: cluster.CreatedAt,
+		UpdatedAt: cluster.UpdatedAt,
 	}, nil
 }
 
 func (s *Service) getConnStr(ctx context.Context, db *querier.DatabaseConnection) (string, error) {
 	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
-		ID:             db.ClusterID,
-		OrganizationID: db.OrganizationID,
+		ID:    db.ClusterID,
+		OrgID: db.OrgID,
 	})
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to get cluster")
@@ -67,8 +67,8 @@ const getRwDependSQL = `SELECT * FROM rw_depend`
 
 func (s *Service) getDb(ctx context.Context, id int32, orgID int32) (*querier.DatabaseConnection, error) {
 	db, err := s.m.GetOrgDatabaseByID(ctx, querier.GetOrgDatabaseByIDParams{
-		ID:             id,
-		OrganizationID: orgID,
+		ID:    id,
+		OrgID: orgID,
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -152,16 +152,16 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 	}
 
 	return &apigen.Database{
-		ID:             db.ID,
-		Name:           db.Name,
-		ClusterID:      db.ClusterID,
-		OrganizationID: db.OrganizationID,
-		Username:       db.Username,
-		Password:       db.Password,
-		Database:       db.Database,
-		CreatedAt:      db.CreatedAt,
-		UpdatedAt:      db.UpdatedAt,
-		Schemas:        &schemas,
+		ID:        db.ID,
+		Name:      db.Name,
+		ClusterID: db.ClusterID,
+		OrgID:     db.OrgID,
+		Username:  db.Username,
+		Password:  db.Password,
+		Database:  db.Database,
+		CreatedAt: db.CreatedAt,
+		UpdatedAt: db.UpdatedAt,
+		Schemas:   &schemas,
 	}, nil
 }
 
@@ -177,15 +177,15 @@ func (s *Service) ListDatabases(ctx context.Context, orgID int32) ([]apigen.Data
 	result := make([]apigen.Database, len(dbs))
 	for i, db := range dbs {
 		result[i] = apigen.Database{
-			ID:             db.ID,
-			Name:           db.Name,
-			ClusterID:      db.ClusterID,
-			OrganizationID: db.OrganizationID,
-			Username:       db.Username,
-			Password:       db.Password,
-			Database:       db.Database,
-			CreatedAt:      db.CreatedAt,
-			UpdatedAt:      db.UpdatedAt,
+			ID:        db.ID,
+			Name:      db.Name,
+			ClusterID: db.ClusterID,
+			OrgID:     db.OrgID,
+			Username:  db.Username,
+			Password:  db.Password,
+			Database:  db.Database,
+			CreatedAt: db.CreatedAt,
+			UpdatedAt: db.UpdatedAt,
 		}
 	}
 	return result, nil
@@ -193,14 +193,14 @@ func (s *Service) ListDatabases(ctx context.Context, orgID int32) ([]apigen.Data
 
 func (s *Service) UpdateDatabase(ctx context.Context, id int32, params apigen.DatabaseConnectInfo, orgID int32) (*apigen.Database, error) {
 	db, err := s.m.UpdateOrgDatabaseConnection(ctx, querier.UpdateOrgDatabaseConnectionParams{
-		ID:               id,
-		ClusterID:        params.ClusterID,
-		Name:             params.Name,
-		Username:         params.Username,
-		Password:         params.Password,
-		Database:         params.Database,
-		OrganizationID:   orgID,
-		OrganizationID_2: orgID,
+		ID:        id,
+		ClusterID: params.ClusterID,
+		Name:      params.Name,
+		Username:  params.Username,
+		Password:  params.Password,
+		Database:  params.Database,
+		OrgID:     orgID,
+		OrgID_2:   orgID,
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -210,22 +210,22 @@ func (s *Service) UpdateDatabase(ctx context.Context, id int32, params apigen.Da
 	}
 
 	return &apigen.Database{
-		ID:             db.ID,
-		Name:           db.Name,
-		ClusterID:      db.ClusterID,
-		Database:       db.Database,
-		OrganizationID: db.OrganizationID,
-		Username:       db.Username,
-		Password:       db.Password,
-		CreatedAt:      db.CreatedAt,
-		UpdatedAt:      db.UpdatedAt,
+		ID:        db.ID,
+		Name:      db.Name,
+		ClusterID: db.ClusterID,
+		Database:  db.Database,
+		OrgID:     db.OrgID,
+		Username:  db.Username,
+		Password:  db.Password,
+		CreatedAt: db.CreatedAt,
+		UpdatedAt: db.UpdatedAt,
 	}, nil
 }
 
 func (s *Service) DeleteDatabase(ctx context.Context, id int32, orgID int32) error {
 	err := s.m.DeleteOrgDatabaseConnection(ctx, querier.DeleteOrgDatabaseConnectionParams{
-		ID:             id,
-		OrganizationID: orgID,
+		ID:    id,
+		OrgID: orgID,
 	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete database")

@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	anchor_apigen "github.com/cloudcarver/anchor/pkg/apigen"
 	"github.com/cloudcarver/anchor/pkg/taskcore"
+	anchor_apigen "github.com/cloudcarver/anchor/pkg/zgen/apigen"
 )
 
 func TestExecuteAutoBackup(t *testing.T) {
@@ -40,11 +40,11 @@ func TestExecuteAutoBackup(t *testing.T) {
 	risectlcm := mock_meta.NewMockRisectlConn(ctrl)
 
 	model.EXPECT().GetClusterByID(gomock.Any(), clusterID).Return(&querier.Cluster{
-		ID:             clusterID,
-		Version:        clusterVersion,
-		Host:           clusterHost,
-		MetaPort:       clusterPort,
-		OrganizationID: orgID,
+		ID:       clusterID,
+		Version:  clusterVersion,
+		Host:     clusterHost,
+		MetaPort: clusterPort,
+		OrgID:    orgID,
 	}, nil)
 
 	risectlm.EXPECT().NewConn(gomock.Any(), clusterVersion, clusterHost, clusterPort).Return(risectlcm, nil)
@@ -59,9 +59,10 @@ func TestExecuteAutoBackup(t *testing.T) {
 		model:      model,
 	}
 
-	model.EXPECT().CreateSnapshot(gomock.Any(), querier.CreateSnapshotParams{
+	model.EXPECT().CreateClusterSnapshot(gomock.Any(), querier.CreateClusterSnapshotParams{
 		ClusterID:  clusterID,
 		SnapshotID: snapshotID,
+		Name:       fmt.Sprintf("auto-backup-%s", currTime.Format("2006-01-02-15-04-05")),
 	}).Return(nil)
 
 	taskRunner.EXPECT().RunDeleteSnapshot(
@@ -104,10 +105,10 @@ func TestExecuteAutoDiagnostic(t *testing.T) {
 	taskRunner := taskgen.NewMockTaskRunner(ctrl)
 
 	model.EXPECT().GetClusterByID(gomock.Any(), clusterID).Return(&querier.Cluster{
-		ID:             clusterID,
-		Host:           clusterHost,
-		HttpPort:       clusterHttpPort,
-		OrganizationID: orgID,
+		ID:       clusterID,
+		Host:     clusterHost,
+		HttpPort: clusterHttpPort,
+		OrgID:    orgID,
 	}, nil)
 
 	metahttp.
@@ -196,7 +197,7 @@ func TestExecuteDeleteSnapshot(t *testing.T) {
 	risectlm.EXPECT().NewConn(gomock.Any(), clusterVersion, clusterHost, clusterPort).Return(risectlcm, nil)
 	risectlcm.EXPECT().DeleteSnapshot(gomock.Any(), snapshotID).Return(nil)
 
-	model.EXPECT().DeleteSnapshot(gomock.Any(), querier.DeleteSnapshotParams{
+	model.EXPECT().DeleteClusterSnapshot(gomock.Any(), querier.DeleteClusterSnapshotParams{
 		ClusterID:  clusterID,
 		SnapshotID: snapshotID,
 	}).Return(nil)

@@ -47,7 +47,7 @@ func (s *Service) ListClusterVersions(ctx context.Context) ([]string, error) {
 
 func (s *Service) ImportCluster(ctx context.Context, params apigen.ClusterImport, orgID int32) (*apigen.Cluster, error) {
 	cluster, err := s.m.CreateCluster(ctx, querier.CreateClusterParams{
-		OrganizationID: orgID,
+		OrgID:          orgID,
 		Name:           params.Name,
 		Host:           params.Host,
 		SqlPort:        params.SqlPort,
@@ -65,8 +65,8 @@ func (s *Service) ImportCluster(ctx context.Context, params apigen.ClusterImport
 
 func (s *Service) GetCluster(ctx context.Context, id int32, orgID int32) (*apigen.Cluster, error) {
 	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
-		ID:             id,
-		OrganizationID: orgID,
+		ID:    id,
+		OrgID: orgID,
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -97,7 +97,7 @@ func (s *Service) ListClusters(ctx context.Context, orgID int32) ([]*apigen.Clus
 func (s *Service) UpdateCluster(ctx context.Context, id int32, params apigen.ClusterImport, orgID int32) (*apigen.Cluster, error) {
 	cluster, err := s.m.UpdateOrgCluster(ctx, querier.UpdateOrgClusterParams{
 		ID:             id,
-		OrganizationID: orgID,
+		OrgID:          orgID,
 		Name:           params.Name,
 		Host:           params.Host,
 		Version:        params.Version,
@@ -126,15 +126,15 @@ func (s *Service) DeleteCluster(ctx context.Context, id int32, cascade bool, org
 func (s *Service) deleteClusterCacasde(ctx context.Context, id int32, orgID int32) error {
 	return s.m.RunTransaction(ctx, func(txm model.ModelInterface) error {
 		if err := txm.DeleteAllOrgDatabaseConnectionsByClusterID(ctx, querier.DeleteAllOrgDatabaseConnectionsByClusterIDParams{
-			ClusterID:      id,
-			OrganizationID: orgID,
+			ClusterID: id,
+			OrgID:     orgID,
 		}); err != nil {
 			return errors.Wrapf(err, "failed to delete associated database connections")
 		}
 
 		if err := txm.DeleteOrgCluster(ctx, querier.DeleteOrgClusterParams{
-			ID:             id,
-			OrganizationID: orgID,
+			ID:    id,
+			OrgID: orgID,
 		}); err != nil {
 			return errors.Wrapf(err, "failed to delete cluster")
 		}
@@ -144,8 +144,8 @@ func (s *Service) deleteClusterCacasde(ctx context.Context, id int32, orgID int3
 
 func (s *Service) deleteClusterNonCacasde(ctx context.Context, id int32, orgID int32) error {
 	dbConnections, err := s.m.GetAllOrgDatabseConnectionsByClusterID(ctx, querier.GetAllOrgDatabseConnectionsByClusterIDParams{
-		ClusterID:      id,
-		OrganizationID: orgID,
+		ClusterID: id,
+		OrgID:     orgID,
 	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to get database connections")
@@ -160,8 +160,8 @@ func (s *Service) deleteClusterNonCacasde(ctx context.Context, id int32, orgID i
 	}
 
 	err = s.m.DeleteOrgCluster(ctx, querier.DeleteOrgClusterParams{
-		ID:             id,
-		OrganizationID: orgID,
+		ID:    id,
+		OrgID: orgID,
 	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete cluster")

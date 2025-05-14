@@ -12,10 +12,8 @@ github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6r
 github.com/bmatcuk/doublestar v1.1.1/go.mod h1:UD6OnuiIn0yFxxA2le/rnRU1G4RaI4UvFv1sNto9p6w=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
-github.com/cloudcarver/anchor v0.3.14 h1:BqwndQwQ5L4I3OkO4j/PLAR7V6t+/FUEpXreTJR7FB0=
-github.com/cloudcarver/anchor v0.3.14/go.mod h1:R5wPI6RXrU3N12cyglgzZG1bJ6EiLk4gfrtH6ZuaYx0=
-github.com/cloudcarver/edc v0.2.0 h1:HgaBOPhd7V/FvDkTSUr/WpV7t/mo1QZSeJnEbYejEgw=
-github.com/cloudcarver/edc v0.2.0/go.mod h1:wIMRGWXbVuWS/MT+LuxroByo6nz2OjeJZq7fm2NqFgM=
+github.com/cloudcarver/anchor v0.3.29 h1:uNgHjwQRsBCCsLh44h/lt6g1BQn4DEYcH+/ZvkKWuek=
+github.com/cloudcarver/anchor v0.3.29/go.mod h1:R5wPI6RXrU3N12cyglgzZG1bJ6EiLk4gfrtH6ZuaYx0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=

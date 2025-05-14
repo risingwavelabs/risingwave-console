@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	anchor_apigen "github.com/cloudcarver/anchor/pkg/apigen"
+	anchor_apigen "github.com/cloudcarver/anchor/pkg/zgen/apigen"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
@@ -65,9 +65,10 @@ func (e *TaskExecutor) ExecuteAutoBackup(ctx context.Context, params *taskgen.Au
 	)
 
 	// record the snapshot ID
-	if err := e.model.CreateSnapshot(ctx, querier.CreateSnapshotParams{
+	if err := e.model.CreateClusterSnapshot(ctx, querier.CreateClusterSnapshotParams{
 		ClusterID:  cluster.ID,
 		SnapshotID: snapshotID,
+		Name:       fmt.Sprintf("auto-backup-%s", e.now().Format("2006-01-02-15-04-05")),
 	}); err != nil {
 		return errors.Wrap(err, "failed to create snapshot")
 	}
@@ -176,23 +177,12 @@ func (e *TaskExecutor) ExecuteDeleteSnapshot(ctx context.Context, params *taskge
 		return errors.Wrapf(err, "failed to delete snapshot in risingwave, snapshot_id: %d", params.SnapshotID)
 	}
 
-	if err := e.model.DeleteSnapshot(ctx, querier.DeleteSnapshotParams{
+	if err := e.model.DeleteClusterSnapshot(ctx, querier.DeleteClusterSnapshotParams{
 		ClusterID:  cluster.ID,
 		SnapshotID: params.SnapshotID,
 	}); err != nil {
 		return errors.Wrapf(err, "failed to delete snapshot in database, cluster_name: %s, cluster_id: %d, snapshot_id: %d", cluster.Name, cluster.ID, params.SnapshotID)
 	}
 
-	return nil
-}
-
-func (e *TaskExecutor) ExecuteDeleteOpaqueKey(ctx context.Context, params *taskgen.DeleteOpaqueKeyParameters) error {
-	if err := e.model.DeleteOpaqueKey(ctx, params.KeyID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			log.Info("opaque key not found, skipping delete", zap.Int64("key_id", params.KeyID))
-			return nil
-		}
-		return errors.Wrapf(err, "failed to delete opaque key in database, key_id: %d", params.KeyID)
-	}
 	return nil
 }

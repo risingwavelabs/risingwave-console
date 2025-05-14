@@ -25,8 +25,8 @@ func (v *Validator) GetOrgID(c *fiber.Ctx) int32 {
 
 func (v *Validator) OwnDatabase(c *fiber.Ctx, orgID int32, databaseID int32) error {
 	_, err := v.model.GetOrgDatabaseByID(c.Context(), querier.GetOrgDatabaseByIDParams{
-		ID:             databaseID,
-		OrganizationID: orgID,
+		ID:    databaseID,
+		OrgID: orgID,
 	})
 	if err != nil {
 		return err
@@ -34,8 +34,12 @@ func (v *Validator) OwnDatabase(c *fiber.Ctx, orgID int32, databaseID int32) err
 	return nil
 }
 
-func (v *Validator) PreValidate(c *fiber.Ctx) error {
+func (v *Validator) AuthFunc(c *fiber.Ctx) error {
 	return v.auth.Authfunc(c)
+}
+
+func (v *Validator) PreValidate(c *fiber.Ctx) error {
+	return nil
 }
 
 func (v *Validator) PostValidate(c *fiber.Ctx) error {

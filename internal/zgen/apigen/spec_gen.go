@@ -22,11 +22,6 @@ const (
 	BearerAuthScopes = "BearerAuth.Scopes"
 )
 
-// Defines values for CredentialsTokenType.
-const (
-	Bearer CredentialsTokenType = "Bearer"
-)
-
 // Defines values for EventSpecType.
 const (
 	TaskCompleted EventSpecType = "TaskCompleted"
@@ -94,6 +89,7 @@ type AutoDiagnosticConfig struct {
 // Cluster defines model for Cluster.
 type Cluster struct {
 	ID        int32     `json:"ID"`
+	OrgID     int32     `json:"OrgID"`
 	CreatedAt time.Time `json:"createdAt"`
 	Host      string    `json:"host"`
 	HttpPort  int32     `json:"httpPort"`
@@ -102,7 +98,6 @@ type Cluster struct {
 	// MetricsStoreID ID of the metrics store this cluster belongs to
 	MetricsStoreID *int32    `json:"metricsStoreID,omitempty"`
 	Name           string    `json:"name"`
-	OrganizationID int32     `json:"organizationID"`
 	SqlPort        int32     `json:"sqlPort"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 	Version        string    `json:"version"`
@@ -156,21 +151,6 @@ type Column struct {
 	Type string `json:"type"`
 }
 
-// Credentials defines model for Credentials.
-type Credentials struct {
-	// AccessToken JWT access token
-	AccessToken string `json:"accessToken"`
-
-	// RefreshToken JWT refresh token for obtaining new access tokens
-	RefreshToken string `json:"refreshToken"`
-
-	// TokenType Token type
-	TokenType CredentialsTokenType `json:"tokenType"`
-}
-
-// CredentialsTokenType Token type
-type CredentialsTokenType string
-
 // DDLProgress defines model for DDLProgress.
 type DDLProgress struct {
 	ID int64 `json:"ID"`
@@ -188,6 +168,9 @@ type Database struct {
 	// ID Unique identifier of the database
 	ID int32 `json:"ID"`
 
+	// OrgID ID of the organization this database belongs to
+	OrgID int32 `json:"OrgID"`
+
 	// ClusterID ID of the cluster this database belongs to
 	ClusterID int32 `json:"clusterID"`
 
@@ -199,9 +182,6 @@ type Database struct {
 
 	// Name Name of the database
 	Name string `json:"name"`
-
-	// OrganizationID ID of the organization this database belongs to
-	OrganizationID int32 `json:"organizationID"`
 
 	// Password Database password (optional)
 	Password *string `json:"password,omitempty"`
@@ -355,12 +335,6 @@ type QueryResponse struct {
 	RowsAffected int32 `json:"rowsAffected"`
 }
 
-// RefreshTokenRequest defines model for RefreshTokenRequest.
-type RefreshTokenRequest struct {
-	// RefreshToken Refresh token obtained from sign-in
-	RefreshToken string `json:"refreshToken"`
-}
-
 // Relation defines model for Relation.
 type Relation struct {
 	// ID Unique identifier of the table
@@ -405,15 +379,6 @@ type Schema struct {
 	// Name Name of the schema
 	Name      string     `json:"name"`
 	Relations []Relation `json:"relations"`
-}
-
-// SignInRequest defines model for SignInRequest.
-type SignInRequest struct {
-	// Name User's name
-	Name string `json:"name"`
-
-	// Password User's password
-	Password string `json:"password"`
 }
 
 // Snapshot defines model for Snapshot.
@@ -596,12 +561,6 @@ type DeleteMetricsStoreParams struct {
 	Force bool `form:"force" json:"force"`
 }
 
-// RefreshTokenJSONRequestBody defines body for RefreshToken for application/json ContentType.
-type RefreshTokenJSONRequestBody = RefreshTokenRequest
-
-// SignInJSONRequestBody defines body for SignIn for application/json ContentType.
-type SignInJSONRequestBody = SignInRequest
-
 // CreateClusterJSONRequestBody defines body for CreateCluster for application/json ContentType.
 type CreateClusterJSONRequestBody = ClusterCreate
 
@@ -720,19 +679,6 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// RefreshTokenWithBody request with any body
-	RefreshTokenWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	RefreshToken(ctx context.Context, body RefreshTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// SignInWithBody request with any body
-	SignInWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	SignIn(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// SignOut request
-	SignOut(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// ListClusterVersions request
 	ListClusterVersions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -873,66 +819,6 @@ type ClientInterface interface {
 	TestClusterConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	TestClusterConnection(ctx context.Context, body TestClusterConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-}
-
-func (c *Client) RefreshTokenWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewRefreshTokenRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) RefreshToken(ctx context.Context, body RefreshTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewRefreshTokenRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) SignInWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSignInRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) SignIn(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSignInRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) SignOut(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSignOutRequest(c.Server)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
 }
 
 func (c *Client) ListClusterVersions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -1557,113 +1443,6 @@ func (c *Client) TestClusterConnection(ctx context.Context, body TestClusterConn
 		return nil, err
 	}
 	return c.Client.Do(req)
-}
-
-// NewRefreshTokenRequest calls the generic RefreshToken builder with application/json body
-func NewRefreshTokenRequest(server string, body RefreshTokenJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewRefreshTokenRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewRefreshTokenRequestWithBody generates requests for RefreshToken with any type of body
-func NewRefreshTokenRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/auth/refresh")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewSignInRequest calls the generic SignIn builder with application/json body
-func NewSignInRequest(server string, body SignInJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewSignInRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewSignInRequestWithBody generates requests for SignIn with any type of body
-func NewSignInRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/auth/sign-in")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewSignOutRequest generates requests for SignOut
-func NewSignOutRequest(server string) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/auth/sign-out")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
 }
 
 // NewListClusterVersionsRequest generates requests for ListClusterVersions
@@ -3216,19 +2995,6 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// RefreshTokenWithBodyWithResponse request with any body
-	RefreshTokenWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RefreshTokenResponse, error)
-
-	RefreshTokenWithResponse(ctx context.Context, body RefreshTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*RefreshTokenResponse, error)
-
-	// SignInWithBodyWithResponse request with any body
-	SignInWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SignInResponse, error)
-
-	SignInWithResponse(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*SignInResponse, error)
-
-	// SignOutWithResponse request
-	SignOutWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*SignOutResponse, error)
-
 	// ListClusterVersionsWithResponse request
 	ListClusterVersionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListClusterVersionsResponse, error)
 
@@ -3369,71 +3135,6 @@ type ClientWithResponsesInterface interface {
 	TestClusterConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TestClusterConnectionResponse, error)
 
 	TestClusterConnectionWithResponse(ctx context.Context, body TestClusterConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*TestClusterConnectionResponse, error)
-}
-
-type RefreshTokenResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Credentials
-}
-
-// Status returns HTTPResponse.Status
-func (r RefreshTokenResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r RefreshTokenResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type SignInResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Credentials
-}
-
-// Status returns HTTPResponse.Status
-func (r SignInResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r SignInResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type SignOutResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r SignOutResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r SignOutResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
 }
 
 type ListClusterVersionsResponse struct {
@@ -4240,49 +3941,6 @@ func (r TestClusterConnectionResponse) StatusCode() int {
 	return 0
 }
 
-// RefreshTokenWithBodyWithResponse request with arbitrary body returning *RefreshTokenResponse
-func (c *ClientWithResponses) RefreshTokenWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RefreshTokenResponse, error) {
-	rsp, err := c.RefreshTokenWithBody(ctx, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseRefreshTokenResponse(rsp)
-}
-
-func (c *ClientWithResponses) RefreshTokenWithResponse(ctx context.Context, body RefreshTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*RefreshTokenResponse, error) {
-	rsp, err := c.RefreshToken(ctx, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseRefreshTokenResponse(rsp)
-}
-
-// SignInWithBodyWithResponse request with arbitrary body returning *SignInResponse
-func (c *ClientWithResponses) SignInWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SignInResponse, error) {
-	rsp, err := c.SignInWithBody(ctx, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseSignInResponse(rsp)
-}
-
-func (c *ClientWithResponses) SignInWithResponse(ctx context.Context, body SignInJSONRequestBody, reqEditors ...RequestEditorFn) (*SignInResponse, error) {
-	rsp, err := c.SignIn(ctx, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseSignInResponse(rsp)
-}
-
-// SignOutWithResponse request returning *SignOutResponse
-func (c *ClientWithResponses) SignOutWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*SignOutResponse, error) {
-	rsp, err := c.SignOut(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseSignOutResponse(rsp)
-}
-
 // ListClusterVersionsWithResponse request returning *ListClusterVersionsResponse
 func (c *ClientWithResponses) ListClusterVersionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListClusterVersionsResponse, error) {
 	rsp, err := c.ListClusterVersions(ctx, reqEditors...)
@@ -4734,74 +4392,6 @@ func (c *ClientWithResponses) TestClusterConnectionWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParseTestClusterConnectionResponse(rsp)
-}
-
-// ParseRefreshTokenResponse parses an HTTP response from a RefreshTokenWithResponse call
-func ParseRefreshTokenResponse(rsp *http.Response) (*RefreshTokenResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &RefreshTokenResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Credentials
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseSignInResponse parses an HTTP response from a SignInWithResponse call
-func ParseSignInResponse(rsp *http.Response) (*SignInResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &SignInResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Credentials
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseSignOutResponse parses an HTTP response from a SignOutWithResponse call
-func ParseSignOutResponse(rsp *http.Response) (*SignOutResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &SignOutResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
 }
 
 // ParseListClusterVersionsResponse parses an HTTP response from a ListClusterVersionsWithResponse call
@@ -5668,15 +5258,6 @@ func ParseTestClusterConnectionResponse(rsp *http.Response) (*TestClusterConnect
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Refresh access token
-	// (POST /auth/refresh)
-	RefreshToken(c *fiber.Ctx) error
-	// Sign in user
-	// (POST /auth/sign-in)
-	SignIn(c *fiber.Ctx) error
-	// Sign out user
-	// (POST /auth/sign-out)
-	SignOut(c *fiber.Ctx) error
 	// List all cluster versions
 	// (GET /cluster-versions)
 	ListClusterVersions(c *fiber.Ctx) error
@@ -5796,26 +5377,6 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc fiber.Handler
-
-// RefreshToken operation middleware
-func (siw *ServerInterfaceWrapper) RefreshToken(c *fiber.Ctx) error {
-
-	return siw.Handler.RefreshToken(c)
-}
-
-// SignIn operation middleware
-func (siw *ServerInterfaceWrapper) SignIn(c *fiber.Ctx) error {
-
-	return siw.Handler.SignIn(c)
-}
-
-// SignOut operation middleware
-func (siw *ServerInterfaceWrapper) SignOut(c *fiber.Ctx) error {
-
-	c.Context().SetUserValue(BearerAuthScopes, []string{})
-
-	return siw.Handler.SignOut(c)
-}
 
 // ListClusterVersions operation middleware
 func (siw *ServerInterfaceWrapper) ListClusterVersions(c *fiber.Ctx) error {
@@ -6490,12 +6051,6 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	for _, m := range options.Middlewares {
 		router.Use(fiber.Handler(m))
 	}
-
-	router.Post(options.BaseURL+"/auth/refresh", wrapper.RefreshToken)
-
-	router.Post(options.BaseURL+"/auth/sign-in", wrapper.SignIn)
-
-	router.Post(options.BaseURL+"/auth/sign-out", wrapper.SignOut)
 
 	router.Get(options.BaseURL+"/cluster-versions", wrapper.ListClusterVersions)
 

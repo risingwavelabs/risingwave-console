@@ -12,23 +12,23 @@ import (
 )
 
 const createMetricsStore = `-- name: CreateMetricsStore :one
-INSERT INTO metrics_stores (name, spec, organization_id, default_labels)
+INSERT INTO metrics_stores (name, spec, org_id, default_labels)
 VALUES ($1, $2, $3, $4)
-RETURNING id, name, spec, organization_id, default_labels, created_at, updated_at
+RETURNING id, name, spec, org_id, default_labels, created_at, updated_at
 `
 
 type CreateMetricsStoreParams struct {
-	Name           string
-	Spec           *apigen.MetricsStoreSpec
-	OrganizationID int32
-	DefaultLabels  *apigen.MetricsStoreLabelMatcherList
+	Name          string
+	Spec          *apigen.MetricsStoreSpec
+	OrgID         int32
+	DefaultLabels *apigen.MetricsStoreLabelMatcherList
 }
 
 func (q *Queries) CreateMetricsStore(ctx context.Context, arg CreateMetricsStoreParams) (*MetricsStore, error) {
 	row := q.db.QueryRow(ctx, createMetricsStore,
 		arg.Name,
 		arg.Spec,
-		arg.OrganizationID,
+		arg.OrgID,
 		arg.DefaultLabels,
 	)
 	var i MetricsStore
@@ -36,7 +36,7 @@ func (q *Queries) CreateMetricsStore(ctx context.Context, arg CreateMetricsStore
 		&i.ID,
 		&i.Name,
 		&i.Spec,
-		&i.OrganizationID,
+		&i.OrgID,
 		&i.DefaultLabels,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -46,21 +46,21 @@ func (q *Queries) CreateMetricsStore(ctx context.Context, arg CreateMetricsStore
 
 const deleteMetricsStore = `-- name: DeleteMetricsStore :exec
 DELETE FROM metrics_stores
-WHERE id = $1 AND organization_id = $2
+WHERE id = $1 AND org_id = $2
 `
 
 type DeleteMetricsStoreParams struct {
-	ID             int32
-	OrganizationID int32
+	ID    int32
+	OrgID int32
 }
 
 func (q *Queries) DeleteMetricsStore(ctx context.Context, arg DeleteMetricsStoreParams) error {
-	_, err := q.db.Exec(ctx, deleteMetricsStore, arg.ID, arg.OrganizationID)
+	_, err := q.db.Exec(ctx, deleteMetricsStore, arg.ID, arg.OrgID)
 	return err
 }
 
 const getMetricsStore = `-- name: GetMetricsStore :one
-SELECT ms.id, ms.name, ms.spec, ms.organization_id, ms.default_labels, ms.created_at, ms.updated_at
+SELECT ms.id, ms.name, ms.spec, ms.org_id, ms.default_labels, ms.created_at, ms.updated_at
 FROM metrics_stores ms
     JOIN clusters c ON c.metrics_store_id = ms.id
 WHERE c.id = $1
@@ -73,7 +73,7 @@ func (q *Queries) GetMetricsStore(ctx context.Context, id int32) (*MetricsStore,
 		&i.ID,
 		&i.Name,
 		&i.Spec,
-		&i.OrganizationID,
+		&i.OrgID,
 		&i.DefaultLabels,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -82,23 +82,23 @@ func (q *Queries) GetMetricsStore(ctx context.Context, id int32) (*MetricsStore,
 }
 
 const getMetricsStoreByIDAndOrgID = `-- name: GetMetricsStoreByIDAndOrgID :one
-SELECT id, name, spec, organization_id, default_labels, created_at, updated_at FROM metrics_stores
-WHERE id = $1 AND organization_id = $2
+SELECT id, name, spec, org_id, default_labels, created_at, updated_at FROM metrics_stores
+WHERE id = $1 AND org_id = $2
 `
 
 type GetMetricsStoreByIDAndOrgIDParams struct {
-	ID             int32
-	OrganizationID int32
+	ID    int32
+	OrgID int32
 }
 
 func (q *Queries) GetMetricsStoreByIDAndOrgID(ctx context.Context, arg GetMetricsStoreByIDAndOrgIDParams) (*MetricsStore, error) {
-	row := q.db.QueryRow(ctx, getMetricsStoreByIDAndOrgID, arg.ID, arg.OrganizationID)
+	row := q.db.QueryRow(ctx, getMetricsStoreByIDAndOrgID, arg.ID, arg.OrgID)
 	var i MetricsStore
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Spec,
-		&i.OrganizationID,
+		&i.OrgID,
 		&i.DefaultLabels,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -107,28 +107,28 @@ func (q *Queries) GetMetricsStoreByIDAndOrgID(ctx context.Context, arg GetMetric
 }
 
 const initMetricsStore = `-- name: InitMetricsStore :one
-INSERT INTO metrics_stores (name, spec, organization_id, default_labels)
+INSERT INTO metrics_stores (name, spec, org_id, default_labels)
 VALUES ($1, $2, $3, $4)
-ON CONFLICT (organization_id, name) DO UPDATE 
+ON CONFLICT (org_id, name) DO UPDATE 
     SET 
         spec = EXCLUDED.spec,
         default_labels = EXCLUDED.default_labels,
         updated_at = CURRENT_TIMESTAMP
-RETURNING id, name, spec, organization_id, default_labels, created_at, updated_at
+RETURNING id, name, spec, org_id, default_labels, created_at, updated_at
 `
 
 type InitMetricsStoreParams struct {
-	Name           string
-	Spec           *apigen.MetricsStoreSpec
-	OrganizationID int32
-	DefaultLabels  *apigen.MetricsStoreLabelMatcherList
+	Name          string
+	Spec          *apigen.MetricsStoreSpec
+	OrgID         int32
+	DefaultLabels *apigen.MetricsStoreLabelMatcherList
 }
 
 func (q *Queries) InitMetricsStore(ctx context.Context, arg InitMetricsStoreParams) (*MetricsStore, error) {
 	row := q.db.QueryRow(ctx, initMetricsStore,
 		arg.Name,
 		arg.Spec,
-		arg.OrganizationID,
+		arg.OrgID,
 		arg.DefaultLabels,
 	)
 	var i MetricsStore
@@ -136,7 +136,7 @@ func (q *Queries) InitMetricsStore(ctx context.Context, arg InitMetricsStorePara
 		&i.ID,
 		&i.Name,
 		&i.Spec,
-		&i.OrganizationID,
+		&i.OrgID,
 		&i.DefaultLabels,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -145,12 +145,12 @@ func (q *Queries) InitMetricsStore(ctx context.Context, arg InitMetricsStorePara
 }
 
 const listMetricsStoresByOrgID = `-- name: ListMetricsStoresByOrgID :many
-SELECT id, name, spec, organization_id, default_labels, created_at, updated_at FROM metrics_stores
-WHERE organization_id = $1
+SELECT id, name, spec, org_id, default_labels, created_at, updated_at FROM metrics_stores
+WHERE org_id = $1
 `
 
-func (q *Queries) ListMetricsStoresByOrgID(ctx context.Context, organizationID int32) ([]*MetricsStore, error) {
-	rows, err := q.db.Query(ctx, listMetricsStoresByOrgID, organizationID)
+func (q *Queries) ListMetricsStoresByOrgID(ctx context.Context, orgID int32) ([]*MetricsStore, error) {
+	rows, err := q.db.Query(ctx, listMetricsStoresByOrgID, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func (q *Queries) ListMetricsStoresByOrgID(ctx context.Context, organizationID i
 			&i.ID,
 			&i.Name,
 			&i.Spec,
-			&i.OrganizationID,
+			&i.OrgID,
 			&i.DefaultLabels,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -183,16 +183,16 @@ SET name = $2,
     spec = $3,
     default_labels = $4,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND organization_id = $5
-RETURNING id, name, spec, organization_id, default_labels, created_at, updated_at
+WHERE id = $1 AND org_id = $5
+RETURNING id, name, spec, org_id, default_labels, created_at, updated_at
 `
 
 type UpdateMetricsStoreParams struct {
-	ID             int32
-	Name           string
-	Spec           *apigen.MetricsStoreSpec
-	DefaultLabels  *apigen.MetricsStoreLabelMatcherList
-	OrganizationID int32
+	ID            int32
+	Name          string
+	Spec          *apigen.MetricsStoreSpec
+	DefaultLabels *apigen.MetricsStoreLabelMatcherList
+	OrgID         int32
 }
 
 func (q *Queries) UpdateMetricsStore(ctx context.Context, arg UpdateMetricsStoreParams) (*MetricsStore, error) {
@@ -201,14 +201,14 @@ func (q *Queries) UpdateMetricsStore(ctx context.Context, arg UpdateMetricsStore
 		arg.Name,
 		arg.Spec,
 		arg.DefaultLabels,
-		arg.OrganizationID,
+		arg.OrgID,
 	)
 	var i MetricsStore
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Spec,
-		&i.OrganizationID,
+		&i.OrgID,
 		&i.DefaultLabels,
 		&i.CreatedAt,
 		&i.UpdatedAt,

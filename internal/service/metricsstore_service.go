@@ -26,12 +26,12 @@ func metricsStoreToAPI(ms *querier.MetricsStore) *apigen.MetricsStore {
 }
 
 // ImportMetricsStore creates a new metrics store
-func (s *Service) ImportMetricsStore(ctx context.Context, req apigen.MetricsStoreImport, organizationID int32) (*apigen.MetricsStore, error) {
+func (s *Service) ImportMetricsStore(ctx context.Context, req apigen.MetricsStoreImport, OrgID int32) (*apigen.MetricsStore, error) {
 	params := querier.CreateMetricsStoreParams{
-		Name:           req.Name,
-		Spec:           &req.Spec,
-		OrganizationID: organizationID,
-		DefaultLabels:  req.DefaultLabels,
+		Name:          req.Name,
+		Spec:          &req.Spec,
+		OrgID:         OrgID,
+		DefaultLabels: req.DefaultLabels,
 	}
 
 	ms, err := s.m.CreateMetricsStore(ctx, params)
@@ -55,7 +55,7 @@ func (s *Service) ListClustersByMetricsStoreID(ctx context.Context, id int32) ([
 	return apiClusters, nil
 }
 
-func (s *Service) DeleteMetricsStore(ctx context.Context, id int32, organizationID int32, force bool) error {
+func (s *Service) DeleteMetricsStore(ctx context.Context, id int32, OrgID int32, force bool) error {
 	if err := s.m.RunTransaction(ctx, func(model model.ModelInterface) error {
 		if force {
 			clusters, err := s.m.ListClustersByMetricsStoreID(ctx, &id)
@@ -64,16 +64,16 @@ func (s *Service) DeleteMetricsStore(ctx context.Context, id int32, organization
 			}
 			for _, cluster := range clusters {
 				if err := model.RemoveClusterMetricsStoreID(ctx, querier.RemoveClusterMetricsStoreIDParams{
-					ID:             cluster.ID,
-					OrganizationID: organizationID,
+					ID:    cluster.ID,
+					OrgID: OrgID,
 				}); err != nil {
 					return fmt.Errorf("failed to remove cluster metrics store id: %w", err)
 				}
 			}
 		}
 		if err := s.m.DeleteMetricsStore(ctx, querier.DeleteMetricsStoreParams{
-			ID:             id,
-			OrganizationID: organizationID,
+			ID:    id,
+			OrgID: OrgID,
 		}); err != nil {
 			if err == sql.ErrNoRows {
 				return ErrMetricsStoreNotFound
@@ -87,10 +87,10 @@ func (s *Service) DeleteMetricsStore(ctx context.Context, id int32, organization
 	return nil
 }
 
-func (s *Service) GetMetricsStore(ctx context.Context, id int32, organizationID int32) (*apigen.MetricsStore, error) {
+func (s *Service) GetMetricsStore(ctx context.Context, id int32, OrgID int32) (*apigen.MetricsStore, error) {
 	ms, err := s.m.GetMetricsStoreByIDAndOrgID(ctx, querier.GetMetricsStoreByIDAndOrgIDParams{
-		ID:             id,
-		OrganizationID: organizationID,
+		ID:    id,
+		OrgID: OrgID,
 	})
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -102,8 +102,8 @@ func (s *Service) GetMetricsStore(ctx context.Context, id int32, organizationID 
 	return metricsStoreToAPI(ms), nil
 }
 
-func (s *Service) ListMetricsStores(ctx context.Context, organizationID int32) ([]*apigen.MetricsStore, error) {
-	msList, err := s.m.ListMetricsStoresByOrgID(ctx, organizationID)
+func (s *Service) ListMetricsStores(ctx context.Context, OrgID int32) ([]*apigen.MetricsStore, error) {
+	msList, err := s.m.ListMetricsStoresByOrgID(ctx, OrgID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list metrics stores: %w", err)
 	}
@@ -116,13 +116,13 @@ func (s *Service) ListMetricsStores(ctx context.Context, organizationID int32) (
 	return apiMsList, nil
 }
 
-func (s *Service) UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreImport, organizationID int32) (*apigen.MetricsStore, error) {
+func (s *Service) UpdateMetricsStore(ctx context.Context, id int32, req apigen.MetricsStoreImport, OrgID int32) (*apigen.MetricsStore, error) {
 	params := querier.UpdateMetricsStoreParams{
-		ID:             id,
-		Name:           req.Name,
-		Spec:           &req.Spec,
-		OrganizationID: organizationID,
-		DefaultLabels:  req.DefaultLabels,
+		ID:            id,
+		Name:          req.Name,
+		Spec:          &req.Spec,
+		OrgID:         OrgID,
+		DefaultLabels: req.DefaultLabels,
 	}
 
 	ms, err := s.m.UpdateMetricsStore(ctx, params)

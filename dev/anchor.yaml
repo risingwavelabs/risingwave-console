@@ -3,6 +3,7 @@ externals:
   wire: v0.6.0
   sqlc: v1.27.0
   mockgen: v0.5.0
+  anchor: v0.3.29
 
 oapi-codegen:
   path: api/v1.yaml
@@ -11,6 +12,9 @@ oapi-codegen:
 
 wire:
   path: ./wire
+
+clean:
+  - internal/zgen/*
 
 xware:
   path: api/v1.yaml
@@ -21,6 +25,9 @@ task-handler:
   path: api/tasks.yaml
   package: taskgen
   out: internal/zgen/taskgen/taskgen_gen.go
+
+sqlc:
+  path: dev/sqlc.yaml
 
 mockgen:
   files:

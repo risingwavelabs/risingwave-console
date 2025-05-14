@@ -8,6 +8,7 @@ package wire
 
 import (
 	"github.com/cloudcarver/anchor/wire"
+	"github.com/risingwavelabs/wavekit/internal"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/conn/http"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
@@ -50,18 +51,20 @@ func InitializeApplication() (*initapp.App, error) {
 	metaHttpManagerInterface := http.NewMetaHttpManager()
 	taskStoreInterface := injection.InjectTaskStore(application)
 	taskRunner := taskgen.NewTaskRunner(taskStoreInterface)
-	serviceInterface, err := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager, metaHttpManagerInterface, taskRunner, taskStoreInterface)
+	serviceInterface := injection.InjectAnchorSvc(application)
+	serviceServiceInterface, err := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager, metaHttpManagerInterface, taskRunner, taskStoreInterface, serviceInterface)
 	if err != nil {
 		return nil, err
 	}
-	initService := service.NewInitService(modelInterface, serviceInterface)
-	serverInterface, err := controller.NewSeverInterface(configConfig, serviceInterface, authInterface, initService)
-	if err != nil {
-		return nil, err
-	}
+	serverInterface := controller.NewSeverInterface(serviceServiceInterface, authInterface)
 	validator := controller.NewValidator(modelInterface, authInterface)
 	executorInterface := task.NewTaskExecutor(taskRunner, modelInterface, risectlManagerInterface, metaHttpManagerInterface)
 	taskHandler := taskgen.NewTaskHandler(executorInterface)
-	app := initapp.NewApp(application, serverInterface, validator, taskHandler)
+	initService := service.NewInitService(modelInterface, serviceInterface)
+	v := internal.Init(configConfig, initService)
+	app, err := initapp.NewApp(application, serverInterface, validator, taskHandler, v)
+	if err != nil {
+		return nil, err
+	}
 	return app, nil
 }

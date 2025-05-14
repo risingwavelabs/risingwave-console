@@ -14,7 +14,6 @@ import (
 	reflect "reflect"
 
 	pgx "github.com/jackc/pgx/v5"
-	apigen "github.com/risingwavelabs/wavekit/internal/zgen/apigen"
 	querier "github.com/risingwavelabs/wavekit/internal/zgen/querier"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -145,92 +144,18 @@ func (mr *MockModelInterfaceMockRecorder) CreateMetricsStore(ctx, arg any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMetricsStore", reflect.TypeOf((*MockModelInterface)(nil).CreateMetricsStore), ctx, arg)
 }
 
-// CreateOpaqueKey mocks base method.
-func (m *MockModelInterface) CreateOpaqueKey(ctx context.Context, arg querier.CreateOpaqueKeyParams) (int64, error) {
+// CreateOrgSettings mocks base method.
+func (m *MockModelInterface) CreateOrgSettings(ctx context.Context, arg querier.CreateOrgSettingsParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOpaqueKey", ctx, arg)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateOpaqueKey indicates an expected call of CreateOpaqueKey.
-func (mr *MockModelInterfaceMockRecorder) CreateOpaqueKey(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOpaqueKey", reflect.TypeOf((*MockModelInterface)(nil).CreateOpaqueKey), ctx, arg)
-}
-
-// CreateOrganization mocks base method.
-func (m *MockModelInterface) CreateOrganization(ctx context.Context, name string) (*querier.Organization, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOrganization", ctx, name)
-	ret0, _ := ret[0].(*querier.Organization)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateOrganization indicates an expected call of CreateOrganization.
-func (mr *MockModelInterfaceMockRecorder) CreateOrganization(ctx, name any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganization", reflect.TypeOf((*MockModelInterface)(nil).CreateOrganization), ctx, name)
-}
-
-// CreateOrganizationOwner mocks base method.
-func (m *MockModelInterface) CreateOrganizationOwner(ctx context.Context, arg querier.CreateOrganizationOwnerParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOrganizationOwner", ctx, arg)
+	ret := m.ctrl.Call(m, "CreateOrgSettings", ctx, arg)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CreateOrganizationOwner indicates an expected call of CreateOrganizationOwner.
-func (mr *MockModelInterfaceMockRecorder) CreateOrganizationOwner(ctx, arg any) *gomock.Call {
+// CreateOrgSettings indicates an expected call of CreateOrgSettings.
+func (mr *MockModelInterfaceMockRecorder) CreateOrgSettings(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganizationOwner", reflect.TypeOf((*MockModelInterface)(nil).CreateOrganizationOwner), ctx, arg)
-}
-
-// CreateSnapshot mocks base method.
-func (m *MockModelInterface) CreateSnapshot(ctx context.Context, arg querier.CreateSnapshotParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSnapshot", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateSnapshot indicates an expected call of CreateSnapshot.
-func (mr *MockModelInterfaceMockRecorder) CreateSnapshot(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSnapshot", reflect.TypeOf((*MockModelInterface)(nil).CreateSnapshot), ctx, arg)
-}
-
-// CreateTask mocks base method.
-func (m *MockModelInterface) CreateTask(ctx context.Context, arg querier.CreateTaskParams) (*querier.Task, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateTask", ctx, arg)
-	ret0, _ := ret[0].(*querier.Task)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateTask indicates an expected call of CreateTask.
-func (mr *MockModelInterfaceMockRecorder) CreateTask(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTask", reflect.TypeOf((*MockModelInterface)(nil).CreateTask), ctx, arg)
-}
-
-// CreateUser mocks base method.
-func (m *MockModelInterface) CreateUser(ctx context.Context, arg querier.CreateUserParams) (*querier.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUser", ctx, arg)
-	ret0, _ := ret[0].(*querier.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateUser indicates an expected call of CreateUser.
-func (mr *MockModelInterfaceMockRecorder) CreateUser(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockModelInterface)(nil).CreateUser), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrgSettings", reflect.TypeOf((*MockModelInterface)(nil).CreateOrgSettings), ctx, arg)
 }
 
 // DeleteAllOrgDatabaseConnectionsByClusterID mocks base method.
@@ -289,34 +214,6 @@ func (mr *MockModelInterfaceMockRecorder) DeleteMetricsStore(ctx, arg any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMetricsStore", reflect.TypeOf((*MockModelInterface)(nil).DeleteMetricsStore), ctx, arg)
 }
 
-// DeleteOpaqueKey mocks base method.
-func (m *MockModelInterface) DeleteOpaqueKey(ctx context.Context, id int64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteOpaqueKey", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteOpaqueKey indicates an expected call of DeleteOpaqueKey.
-func (mr *MockModelInterfaceMockRecorder) DeleteOpaqueKey(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOpaqueKey", reflect.TypeOf((*MockModelInterface)(nil).DeleteOpaqueKey), ctx, id)
-}
-
-// DeleteOpaqueKeys mocks base method.
-func (m *MockModelInterface) DeleteOpaqueKeys(ctx context.Context, userID int32) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteOpaqueKeys", ctx, userID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteOpaqueKeys indicates an expected call of DeleteOpaqueKeys.
-func (mr *MockModelInterfaceMockRecorder) DeleteOpaqueKeys(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOpaqueKeys", reflect.TypeOf((*MockModelInterface)(nil).DeleteOpaqueKeys), ctx, userID)
-}
-
 // DeleteOrgCluster mocks base method.
 func (m *MockModelInterface) DeleteOrgCluster(ctx context.Context, arg querier.DeleteOrgClusterParams) error {
 	m.ctrl.T.Helper()
@@ -343,48 +240,6 @@ func (m *MockModelInterface) DeleteOrgDatabaseConnection(ctx context.Context, ar
 func (mr *MockModelInterfaceMockRecorder) DeleteOrgDatabaseConnection(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrgDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).DeleteOrgDatabaseConnection), ctx, arg)
-}
-
-// DeleteOrganization mocks base method.
-func (m *MockModelInterface) DeleteOrganization(ctx context.Context, id int32) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteOrganization", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteOrganization indicates an expected call of DeleteOrganization.
-func (mr *MockModelInterfaceMockRecorder) DeleteOrganization(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrganization", reflect.TypeOf((*MockModelInterface)(nil).DeleteOrganization), ctx, id)
-}
-
-// DeleteSnapshot mocks base method.
-func (m *MockModelInterface) DeleteSnapshot(ctx context.Context, arg querier.DeleteSnapshotParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteSnapshot", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteSnapshot indicates an expected call of DeleteSnapshot.
-func (mr *MockModelInterfaceMockRecorder) DeleteSnapshot(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSnapshot", reflect.TypeOf((*MockModelInterface)(nil).DeleteSnapshot), ctx, arg)
-}
-
-// DeleteUserByName mocks base method.
-func (m *MockModelInterface) DeleteUserByName(ctx context.Context, name string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteUserByName", ctx, name)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteUserByName indicates an expected call of DeleteUserByName.
-func (mr *MockModelInterfaceMockRecorder) DeleteUserByName(ctx, name any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserByName", reflect.TypeOf((*MockModelInterface)(nil).DeleteUserByName), ctx, name)
 }
 
 // GetAllOrgDatabseConnectionsByClusterID mocks base method.
@@ -507,21 +362,6 @@ func (mr *MockModelInterfaceMockRecorder) GetMetricsStoreByIDAndOrgID(ctx, arg a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricsStoreByIDAndOrgID", reflect.TypeOf((*MockModelInterface)(nil).GetMetricsStoreByIDAndOrgID), ctx, arg)
 }
 
-// GetOpaqueKey mocks base method.
-func (m *MockModelInterface) GetOpaqueKey(ctx context.Context, id int64) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOpaqueKey", ctx, id)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetOpaqueKey indicates an expected call of GetOpaqueKey.
-func (mr *MockModelInterfaceMockRecorder) GetOpaqueKey(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpaqueKey", reflect.TypeOf((*MockModelInterface)(nil).GetOpaqueKey), ctx, id)
-}
-
 // GetOrgCluster mocks base method.
 func (m *MockModelInterface) GetOrgCluster(ctx context.Context, arg querier.GetOrgClusterParams) (*querier.Cluster, error) {
 	m.ctrl.T.Helper()
@@ -567,79 +407,19 @@ func (mr *MockModelInterfaceMockRecorder) GetOrgDatabaseConnection(ctx, arg any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).GetOrgDatabaseConnection), ctx, arg)
 }
 
-// GetOrganization mocks base method.
-func (m *MockModelInterface) GetOrganization(ctx context.Context, id int32) (*querier.Organization, error) {
+// GetOrgSettings mocks base method.
+func (m *MockModelInterface) GetOrgSettings(ctx context.Context, orgID int32) (*querier.OrgSetting, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrganization", ctx, id)
-	ret0, _ := ret[0].(*querier.Organization)
+	ret := m.ctrl.Call(m, "GetOrgSettings", ctx, orgID)
+	ret0, _ := ret[0].(*querier.OrgSetting)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetOrganization indicates an expected call of GetOrganization.
-func (mr *MockModelInterfaceMockRecorder) GetOrganization(ctx, id any) *gomock.Call {
+// GetOrgSettings indicates an expected call of GetOrgSettings.
+func (mr *MockModelInterfaceMockRecorder) GetOrgSettings(ctx, orgID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganization", reflect.TypeOf((*MockModelInterface)(nil).GetOrganization), ctx, id)
-}
-
-// GetTaskByID mocks base method.
-func (m *MockModelInterface) GetTaskByID(ctx context.Context, id int32) (*querier.Task, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTaskByID", ctx, id)
-	ret0, _ := ret[0].(*querier.Task)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetTaskByID indicates an expected call of GetTaskByID.
-func (mr *MockModelInterfaceMockRecorder) GetTaskByID(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTaskByID", reflect.TypeOf((*MockModelInterface)(nil).GetTaskByID), ctx, id)
-}
-
-// GetTimeZone mocks base method.
-func (m *MockModelInterface) GetTimeZone(ctx context.Context, id int32) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTimeZone", ctx, id)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetTimeZone indicates an expected call of GetTimeZone.
-func (mr *MockModelInterfaceMockRecorder) GetTimeZone(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTimeZone", reflect.TypeOf((*MockModelInterface)(nil).GetTimeZone), ctx, id)
-}
-
-// GetUser mocks base method.
-func (m *MockModelInterface) GetUser(ctx context.Context, id int32) (*querier.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUser", ctx, id)
-	ret0, _ := ret[0].(*querier.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUser indicates an expected call of GetUser.
-func (mr *MockModelInterfaceMockRecorder) GetUser(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockModelInterface)(nil).GetUser), ctx, id)
-}
-
-// GetUserByName mocks base method.
-func (m *MockModelInterface) GetUserByName(ctx context.Context, name string) (*querier.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserByName", ctx, name)
-	ret0, _ := ret[0].(*querier.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserByName indicates an expected call of GetUserByName.
-func (mr *MockModelInterfaceMockRecorder) GetUserByName(ctx, name any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByName", reflect.TypeOf((*MockModelInterface)(nil).GetUserByName), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgSettings", reflect.TypeOf((*MockModelInterface)(nil).GetOrgSettings), ctx, orgID)
 }
 
 // InTransaction mocks base method.
@@ -701,21 +481,6 @@ func (mr *MockModelInterfaceMockRecorder) InitMetricsStore(ctx, arg any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitMetricsStore", reflect.TypeOf((*MockModelInterface)(nil).InitMetricsStore), ctx, arg)
 }
 
-// InsertEvent mocks base method.
-func (m *MockModelInterface) InsertEvent(ctx context.Context, spec apigen.EventSpec) (*querier.Event, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InsertEvent", ctx, spec)
-	ret0, _ := ret[0].(*querier.Event)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// InsertEvent indicates an expected call of InsertEvent.
-func (mr *MockModelInterfaceMockRecorder) InsertEvent(ctx, spec any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertEvent", reflect.TypeOf((*MockModelInterface)(nil).InsertEvent), ctx, spec)
-}
-
 // ListClusterDiagnostics mocks base method.
 func (m *MockModelInterface) ListClusterDiagnostics(ctx context.Context, clusterID int32) ([]*querier.ListClusterDiagnosticsRow, error) {
 	m.ctrl.T.Helper()
@@ -762,93 +527,48 @@ func (mr *MockModelInterfaceMockRecorder) ListClustersByMetricsStoreID(ctx, metr
 }
 
 // ListMetricsStoresByOrgID mocks base method.
-func (m *MockModelInterface) ListMetricsStoresByOrgID(ctx context.Context, organizationID int32) ([]*querier.MetricsStore, error) {
+func (m *MockModelInterface) ListMetricsStoresByOrgID(ctx context.Context, orgID int32) ([]*querier.MetricsStore, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListMetricsStoresByOrgID", ctx, organizationID)
+	ret := m.ctrl.Call(m, "ListMetricsStoresByOrgID", ctx, orgID)
 	ret0, _ := ret[0].([]*querier.MetricsStore)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListMetricsStoresByOrgID indicates an expected call of ListMetricsStoresByOrgID.
-func (mr *MockModelInterfaceMockRecorder) ListMetricsStoresByOrgID(ctx, organizationID any) *gomock.Call {
+func (mr *MockModelInterfaceMockRecorder) ListMetricsStoresByOrgID(ctx, orgID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMetricsStoresByOrgID", reflect.TypeOf((*MockModelInterface)(nil).ListMetricsStoresByOrgID), ctx, organizationID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMetricsStoresByOrgID", reflect.TypeOf((*MockModelInterface)(nil).ListMetricsStoresByOrgID), ctx, orgID)
 }
 
 // ListOrgClusters mocks base method.
-func (m *MockModelInterface) ListOrgClusters(ctx context.Context, organizationID int32) ([]*querier.Cluster, error) {
+func (m *MockModelInterface) ListOrgClusters(ctx context.Context, orgID int32) ([]*querier.Cluster, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListOrgClusters", ctx, organizationID)
+	ret := m.ctrl.Call(m, "ListOrgClusters", ctx, orgID)
 	ret0, _ := ret[0].([]*querier.Cluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListOrgClusters indicates an expected call of ListOrgClusters.
-func (mr *MockModelInterfaceMockRecorder) ListOrgClusters(ctx, organizationID any) *gomock.Call {
+func (mr *MockModelInterfaceMockRecorder) ListOrgClusters(ctx, orgID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrgClusters", reflect.TypeOf((*MockModelInterface)(nil).ListOrgClusters), ctx, organizationID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrgClusters", reflect.TypeOf((*MockModelInterface)(nil).ListOrgClusters), ctx, orgID)
 }
 
 // ListOrgDatabaseConnections mocks base method.
-func (m *MockModelInterface) ListOrgDatabaseConnections(ctx context.Context, organizationID int32) ([]*querier.DatabaseConnection, error) {
+func (m *MockModelInterface) ListOrgDatabaseConnections(ctx context.Context, orgID int32) ([]*querier.DatabaseConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListOrgDatabaseConnections", ctx, organizationID)
+	ret := m.ctrl.Call(m, "ListOrgDatabaseConnections", ctx, orgID)
 	ret0, _ := ret[0].([]*querier.DatabaseConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListOrgDatabaseConnections indicates an expected call of ListOrgDatabaseConnections.
-func (mr *MockModelInterfaceMockRecorder) ListOrgDatabaseConnections(ctx, organizationID any) *gomock.Call {
+func (mr *MockModelInterfaceMockRecorder) ListOrgDatabaseConnections(ctx, orgID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrgDatabaseConnections", reflect.TypeOf((*MockModelInterface)(nil).ListOrgDatabaseConnections), ctx, organizationID)
-}
-
-// ListOrganizations mocks base method.
-func (m *MockModelInterface) ListOrganizations(ctx context.Context) ([]*querier.Organization, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListOrganizations", ctx)
-	ret0, _ := ret[0].([]*querier.Organization)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListOrganizations indicates an expected call of ListOrganizations.
-func (mr *MockModelInterfaceMockRecorder) ListOrganizations(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockModelInterface)(nil).ListOrganizations), ctx)
-}
-
-// ListSnapshots mocks base method.
-func (m *MockModelInterface) ListSnapshots(ctx context.Context, clusterID int32) ([]*querier.Snapshot, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListSnapshots", ctx, clusterID)
-	ret0, _ := ret[0].([]*querier.Snapshot)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListSnapshots indicates an expected call of ListSnapshots.
-func (mr *MockModelInterfaceMockRecorder) ListSnapshots(ctx, clusterID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSnapshots", reflect.TypeOf((*MockModelInterface)(nil).ListSnapshots), ctx, clusterID)
-}
-
-// PullTask mocks base method.
-func (m *MockModelInterface) PullTask(ctx context.Context) (*querier.Task, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PullTask", ctx)
-	ret0, _ := ret[0].(*querier.Task)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PullTask indicates an expected call of PullTask.
-func (mr *MockModelInterfaceMockRecorder) PullTask(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullTask", reflect.TypeOf((*MockModelInterface)(nil).PullTask), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrgDatabaseConnections", reflect.TypeOf((*MockModelInterface)(nil).ListOrgDatabaseConnections), ctx, orgID)
 }
 
 // RemoveClusterMetricsStoreID mocks base method.
@@ -891,20 +611,6 @@ func (m *MockModelInterface) RunTransactionWithTx(ctx context.Context, f func(pg
 func (mr *MockModelInterfaceMockRecorder) RunTransactionWithTx(ctx, f any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunTransactionWithTx", reflect.TypeOf((*MockModelInterface)(nil).RunTransactionWithTx), ctx, f)
-}
-
-// SetTimeZone mocks base method.
-func (m *MockModelInterface) SetTimeZone(ctx context.Context, arg querier.SetTimeZoneParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetTimeZone", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetTimeZone indicates an expected call of SetTimeZone.
-func (mr *MockModelInterfaceMockRecorder) SetTimeZone(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTimeZone", reflect.TypeOf((*MockModelInterface)(nil).SetTimeZone), ctx, arg)
 }
 
 // SpawnWithTx mocks base method.
@@ -992,61 +698,4 @@ func (m *MockModelInterface) UpdateOrgDatabaseConnection(ctx context.Context, ar
 func (mr *MockModelInterfaceMockRecorder) UpdateOrgDatabaseConnection(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrgDatabaseConnection", reflect.TypeOf((*MockModelInterface)(nil).UpdateOrgDatabaseConnection), ctx, arg)
-}
-
-// UpdateOrganization mocks base method.
-func (m *MockModelInterface) UpdateOrganization(ctx context.Context, arg querier.UpdateOrganizationParams) (*querier.Organization, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateOrganization", ctx, arg)
-	ret0, _ := ret[0].(*querier.Organization)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateOrganization indicates an expected call of UpdateOrganization.
-func (mr *MockModelInterfaceMockRecorder) UpdateOrganization(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrganization", reflect.TypeOf((*MockModelInterface)(nil).UpdateOrganization), ctx, arg)
-}
-
-// UpdateTask mocks base method.
-func (m *MockModelInterface) UpdateTask(ctx context.Context, arg querier.UpdateTaskParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateTask", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateTask indicates an expected call of UpdateTask.
-func (mr *MockModelInterfaceMockRecorder) UpdateTask(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTask", reflect.TypeOf((*MockModelInterface)(nil).UpdateTask), ctx, arg)
-}
-
-// UpdateTaskStartedAt mocks base method.
-func (m *MockModelInterface) UpdateTaskStartedAt(ctx context.Context, arg querier.UpdateTaskStartedAtParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateTaskStartedAt", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateTaskStartedAt indicates an expected call of UpdateTaskStartedAt.
-func (mr *MockModelInterfaceMockRecorder) UpdateTaskStartedAt(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTaskStartedAt", reflect.TypeOf((*MockModelInterface)(nil).UpdateTaskStartedAt), ctx, arg)
-}
-
-// UpdateTaskStatus mocks base method.
-func (m *MockModelInterface) UpdateTaskStatus(ctx context.Context, arg querier.UpdateTaskStatusParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateTaskStatus", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateTaskStatus indicates an expected call of UpdateTaskStatus.
-func (mr *MockModelInterfaceMockRecorder) UpdateTaskStatus(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTaskStatus", reflect.TypeOf((*MockModelInterface)(nil).UpdateTaskStatus), ctx, arg)
 }

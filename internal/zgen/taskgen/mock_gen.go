@@ -162,46 +162,6 @@ func (mr *MockTaskRunnerMockRecorder) RunDeleteClusterDiagnosticWithTx(ctx, tx, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunDeleteClusterDiagnosticWithTx", reflect.TypeOf((*MockTaskRunner)(nil).RunDeleteClusterDiagnosticWithTx), varargs...)
 }
 
-// RunDeleteOpaqueKey mocks base method.
-func (m *MockTaskRunner) RunDeleteOpaqueKey(ctx context.Context, params *DeleteOpaqueKeyParameters, overrides ...taskcore.TaskOverride) (int32, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, params}
-	for _, a := range overrides {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "RunDeleteOpaqueKey", varargs...)
-	ret0, _ := ret[0].(int32)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RunDeleteOpaqueKey indicates an expected call of RunDeleteOpaqueKey.
-func (mr *MockTaskRunnerMockRecorder) RunDeleteOpaqueKey(ctx, params any, overrides ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, params}, overrides...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunDeleteOpaqueKey", reflect.TypeOf((*MockTaskRunner)(nil).RunDeleteOpaqueKey), varargs...)
-}
-
-// RunDeleteOpaqueKeyWithTx mocks base method.
-func (m *MockTaskRunner) RunDeleteOpaqueKeyWithTx(ctx context.Context, tx pgx.Tx, params *DeleteOpaqueKeyParameters, overrides ...taskcore.TaskOverride) (int32, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, tx, params}
-	for _, a := range overrides {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "RunDeleteOpaqueKeyWithTx", varargs...)
-	ret0, _ := ret[0].(int32)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RunDeleteOpaqueKeyWithTx indicates an expected call of RunDeleteOpaqueKeyWithTx.
-func (mr *MockTaskRunnerMockRecorder) RunDeleteOpaqueKeyWithTx(ctx, tx, params any, overrides ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, tx, params}, overrides...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunDeleteOpaqueKeyWithTx", reflect.TypeOf((*MockTaskRunner)(nil).RunDeleteOpaqueKeyWithTx), varargs...)
-}
-
 // RunDeleteSnapshot mocks base method.
 func (m *MockTaskRunner) RunDeleteSnapshot(ctx context.Context, params *DeleteSnapshotParameters, overrides ...taskcore.TaskOverride) (int32, error) {
 	m.ctrl.T.Helper()
@@ -306,20 +266,6 @@ func (m *MockExecutorInterface) ExecuteDeleteClusterDiagnostic(ctx context.Conte
 func (mr *MockExecutorInterfaceMockRecorder) ExecuteDeleteClusterDiagnostic(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteDeleteClusterDiagnostic", reflect.TypeOf((*MockExecutorInterface)(nil).ExecuteDeleteClusterDiagnostic), ctx, params)
-}
-
-// ExecuteDeleteOpaqueKey mocks base method.
-func (m *MockExecutorInterface) ExecuteDeleteOpaqueKey(ctx context.Context, params *DeleteOpaqueKeyParameters) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecuteDeleteOpaqueKey", ctx, params)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ExecuteDeleteOpaqueKey indicates an expected call of ExecuteDeleteOpaqueKey.
-func (mr *MockExecutorInterfaceMockRecorder) ExecuteDeleteOpaqueKey(ctx, params any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteDeleteOpaqueKey", reflect.TypeOf((*MockExecutorInterface)(nil).ExecuteDeleteOpaqueKey), ctx, params)
 }
 
 // ExecuteDeleteSnapshot mocks base method.

@@ -3,7 +3,7 @@ package config
 import (
 	"os"
 
-	"github.com/cloudcarver/edc/conf"
+	"github.com/cloudcarver/anchor/pkg/conf"
 )
 
 type Pg struct {

@@ -75,18 +75,18 @@ func (s *Service) DeleteClusterSnapshot(ctx context.Context, id int32, snapshotI
 
 func (s *Service) UpdateClusterAutoBackupConfig(ctx context.Context, id int32, params apigen.AutoBackupConfig, orgID int32) error {
 	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
-		ID:             id,
-		OrganizationID: orgID,
+		ID:    id,
+		OrgID: orgID,
 	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to get cluster")
 	}
 
-	org, err := s.m.GetOrganization(ctx, orgID)
+	orgSettings, err := s.m.GetOrgSettings(ctx, orgID)
 	if err != nil {
 		return errors.Wrapf(err, "failed to get organization")
 	}
-	cronExpression := fmt.Sprintf("CRON_TZ=%s %s", org.Timezone, params.CronExpression)
+	cronExpression := fmt.Sprintf("CRON_TZ=%s %s", orgSettings.Timezone, params.CronExpression)
 
 	c, err := s.m.GetAutoBackupConfig(ctx, cluster.ID)
 	if err != nil {
@@ -167,14 +167,19 @@ func (s *Service) GetClusterAutoBackupConfig(ctx context.Context, id int32, orgI
 		}
 		return nil, errors.Wrapf(err, "failed to get auto backup config")
 	}
-	task, err := s.m.GetTaskByID(ctx, c.TaskID)
+	task, err := s.anchorSvc.GetTaskByID(ctx, c.TaskID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get task")
+	}
+
+	var params taskgen.AutoBackupParameters
+	if err := params.Parse(task.Spec.Payload); err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal task spec")
 	}
 
 	return &apigen.AutoBackupConfig{
 		Enabled:           c.Enabled,
 		CronExpression:    task.Attributes.Cronjob.CronExpression,
-		RetentionDuration: task.Spec.AutoBackup.RetentionDuration,
+		RetentionDuration: params.RetentionDuration,
 	}, nil
 }

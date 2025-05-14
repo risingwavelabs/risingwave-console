@@ -19,11 +19,6 @@ type AutoBackupConfig struct {
 	TaskID    int32
 }
 
-type AutoBackupTask struct {
-	ClusterID  int32
-	NextTaskID int32
-}
-
 type AutoDiagnosticsConfig struct {
 	ClusterID int32
 	Enabled   bool
@@ -32,14 +27,9 @@ type AutoDiagnosticsConfig struct {
 	TaskID    int32
 }
 
-type AutoDiagnosticsTask struct {
-	ClusterID  int32
-	NextTaskID int32
-}
-
 type Cluster struct {
 	ID             int32
-	OrganizationID int32
+	OrgID          int32
 	Name           string
 	Host           string
 	SqlPort        int32
@@ -68,31 +58,25 @@ type ClusterSnapshot struct {
 }
 
 type DatabaseConnection struct {
-	ID             int32
-	OrganizationID int32
-	Name           string
-	ClusterID      int32
-	Username       string
-	Password       *string
-	Database       string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-}
-
-type Event struct {
 	ID        int32
-	Spec      apigen.EventSpec
+	OrgID     int32
+	Name      string
+	ClusterID int32
+	Username  string
+	Password  *string
+	Database  string
 	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type MetricsStore struct {
-	ID             int32
-	Name           string
-	Spec           *apigen.MetricsStoreSpec
-	OrganizationID int32
-	DefaultLabels  *apigen.MetricsStoreLabelMatcherList
-	CreatedAt      pgtype.Timestamp
-	UpdatedAt      pgtype.Timestamp
+	ID            int32
+	Name          string
+	Spec          *apigen.MetricsStoreSpec
+	OrgID         int32
+	DefaultLabels *apigen.MetricsStoreLabelMatcherList
+	CreatedAt     pgtype.Timestamp
+	UpdatedAt     pgtype.Timestamp
 }
 
 type OpaqueKey struct {
@@ -104,10 +88,10 @@ type OpaqueKey struct {
 }
 
 type OrgSetting struct {
-	OrganizationID int32
-	Timezone       string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	OrgID     int32
+	Timezone  string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type Organization struct {
@@ -137,16 +121,6 @@ type Snapshot struct {
 	ClusterID  int32
 	SnapshotID int64
 	CreatedAt  time.Time
-}
-
-type Task struct {
-	ID         int32
-	Attributes apigen.TaskAttributes
-	Spec       apigen.TaskSpec
-	Status     string
-	StartedAt  *time.Time
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
 }
 
 type User struct {

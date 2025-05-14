@@ -15,8 +15,8 @@ import (
 
 func (s *Service) CreateClusterDiagnostic(ctx context.Context, id int32, orgID int32) (*apigen.DiagnosticData, error) {
 	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
-		ID:             id,
-		OrganizationID: orgID,
+		ID:    id,
+		OrgID: orgID,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get cluster")
@@ -42,8 +42,8 @@ func (s *Service) CreateClusterDiagnostic(ctx context.Context, id int32, orgID i
 
 func (s *Service) ListClusterDiagnostics(ctx context.Context, id int32, orgID int32) ([]apigen.DiagnosticData, error) {
 	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
-		ID:             id,
-		OrganizationID: orgID,
+		ID:    id,
+		OrgID: orgID,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get cluster")
@@ -66,8 +66,8 @@ func (s *Service) ListClusterDiagnostics(ctx context.Context, id int32, orgID in
 
 func (s *Service) GetClusterDiagnostic(ctx context.Context, id int32, diagnosticID int32, orgID int32) (*apigen.DiagnosticData, error) {
 	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
-		ID:             id,
-		OrganizationID: orgID,
+		ID:    id,
+		OrgID: orgID,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get cluster")
@@ -91,18 +91,18 @@ func (s *Service) GetClusterDiagnostic(ctx context.Context, id int32, diagnostic
 
 func (s *Service) UpdateClusterAutoDiagnosticConfig(ctx context.Context, id int32, params apigen.AutoDiagnosticConfig, orgID int32) error {
 	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
-		ID:             id,
-		OrganizationID: orgID,
+		ID:    id,
+		OrgID: orgID,
 	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to get cluster")
 	}
 
-	org, err := s.m.GetOrganization(ctx, orgID)
+	orgSettings, err := s.m.GetOrgSettings(ctx, orgID)
 	if err != nil {
 		return errors.Wrapf(err, "failed to get organization")
 	}
-	cronExpression := fmt.Sprintf("CRON_TZ=%s %s", org.Timezone, params.CronExpression)
+	cronExpression := fmt.Sprintf("CRON_TZ=%s %s", orgSettings.Timezone, params.CronExpression)
 
 	c, err := s.m.GetAutoDiagnosticsConfig(ctx, cluster.ID)
 	if err != nil {
@@ -172,8 +172,8 @@ func (s *Service) UpdateClusterAutoDiagnosticConfig(ctx context.Context, id int3
 
 func (s *Service) GetClusterAutoDiagnosticConfig(ctx context.Context, id int32, orgID int32) (*apigen.AutoDiagnosticConfig, error) {
 	cluster, err := s.m.GetOrgCluster(ctx, querier.GetOrgClusterParams{
-		ID:             id,
-		OrganizationID: orgID,
+		ID:    id,
+		OrgID: orgID,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get cluster")
@@ -186,14 +186,19 @@ func (s *Service) GetClusterAutoDiagnosticConfig(ctx context.Context, id int32, 
 			}, nil
 		}
 	}
-	task, err := s.m.GetTaskByID(ctx, c.TaskID)
+	task, err := s.anchorSvc.GetTaskByID(ctx, c.TaskID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get task")
+	}
+
+	var params taskgen.AutoDiagnosticParameters
+	if err := params.Parse(task.Spec.Payload); err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal task spec")
 	}
 
 	return &apigen.AutoDiagnosticConfig{
 		Enabled:           c.Enabled,
 		CronExpression:    task.Attributes.Cronjob.CronExpression,
-		RetentionDuration: task.Spec.AutoDiagnostic.RetentionDuration,
+		RetentionDuration: params.RetentionDuration,
 	}, nil
 }

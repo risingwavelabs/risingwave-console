@@ -14,7 +14,7 @@ export type User = {
     /**
      * ID of the organization this user belongs to
      */
-    organizationID: number;
+    OrgID: number;
     /**
      * Creation timestamp
      */

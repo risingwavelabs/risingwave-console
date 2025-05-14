@@ -2,21 +2,30 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
+	"github.com/risingwavelabs/wavekit"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/utils"
 	"github.com/risingwavelabs/wavekit/internal/zcore/model"
 	"github.com/risingwavelabs/wavekit/internal/zgen/apigen"
 	"github.com/risingwavelabs/wavekit/internal/zgen/querier"
 	"gopkg.in/yaml.v3"
+
+	anchor_app "github.com/cloudcarver/anchor/pkg/app"
+	anchor_svc "github.com/cloudcarver/anchor/pkg/service"
 )
 
 type InitService struct {
-	m model.ModelInterface
-	s ServiceInterface
+	m         model.ModelInterface
+	anchorSvc anchor_svc.ServiceInterface
 }
 
 type ClusterConnections struct {
@@ -53,17 +62,17 @@ type InitConfig struct {
 	MetricsStores []apigen.MetricsStore `yaml:"metricsStores"`
 }
 
-func NewInitService(m model.ModelInterface, s ServiceInterface) *InitService {
+func NewInitService(m model.ModelInterface, anchor_svc anchor_svc.ServiceInterface) *InitService {
 	return &InitService{
-		m: m,
-		s: s,
+		m:         m,
+		anchorSvc: anchor_svc,
 	}
 }
 
-func (s *InitService) Init(ctx context.Context, cfg *config.Config) error {
+func (s *InitService) Init(ctx context.Context, cfg *config.Config, anchorApp *anchor_app.Application) error {
 	// remove the root user if it is not set in the config
 	if cfg.Root == nil {
-		if err := s.m.DeleteUserByName(ctx, "root"); err != nil {
+		if err := s.anchorSvc.DeleteUserByName(ctx, "root"); err != nil {
 			return errors.Wrapf(err, "failed to delete root user")
 		}
 		return nil
@@ -74,7 +83,7 @@ func (s *InitService) Init(ctx context.Context, cfg *config.Config) error {
 	if rootPwd == "" {
 		rootPwd = "123456"
 	}
-	orgID, err := s.s.CreateNewUser(ctx, "root", rootPwd)
+	orgID, err := s.anchorSvc.CreateNewUser(ctx, "root", rootPwd)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create root user")
 	}
@@ -97,6 +106,32 @@ func (s *InitService) Init(ctx context.Context, cfg *config.Config) error {
 		}
 	}
 
+	// init the static web pages
+	anchorApp.GetServer().GetApp().Use("/", filesystem.New(filesystem.Config{
+		Root:         http.FS(wavekit.StaticFiles),
+		PathPrefix:   "web/out",
+		NotFoundFile: "404.html",
+		Index:        "index.html",
+	}))
+
+	anchorApp.GetServer().GetApp().Get("/config.js", func(c *fiber.Ctx) error {
+		endpoint := fmt.Sprintf("http://%s:%d/api/v1", anchorApp.GetServer().GetHost(), anchorApp.GetServer().GetPort())
+		c.Set("Content-Type", "application/javascript")
+		return c.Status(fiber.StatusOK).SendString(fmt.Sprintf("window.APP_ENDPOINT = '%s';", endpoint))
+	})
+
+	// init hooks
+	anchorApp.GetHooks().RegisterOnOrgCreatedWithTx(func(ctx context.Context, tx pgx.Tx, orgID int32) error {
+		txm := s.m.SpawnWithTx(tx)
+		if err := txm.CreateOrgSettings(ctx, querier.CreateOrgSettingsParams{
+			OrgID:    orgID,
+			Timezone: "UTC",
+		}); err != nil {
+			return errors.Wrapf(err, "failed to create org settings")
+		}
+		return nil
+	})
+
 	return nil
 }
 
@@ -116,11 +151,11 @@ func (s *InitService) initDatabase(ctx context.Context, cfg *InitConfig, orgID i
 		for _, metricsStore := range cfg.MetricsStores {
 			if _, ok := metricsStoreNameToID[metricsStore.Name]; ok {
 				_, err := s.m.UpdateMetricsStore(ctx, querier.UpdateMetricsStoreParams{
-					ID:             metricsStoreNameToID[metricsStore.Name],
-					OrganizationID: orgID,
-					Name:           metricsStore.Name,
-					Spec:           metricsStore.Spec,
-					DefaultLabels:  metricsStore.DefaultLabels,
+					ID:            metricsStoreNameToID[metricsStore.Name],
+					OrgID:         orgID,
+					Name:          metricsStore.Name,
+					Spec:          metricsStore.Spec,
+					DefaultLabels: metricsStore.DefaultLabels,
 				})
 				if err != nil {
 					return errors.Wrapf(err, "failed to update metrics store: %s", metricsStore.Name)
@@ -128,10 +163,10 @@ func (s *InitService) initDatabase(ctx context.Context, cfg *InitConfig, orgID i
 				continue
 			}
 			ms, err := s.m.CreateMetricsStore(ctx, querier.CreateMetricsStoreParams{
-				OrganizationID: orgID,
-				Name:           metricsStore.Name,
-				Spec:           metricsStore.Spec,
-				DefaultLabels:  metricsStore.DefaultLabels,
+				OrgID:         orgID,
+				Name:          metricsStore.Name,
+				Spec:          metricsStore.Spec,
+				DefaultLabels: metricsStore.DefaultLabels,
 			})
 			if err != nil {
 				return errors.Wrapf(err, "failed to create metrics store: %s", metricsStore.Name)
@@ -145,7 +180,7 @@ func (s *InitService) initDatabase(ctx context.Context, cfg *InitConfig, orgID i
 			}
 			msid, ok := metricsStoreNameToID[cluster.MetricsStore]
 			cluster, err := s.m.InitCluster(ctx, querier.InitClusterParams{
-				OrganizationID: orgID,
+				OrgID:          orgID,
 				Name:           cluster.Name,
 				Host:           cluster.Connections.Host,
 				SqlPort:        cluster.Connections.SqlPort,
@@ -166,12 +201,12 @@ func (s *InitService) initDatabase(ctx context.Context, cfg *InitConfig, orgID i
 			}
 			clusterID := clusterNameToID[database.Cluster]
 			if _, err := s.m.InitDatabaseConnection(ctx, querier.InitDatabaseConnectionParams{
-				Name:           database.Name,
-				OrganizationID: orgID,
-				ClusterID:      clusterID,
-				Username:       database.Username,
-				Password:       database.Password,
-				Database:       database.Database,
+				Name:      database.Name,
+				OrgID:     orgID,
+				ClusterID: clusterID,
+				Username:  database.Username,
+				Password:  database.Password,
+				Database:  database.Database,
 			}); err != nil {
 				return errors.Wrapf(err, "failed to init cluster: %s", database.Cluster)
 			}

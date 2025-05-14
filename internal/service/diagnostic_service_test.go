@@ -81,14 +81,14 @@ func TestUpdateClusterAutoDiagnosticConfig(t *testing.T) {
 		}
 
 		mockModel.EXPECT().GetOrgCluster(gomock.Any(), querier.GetOrgClusterParams{
-			ID:             clusterID,
-			OrganizationID: orgID,
+			ID:    clusterID,
+			OrgID: orgID,
 		}).Return(&querier.Cluster{
 			ID: clusterID,
 		}, nil)
 
-		mockModel.EXPECT().GetOrganization(gomock.Any(), orgID).Return(&querier.Organization{
-			ID:       orgID,
+		mockModel.EXPECT().GetOrgSettings(gomock.Any(), orgID).Return(&querier.OrgSetting{
+			OrgID:    orgID,
 			Timezone: tz,
 		}, nil)
 
@@ -157,13 +157,13 @@ func TestCreateClusterDiagnostic(t *testing.T) {
 	}
 
 	model.EXPECT().GetOrgCluster(ctx, querier.GetOrgClusterParams{
-		ID:             clusterID,
-		OrganizationID: orgID,
+		ID:    clusterID,
+		OrgID: orgID,
 	}).Return(&querier.Cluster{
-		ID:             clusterID,
-		Host:           clusterHost,
-		HttpPort:       clusterHttpPort,
-		OrganizationID: orgID,
+		ID:       clusterID,
+		Host:     clusterHost,
+		HttpPort: clusterHttpPort,
+		OrgID:    orgID,
 	}, nil)
 
 	metahttp.

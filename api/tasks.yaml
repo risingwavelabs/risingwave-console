@@ -61,16 +61,3 @@ tasks:
     retryPolicy:
       interval: 30m
       always_retry_on_failure: true
-  - name: DeleteOpaqueKey
-    description: "Delete opaque key"
-    parameters:
-      type: object
-      required: [keyID]
-      properties:
-        keyID:
-          type: integer
-          format: int64
-    timeout: 30m
-    retryPolicy:
-      interval: 30m
-      always_retry_on_failure: true

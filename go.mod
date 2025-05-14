@@ -3,8 +3,7 @@ module github.com/risingwavelabs/wavekit
 go 1.24.1
 
 require (
-	github.com/cloudcarver/anchor v0.3.14
-	github.com/cloudcarver/edc v0.2.0
+	github.com/cloudcarver/anchor v0.3.29
 	github.com/go-playground/validator/v10 v10.24.0
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/golang-migrate/migrate/v4 v4.18.2

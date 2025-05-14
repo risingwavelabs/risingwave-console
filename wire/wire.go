@@ -5,6 +5,7 @@ package wire
 
 import (
 	"github.com/google/wire"
+	"github.com/risingwavelabs/wavekit/internal"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/conn/http"
 	"github.com/risingwavelabs/wavekit/internal/conn/meta"
@@ -27,6 +28,7 @@ func InitializeApplication() (*initapp.App, error) {
 		initapp.NewApp,
 		injection.InjectAuth,
 		injection.InjectTaskStore,
+		injection.InjectAnchorSvc,
 		config.NewConfig,
 		service.NewService,
 		service.NewInitService,
@@ -40,6 +42,7 @@ func InitializeApplication() (*initapp.App, error) {
 		taskgen.NewTaskHandler,
 		taskgen.NewTaskRunner,
 		task.NewTaskExecutor,
+		internal.Init,
 	)
 	return nil, nil
 }

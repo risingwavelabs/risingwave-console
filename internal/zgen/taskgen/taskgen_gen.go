@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cloudcarver/anchor/pkg/apigen"
+	"github.com/cloudcarver/anchor/pkg/zgen/apigen"
 	"github.com/cloudcarver/anchor/pkg/taskcore"
 	"github.com/cloudcarver/anchor/pkg/taskcore/worker"
 	"github.com/cloudcarver/anchor/pkg/utils"
@@ -27,8 +27,6 @@ const (
 	DeleteClusterDiagnostic = "DeleteClusterDiagnostic" 
 
 	DeleteSnapshot = "DeleteSnapshot" 
-
-	DeleteOpaqueKey = "DeleteOpaqueKey" 
 )
 
 type TaskRunner interface { 
@@ -51,11 +49,6 @@ type TaskRunner interface {
 	RunDeleteSnapshot(ctx context.Context, params *DeleteSnapshotParameters, overrides ...taskcore.TaskOverride) (int32, error)
     // Delete snapshot
 	RunDeleteSnapshotWithTx(ctx context.Context, tx pgx.Tx, params *DeleteSnapshotParameters, overrides ...taskcore.TaskOverride) (int32, error)
-
-    // Delete opaque key
-	RunDeleteOpaqueKey(ctx context.Context, params *DeleteOpaqueKeyParameters, overrides ...taskcore.TaskOverride) (int32, error)
-    // Delete opaque key
-	RunDeleteOpaqueKeyWithTx(ctx context.Context, tx pgx.Tx, params *DeleteOpaqueKeyParameters, overrides ...taskcore.TaskOverride) (int32, error)
 }
 
 type Client struct {
@@ -237,48 +230,6 @@ func (c *Client) runDeleteSnapshot(ctx context.Context, taskstore taskcore.TaskS
 	}
 	return taskID, nil
 }
-func (c *Client) RunDeleteOpaqueKey(ctx context.Context, params *DeleteOpaqueKeyParameters, overrides ...taskcore.TaskOverride) (int32, error) {
-	return c.runDeleteOpaqueKey(ctx, c.taskStore, params, overrides...)
-}
-
-func (c *Client) RunDeleteOpaqueKeyWithTx(ctx context.Context, tx pgx.Tx, params *DeleteOpaqueKeyParameters, overrides ...taskcore.TaskOverride) (int32, error) {
-	return c.runDeleteOpaqueKey(ctx, c.taskStore.WithTx(tx), params, overrides...)
-}
-
-func (c *Client) runDeleteOpaqueKey(ctx context.Context, taskstore taskcore.TaskStoreInterface, params *DeleteOpaqueKeyParameters, overrides ...taskcore.TaskOverride) (int32, error) {
-	payload, err := params.Marshal()
-	if err != nil {
-		return 0, err
-	}
-
-	spec := apigen.TaskSpec{
-		Type:    DeleteOpaqueKey,
-		Payload: payload,
-	}
-	attributes := apigen.TaskAttributes{}
-	attributes.Timeout = utils.Ptr("30m")
-	attributes.RetryPolicy = &apigen.TaskRetryPolicy{
-		Interval:             "30m",
-		AlwaysRetryOnFailure: true,
-	}
-	
-	task := &apigen.Task{
-		Attributes: attributes,
-		Spec:       spec,
-		Status:     apigen.Pending,
-	}
-	
-	for _, override := range overrides {
-		if err := override(task); err != nil {
-			return 0, errors.Wrap(err, "failed to apply task override")
-		}
-	}
-	taskID, err := taskstore.PushTask(ctx, task)
-	if err != nil {
-		return 0, err
-	}
-	return taskID, nil
-}
 
 
 type AutoBackupParameters struct { 
@@ -299,10 +250,10 @@ type AutoDiagnosticParameters struct {
 
 type DeleteClusterDiagnosticParameters struct { 
     // 
-	DiagnosticID int32 `json:"diagnosticID" yaml:"diagnosticID"`
+	ClusterID int32 `json:"clusterID" yaml:"clusterID"`
 
     // 
-	ClusterID int32 `json:"clusterID" yaml:"clusterID"`
+	DiagnosticID int32 `json:"diagnosticID" yaml:"diagnosticID"`
 }
 
 type DeleteSnapshotParameters struct { 
@@ -311,11 +262,6 @@ type DeleteSnapshotParameters struct {
 
     // 
 	SnapshotID int64 `json:"snapshotID" yaml:"snapshotID"`
-}
-
-type DeleteOpaqueKeyParameters struct { 
-    // 
-	KeyID int64 `json:"keyID" yaml:"keyID"`
 }
 
 func (r *AutoBackupParameters) Parse(spec json.RawMessage) error {
@@ -346,13 +292,6 @@ func (r *DeleteSnapshotParameters) Parse(spec json.RawMessage) error {
 func (r *DeleteSnapshotParameters) Marshal() (json.RawMessage, error) {
 	return json.Marshal(r)
 }
-func (r *DeleteOpaqueKeyParameters) Parse(spec json.RawMessage) error {
-	return json.Unmarshal(spec, r)
-}
-
-func (r *DeleteOpaqueKeyParameters) Marshal() (json.RawMessage, error) {
-	return json.Marshal(r)
-}
 
 type ExecutorInterface interface { 
     // Auto backup
@@ -366,9 +305,6 @@ type ExecutorInterface interface {
 
     // Delete snapshot
 	ExecuteDeleteSnapshot(ctx context.Context, params *DeleteSnapshotParameters) error
-
-    // Delete opaque key
-	ExecuteDeleteOpaqueKey(ctx context.Context, params *DeleteOpaqueKeyParameters) error
 }
 
 type TaskHandler struct {
@@ -427,14 +363,7 @@ func (f *TaskHandler) HandleTask(ctx context.Context, spec worker.TaskSpec) erro
 		}
 		return f.executor.ExecuteDeleteSnapshot(ctx, &params)
 		
-	case DeleteOpaqueKey:
-		var params DeleteOpaqueKeyParameters
-		if err := params.Parse(spec.GetPayload()); err != nil {
-			return fmt.Errorf("failed to parse DeleteOpaqueKey parameters: %w", err)
-		}
-		return f.executor.ExecuteDeleteOpaqueKey(ctx, &params)
-		
 	default:
-		return fmt.Errorf("unknown handler %s", spec.GetType())
+		return errors.Wrapf(worker.ErrUnknownTaskType, "unknown task type: %s", spec.GetType())
 	}
 }
