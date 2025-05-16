@@ -7,7 +7,6 @@ import (
 
 	"github.com/cloudcarver/anchor/pkg/auth"
 	"github.com/gofiber/fiber/v2"
-	"github.com/risingwavelabs/wavekit/internal/caveats"
 	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
 	"github.com/risingwavelabs/wavekit/internal/service"
 	"github.com/risingwavelabs/wavekit/internal/utils"
@@ -26,21 +25,13 @@ func NewSeverInterface(s service.ServiceInterface, auth auth.AuthInterface) apig
 	}
 }
 
-func getOrgID(c *fiber.Ctx) (int32, error) {
-	orgID, ok := c.Locals(caveats.ContextKeyOrgID).(int32)
-	if !ok {
-		return 0, errors.New("missing orgID in request context")
-	}
-	return orgID, nil
-}
-
 func (controller *Controller) ImportCluster(c *fiber.Ctx) error {
 	var params apigen.ClusterImport
 	if err := c.BodyParser(&params); err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -54,7 +45,7 @@ func (controller *Controller) ImportCluster(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) DeleteCluster(c *fiber.Ctx, id int32, params apigen.DeleteClusterParams) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -71,7 +62,7 @@ func (controller *Controller) DeleteCluster(c *fiber.Ctx, id int32, params apige
 }
 
 func (controller *Controller) GetCluster(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -88,7 +79,7 @@ func (controller *Controller) GetCluster(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) UpdateCluster(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -110,7 +101,7 @@ func (controller *Controller) UpdateCluster(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) ListClusters(c *fiber.Ctx) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -129,7 +120,7 @@ func (controller *Controller) ImportDatabase(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -143,7 +134,7 @@ func (controller *Controller) ImportDatabase(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) DeleteDatabase(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -157,7 +148,7 @@ func (controller *Controller) DeleteDatabase(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) GetDatabase(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -179,7 +170,7 @@ func (controller *Controller) UpdateDatabase(c *fiber.Ctx, id int32) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -196,7 +187,7 @@ func (controller *Controller) UpdateDatabase(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) ListDatabases(c *fiber.Ctx) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -210,7 +201,7 @@ func (controller *Controller) ListDatabases(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) GetDDLProgress(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -224,7 +215,7 @@ func (controller *Controller) GetDDLProgress(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) CancelDDLProgress(c *fiber.Ctx, id int32, ddlID int64) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -238,7 +229,7 @@ func (controller *Controller) CancelDDLProgress(c *fiber.Ctx, id int32, ddlID in
 }
 
 func (controller *Controller) TestDatabaseConnection(c *fiber.Ctx) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -262,7 +253,7 @@ func (controller *Controller) QueryDatabase(c *fiber.Ctx, id int32) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -279,7 +270,7 @@ func (controller *Controller) QueryDatabase(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) CreateClusterSnapshot(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -298,7 +289,7 @@ func (controller *Controller) CreateClusterSnapshot(c *fiber.Ctx, id int32) erro
 }
 
 func (controller *Controller) DeleteClusterSnapshot(c *fiber.Ctx, id int32, snapshotId int64) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -315,7 +306,7 @@ func (controller *Controller) RestoreClusterSnapshot(c *fiber.Ctx, id int32, sna
 }
 
 func (controller *Controller) ListClusterSnapshots(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -328,7 +319,7 @@ func (controller *Controller) ListClusterSnapshots(c *fiber.Ctx, id int32) error
 }
 
 func (controller *Controller) ListClusterDiagnostics(c *fiber.Ctx, id int32, params apigen.ListClusterDiagnosticsParams) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -341,7 +332,7 @@ func (controller *Controller) ListClusterDiagnostics(c *fiber.Ctx, id int32, par
 }
 
 func (controller *Controller) GetClusterAutoBackupConfig(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -354,7 +345,7 @@ func (controller *Controller) GetClusterAutoBackupConfig(c *fiber.Ctx, id int32)
 }
 
 func (controller *Controller) UpdateClusterAutoBackupConfig(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -373,7 +364,7 @@ func (controller *Controller) UpdateClusterAutoBackupConfig(c *fiber.Ctx, id int
 }
 
 func (controller *Controller) GetClusterAutoDiagnosticConfig(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -386,7 +377,7 @@ func (controller *Controller) GetClusterAutoDiagnosticConfig(c *fiber.Ctx, id in
 }
 
 func (controller *Controller) UpdateClusterAutoDiagnosticConfig(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -418,7 +409,7 @@ func (controller *Controller) TestClusterConnection(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -432,7 +423,7 @@ func (controller *Controller) TestClusterConnection(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) RunRisectlCommand(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -451,7 +442,7 @@ func (controller *Controller) RunRisectlCommand(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) CreateClusterDiagnostic(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -464,7 +455,7 @@ func (controller *Controller) CreateClusterDiagnostic(c *fiber.Ctx, id int32) er
 }
 
 func (controller *Controller) GetClusterDiagnostic(c *fiber.Ctx, id int32, diagnosticId int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -493,7 +484,7 @@ func (controller *Controller) ImportMetricsStore(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -507,7 +498,7 @@ func (controller *Controller) ImportMetricsStore(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) DeleteMetricsStore(c *fiber.Ctx, id int32, params apigen.DeleteMetricsStoreParams) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -534,7 +525,7 @@ func (controller *Controller) DeleteMetricsStore(c *fiber.Ctx, id int32, params 
 }
 
 func (controller *Controller) GetMetricsStore(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -548,7 +539,7 @@ func (controller *Controller) GetMetricsStore(c *fiber.Ctx, id int32) error {
 }
 
 func (controller *Controller) ListMetricsStores(c *fiber.Ctx) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}
@@ -562,7 +553,7 @@ func (controller *Controller) ListMetricsStores(c *fiber.Ctx) error {
 }
 
 func (controller *Controller) UpdateMetricsStore(c *fiber.Ctx, id int32) error {
-	orgID, err := getOrgID(c)
+	orgID, err := auth.GetOrgID(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).SendString("missing orgID in request context")
 	}

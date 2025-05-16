@@ -12,7 +12,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	"github.com/risingwavelabs/wavekit"
-	"github.com/risingwavelabs/wavekit/internal/caveats"
 	"github.com/risingwavelabs/wavekit/internal/config"
 	"github.com/risingwavelabs/wavekit/internal/utils"
 	"github.com/risingwavelabs/wavekit/internal/zcore/model"
@@ -21,7 +20,6 @@ import (
 	"gopkg.in/yaml.v3"
 
 	anchor_app "github.com/cloudcarver/anchor/pkg/app"
-	"github.com/cloudcarver/anchor/pkg/macaroons"
 	anchor_svc "github.com/cloudcarver/anchor/pkg/service"
 )
 
@@ -132,22 +130,6 @@ func (s *InitService) Init(ctx context.Context, cfg *config.Config, anchorApp *a
 			return errors.Wrapf(err, "failed to create org settings")
 		}
 		return nil
-	})
-
-	anchorApp.GetHooks().RegisterOnCreateToken(func(ctx context.Context, userID int32, macaroon *macaroons.Macaroon) error {
-		orgs, err := s.anchorSvc.ListOrgs(ctx, userID)
-		if err != nil {
-			return errors.Wrapf(err, "failed to list orgs")
-		}
-		if len(orgs) == 0 {
-			return errors.Errorf("no orgs found for user %d", userID)
-		}
-		macaroon.AddCaveat(caveats.NewOrgContextCaveat(orgs[0].ID))
-		return nil
-	})
-
-	anchorApp.GetCaveatParser().Register(caveats.ContextKeyOrgID, func() macaroons.Caveat {
-		return &caveats.OrgContextCaveat{}
 	})
 
 	return nil

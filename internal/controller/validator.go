@@ -5,7 +5,6 @@ import (
 
 	"github.com/cloudcarver/anchor/pkg/auth"
 	"github.com/gofiber/fiber/v2"
-	"github.com/risingwavelabs/wavekit/internal/caveats"
 	"github.com/risingwavelabs/wavekit/internal/zcore/model"
 	"github.com/risingwavelabs/wavekit/internal/zgen/apigen"
 	"github.com/risingwavelabs/wavekit/internal/zgen/querier"
@@ -21,7 +20,7 @@ func NewValidator(model model.ModelInterface, auth auth.AuthInterface) apigen.Va
 }
 
 func (v *Validator) GetOrgID(c *fiber.Ctx) int32 {
-	return c.Locals(caveats.ContextKeyOrgID).(int32)
+	return c.Locals(auth.ContextKeyOrgID).(int32)
 }
 
 func (v *Validator) OwnDatabase(c *fiber.Ctx, orgID int32, databaseID int32) error {
