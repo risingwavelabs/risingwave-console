@@ -70,6 +70,32 @@ func NewInitService(m model.ModelInterface, anchor_svc anchor_svc.ServiceInterfa
 }
 
 func (s *InitService) Init(ctx context.Context, cfg *config.Config, anchorApp *anchor_app.Application) error {
+	// init the static web pages
+	anchorApp.GetServer().GetApp().Use("/", filesystem.New(filesystem.Config{
+		Root:         http.FS(wavekit.StaticFiles),
+		PathPrefix:   "web/out",
+		NotFoundFile: "404.html",
+		Index:        "index.html",
+	}))
+
+	anchorApp.GetServer().GetApp().Get("/config.js", func(c *fiber.Ctx) error {
+		endpoint := fmt.Sprintf("http://%s:%d/api/v1", anchorApp.GetServer().GetHost(), anchorApp.GetServer().GetPort())
+		c.Set("Content-Type", "application/javascript")
+		return c.Status(fiber.StatusOK).SendString(fmt.Sprintf("window.APP_ENDPOINT = '%s';", endpoint))
+	})
+
+	// init hooks
+	anchorApp.GetHooks().RegisterOnOrgCreatedWithTx(func(ctx context.Context, tx pgx.Tx, orgID int32) error {
+		txm := s.m.SpawnWithTx(tx)
+		if err := txm.CreateOrgSettings(ctx, querier.CreateOrgSettingsParams{
+			OrgID:    orgID,
+			Timezone: "UTC",
+		}); err != nil {
+			return errors.Wrapf(err, "failed to create org settings")
+		}
+		return nil
+	})
+
 	// remove the root user if it is not set in the config
 	if cfg.Root == nil {
 		if err := s.anchorSvc.DeleteUserByName(ctx, "root"); err != nil {
@@ -105,32 +131,6 @@ func (s *InitService) Init(ctx context.Context, cfg *config.Config, anchorApp *a
 			return errors.Wrapf(err, "failed to init database")
 		}
 	}
-
-	// init the static web pages
-	anchorApp.GetServer().GetApp().Use("/", filesystem.New(filesystem.Config{
-		Root:         http.FS(wavekit.StaticFiles),
-		PathPrefix:   "web/out",
-		NotFoundFile: "404.html",
-		Index:        "index.html",
-	}))
-
-	anchorApp.GetServer().GetApp().Get("/config.js", func(c *fiber.Ctx) error {
-		endpoint := fmt.Sprintf("http://%s:%d/api/v1", anchorApp.GetServer().GetHost(), anchorApp.GetServer().GetPort())
-		c.Set("Content-Type", "application/javascript")
-		return c.Status(fiber.StatusOK).SendString(fmt.Sprintf("window.APP_ENDPOINT = '%s';", endpoint))
-	})
-
-	// init hooks
-	anchorApp.GetHooks().RegisterOnOrgCreatedWithTx(func(ctx context.Context, tx pgx.Tx, orgID int32) error {
-		txm := s.m.SpawnWithTx(tx)
-		if err := txm.CreateOrgSettings(ctx, querier.CreateOrgSettingsParams{
-			OrgID:    orgID,
-			Timezone: "UTC",
-		}); err != nil {
-			return errors.Wrapf(err, "failed to create org settings")
-		}
-		return nil
-	})
 
 	return nil
 }

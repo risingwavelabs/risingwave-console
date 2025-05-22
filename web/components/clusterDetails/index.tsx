@@ -33,7 +33,12 @@ import { DiagnosticData } from "@/api-gen/models/DiagnosticData"
 import toast from "react-hot-toast"
 
 const width = "w-full"
-
+const every_5_minutes = "0 */5 * * * *"
+const every_15_minutes = "0 */15 * * * *"
+const every_30_minutes = "0 */30 * * * *"
+const every_1_hour = "0 0 * * * *"
+const every_2_hours = "0 0 */2 * * *"
+const every_6_hours = "0 0 */6 * * *"
 interface BaseCluster {
   name: string
   host: string
@@ -84,6 +89,15 @@ interface ClusterPageProps {
   }
 }
 
+function trimTz(cronExpression: string) {
+  // Removes the timezone prefix from cron expressions if present
+  // Example: "CRON_TZ=UTC 0 */30 * * * *" -> "0 */30 * * * *"
+  if (!cronExpression) return cronExpression;
+  
+  const tzRegex = /^CRON_TZ=[^\s]+ /;
+  return cronExpression.replace(tzRegex, '');
+}
+
 export default function ClusterPage({ params }: ClusterPageProps) {
   const router = useRouter()
   const clusterId = params.id
@@ -92,11 +106,11 @@ export default function ClusterPage({ params }: ClusterPageProps) {
   const [snapshotPage, setSnapshotPage] = useState(1)
   const [deleteSnapshotId, setDeleteSnapshotId] = useState<number | null>(null)
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(false)
-  const [autoBackupInterval, setAutoBackupInterval] = useState("*/30 * * * *")
+  const [autoBackupInterval, setAutoBackupInterval] = useState(every_30_minutes)
   const [autoBackupRetention, setAutoBackupRetention] = useState("7d")
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)
   const [isUpdatingBackupConfig, setIsUpdatingBackupConfig] = useState(false)
-  const [autoDiagnosticInterval, setAutoDiagnosticInterval] = useState("*/30 * * * *")
+  const [autoDiagnosticInterval, setAutoDiagnosticInterval] = useState(every_30_minutes)
   const [autoDiagnosticRetention, setAutoDiagnosticRetention] = useState("7d")
   const [autoDiagnosticEnabled, setAutoDiagnosticEnabled] = useState(false)
   const [isUpdatingDiagnosticConfig, setIsUpdatingDiagnosticConfig] = useState(false)
@@ -131,7 +145,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
       toast.error("Failed to update auto backup configuration")
       // Revert the state changes on error
       setAutoBackupEnabled(clusterData?.autoBackup.enabled ?? false)
-      setAutoBackupInterval(clusterData?.autoBackup.cronExpression ?? "*/30 * * * *")
+      setAutoBackupInterval(trimTz(clusterData?.autoBackup.cronExpression ?? every_30_minutes))
       setAutoBackupRetention(clusterData?.autoBackup.retentionDuration ?? "7d")
     } finally {
       setIsUpdatingBackupConfig(false)
@@ -156,7 +170,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
       toast.error("Failed to update auto diagnostic configuration")
       // Revert the state changes on error
       setAutoDiagnosticEnabled(clusterData?.diagnostics.enabled ?? false)
-      setAutoDiagnosticInterval(clusterData?.diagnostics.cronExpression ?? "*/30 * * * *")
+      setAutoDiagnosticInterval(trimTz(clusterData?.diagnostics.cronExpression ?? every_30_minutes))
       setAutoDiagnosticRetention(clusterData?.diagnostics.retentionDuration ?? "7d")
     } finally {
       setIsUpdatingDiagnosticConfig(false)
@@ -176,13 +190,13 @@ export default function ClusterPage({ params }: ClusterPageProps) {
         // Define default configurations in case API calls fail
         const defaultAutoBackupConfig = {
           enabled: false,
-          cronExpression: "*/30 * * * *",
+          cronExpression: every_30_minutes,
           retentionDuration: "7d"
         };
 
         const defaultAutoDiagnosticConfig = {
           enabled: false,
-          cronExpression: "*/30 * * * *",
+          cronExpression: every_30_minutes,
           retentionDuration: "7d"
         };
 
@@ -250,10 +264,10 @@ export default function ClusterPage({ params }: ClusterPageProps) {
 
         // Initialize state with the fetched data directly from configs
         setAutoBackupEnabled(autoBackupConfig.enabled)
-        setAutoBackupInterval(autoBackupConfig.cronExpression)
+        setAutoBackupInterval(trimTz(autoBackupConfig.cronExpression))
         setAutoBackupRetention(autoBackupConfig.retentionDuration)
         setAutoDiagnosticEnabled(autoDiagnosticConfig.enabled)
-        setAutoDiagnosticInterval(autoDiagnosticConfig.cronExpression)
+        setAutoDiagnosticInterval(trimTz(autoDiagnosticConfig.cronExpression))
         setAutoDiagnosticRetention(autoDiagnosticConfig.retentionDuration)
       } catch (error) {
         console.error("Error fetching cluster:", error)
@@ -668,7 +682,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
               <Select
                 value={autoBackupInterval}
                 onValueChange={(interval) => {
-                  setAutoBackupInterval(interval)
+                  setAutoBackupInterval(trimTz(interval))
                   updateAutoBackupConfig(autoBackupEnabled, interval, autoBackupRetention)
                 }}
                 disabled={!autoBackupEnabled || isUpdatingBackupConfig}
@@ -677,11 +691,11 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                   <SelectValue placeholder="Select interval" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="*/5 * * * *">Every 5 minutes</SelectItem>
-                  <SelectItem value="*/15 * * * *">Every 15 minutes</SelectItem>
-                  <SelectItem value="*/30 * * * *">Every 30 minutes</SelectItem>
-                  <SelectItem value="*/60 * * * *">Every 1 hour</SelectItem>
-                  <SelectItem value="*/120 * * * *">Every 2 hours</SelectItem>
+                  <SelectItem value={every_5_minutes}>Every 5 minutes</SelectItem>
+                  <SelectItem value={every_15_minutes}>Every 15 minutes</SelectItem>
+                  <SelectItem value={every_30_minutes}>Every 30 minutes</SelectItem>
+                  <SelectItem value={every_1_hour}>Every 1 hour</SelectItem>
+                  <SelectItem value={every_2_hours}>Every 2 hours</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -845,7 +859,7 @@ export default function ClusterPage({ params }: ClusterPageProps) {
               <Select 
                 value={autoDiagnosticInterval} 
                 onValueChange={(interval) => {
-                  setAutoDiagnosticInterval(interval)
+                  setAutoDiagnosticInterval(trimTz(interval))
                   updateAutoDiagnosticConfig(autoDiagnosticEnabled, interval, autoDiagnosticRetention)
                 }}
                 disabled={!autoDiagnosticEnabled || isUpdatingDiagnosticConfig}
@@ -854,12 +868,12 @@ export default function ClusterPage({ params }: ClusterPageProps) {
                   <SelectValue placeholder="Select interval" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="*/5 * * * *">Every 5 minutes</SelectItem>
-                  <SelectItem value="*/15 * * * *">Every 15 minutes</SelectItem>
-                  <SelectItem value="*/30 * * * *">Every 30 minutes</SelectItem>
-                  <SelectItem value="0 * * * *">Every 1 hour</SelectItem>
-                  <SelectItem value="0 */2 * * *">Every 2 hours</SelectItem>
-                  <SelectItem value="0 */6 * * *">Every 6 hours</SelectItem>
+                  <SelectItem value={every_5_minutes}>Every 5 minutes</SelectItem>
+                  <SelectItem value={every_15_minutes}>Every 15 minutes</SelectItem>
+                  <SelectItem value={every_30_minutes}>Every 30 minutes</SelectItem>
+                  <SelectItem value={every_1_hour}>Every 1 hour</SelectItem>
+                  <SelectItem value={every_2_hours}>Every 2 hours</SelectItem>
+                  <SelectItem value={every_6_hours}>Every 6 hours</SelectItem>
                 </SelectContent>
               </Select>
             </div>
