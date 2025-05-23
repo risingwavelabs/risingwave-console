@@ -7,42 +7,42 @@ externals:
 
 oapi-codegen:
   path: api/v1.yaml
-  out: internal/zgen/apigen/spec_gen.go
+  out: pkg/zgen/apigen/spec_gen.go
   package: apigen
 
 wire:
   path: ./wire
 
 clean:
-  - internal/zgen/*
+  - pkg/zgen/*
 
 xware:
   path: api/v1.yaml
-  out: internal/zgen/apigen/scopes_extend_gen.go
+  out: pkg/zgen/apigen/scopes_extend_gen.go
   package: apigen
 
 task-handler:
   path: api/tasks.yaml
   package: taskgen
-  out: internal/zgen/taskgen/taskgen_gen.go
+  out: pkg/zgen/taskgen/taskgen_gen.go
 
 sqlc:
-  path: dev/sqlc.yaml
+  path: sql/sqlc.yaml
 
 mockgen:
   files:
-    - source: internal/zcore/model/model.go
-      destination: internal/zcore/model/mock_gen.go
+    - source: pkg/zcore/model/model.go
+      destination: pkg/zcore/model/mock_gen.go
       package: model
-    - source: internal/zgen/taskgen/taskgen_gen.go
-      destination: internal/zgen/taskgen/mock_gen.go
+    - source: pkg/zgen/taskgen/taskgen_gen.go
+      destination: pkg/zgen/taskgen/mock_gen.go
       package: taskgen
-    - source: internal/service/service.go
-      destination: internal/service/service_mock_gen.go
+    - source: pkg/service/service.go
+      destination: pkg/service/service_mock_gen.go
       package: service
-    - source: internal/conn/meta/types.go
-      destination: internal/conn/meta/mock/mock_gen.go
+    - source: pkg/conn/meta/types.go
+      destination: pkg/conn/meta/mock/mock_gen.go
       package: mock
-    - source: internal/conn/http/http.go
-      destination: internal/conn/http/mock/http_mock_gen.go
+    - source: pkg/conn/http/http.go
+      destination: pkg/conn/http/mock/http_mock_gen.go
       package: mock

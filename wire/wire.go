@@ -5,27 +5,25 @@ package wire
 
 import (
 	"github.com/google/wire"
-	"github.com/risingwavelabs/wavekit/internal"
-	"github.com/risingwavelabs/wavekit/internal/config"
-	"github.com/risingwavelabs/wavekit/internal/conn/http"
-	"github.com/risingwavelabs/wavekit/internal/conn/meta"
-	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
-	"github.com/risingwavelabs/wavekit/internal/conn/sql"
-	"github.com/risingwavelabs/wavekit/internal/controller"
-	"github.com/risingwavelabs/wavekit/internal/service"
-	"github.com/risingwavelabs/wavekit/internal/task"
-	"github.com/risingwavelabs/wavekit/internal/zcore/initapp"
-	"github.com/risingwavelabs/wavekit/internal/zcore/injection"
-	"github.com/risingwavelabs/wavekit/internal/zcore/model"
-	"github.com/risingwavelabs/wavekit/internal/zgen/taskgen"
+	"github.com/risingwavelabs/wavekit/pkg"
+	"github.com/risingwavelabs/wavekit/pkg/config"
+	"github.com/risingwavelabs/wavekit/pkg/conn/http"
+	"github.com/risingwavelabs/wavekit/pkg/conn/meta"
+	"github.com/risingwavelabs/wavekit/pkg/conn/metricsstore"
+	"github.com/risingwavelabs/wavekit/pkg/conn/sql"
+	"github.com/risingwavelabs/wavekit/pkg/controller"
+	"github.com/risingwavelabs/wavekit/pkg/service"
+	"github.com/risingwavelabs/wavekit/pkg/task"
+	"github.com/risingwavelabs/wavekit/pkg/zcore/injection"
+	"github.com/risingwavelabs/wavekit/pkg/zcore/model"
+	"github.com/risingwavelabs/wavekit/pkg/zgen/taskgen"
 
 	anchor_wire "github.com/cloudcarver/anchor/wire"
 )
 
-func InitializeApplication() (*initapp.App, error) {
+func InitializeApplication() (*pkg.App, error) {
 	wire.Build(
 		anchor_wire.InitializeApplication,
-		initapp.NewApp,
 		injection.InjectAuth,
 		injection.InjectTaskStore,
 		injection.InjectAnchorSvc,
@@ -42,7 +40,7 @@ func InitializeApplication() (*initapp.App, error) {
 		taskgen.NewTaskHandler,
 		taskgen.NewTaskRunner,
 		task.NewTaskExecutor,
-		internal.Init,
+		pkg.NewApp,
 	)
 	return nil, nil
 }

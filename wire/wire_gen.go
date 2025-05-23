@@ -8,24 +8,23 @@ package wire
 
 import (
 	"github.com/cloudcarver/anchor/wire"
-	"github.com/risingwavelabs/wavekit/internal"
-	"github.com/risingwavelabs/wavekit/internal/config"
-	"github.com/risingwavelabs/wavekit/internal/conn/http"
-	"github.com/risingwavelabs/wavekit/internal/conn/meta"
-	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
-	"github.com/risingwavelabs/wavekit/internal/conn/sql"
-	"github.com/risingwavelabs/wavekit/internal/controller"
-	"github.com/risingwavelabs/wavekit/internal/service"
-	"github.com/risingwavelabs/wavekit/internal/task"
-	"github.com/risingwavelabs/wavekit/internal/zcore/initapp"
-	"github.com/risingwavelabs/wavekit/internal/zcore/injection"
-	"github.com/risingwavelabs/wavekit/internal/zcore/model"
-	"github.com/risingwavelabs/wavekit/internal/zgen/taskgen"
+	"github.com/risingwavelabs/wavekit/pkg"
+	"github.com/risingwavelabs/wavekit/pkg/config"
+	"github.com/risingwavelabs/wavekit/pkg/conn/http"
+	"github.com/risingwavelabs/wavekit/pkg/conn/meta"
+	"github.com/risingwavelabs/wavekit/pkg/conn/metricsstore"
+	"github.com/risingwavelabs/wavekit/pkg/conn/sql"
+	"github.com/risingwavelabs/wavekit/pkg/controller"
+	"github.com/risingwavelabs/wavekit/pkg/service"
+	"github.com/risingwavelabs/wavekit/pkg/task"
+	"github.com/risingwavelabs/wavekit/pkg/zcore/injection"
+	"github.com/risingwavelabs/wavekit/pkg/zcore/model"
+	"github.com/risingwavelabs/wavekit/pkg/zgen/taskgen"
 )
 
 // Injectors from wire.go:
 
-func InitializeApplication() (*initapp.App, error) {
+func InitializeApplication() (*pkg.App, error) {
 	application, err := wire.InitializeApplication()
 	if err != nil {
 		return nil, err
@@ -61,8 +60,7 @@ func InitializeApplication() (*initapp.App, error) {
 	executorInterface := task.NewTaskExecutor(taskRunner, modelInterface, risectlManagerInterface, metaHttpManagerInterface)
 	taskHandler := taskgen.NewTaskHandler(executorInterface)
 	initService := service.NewInitService(modelInterface, serviceInterface)
-	v := internal.Init(configConfig, initService)
-	app, err := initapp.NewApp(application, serverInterface, validator, taskHandler, v)
+	app, err := pkg.NewApp(application, configConfig, serverInterface, validator, taskHandler, initService)
 	if err != nil {
 		return nil, err
 	}

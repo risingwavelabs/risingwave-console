@@ -1,9 +1,9 @@
 openapi: 3.0.0
 
 info:
-  title: AI Agent API
+  title: Wavekit
   version: "1.0"
-  description: API for interacting with AI models and managing settings
+  description: API for interacting with Wavekit
 
 servers:
   - url: /api/v1
@@ -1362,7 +1362,6 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/MetricSeries"
-          
 
     MetricSeries:
       type: object
@@ -1427,6 +1426,7 @@ components:
 
     MetricValue:
       type: array
+      items: {}
 
     MetricsStoreDownloadReq:
       type: object
