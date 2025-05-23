@@ -74,6 +74,12 @@ ut:
 	@go tool cover -func=coverage.filtered | fgrep total | awk '{print "Coverage:", $$3}'
 	@go tool cover -html=coverage.filtered -o coverage.html
 
+prepare-test:
+	cd test && uv sync
+	cd test && uv run openapi-python-client generate --path ../api/v1.yaml --output-path oapi --overwrite 
+
+test: prepare-test
+	cd test && uv run main.py
 
 # https://pkg.go.dev/net/http/pprof#hdr-Usage_examples
 pprof:
