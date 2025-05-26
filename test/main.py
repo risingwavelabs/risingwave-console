@@ -1,13 +1,6 @@
 import pytest
 import httpx
 
-from oapi.wavekit_client.api.default import (
-    list_clusters,
-    get_cluster,
-    import_cluster,
-    delete_cluster,
-)
-from oapi.wavekit_client.models import ClusterImport
 from oapi.wavekit_client.client import AuthenticatedClient
 
 base_url = "http://localhost:8020/api/v1"
@@ -23,7 +16,15 @@ def auth_client():
     return AuthenticatedClient(base_url=base_url, token=access_token)
 
 
-def test_clusters(auth_client: AuthenticatedClient):
+def test_cluster_db_management(auth_client: AuthenticatedClient):
+    from oapi.wavekit_client.api.default import (
+        list_clusters,
+        get_cluster,
+        import_cluster,
+        delete_cluster,
+    )
+    from oapi.wavekit_client.models import ClusterImport
+
     # list clusters
     response = list_clusters.sync_detailed(client=auth_client)
     assert response.status_code == 200
@@ -67,6 +68,7 @@ def test_clusters(auth_client: AuthenticatedClient):
     # delete cluster
     response = delete_cluster.sync_detailed(client=auth_client, id=imported_cluster.id)
     assert response.status_code == 204
+
 
 
 if __name__ == "__main__":

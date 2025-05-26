@@ -41,6 +41,7 @@ func InitializeApplication() (*pkg.App, error) {
 		taskgen.NewTaskRunner,
 		task.NewTaskExecutor,
 		pkg.NewApp,
+		pkg.NewPlugin,
 	)
 	return nil, nil
 }

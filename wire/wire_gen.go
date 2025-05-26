@@ -59,8 +59,9 @@ func InitializeApplication() (*pkg.App, error) {
 	validator := controller.NewValidator(modelInterface, authInterface)
 	executorInterface := task.NewTaskExecutor(taskRunner, modelInterface, risectlManagerInterface, metaHttpManagerInterface)
 	taskHandler := taskgen.NewTaskHandler(executorInterface)
+	plugin := pkg.NewPlugin(serverInterface, validator, taskHandler)
 	initService := service.NewInitService(modelInterface, serviceInterface)
-	app, err := pkg.NewApp(application, configConfig, serverInterface, validator, taskHandler, initService)
+	app, err := pkg.NewApp(application, configConfig, plugin, initService)
 	if err != nil {
 		return nil, err
 	}
