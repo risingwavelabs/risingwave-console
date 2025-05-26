@@ -4,7 +4,7 @@
 /* eslint-disable */
 export type Cluster = {
     ID: number;
-    organizationID: number;
+    OrgID: number;
     name: string;
     host: string;
     sqlPort: number;

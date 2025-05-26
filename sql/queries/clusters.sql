@@ -1,6 +1,6 @@
 -- name: CreateCluster :one
 INSERT INTO clusters (
-    organization_id,
+    org_id,
     name,
     host,
     sql_port,
@@ -14,7 +14,7 @@ INSERT INTO clusters (
 
 -- name: InitCluster :one
 INSERT INTO clusters (
-    organization_id,
+    org_id,
     name,
     host,
     sql_port,
@@ -24,7 +24,7 @@ INSERT INTO clusters (
     metrics_store_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8
-) ON CONFLICT (organization_id, name) DO UPDATE 
+) ON CONFLICT (org_id, name) DO UPDATE 
     SET 
         host = EXCLUDED.host,
         sql_port = EXCLUDED.sql_port,
@@ -37,11 +37,11 @@ RETURNING *;
 
 -- name: GetOrgCluster :one
 SELECT * FROM clusters
-WHERE id = $1 AND organization_id = $2;
+WHERE id = $1 AND org_id = $2;
 
 -- name: ListOrgClusters :many
 SELECT * FROM clusters
-WHERE organization_id = $1
+WHERE org_id = $1
 ORDER BY name;
 
 -- name: UpdateOrgCluster :one
@@ -55,12 +55,12 @@ SET
     version = $8,
     metrics_store_id = $9,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND organization_id = $2
+WHERE id = $1 AND org_id = $2
 RETURNING *;
 
 -- name: DeleteOrgCluster :exec
 DELETE FROM clusters
-WHERE id = $1 AND organization_id = $2;
+WHERE id = $1 AND org_id = $2;
 
 -- name: GetClusterByID :one
 SELECT * FROM clusters
@@ -75,4 +75,4 @@ ORDER BY name;
 -- name: RemoveClusterMetricsStoreID :exec
 UPDATE clusters
 SET metrics_store_id = NULL
-WHERE id = $1 AND organization_id = $2;
+WHERE id = $1 AND org_id = $2;

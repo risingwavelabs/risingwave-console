@@ -5,7 +5,7 @@ INSERT INTO database_connections (
     username,
     password,
     database,
-    organization_id
+    org_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6
 ) RETURNING *;
@@ -17,10 +17,10 @@ INSERT INTO database_connections (
     username,
     password,
     database,
-    organization_id
+    org_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6
-) ON CONFLICT (organization_id, name) DO UPDATE 
+) ON CONFLICT (org_id, name) DO UPDATE 
     SET 
         cluster_id = EXCLUDED.cluster_id,
         username = EXCLUDED.username,
@@ -31,7 +31,7 @@ RETURNING *;
 
 -- name: GetOrgDatabaseConnection :one
 SELECT * FROM database_connections
-WHERE id = $1 AND organization_id = $2;
+WHERE id = $1 AND org_id = $2;
 
 -- name: GetDatabaseConnectionByID :one
 SELECT * FROM database_connections
@@ -39,7 +39,7 @@ WHERE id = $1;
 
 -- name: ListOrgDatabaseConnections :many
 SELECT * FROM database_connections
-WHERE organization_id = $1
+WHERE org_id = $1
 ORDER BY name;
 
 -- name: UpdateOrgDatabaseConnection :one
@@ -50,23 +50,23 @@ SET
     username = $5,
     password = $6,
     database = $7,
-    organization_id = $8,
+    org_id = $8,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND organization_id = $2
+WHERE id = $1 AND org_id = $2
 RETURNING *;
 
 -- name: DeleteOrgDatabaseConnection :exec
 DELETE FROM database_connections
-WHERE id = $1 AND organization_id = $2;
+WHERE id = $1 AND org_id = $2;
 
 -- name: GetOrgDatabaseByID :one
 SELECT * FROM database_connections
-WHERE id = $1 AND organization_id = $2;
+WHERE id = $1 AND org_id = $2;
 
 -- name: GetAllOrgDatabseConnectionsByClusterID :many
 SELECT * FROM database_connections
-WHERE cluster_id = $1 AND organization_id = $2;
+WHERE cluster_id = $1 AND org_id = $2;
 
 -- name: DeleteAllOrgDatabaseConnectionsByClusterID :exec
 DELETE FROM database_connections
-WHERE cluster_id = $1 AND organization_id = $2;
+WHERE cluster_id = $1 AND org_id = $2;

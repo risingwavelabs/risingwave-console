@@ -5,6 +5,7 @@
 import type { AutoBackupConfig } from '../models/AutoBackupConfig';
 import type { AutoDiagnosticConfig } from '../models/AutoDiagnosticConfig';
 import type { Cluster } from '../models/Cluster';
+import type { ClusterCreate } from '../models/ClusterCreate';
 import type { ClusterImport } from '../models/ClusterImport';
 import type { Credentials } from '../models/Credentials';
 import type { Database } from '../models/Database';
@@ -236,6 +237,23 @@ export class DefaultService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/clusters',
+        });
+    }
+    /**
+     * Create a new cluster
+     * Create a new database cluster
+     * @param requestBody
+     * @returns Cluster Cluster created successfully
+     * @throws ApiError
+     */
+    public static createCluster(
+        requestBody: ClusterCreate,
+    ): CancelablePromise<Cluster> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/clusters',
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
     /**

@@ -19,7 +19,7 @@ export type Database = {
     /**
      * ID of the organization this database belongs to
      */
-    organizationID: number;
+    OrgID: number;
     /**
      * Database username
      */

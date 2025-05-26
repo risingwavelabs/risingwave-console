@@ -10,6 +10,7 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export type { AutoBackupConfig } from './models/AutoBackupConfig';
 export type { AutoDiagnosticConfig } from './models/AutoDiagnosticConfig';
 export type { Cluster } from './models/Cluster';
+export type { ClusterCreate } from './models/ClusterCreate';
 export type { ClusterImport } from './models/ClusterImport';
 export type { Column } from './models/Column';
 export { Credentials } from './models/Credentials';

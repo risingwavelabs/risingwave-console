@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 let baseUrl = "http://localhost:30080/api/v1";
 if (typeof window !== "undefined") {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  baseUrl = (window as any).APP_ENDPOINT || "http://localhost:30080/api/v1";
+  baseUrl = (window as any).APP_ENDPOINT || "http://localhost:8020/api/v1";
 }
 
 const tokenKey = "token";

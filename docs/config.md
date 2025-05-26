@@ -17,6 +17,8 @@ nointernet: true/false
 risectldir: string
 worker:
   disable: true/false
+ee:
+  code: string
 debug:
   enable: true/false
   port: integer
@@ -38,6 +40,7 @@ You can override the YAML configuration settings by using environment variables.
 | `WK_NOINTERNET` | `true/false` | (Optional) Whether to disable internet access, default is false. If public internet is not allowed, set it to true. Then mount risectl files to <risectl dir>/<version>/risectl. |
 | `WK_RISECTLDIR` | `string` | (Optional) The path of the directory to store the risectl files, default is "$HOME/.risectl" |
 | `WK_WORKER_DISABLE` | `true/false` | (Optional) Whether to disable the worker, default is false. |
+| `WK_EE_CODE` | `string` | (Optional) The activation code of the enterprise edition, if not set, the enterprise edition will be disabled. |
 | `WK_DEBUG_ENABLE` | `true/false` | (Optional) Whether to enable the debug server, default is false. |
 | `WK_DEBUG_PORT` | `integer` | (Optional) The port of the debug server, default is 8777 |
 

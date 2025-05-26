@@ -1,0 +1,63 @@
+tasks:
+  - name: AutoBackup
+    description: "Auto backup"
+    parameters:
+      type: object
+      required: [clusterID, retentionDuration]
+      properties:
+        clusterID:
+          type: integer
+          format: int32
+        retentionDuration:
+          type: string
+          description: e.g. 1h, 1d, 1w
+    timeout: 30m
+    cronjob:
+      cronExpression: 0 */6 * * * # every 6 hours
+  - name: AutoDiagnostic
+    description: "Auto diagnostic"
+    parameters:
+      type: object
+      required: [clusterID, retentionDuration]
+      properties:
+        clusterID:
+          type: integer
+          format: int32
+        retentionDuration:
+          type: string
+          description: e.g. 1h, 1d, 1w
+    timeout: 30m
+    cronjob:
+      cronExpression: 0 */6 * * * # every 6 hours
+  - name: DeleteClusterDiagnostic
+    description: "Delete cluster diagnostic"
+    parameters:
+      type: object
+      required: [clusterID, diagnosticID]
+      properties:
+        clusterID:
+          type: integer
+          format: int32
+        diagnosticID:
+          type: integer
+          format: int32
+    timeout: 30m
+    retryPolicy:
+      interval: 30m
+      always_retry_on_failure: true
+  - name: DeleteSnapshot
+    description: "Delete snapshot"
+    parameters:
+      type: object
+      required: [clusterID, snapshotID]
+      properties:
+        clusterID:
+          type: integer
+          format: int32
+        snapshotID:
+          type: integer
+          format: int64
+    timeout: 30m
+    retryPolicy:
+      interval: 30m
+      always_retry_on_failure: true

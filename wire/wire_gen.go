@@ -7,46 +7,37 @@
 package wire
 
 import (
-	"github.com/risingwavelabs/wavekit/internal/app"
-	"github.com/risingwavelabs/wavekit/internal/auth"
-	"github.com/risingwavelabs/wavekit/internal/config"
-	"github.com/risingwavelabs/wavekit/internal/conn/http"
-	"github.com/risingwavelabs/wavekit/internal/conn/meta"
-	"github.com/risingwavelabs/wavekit/internal/conn/metricsstore"
-	"github.com/risingwavelabs/wavekit/internal/conn/sql"
-	"github.com/risingwavelabs/wavekit/internal/controller"
-	"github.com/risingwavelabs/wavekit/internal/globalctx"
-	"github.com/risingwavelabs/wavekit/internal/macaroons"
-	"github.com/risingwavelabs/wavekit/internal/macaroons/store"
-	"github.com/risingwavelabs/wavekit/internal/metrics"
-	"github.com/risingwavelabs/wavekit/internal/model"
-	"github.com/risingwavelabs/wavekit/internal/server"
-	"github.com/risingwavelabs/wavekit/internal/service"
-	"github.com/risingwavelabs/wavekit/internal/task"
-	"github.com/risingwavelabs/wavekit/internal/worker"
-	"github.com/risingwavelabs/wavekit/internal/worker/handler"
+	"github.com/cloudcarver/anchor/wire"
+	"github.com/risingwavelabs/wavekit/pkg"
+	"github.com/risingwavelabs/wavekit/pkg/config"
+	"github.com/risingwavelabs/wavekit/pkg/conn/http"
+	"github.com/risingwavelabs/wavekit/pkg/conn/meta"
+	"github.com/risingwavelabs/wavekit/pkg/conn/metricsstore"
+	"github.com/risingwavelabs/wavekit/pkg/conn/sql"
+	"github.com/risingwavelabs/wavekit/pkg/controller"
+	"github.com/risingwavelabs/wavekit/pkg/service"
+	"github.com/risingwavelabs/wavekit/pkg/task"
+	"github.com/risingwavelabs/wavekit/pkg/zcore/injection"
+	"github.com/risingwavelabs/wavekit/pkg/zcore/model"
+	"github.com/risingwavelabs/wavekit/pkg/zgen/taskgen"
 )
 
 // Injectors from wire.go:
 
-func InitializeApplication() (*app.Application, error) {
+func InitializeApplication() (*pkg.App, error) {
+	application, err := wire.InitializeApplication()
+	if err != nil {
+		return nil, err
+	}
 	configConfig, err := config.NewConfig()
 	if err != nil {
 		return nil, err
 	}
-	globalContext := globalctx.New()
 	modelInterface, err := model.NewModel(configConfig)
 	if err != nil {
 		return nil, err
 	}
-	taskStoreInterface := task.NewTaskStore()
-	keyStore := store.NewStore(modelInterface, taskStoreInterface)
-	caveatParser := auth.NewCaveatParser()
-	macaroonManagerInterface := macaroons.NewMacaroonManager(keyStore, caveatParser)
-	authInterface, err := auth.NewAuth(macaroonManagerInterface)
-	if err != nil {
-		return nil, err
-	}
+	authInterface := injection.InjectAuth(application)
 	sqlConnectionManegerInterface := sql.NewSQLConnectionManager(modelInterface)
 	risectlManagerInterface, err := meta.NewRisectlManager(configConfig)
 	if err != nil {
@@ -57,21 +48,22 @@ func InitializeApplication() (*app.Application, error) {
 		return nil, err
 	}
 	metaHttpManagerInterface := http.NewMetaHttpManager()
-	serviceInterface := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager, metaHttpManagerInterface, taskStoreInterface)
-	initService := service.NewInitService(modelInterface, serviceInterface)
-	serverInterface := controller.NewController(serviceInterface, authInterface)
+	taskStoreInterface := injection.InjectTaskStore(application)
+	taskRunner := taskgen.NewTaskRunner(taskStoreInterface)
+	serviceInterface := injection.InjectAnchorSvc(application)
+	serviceServiceInterface, err := service.NewService(configConfig, modelInterface, authInterface, sqlConnectionManegerInterface, risectlManagerInterface, metricsManager, metaHttpManagerInterface, taskRunner, taskStoreInterface, serviceInterface)
+	if err != nil {
+		return nil, err
+	}
+	serverInterface := controller.NewSeverInterface(serviceServiceInterface, authInterface)
 	validator := controller.NewValidator(modelInterface, authInterface)
-	serverServer, err := server.NewServer(configConfig, globalContext, authInterface, initService, serverInterface, validator)
+	executorInterface := task.NewTaskExecutor(taskRunner, modelInterface, risectlManagerInterface, metaHttpManagerInterface)
+	taskHandler := taskgen.NewTaskHandler(executorInterface)
+	plugin := pkg.NewPlugin(serverInterface, validator, taskHandler)
+	initService := service.NewInitService(modelInterface, serviceInterface)
+	app, err := pkg.NewApp(application, configConfig, plugin, initService)
 	if err != nil {
 		return nil, err
 	}
-	metricsServer := metrics.NewMetricsServer(configConfig, globalContext)
-	taskHandler := handler.NewTaskHandler(risectlManagerInterface, taskStoreInterface, metaHttpManagerInterface)
-	workerWorker, err := worker.NewWorker(globalContext, modelInterface, taskHandler)
-	if err != nil {
-		return nil, err
-	}
-	debugServer := app.NewDebugServer(configConfig, globalContext)
-	application := app.NewApplication(configConfig, serverServer, metricsServer, workerWorker, debugServer)
-	return application, nil
+	return app, nil
 }
