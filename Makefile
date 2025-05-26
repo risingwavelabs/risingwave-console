@@ -37,7 +37,7 @@ db:
 ### Build
 ###################################################
 
-VERSION=v0.3.2
+VERSION=v0.4.0
 
 build-web:
 	@cd web && pnpm install && pnpm run build
