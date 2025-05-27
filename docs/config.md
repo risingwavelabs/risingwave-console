@@ -79,3 +79,6 @@ To use the initialization file, start WaveKit with the `WK_INIT` environment var
 ```shell
 WK_INIT=/path/to/init.yaml wavekit
 ```
+
+
+
