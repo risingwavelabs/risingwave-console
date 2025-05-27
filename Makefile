@@ -1,14 +1,15 @@
 SHELL := /bin/zsh
 PROJECT_DIR=$(shell pwd)
+ANCHOR_BIN="$(PROJECT_DIR)/.anchor/bin/anchor"
 
 gen-frontend-client:
 	cd web && pnpm run gen
 
 install-toolchains:
-	$(PROJECT_DIR)/.anchor/bin/anchor install --config dev/anchor.yaml .
+	$(ANCHOR_BIN) install --config dev/anchor.yaml .
 
 anchor-gen: install-toolchains
-	$(PROJECT_DIR)/.anchor/bin/anchor gen --config dev/anchor.yaml .
+	$(ANCHOR_BIN) gen --config dev/anchor.yaml .
 
 ###################################################
 ### Common
@@ -16,6 +17,21 @@ anchor-gen: install-toolchains
 
 gen: anchor-gen
 	@go mod tidy
+
+###################################################
+### Documentation
+###################################################
+
+doc-config:
+	@mkdir -p .tmp
+	@$(ANCHOR_BIN) docs config --prefix wk --path pkg/config --yaml > .tmp/sample_config.yaml
+	@$(ANCHOR_BIN) docs config --prefix wk --path pkg/config --env --markdown > .tmp/sample_config.env
+	@cat docs/templates/config.tmpl.md | $(ANCHOR_BIN) docs replace --key CONFIG_SAMPLE_YAML --file .tmp/sample_config.yaml |\
+		$(ANCHOR_BIN) docs replace --key CONFIG_ENV --file .tmp/sample_config.env |\
+		$(ANCHOR_BIN) docs replace --key CONFIG_SAMPLE_INIT --file dev/init.yaml \
+		> docs/config.md
+
+doc: doc-config
 
 ###################################################
 ### Dev enviornment

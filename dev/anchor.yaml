@@ -3,7 +3,7 @@ externals:
   wire: v0.6.0
   sqlc: v1.27.0
   mockgen: v0.5.0
-  anchor: v0.3.29
+  anchor: v0.3.46
 
 oapi-codegen:
   path: api/v1.yaml

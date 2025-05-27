@@ -7,3 +7,4 @@ upload/*
 *.ndjson.gz
 profile
 .anchor/*
+.tmp/*
