@@ -40,7 +40,6 @@ export { Relation } from './models/Relation';
 export type { RisectlCommand } from './models/RisectlCommand';
 export type { RisectlCommandResult } from './models/RisectlCommandResult';
 export type { Schema } from './models/Schema';
-export type { SignInRequest } from './models/SignInRequest';
 export type { Snapshot } from './models/Snapshot';
 export type { SnapshotCreate } from './models/SnapshotCreate';
 export { Task } from './models/Task';

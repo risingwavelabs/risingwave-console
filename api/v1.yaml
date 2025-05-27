@@ -917,11 +917,15 @@ components:
         - type
         - columns
         - dependencies
+        - schema
       properties:
         ID:
           type: integer
           format: int32
           description: Unique identifier of the table
+        schema:
+          type: string
+          description: Name of the schema this table belongs to
         name:
           type: string
           description: Name of the table

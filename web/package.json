@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "gen": "npx openapi-typescript-codegen --input ../api/v1.yaml --output ./api-gen --client axios"
+    "gen": "npx openapi-typescript-codegen --input ../api/v1.yaml --output ./api-gen --client axios && npx openapi-typescript-codegen --input https://raw.githubusercontent.com/cloudcarver/anchor/refs/tags/v0.3.45/api/v1.yaml --output ./api-anchor --client axios"
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.1.4",

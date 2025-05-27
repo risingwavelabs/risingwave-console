@@ -9,6 +9,10 @@ export type Relation = {
      */
     ID: number;
     /**
+     * Name of the schema this table belongs to
+     */
+    schema: string;
+    /**
      * Name of the table
      */
     name: string;

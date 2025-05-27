@@ -2,4 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type MetricValue = Array<any>;
+export type EventTaskError = {
+    taskID: number;
+    error: string;
+};
+

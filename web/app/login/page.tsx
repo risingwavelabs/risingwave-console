@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { DefaultService } from "@/api-gen"
+import { DefaultService as AnchorService } from "@/api-anchor"
 import toast from "react-hot-toast"
 
 export default function LoginPage() {
@@ -20,7 +20,7 @@ export default function LoginPage() {
     setLoading(true)
     
     try {
-      const credentials = await DefaultService.signIn({
+      const credentials = await AnchorService.signIn({
         name: name,
         password: password,
       })
