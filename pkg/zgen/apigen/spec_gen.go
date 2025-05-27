@@ -347,6 +347,9 @@ type Relation struct {
 	// Name Name of the table
 	Name string `json:"name"`
 
+	// Schema Name of the schema this table belongs to
+	Schema string `json:"schema"`
+
 	// Type Type of the relation
 	Type RelationType `json:"type"`
 }

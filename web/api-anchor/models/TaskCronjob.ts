@@ -2,4 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type MetricValue = Array<any>;
+export type TaskCronjob = {
+    cronExpression: string;
+};
+

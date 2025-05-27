@@ -15,6 +15,20 @@ import type { Database as APIDatabase } from "@/api-gen/models/Database"
 
 const SELECTED_DB_KEY = 'selected-database-id'
 
+// System schemas to exclude from streaming graph
+const SYSTEM_SCHEMAS = ['pg_catalog', 'rw_catalog', 'information_schema']
+
+// Utility function to filter out system schemas and get user schemas
+const getUserSchemas = (schemas: APISchema[]): APISchema[] => {
+  return schemas.filter(schema => !SYSTEM_SCHEMAS.includes(schema.name))
+}
+
+// Utility function to convert multiple schemas to streaming graph data
+const convertSchemasToStreamingGraph = (schemas: APISchema[]): RisingWaveNodeData[] => {
+  const userSchemas = getUserSchemas(schemas)
+  return userSchemas.flatMap(schema => convertToStreamingGraph(schema))
+}
+
 // Utility function to convert API schema to UI schema
 const convertDatabaseSchema = (dbDetails: APIDatabase): DatabaseItem['schemas'] => {
   return dbDetails.schemas?.map(schema => ({
@@ -37,6 +51,7 @@ const convertDatabaseSchema = (dbDetails: APIDatabase): DatabaseItem['schemas'] 
 const convertToStreamingGraph = (schema: APISchema): RisingWaveNodeData[] => {
   return schema.relations.map((relation: APIRelation) => ({
     id: relation.ID,
+    schema: relation.schema,
     name: relation.name,
     type: relation.type.toLowerCase() as NodeType,
     columns: relation.columns.map(col => ({
@@ -156,10 +171,11 @@ export default function SQLConsole() {
           })
           setDatabases(updatedDatabases)
 
-          // Update the streaming graph if there's a public schema
-          const publicSchema = dbDetails.schemas?.find(s => s.name === 'public')
-          if (publicSchema) {
-            setDatabaseSchema(convertToStreamingGraph(publicSchema))
+          // Update the streaming graph if there are user schemas
+          if (dbDetails.schemas && dbDetails.schemas.length > 0) {
+            setDatabaseSchema(convertSchemasToStreamingGraph(dbDetails.schemas))
+          } else {
+            setDatabaseSchema([])
           }
 
           // Set the selected database ID
@@ -240,9 +256,11 @@ export default function SQLConsole() {
     // Update streaming graph data for the selected database
     const db = databases.find(db => db.id === databaseId)
     if (db?.schemas) {
-      const publicSchema = db.schemas.find(s => s.name === 'public')
-      if (publicSchema) {
-        const graphData = convertToStreamingGraph(publicSchema as unknown as APISchema)
+      const userSchemas = db.schemas.filter(s => !SYSTEM_SCHEMAS.includes(s.name))
+      if (userSchemas.length > 0) {
+        const graphData = userSchemas.flatMap(schema => 
+          convertToStreamingGraph(schema as unknown as APISchema)
+        )
         setDatabaseSchema(graphData)
       } else {
         setDatabaseSchema([])
@@ -289,9 +307,8 @@ export default function SQLConsole() {
           }))
 
           // Update streaming graph data for the selected database
-          const publicSchema = dbDetails.schemas?.find(s => s.name === 'public')
-          if (publicSchema) {
-            setDatabaseSchema(convertToStreamingGraph(publicSchema))
+          if (dbDetails.schemas && dbDetails.schemas.length > 0) {
+            setDatabaseSchema(convertSchemasToStreamingGraph(dbDetails.schemas))
           } else {
             setDatabaseSchema([])
           }
@@ -374,9 +391,10 @@ export default function SQLConsole() {
 
           // Update streaming graph data if this is the selected database
           if (dbId === selectedDatabaseId) {
-            const publicSchema = (dbDetails.schemas as APISchema[])?.find(s => s.name === 'public')
-            if (publicSchema) {
-              setDatabaseSchema(convertToStreamingGraph(publicSchema))
+            if (dbDetails.schemas && dbDetails.schemas.length > 0) {
+              setDatabaseSchema(convertSchemasToStreamingGraph(dbDetails.schemas))
+            } else {
+              setDatabaseSchema([])
             }
           }
         } catch (error) {
@@ -410,9 +428,8 @@ export default function SQLConsole() {
 
             // If this is the selected database, update the streaming graph
             if (dbId === selectedDatabaseId) {
-              const publicSchema = dbDetails.schemas?.find(s => s.name === 'public')
-              if (publicSchema) {
-                setDatabaseSchema(convertToStreamingGraph(publicSchema))
+              if (dbDetails.schemas && dbDetails.schemas.length > 0) {
+                setDatabaseSchema(convertSchemasToStreamingGraph(dbDetails.schemas))
               } else {
                 setDatabaseSchema([])
               }

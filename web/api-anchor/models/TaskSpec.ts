@@ -2,4 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type MetricValue = Array<any>;
+export type TaskSpec = {
+    type: string;
+    /**
+     * The JSONB of the spec of the task
+     */
+    payload: string;
+};
+

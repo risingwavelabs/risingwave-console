@@ -19,6 +19,7 @@ export type NodeType = 'source' | 'sink' | 'materialized view' | 'table' | 'syst
 
 export interface RisingWaveNodeData extends Record<string, unknown> {
   id: number;
+  schema: string;
   name: string;
   type: NodeType;
   columns: TableColumn[];
@@ -92,7 +93,7 @@ const TableNodeComponent = React.memo(({ data }: { data: RisingWaveNodeData }) =
   const headerContent = React.useMemo(() => (
     <span className="flex items-center gap-2 flex-1">
       <span>{icon}</span>
-      <span className="text-foreground">{data.name}</span>
+      <span className="text-foreground">{data.schema}.{data.name}</span>
     </span>
   ), [icon, data.name]);
 
@@ -221,7 +222,6 @@ export function StreamingGraph({ clusterId, data = [], className = '', height = 
     if (clusterId) {
       try {
         const matrix = await DefaultService.getMaterializedViewThroughput(clusterId);
-
         if (matrix && matrix.length > 0) {
           // Process the throughput data for each materialized view
           const newThroughputData: Record<string, number> = {};

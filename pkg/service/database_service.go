@@ -122,6 +122,7 @@ func (s *Service) GetDatabase(ctx context.Context, id int32, orgID int32) (*apig
 		if _, ok := schema[relationName]; !ok {
 			schema[relationName] = apigen.Relation{
 				ID:           row["relation_id"].(int32),
+				Schema:       schemaName,
 				Name:         row["relation_name"].(string),
 				Type:         apigen.RelationType(row["relation_type"].(string)),
 				Columns:      []apigen.Column{},

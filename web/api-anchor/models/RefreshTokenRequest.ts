@@ -2,4 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type MetricValue = Array<any>;
+export type RefreshTokenRequest = {
+    /**
+     * Refresh token obtained from sign-in
+     */
+    refreshToken: string;
+};
+

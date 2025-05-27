@@ -1,8 +1,9 @@
 import axios, { AxiosError } from "axios";
 
 import { OpenAPI } from "../api-gen";
-import { DefaultService } from "../api-gen";
+import { OpenAPI as AnchorOpenAPI } from "../api-anchor";
 import toast from "react-hot-toast";
+import { DefaultService as AnchorService } from "../api-anchor";
 
 let baseUrl = "http://localhost:30080/api/v1";
 if (typeof window !== "undefined") {
@@ -10,13 +11,16 @@ if (typeof window !== "undefined") {
   baseUrl = (window as any).APP_ENDPOINT || "http://localhost:8020/api/v1";
 }
 
+AnchorOpenAPI.BASE = baseUrl;
+OpenAPI.BASE = baseUrl;
+
 const tokenKey = "token";
 const refreshTokenKey = "refresh_token";
 
 const initService = () => {
-  OpenAPI.BASE = baseUrl;
   const userToken = localStorage.getItem(tokenKey) || "";
   OpenAPI.TOKEN = userToken;
+  AnchorOpenAPI.TOKEN = userToken;
 
   axios.interceptors.response.use(
     function (response) {
@@ -35,10 +39,11 @@ const initService = () => {
         const refreshToken = localStorage.getItem(refreshTokenKey);
         if (refreshToken) {
           try {
-            const response = await DefaultService.refreshToken({ refreshToken });
+            const response = await AnchorService.refreshToken({ refreshToken });
             localStorage.setItem(tokenKey, response.accessToken);
             localStorage.setItem(refreshTokenKey, response.refreshToken);
             OpenAPI.TOKEN = response.accessToken;
+            AnchorOpenAPI.TOKEN = response.accessToken;
 
             // Retry the original request with the new token
             const config = error.config;
