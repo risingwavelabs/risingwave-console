@@ -6,9 +6,6 @@ WaveKit is a simple on-prem tool designed to enhance observability for your Risi
 
 WaveKit supports all RisingWave deployment types, including Docker, Kubernetes, and RisingWave Cloud.
 
-> [!WARNING]
-> **WaveKit is currently in the public preview stage.**
-
 > [!NOTE]
 > _WaveKit uses a PostgreSQL database to store key cluster metadata, including connection details like hostnames and ports for RisingWave clusters. To ensure persistence, you’ll need to self-host a PostgreSQL database to prevent metadata loss._
 
