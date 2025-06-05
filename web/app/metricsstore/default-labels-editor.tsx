@@ -124,7 +124,7 @@ export function DefaultLabelsEditor({
               <Label htmlFor="label-value" className="text-xs">Value</Label>
               <Input
                 id="label-value"
-                placeholder="e.g. wavekit"
+                placeholder="e.g. risingwave-console"
                 value={newLabel.value}
                 onChange={(e) => setNewLabel({ ...newLabel, value: e.target.value })}
                 className="h-8"

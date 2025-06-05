@@ -1,10 +1,10 @@
-# Contributing to WaveKit
+# Contributing to RisingWave Console
 
-We're excited that you're interested in contributing to WaveKit! This guide will help you get started with making contributions to the project.
+We're excited that you're interested in contributing to RisingWave Console! This guide will help you get started with making contributions to the project.
 
 ## Contributing to Documentation
 
-WaveKit's documentation is partially generated from templates located in the [docs/templates](docs/templates) directory. To make documentation changes:
+RisingWave Console's documentation is partially generated from templates located in the [docs/templates](docs/templates) directory. To make documentation changes:
 
 1. Find the relevant template file in the templates directory
 2. Make your changes to the template

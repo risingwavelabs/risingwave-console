@@ -7,10 +7,10 @@ import (
 	"github.com/cloudcarver/anchor/pkg/taskcore"
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
-	"github.com/risingwavelabs/wavekit/pkg/zcore/model"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/querier"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/taskgen"
+	"github.com/risingwavelabs/risingwave-console/pkg/zcore/model"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/querier"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/taskgen"
 )
 
 func (s *Service) CreateClusterDiagnostic(ctx context.Context, id int32, orgID int32) (*apigen.DiagnosticData, error) {

@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/querier"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/querier"
 )
 
 func clusterToApi(cluster *querier.Cluster) *apigen.Cluster {

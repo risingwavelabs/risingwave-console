@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"github.com/risingwavelabs/wavekit/pkg/conn/meta"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
+	"github.com/risingwavelabs/risingwave-console/pkg/conn/meta"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
 )
 
 func (s *Service) getRisectlConn(ctx context.Context, id int32) (meta.RisectlConn, error) {

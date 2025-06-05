@@ -4,6 +4,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y ca-certificates
 
 ARG TARGETARCH
-COPY ./bin/wavekit-server-${TARGETARCH} /app/wavekit-server
+COPY ./bin/risingwave-console-server-${TARGETARCH} /app/risingwave-console-server
 
-CMD ["./wavekit-server"]
+CMD ["./risingwave-console-server"]

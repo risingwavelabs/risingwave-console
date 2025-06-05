@@ -13,7 +13,7 @@ RUN echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/16/main/pg_hba.conf
 # RUN echo "listen_addresses='*'\nport = 5432" >> /etc/postgresql/12/main/postgresql.conf
 
 ARG TARGETARCH
-COPY ./bin/wavekit-server-${TARGETARCH} /app/wavekit-server
+COPY ./bin/risingwave-console-server-${TARGETARCH} /app/risingwave-console-server
 COPY ./docker/config.bundle.yaml /app/config.yaml
 
 # Create startup script
@@ -22,8 +22,8 @@ COPY <<EOF /app/start.sh
 set -e
 service postgresql start
 su - postgres -c "psql -c \\\"ALTER USER postgres WITH PASSWORD 'postgres';\\\""
-echo 'starting wavekit-server'
-exec /app/wavekit-server
+echo 'starting risingwave-console-server'
+exec /app/risingwave-console-server
 EOF
 RUN chmod +x /app/start.sh
 

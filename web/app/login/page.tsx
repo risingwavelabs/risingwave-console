@@ -49,7 +49,7 @@ export default function LoginPage() {
             height={48}
           />
           <h1 className="text-2xl font-semibold tracking-tight">
-            Welcome to WaveKit
+            Welcome to RisingWave Console
           </h1>
           <p className="text-sm text-muted-foreground">
             Sign in to manage your RisingWave clusters

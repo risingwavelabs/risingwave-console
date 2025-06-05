@@ -11,12 +11,12 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
-	"github.com/risingwavelabs/wavekit"
-	"github.com/risingwavelabs/wavekit/pkg/config"
-	"github.com/risingwavelabs/wavekit/pkg/utils"
-	"github.com/risingwavelabs/wavekit/pkg/zcore/model"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/querier"
+	root "github.com/risingwavelabs/risingwave-console"
+	"github.com/risingwavelabs/risingwave-console/pkg/config"
+	"github.com/risingwavelabs/risingwave-console/pkg/utils"
+	"github.com/risingwavelabs/risingwave-console/pkg/zcore/model"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/querier"
 	"gopkg.in/yaml.v3"
 
 	anchor_app "github.com/cloudcarver/anchor/pkg/app"
@@ -72,7 +72,7 @@ func NewInitService(m model.ModelInterface, anchor_svc anchor_svc.ServiceInterfa
 func (s *InitService) Init(ctx context.Context, cfg *config.Config, anchorApp *anchor_app.Application) error {
 	// init the static web pages
 	anchorApp.GetServer().GetApp().Use("/", filesystem.New(filesystem.Config{
-		Root:         http.FS(wavekit.StaticFiles),
+		Root:         http.FS(root.StaticFiles),
 		PathPrefix:   "web/out",
 		NotFoundFile: "404.html",
 		Index:        "index.html",

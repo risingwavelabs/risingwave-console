@@ -18,6 +18,7 @@ class Relation:
     """
     Attributes:
         id (int): Unique identifier of the table
+        schema (str): Name of the schema this table belongs to
         name (str): Name of the table
         type_ (RelationType): Type of the relation
         columns (list['Column']): List of columns in the table
@@ -25,6 +26,7 @@ class Relation:
     """
 
     id: int
+    schema: str
     name: str
     type_: RelationType
     columns: list["Column"]
@@ -33,6 +35,8 @@ class Relation:
 
     def to_dict(self) -> dict[str, Any]:
         id = self.id
+
+        schema = self.schema
 
         name = self.name
 
@@ -50,6 +54,7 @@ class Relation:
         field_dict.update(
             {
                 "ID": id,
+                "schema": schema,
                 "name": name,
                 "type": type_,
                 "columns": columns,
@@ -66,6 +71,8 @@ class Relation:
         d = dict(src_dict)
         id = d.pop("ID")
 
+        schema = d.pop("schema")
+
         name = d.pop("name")
 
         type_ = RelationType(d.pop("type"))
@@ -81,6 +88,7 @@ class Relation:
 
         relation = cls(
             id=id,
+            schema=schema,
             name=name,
             type_=type_,
             columns=columns,

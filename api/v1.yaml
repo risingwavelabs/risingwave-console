@@ -1,9 +1,9 @@
 openapi: 3.0.0
 
 info:
-  title: Wavekit
+  title: Console
   version: "1.0"
-  description: API for interacting with Wavekit
+  description: API for interacting with RisingWave Console
 
 servers:
   - url: /api/v1
@@ -1454,7 +1454,7 @@ components:
         query:
           type: string
           description: |
-            query to get the metrics, e.g. `{namespace="wavekit"}`
+            query to get the metrics, e.g. `{namespace="risingwave-console"}`
 
     MetricsStoreLabelMatcherList:
       type: array

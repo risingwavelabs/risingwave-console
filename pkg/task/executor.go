@@ -9,13 +9,13 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
-	"github.com/risingwavelabs/wavekit/pkg/conn/http"
-	"github.com/risingwavelabs/wavekit/pkg/conn/meta"
-	"github.com/risingwavelabs/wavekit/pkg/logger"
-	"github.com/risingwavelabs/wavekit/pkg/utils"
-	"github.com/risingwavelabs/wavekit/pkg/zcore/model"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/querier"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/taskgen"
+	"github.com/risingwavelabs/risingwave-console/pkg/conn/http"
+	"github.com/risingwavelabs/risingwave-console/pkg/conn/meta"
+	"github.com/risingwavelabs/risingwave-console/pkg/logger"
+	"github.com/risingwavelabs/risingwave-console/pkg/utils"
+	"github.com/risingwavelabs/risingwave-console/pkg/zcore/model"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/querier"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/taskgen"
 	"go.uber.org/zap"
 )
 

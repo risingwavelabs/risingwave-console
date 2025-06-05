@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/risingwavelabs/wavekit/pkg/utils"
+	"github.com/risingwavelabs/risingwave-console/pkg/utils"
 	"golang.org/x/mod/semver"
 )
 

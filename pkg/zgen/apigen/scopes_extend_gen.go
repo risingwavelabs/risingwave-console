@@ -3,7 +3,7 @@ package apigen
 import "github.com/gofiber/fiber/v2"
 
 type Validator interface { 
-    // AuthFunc is called before the request is processed. The response will be 400 if the auth fails.
+    // AuthFunc is called before the request is processed. The response will be 401 if the auth fails.
     AuthFunc(*fiber.Ctx) error
 
     // PreValidate is called before the request is processed. The response will be 403 if the validation fails.

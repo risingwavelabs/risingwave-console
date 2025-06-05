@@ -11,10 +11,10 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
-	"github.com/risingwavelabs/wavekit"
-	"github.com/risingwavelabs/wavekit/pkg/config"
-	"github.com/risingwavelabs/wavekit/pkg/logger"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/querier"
+	root "github.com/risingwavelabs/risingwave-console"
+	"github.com/risingwavelabs/risingwave-console/pkg/config"
+	"github.com/risingwavelabs/risingwave-console/pkg/logger"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/querier"
 )
 
 var log = logger.NewLogAgent("model")
@@ -122,7 +122,7 @@ func NewModel(cfg *config.Config) (ModelInterface, error) {
 		time.Sleep(3 * time.Second)
 	}
 
-	d, err := iofs.New(wavekit.Migrations, "sql/migrations")
+	d, err := iofs.New(root.Migrations, "sql/migrations")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create migration source driver")
 	}
