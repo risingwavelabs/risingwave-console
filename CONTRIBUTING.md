@@ -14,7 +14,24 @@ This ensures documentation stays consistent and up-to-date across the project.
 
 ## Development Setup
 
-[TODO]
+1. Install Anchor CLI and toolchains (only for first time setup)
+
+```shell
+go install github.com/cloudcarver/anchor@latest
+anchor install --config dev/anchor.yaml .
+```
+
+2. Generate Code
+
+```shell
+make gen
+```
+
+3. Build the web page
+
+```shell
+make build-web
+```
 
 ## Code Style Guidelines
 

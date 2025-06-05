@@ -64,18 +64,8 @@ RisingWave Console offers flexibility in how it can be deployed:
     # 2. Run (ensure RCONSOLE_PG_DSN is set)
     RCONSOLE_PG_DSN="postgres://user:pass@host:port/dbname" RCONSOLE_ROOT_PASSWORD=your_secure_password ./risingwave-console
     ```
-*   **Docker Compose (Recommended for Production with Self-Managed PG):** Use Docker Compose to manage RisingWave Console and (optionally) a dedicated PostgreSQL container. See example `docker-compose.yaml` in our [Installation Guide](risingwave.com/wavekit/installation-setup).
-    ```yaml
-    # Example snippet for docker-compose.yaml using non-pgbundle image
-    # services:
-    #   risingwave-console:
-    #     image: risingwavelabs/risingwave-console:vX.Y.Z
-    #     ports: ["8020:8020"]
-    #     environment:
-    #       RCONSOLE_PG_DSN: "your_postgres_dsn"
-    #       RCONSOLE_ROOT_PASSWORD: "your_secure_password"
-    #   # ... your PostgreSQL service definition ...
-    ```
+*   **Docker Compose (Recommended for Production with Self-Managed PG):** Use Docker Compose to manage RisingWave Console and (optionally) a dedicated PostgreSQL container. See example in [docker-compose.yaml](docker-compose.yaml), or our [Installation Guide](risingwave.com/wavekit/installation-setup).
+
 
 ## 💻 Using RisingWave Console
 
