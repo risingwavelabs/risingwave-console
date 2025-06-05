@@ -1,0 +1,6 @@
+pg:
+  dsn: postgres://postgres:postgres@db:5432/postgres
+root:
+  password: '123456'
+risectldir: /risingwave-console-data/risectl
+init: /app/init.yaml

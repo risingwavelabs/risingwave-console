@@ -38,13 +38,13 @@ doc: doc-config
 ###################################################
 
 start:
-	docker compose up 
+	docker compose -f docker-compose-dev.yaml up 
 
 reload:
-	docker compose restart dev
+	docker compose -f docker-compose-dev.yaml restart dev
 
 log:
-	docker compose logs -f dev
+	docker compose -f docker-compose-dev.yaml logs -f dev
 
 db:
 	psql "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"
