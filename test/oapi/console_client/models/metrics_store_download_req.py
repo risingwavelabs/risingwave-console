@@ -20,7 +20,7 @@ class MetricsStoreDownloadReq:
         end (Union[Unset, datetime.datetime]): End time of the metrics store
         query_ratio (Union[Unset, float]): (0, 1], if OOM, reduce the memory usage in Prometheus instance by this ratio
             (default: 1)
-        query (Union[Unset, str]): query to get the metrics, e.g. `{namespace="wavekit"}`
+        query (Union[Unset, str]): query to get the metrics, e.g. `{namespace="risingwave-console"}`
     """
 
     step: Union[Unset, str] = UNSET

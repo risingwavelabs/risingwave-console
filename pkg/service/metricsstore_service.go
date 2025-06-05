@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/risingwavelabs/wavekit/pkg/zcore/model"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/querier"
+	"github.com/risingwavelabs/risingwave-console/pkg/zcore/model"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/querier"
 )
 
 var (

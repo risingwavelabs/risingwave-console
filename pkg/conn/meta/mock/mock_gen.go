@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	meta "github.com/risingwavelabs/wavekit/pkg/conn/meta"
+	meta "github.com/risingwavelabs/risingwave-console/pkg/conn/meta"
 	gomock "go.uber.org/mock/gomock"
 )
 

@@ -4,9 +4,9 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/risingwavelabs/wavekit/pkg/logger"
-	"github.com/risingwavelabs/wavekit/pkg/utils"
-	"github.com/risingwavelabs/wavekit/wire"
+	"github.com/risingwavelabs/risingwave-console/pkg/logger"
+	"github.com/risingwavelabs/risingwave-console/pkg/utils"
+	"github.com/risingwavelabs/risingwave-console/wire"
 	"go.uber.org/zap"
 )
 

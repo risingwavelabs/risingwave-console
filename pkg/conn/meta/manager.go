@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v68/github"
-	"github.com/risingwavelabs/wavekit/pkg/config"
+	"github.com/risingwavelabs/risingwave-console/pkg/config"
 )
 
 const risectlFileName = "risectl"

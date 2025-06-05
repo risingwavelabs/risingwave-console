@@ -1,4 +1,4 @@
-# This is used for local development of wavekit.
+# This is used for local development of risingwave-console.
 global:
   scrape_interval: 5s
   evaluation_interval: 60s
@@ -14,6 +14,6 @@ scrape_configs:
         labels:
           risingwave_cluster: "default"
 
-  - job_name: wavekit
+  - job_name: risingwave-console
     static_configs:
       - targets: ["dev:9020"]

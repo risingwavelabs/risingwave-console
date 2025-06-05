@@ -6,10 +6,10 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
-	"github.com/risingwavelabs/wavekit/pkg/conn/sql"
-	"github.com/risingwavelabs/wavekit/pkg/utils"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/querier"
+	"github.com/risingwavelabs/risingwave-console/pkg/conn/sql"
+	"github.com/risingwavelabs/risingwave-console/pkg/utils"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/querier"
 )
 
 func (s *Service) TestDatabaseConnection(ctx context.Context, params apigen.TestDatabaseConnectionPayload, orgID int32) (*apigen.TestDatabaseConnectionResult, error) {

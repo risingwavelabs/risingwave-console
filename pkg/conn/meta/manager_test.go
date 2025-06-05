@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/risingwavelabs/wavekit/pkg/config"
+	"github.com/risingwavelabs/risingwave-console/pkg/config"
 	"github.com/stretchr/testify/require"
 )
 

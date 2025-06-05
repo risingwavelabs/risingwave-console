@@ -7,10 +7,10 @@ import (
 
 	"github.com/cloudcarver/anchor/pkg/auth"
 	"github.com/gofiber/fiber/v2"
-	"github.com/risingwavelabs/wavekit/pkg/conn/metricsstore"
-	"github.com/risingwavelabs/wavekit/pkg/service"
-	"github.com/risingwavelabs/wavekit/pkg/utils"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
+	"github.com/risingwavelabs/risingwave-console/pkg/conn/metricsstore"
+	"github.com/risingwavelabs/risingwave-console/pkg/service"
+	"github.com/risingwavelabs/risingwave-console/pkg/utils"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
 )
 
 type Controller struct {

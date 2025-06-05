@@ -7,11 +7,11 @@ import (
 
 	"github.com/cloudcarver/anchor/pkg/taskcore"
 	"github.com/jackc/pgx/v5"
-	mock_http "github.com/risingwavelabs/wavekit/pkg/conn/http/mock"
-	"github.com/risingwavelabs/wavekit/pkg/zcore/model"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/querier"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/taskgen"
+	mock_http "github.com/risingwavelabs/risingwave-console/pkg/conn/http/mock"
+	"github.com/risingwavelabs/risingwave-console/pkg/zcore/model"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/querier"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/taskgen"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )

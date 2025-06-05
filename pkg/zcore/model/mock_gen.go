@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	pgx "github.com/jackc/pgx/v5"
-	querier "github.com/risingwavelabs/wavekit/pkg/zgen/querier"
+	querier "github.com/risingwavelabs/risingwave-console/pkg/zgen/querier"
 	gomock "go.uber.org/mock/gomock"
 )
 

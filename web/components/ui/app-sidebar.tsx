@@ -36,7 +36,7 @@ function RisingWaveIcon({ className }: { className?: string }) {
 
 const mainMenuItems = [
   {
-    title: "WaveKit",
+    title: "RisingWave Console",
     href: "/",
     icon: RisingWaveIcon,
   },

@@ -6,9 +6,9 @@ import (
 
 	"github.com/pkg/errors"
 	prom_model "github.com/prometheus/common/model"
-	"github.com/risingwavelabs/wavekit/pkg/config"
-	"github.com/risingwavelabs/wavekit/pkg/zcore/model"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
+	"github.com/risingwavelabs/risingwave-console/pkg/config"
+	"github.com/risingwavelabs/risingwave-console/pkg/zcore/model"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
 )
 
 var ErrMetricsStoreNotSupported = errors.New("Metrics store not supported")

@@ -21,7 +21,7 @@ export type MetricsStoreDownloadReq = {
      */
     queryRatio?: number;
     /**
-     * query to get the metrics, e.g. `{namespace="wavekit"}`
+     * query to get the metrics, e.g. `{namespace="risingwave-console"}`
      *
      */
     query?: string;

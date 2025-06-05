@@ -8,7 +8,7 @@ package querier
 import (
 	"context"
 
-	"github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
 )
 
 const createMetricsStore = `-- name: CreateMetricsStore :one

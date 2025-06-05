@@ -60,29 +60,29 @@ build-web:
 
 build-binary:
 	@rm -rf upload
-	@CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Darwin/x86_64/wavekit cmd/wavekit/main.go
-	@CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Darwin/arm64/wavekit cmd/wavekit/main.go
-	@CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/x86_64/wavekit cmd/wavekit/main.go
-	@CGO_ENABLED=0 GOOS=linux   GOARCH=386   go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/i386/wavekit cmd/wavekit/main.go
-	@CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build -ldflags="-X 'github.com/risingwavelabs/wavekit/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/arm64/wavekit cmd/wavekit/main.go
+	@CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build -ldflags="-X 'github.com/risingwavelabs/risingwave-console/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Darwin/x86_64/risingwave-console cmd/risingwave-console/main.go
+	@CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build -ldflags="-X 'github.com/risingwavelabs/risingwave-console/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Darwin/arm64/risingwave-console cmd/risingwave-console/main.go
+	@CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -ldflags="-X 'github.com/risingwavelabs/risingwave-console/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/x86_64/risingwave-console cmd/risingwave-console/main.go
+	@CGO_ENABLED=0 GOOS=linux   GOARCH=386   go build -ldflags="-X 'github.com/risingwavelabs/risingwave-console/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/i386/risingwave-console cmd/risingwave-console/main.go
+	@CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build -ldflags="-X 'github.com/risingwavelabs/risingwave-console/internal/utils.CurrentVersion=$(VERSION)'" -o upload/Linux/arm64/risingwave-console cmd/risingwave-console/main.go
 
-binary-push:
+push-binary:
 	@cp scripts/download.sh upload/download.sh
 	@echo 'latest version: $(VERSION)' > upload/metadata.txt
-	@aws s3 cp --recursive upload/ s3://wavekit-release/	
+	@aws s3 cp --recursive upload/ s3://risingwave-console/	
 
 build-server:
-	GOOS=linux GOARCH=amd64 go build -o ./bin/wavekit-server-amd64 cmd/wavekit/main.go
-	GOOS=linux GOARCH=arm64 go build -o ./bin/wavekit-server-arm64 cmd/wavekit/main.go
+	GOOS=linux GOARCH=amd64 go build -o ./bin/risingwave-console-server-amd64 cmd/risingwave-console/main.go
+	GOOS=linux GOARCH=arm64 go build -o ./bin/risingwave-console-server-arm64 cmd/risingwave-console/main.go
 
 IMG_TAG=$(VERSION)
-DOCKER_REPO=risingwavelabs/wavekit
+DOCKER_REPO=risingwavelabs/risingwave-console
 
 push-docker: build-server
 	docker buildx build --platform linux/amd64,linux/arm64 -f docker/Dockerfile.pgbundle -t ${DOCKER_REPO}:${IMG_TAG}-pgbundle --push .
 	docker buildx build --platform linux/amd64,linux/arm64 -f docker/Dockerfile -t ${DOCKER_REPO}:${IMG_TAG} --push .
 
-ci: doc build-web build-server build-binary push-docker binary-push
+ci: doc build-web build-server build-binary push-docker push-binary
 
 ut:
 	@COLOR=ALWAYS go test -race -covermode=atomic -coverprofile=coverage.out -tags ut ./... 

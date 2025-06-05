@@ -33,11 +33,11 @@ type Config struct {
 	// (Optional) The path of file to store the initialization data, if not set, skip the initialization
 	Init string `yaml:"init,omitempty"`
 
-	// (Optional) The host of the wavekit server, it is used in the API endpoint of the web UI.
+	// (Optional) The host of the RisingWave Console server, it is used in the API endpoint of the web UI.
 	// If not set, the host will be localhost.
 	Host string `yaml:"host,omitempty"`
 
-	// (Optional) The port of the wavekit server, default is 8020
+	// (Optional) The port of the RisingWave Console server, default is 8020
 	Port int `yaml:"port,omitempty"`
 
 	// (Optional) The port of the metrics server, default is 9020

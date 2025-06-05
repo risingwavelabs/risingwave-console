@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	mock_http "github.com/risingwavelabs/wavekit/pkg/conn/http/mock"
-	mock_meta "github.com/risingwavelabs/wavekit/pkg/conn/meta/mock"
-	"github.com/risingwavelabs/wavekit/pkg/utils"
-	"github.com/risingwavelabs/wavekit/pkg/zcore/model"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/querier"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/taskgen"
+	mock_http "github.com/risingwavelabs/risingwave-console/pkg/conn/http/mock"
+	mock_meta "github.com/risingwavelabs/risingwave-console/pkg/conn/meta/mock"
+	"github.com/risingwavelabs/risingwave-console/pkg/utils"
+	"github.com/risingwavelabs/risingwave-console/pkg/zcore/model"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/querier"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/taskgen"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 

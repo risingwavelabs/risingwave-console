@@ -12,7 +12,7 @@ import (
 	prom_model "github.com/prometheus/common/model"
 	"go.uber.org/zap"
 
-	"github.com/risingwavelabs/wavekit/pkg/logger"
+	"github.com/risingwavelabs/risingwave-console/pkg/logger"
 )
 
 var log = logger.NewLogAgent("metricsstore")

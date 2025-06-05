@@ -21,18 +21,18 @@ if ! [ -x "$(command -v curl)" ]; then
 fi
 
 # check if the binary exists
-download_url="https://wavekit-release.s3.ap-southeast-1.amazonaws.com/$_os/$_arch/wavekit"
+download_url="https://risingwave-console.s3.ap-southeast-1.amazonaws.com/$_os/$_arch/risingwave-console"
 status_code=$(curl -s -o /dev/null -I -w '%{http_code}' "$download_url")
 
 echo "$download_url"
 
 if [ "$status_code" != 200 ]; then
-	echo "Error $status_code: failed to install wavekit."
+	echo "Error $status_code: failed to install RisingWave Console."
 	exit 1
 fi
 
 # download
-curl -L -o ./wavekit "$download_url"
-chmod 755 ./wavekit
+curl -L -o ./risingwave-console "$download_url"
+chmod 755 ./risingwave-console
 
-echo "wavekit installed successfully."
+echo "RisingWave Console installed successfully."

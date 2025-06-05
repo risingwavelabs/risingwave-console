@@ -6,7 +6,7 @@ import Link from "next/link"
 export default function Home() {
   return (
     <div className="flex flex-col p-8">
-      <h1 className="text-2xl font-semibold mb-4">WaveKit</h1>
+      <h1 className="text-2xl font-semibold mb-4">RisingWave Console</h1>
       <div className="grid gap-4 md:grid-cols-2 mb-8">
         <Link
           href="/clusters"
@@ -34,7 +34,7 @@ export default function Home() {
         <h2 className="text-lg font-medium mb-4">Resources & Documentation</h2>
         <div className="space-y-4">
           <p className="text-muted-foreground">
-            WaveKit is a modern management UI for RisingWave, the cloud-native streaming database.
+          RisingWave Console is a modern management UI for RisingWave, the cloud-native streaming database.
             Here are some helpful resources to get you started:
           </p>
           <div className="grid gap-3 text-sm">
@@ -66,13 +66,13 @@ export default function Home() {
               RisingWave on GitHub
             </a>
             <a
-              href="https://github.com/risingwavelabs/wavekit"
+              href="https://github.com/risingwavelabs/risingwave-console"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-primary hover:underline"
             >
               <FaGithub className="h-4 w-4" />
-              WaveKit on GitHub
+              RisingWave Console on GitHub
             </a>
           </div>
           <div className="border-t pt-4 mt-6">

@@ -2,7 +2,7 @@
 
 ## Build from source
 
-Wavekit server is built with `go` and `pnpm`. The web frontend is served by wavekit server as static files.
+RisingWave Console server is built with `go` and `pnpm`. The web frontend is served by RisingWave Console server as static files.
 All static files are bundled into the server binary through `embed.go`.
 
 1. Build frontend

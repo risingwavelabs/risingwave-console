@@ -1,4 +1,4 @@
-"""A client library for accessing Wavekit"""
+"""A client library for accessing Console"""
 
 from .client import AuthenticatedClient, Client
 

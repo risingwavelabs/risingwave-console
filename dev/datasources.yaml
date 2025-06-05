@@ -1,11 +1,11 @@
 apiVersion: 1
 deleteDatasources:
-  - name: wavekit-default-prometheus
-  - name: wavekit-default-postgres
+  - name: risingwave-console-default-prometheus
+  - name: risingwave-console-default-postgres
 datasources:
   - type: prometheus
-    name: wavekit-default-prometheus
-    uid: wavekit-default-prometheus
+    name: risingwave-console-default-prometheus
+    uid: risingwave-console-default-prometheus
     access: proxy
     url: http://prometheus:9500
     withCredentials: false
@@ -15,8 +15,8 @@ datasources:
     version: 1
     editable: true
   - type: postgres
-    name: wavekit-default-postgres
-    uid: wavekit-default-postgres
+    name: risingwave-console-default-postgres
+    uid: risingwave-console-default-postgres
     access: proxy
     url: db:5432
     database: postgres

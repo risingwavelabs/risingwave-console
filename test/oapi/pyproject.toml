@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "wavekit-client"
+name = "console-client"
 version = "1.0"
-description = "A client library for accessing Wavekit"
+description = "A client library for accessing Console"
 authors = []
 readme = "README.md"
 packages = [
-    {include = "wavekit_client"},
+    {include = "console_client"},
 ]
-include = ["CHANGELOG.md", "wavekit_client/py.typed"]
+include = ["CHANGELOG.md", "console_client/py.typed"]
 
 
 [tool.poetry.dependencies]

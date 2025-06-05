@@ -7,9 +7,9 @@ import (
 	"github.com/cloudcarver/anchor/pkg/app"
 	"github.com/cloudcarver/anchor/pkg/taskcore/worker"
 	"github.com/gofiber/fiber/v2"
-	"github.com/risingwavelabs/wavekit/pkg/config"
-	"github.com/risingwavelabs/wavekit/pkg/service"
-	"github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
+	"github.com/risingwavelabs/risingwave-console/pkg/config"
+	"github.com/risingwavelabs/risingwave-console/pkg/service"
+	"github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
 )
 
 type App struct {

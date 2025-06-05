@@ -64,29 +64,29 @@ sql:
 
         - column: "metrics_stores.spec"
           go_type: 
-            import: "github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
+            import: "github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
             type: "MetricsStoreSpec"
             pointer: true
           nullable: true
 
         - column: "metrics_stores.default_labels"
           go_type:
-            import: "github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
+            import: "github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
             type: "MetricsStoreLabelMatcherList"
             pointer: true
           nullable: true
 
         - column: "tasks.spec"
           go_type:
-            import: "github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
+            import: "github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
             type: "TaskSpec"
 
         - column: "events.spec"
           go_type:
-            import: "github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
+            import: "github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
             type: "EventSpec"
 
         - column: "tasks.attributes"
           go_type:
-            import: "github.com/risingwavelabs/wavekit/pkg/zgen/apigen"
+            import: "github.com/risingwavelabs/risingwave-console/pkg/zgen/apigen"
             type: "TaskAttributes"

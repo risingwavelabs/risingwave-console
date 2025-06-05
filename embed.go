@@ -1,4 +1,4 @@
-package wavekit
+package root
 
 import "embed"
 

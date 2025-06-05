@@ -1,7 +1,7 @@
 import pytest
 import httpx
 
-from oapi.wavekit_client.client import AuthenticatedClient
+from oapi.console_client.client import AuthenticatedClient
 
 base_url = "http://localhost:8020/api/v1"
 
@@ -17,13 +17,13 @@ def auth_client():
 
 
 def test_cluster_db_management(auth_client: AuthenticatedClient):
-    from oapi.wavekit_client.api.default import (
+    from oapi.console_client.api.default import (
         list_clusters,
         get_cluster,
         import_cluster,
         delete_cluster,
     )
-    from oapi.wavekit_client.models import ClusterImport
+    from oapi.console_client.models import ClusterImport
 
     # list clusters
     response = list_clusters.sync_detailed(client=auth_client)
