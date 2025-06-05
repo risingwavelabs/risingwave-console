@@ -1,119 +1,129 @@
 # RisingWave Console
 
-RisingWave Console (previously known as WaveKit) is a simple on-prem tool designed to enhance observability for your RisingWave cluster, enabling faster issue detection, efficient troubleshooting, and improved performance.
+**An On-Premise Observability and Management UI for RisingWave**
 
 ![RisingWave Console Cover](docs/images/cover.png)
 
-RisingWave Console supports all RisingWave deployment types, including Docker, Kubernetes, and RisingWave Cloud.
+WaveKit is a user-friendly, on-premise tool designed to enhance observability and simplify management for your existing RisingWave clusters. It provides a web-based interface to connect to, monitor, and interact with RisingWave, whether it's deployed via Docker, Kubernetes, or on RisingWave Cloud.
 
-> [!NOTE]
-> _RisingWave Console uses a PostgreSQL database to store key cluster metadata, including connection details like hostnames and ports for RisingWave clusters. To ensure persistence, you’ll need to self-host a PostgreSQL database to prevent metadata loss._
+## ✨ Key Features
 
-> [!NOTE]
-> _To use RisingWave Console, ensure your RisingWave cluster is already running and accessible._
+*   **Centralized Cluster View:** Connect to and manage all your RisingWave instances from a single dashboard.
+*   **Status Monitoring:** Get at-a-glance insights into the status and basic information of your connected clusters.
+*   **Direct `risectl` Execution:** Run `risectl` commands on your clusters directly from the WaveKit UI.
+*   **Metadata Snapshot Management:** Easily create manual snapshots and configure automated backups for your RisingWave cluster metadata.
+*   **Diagnostic Collection:** Trigger and automate the collection of diagnostic information for advanced troubleshooting.
+*   **Interactive SQL Console:**
+    *   Securely connect to specific databases within your RisingWave clusters.
+    *   Explore schemas, tables, views, materialized views, sources, and sinks.
+    *   Execute SQL queries with multi-tab support and query history.
+    *   Visualize data flows with an integrated **Streaming Graph** for streaming queries.
+*   **On-Premise Control:** Host WaveKit within your own environment, ensuring your connection details and metadata remain under your control.
 
+## 📋 Prerequisites
 
-## Installation (Quick setup with Docker)
+*   **A running RisingWave cluster:** WaveKit connects to existing, operational RisingWave instances.
+*   **PostgreSQL Database for WaveKit Metadata:** WaveKit uses a PostgreSQL database to store its own configuration (e.g., connection details for your RisingWave clusters). This can be self-hosted or the one bundled with specific WaveKit Docker images.
+*   **Docker (Recommended):** If you plan to use the Docker-based installation methods for WaveKit.
 
-This method installs RisingWave Console with a bundled PostgreSQL database for convenience. However, if you prefer to use your own self-hosted PostgreSQL database for data persistence, skip to the next section.  
+## 🚀 Quick Start (Docker with Persistent Storage)
 
-### **Starting the RisingWave Console Server**  
+This is the recommended way to get started quickly with WaveKit, ensuring your WaveKit metadata persists.
 
-You can start the RisingWave Console server in two ways:  
+1.  Ensure Docker is installed and running.
+2.  Run the following command (replace `vX.Y.Z` with the latest WaveKit version, e.g., `v0.4.0`):
+    ```shell
+    docker run -d -p 8020:8020 --name wavekit \
+      -e WK_ROOT_PASSWORD=your_secure_password \
+      -v wavekit-data:/var/lib/postgresql \
+      risingwavelabs/wavekit:vX.Y.Z-pgbundle
+    ```
+    *   This uses the `-pgbundle` image which includes PostgreSQL.
+    *   `-d` runs the container in detached mode.
+    *   `-p 8020:8020` maps the port.
+    *   `-e WK_ROOT_PASSWORD=your_secure_password` sets a custom initial password for the `root` user. **Recommended!**
+    *   `-v wavekit-data:/var/lib/postgresql` creates a Docker volume named `wavekit-data` to persist PostgreSQL data.
 
-#### **Option 1: Ephemeral Storage (No Persistence)**  
-Runs RisingWave Console with a bundled PostgreSQL database, but metadata is stored inside the container. If the container is removed, all metadata will be lost.  
+3.  Access WaveKit: Open your browser and go to `http://localhost:8020`.
+4.  Login with:
+    *   **Username:** `root`
+    *   **Password:** `your_secure_password` (or `root` if `WK_ROOT_PASSWORD` was not set).
 
-```shell
-docker run --rm -p 8020:8020 --name risingwave-console risingwavelabs/risingwave-console:v0.4.0-pgbundle
-```
+## 🛠️ Other Installation Methods
 
-#### **Option 2: Persistent Storage (Recommended)**  
-Runs RisingWave Console with a bundled PostgreSQL database and stores metadata in a persistent Docker volume (`console-data`), ensuring data persists across restarts.  
+WaveKit offers flexibility in how it can be deployed:
 
-```shell
-docker run -p 8020:8020 --name risingwave-console -v console-data:/var/lib/postgresql risingwavelabs/risingwave-console:v0.4.0-pgbundle
-```
+*   **Docker (Ephemeral Storage):** For quick testing without persistence. Metadata is lost if the container is removed.
+    ```shell
+    docker run --rm -p 8020:8020 --name wavekit risingwavelabs/wavekit:vX.Y.Z-pgbundle
+    ```
+*   **Standalone Binary:** Download the binary and run it directly, connecting to your own existing PostgreSQL instance.
+    ```shell
+    # 1. Download
+    curl https://wavekit-release.s3.ap-southeast-1.amazonaws.com/download.sh | sh
+    # 2. Run (ensure WK_PG_DSN is set)
+    WK_PG_DSN="postgres://user:pass@host:port/dbname" WK_ROOT_PASSWORD=your_secure_password ./wavekit
+    ```
+*   **Docker Compose (Recommended for Production with Self-Managed PG):** Use Docker Compose to manage WaveKit and (optionally) a dedicated PostgreSQL container. See example `docker-compose.yaml` in our [Installation Guide](risingwave.com/wavekit/installation-setup).
+    ```yaml
+    # Example snippet for docker-compose.yaml using non-pgbundle image
+    # services:
+    #   wavekit:
+    #     image: risingwavelabs/wavekit:vX.Y.Z
+    #     ports: ["8020:8020"]
+    #     environment:
+    #       WK_PG_DSN: "your_postgres_dsn"
+    #       WK_ROOT_PASSWORD: "your_secure_password"
+    #   # ... your PostgreSQL service definition ...
+    ```
 
-### **Accessing RisingWave Console**  
+## 💻 Using WaveKit
 
-Once the server is running, open your browser and go to:  
+Once WaveKit is running and you've logged in:
 
-- **[http://localhost:8020](http://localhost:8020)**  
+1.  **Connect Your RisingWave Cluster:**
+    *   Navigate to the "Clusters" section.
+    *   Click "Add Cluster" and provide the connection details (Host, SQL Port, Meta Node Port, HTTP Port, Version) for your existing RisingWave cluster.
+    *   Test and save the connection.
 
-Use the following default credentials to log in:  
-- **Username:** `root`  
-- **Password:** `root`  
+2.  **Explore Cluster Details:**
+    *   From the "Clusters" list, click on your connected cluster to view its details page.
+    *   Here you can:
+        *   View cluster information and status.
+        *   Execute `risectl` commands.
+        *   Manage metadata snapshots.
+        *   Collect diagnostic information.
 
+3.  **Use the SQL Console:**
+    *   Navigate to the "SQL Console" section.
+    *   Click "Manage Databases" to add a new database connection, linking it to one of your configured clusters and providing RisingWave database credentials.
+    *   Write and execute SQL queries, explore schemas, view query history, and visualize streaming graphs.
 
-## Installation (Quick setup with Binary)
+## ⚙️ Configuration
 
-To install RisingWave Console using a standalone binary, follow these steps:
+WaveKit can be configured using environment variables. For a detailed list of available settings, please refer to our [Configuration Guide](docs/config.md).
 
-1. Download and install the latest RisingWave Console binary:
+Key variables include:
+*   `WK_PORT`: Port for the WaveKit UI (default: `8020`).
+*   `WK_PG_DSN`: PostgreSQL connection string for WaveKit's metadata.
+*   `WK_ROOT_PASSWORD`: Initial password for the `root` UI user (default: `root`).
+*   `WK_RISECTLDIR`: Path related to `risectl` resources if needed.
 
-  ```shell
-  curl https://risingwave-console.s3.ap-southeast-1.amazonaws.com/download.sh | sh
-  ```
+## 📚 Documentation
 
-2. Run the following command to start the RisingWave Console server:
+For comprehensive information, guides, and usage details, please visit our **[Official Documentation](risingwave.com/wavekit/introduction)**
 
-  ```shell
-  WK_PG_DSN=postgres://postgres:postgres@localhost:5432/postgres WK_ROOT_PASSWORD=root ./risingwave-console
-  ```
+##  editions
 
-  > [!NOTE]
-  > Ensure you have a PostgreSQL database running on your machine and set the WK_PG_DSN environment variable to your database connection string.
+WaveKit is available in two editions:
 
-## Installation (Recommended for production)
+*   **WaveKit-Lite:** The open-source edition (Apache 2.0) with core functionalities. This is what you get by default.
+*   **WaveKit-Pro:** A future edition with advanced capabilities for enterprise users. A license key will be required. To apply or express interest, contact us at [sales@risingwave-labs.com](mailto:sales@risingwave-labs.com) or [fill out this form](https://cloud.risingwave.com/auth/license_key/).
 
-The following section provides a step-by-step guide to setting up RisingWave Console with your self-hosted PostgreSQL database. This approach is recommended if you need persistent metadata with high availability.
+## 🤝 Contributing to WaveKit
 
-First, create `docker-compose.yaml` file with the following content:
+We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to the project, report bugs, or request features.
 
-```yaml
-version: "3.9"
-services:
-  console:
-    image: risingwavelabs/risingwave-console:v0.4.0
-    ports:
-      - "8020:8020"
-    environment:
-      WK_PORT: 8020
-      WK_PG_DSN: postgres://postgres:postgres@localhost:5432/postgres
-      WK_RISECTLDIR: /
+## 📄 License
 
-  db: 
-    image: "postgres:latest"
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - db-data:/var/lib/postgresql/data
-
-volumes:
-  db-data:
-```
-
-Start RisingWave Console by running the following command:
-
-```shell
-docker compose up
-```
-
-## Customizing RisingWave Console Settings
-
-RisingWave Console offers flexible configuration options through either a configuration file or environment variables. For detailed information about available settings and configuration methods, please refer to our [configuration documentation](docs/config.md).
-
-## RisingWave Console Editions
-
-RisingWave Console is available in two editions:  
-
-- **RisingWave Console Lite** – A lightweight, open-source edition that includes core functionalities. Licensed under Apache 2.0.  
-- **RisingWave Console Pro** – A full-featured edition with advanced capabilities. A license key is required for access. To apply, contact us at [sales@risingwave-labs.com](mailto:sales@risingwave-labs.com) or [fill out this form](https://cloud.risingwave.com/auth/license_key/).
-
-
-## Contributing to RisingWave Console
-
-We welcome contributions to RisingWave Console! Please refer to our [CONTRIBUTING.md](CONTRIBUTING.md) for more information on how to contribute to the project.
+WaveKit-Lite is licensed under the [Apache License 2.0](LICENSE).
