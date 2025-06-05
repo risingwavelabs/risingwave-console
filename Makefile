@@ -24,8 +24,8 @@ gen: anchor-gen
 
 doc-config:
 	@mkdir -p .tmp
-	@$(ANCHOR_BIN) docs config --prefix wk --path pkg/config --yaml > .tmp/sample_config.yaml
-	@$(ANCHOR_BIN) docs config --prefix wk --path pkg/config --env --markdown > .tmp/sample_config.env
+	@$(ANCHOR_BIN) docs config --prefix RCONSOLE --path pkg/config --yaml > .tmp/sample_config.yaml
+	@$(ANCHOR_BIN) docs config --prefix RCONSOLE --path pkg/config --env --markdown > .tmp/sample_config.env
 	@cat docs/templates/config.tmpl.md | $(ANCHOR_BIN) docs replace --key CONFIG_SAMPLE_YAML --file .tmp/sample_config.yaml |\
 		$(ANCHOR_BIN) docs replace --key CONFIG_ENV --file .tmp/sample_config.env |\
 		$(ANCHOR_BIN) docs replace --key CONFIG_SAMPLE_INIT --file dev/init.yaml \

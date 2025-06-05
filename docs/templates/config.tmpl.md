@@ -24,8 +24,8 @@ Here's an example initialization file structure:
 {{CONFIG_SAMPLE_INIT}}
 ```
 
-To use the initialization file, start RisingWave Console with the `WK_INIT` environment variable pointing to your file:
+To use the initialization file, start RisingWave Console with the `RCONSOLE_INIT` environment variable pointing to your file:
 
 ```shell
-WK_INIT=/path/to/init.yaml risingwave-console
+RCONSOLE_INIT=/path/to/init.yaml risingwave-console
 ```

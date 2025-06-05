@@ -77,7 +77,7 @@ func NewConfig() (*Config, error) {
 			return ""
 		}
 		return "config.yaml"
-	})(), "WK_", c); err != nil {
+	})(), "RCONSOLE_", c); err != nil {
 		return nil, err
 	}
 	return c, nil
